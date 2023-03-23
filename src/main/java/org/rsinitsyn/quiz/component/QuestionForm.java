@@ -12,17 +12,17 @@ import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.shared.Registration;
-import org.rsinitsyn.quiz.model.FourAnswersQuestionModel;
+import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
 
 public class QuestionForm extends FormLayout {
-    FourAnswersQuestionModel fourAnswersQuestionModel = new FourAnswersQuestionModel();
+    FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel = new FourAnswersQuestionBindingModel();
     TextField text = new TextField("Question text");
     TextField correctAnswerText = new TextField("Correct answer text");
     TextField secondOptionAnswerText = new TextField("Answer text 2");
     TextField thirdOptionAnswerText = new TextField("Answer text 3");
     TextField fourthOptionAnswerText = new TextField("Answer text 4");
 
-    Binder<FourAnswersQuestionModel> questionBinder = new BeanValidationBinder<>(FourAnswersQuestionModel.class);
+    Binder<FourAnswersQuestionBindingModel> questionBinder = new BeanValidationBinder<>(FourAnswersQuestionBindingModel.class);
 
     Button save = new Button("Save");
     Button delete = new Button("Delete");
@@ -47,7 +47,7 @@ public class QuestionForm extends FormLayout {
         close.addClickShortcut(Key.ESCAPE);
 
         save.addClickListener(event -> validateAndSave());
-        delete.addClickListener(event -> fireEvent(new DeleteEvent(this, fourAnswersQuestionModel)));
+        delete.addClickListener(event -> fireEvent(new DeleteEvent(this, fourAnswersQuestionBindingModel)));
         close.addClickListener(event -> fireEvent(new CloseEvent(this)));
 
         return new HorizontalLayout(save, delete, close);
@@ -56,40 +56,40 @@ public class QuestionForm extends FormLayout {
 
     private void validateAndSave() {
         try {
-            questionBinder.writeBean(fourAnswersQuestionModel);
-            fireEvent(new SaveEvent(this, fourAnswersQuestionModel));
+            questionBinder.writeBean(fourAnswersQuestionBindingModel);
+            fireEvent(new SaveEvent(this, fourAnswersQuestionBindingModel));
         } catch (ValidationException e) {
             e.printStackTrace();
         }
     }
 
-    public void setQuestion(FourAnswersQuestionModel fourAnswersQuestionModel) {
-        this.fourAnswersQuestionModel = fourAnswersQuestionModel;
-        questionBinder.readBean(fourAnswersQuestionModel);
+    public void setQuestion(FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel) {
+        this.fourAnswersQuestionBindingModel = fourAnswersQuestionBindingModel;
+        questionBinder.readBean(fourAnswersQuestionBindingModel);
     }
 
     public static abstract class QuestionFormEvent extends ComponentEvent<QuestionForm> {
-        private FourAnswersQuestionModel fourAnswersQuestionModel;
+        private FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel;
 
-        protected QuestionFormEvent(QuestionForm source, FourAnswersQuestionModel fourAnswersQuestionModel) {
+        protected QuestionFormEvent(QuestionForm source, FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel) {
             super(source, false);
-            this.fourAnswersQuestionModel = fourAnswersQuestionModel;
+            this.fourAnswersQuestionBindingModel = fourAnswersQuestionBindingModel;
         }
 
-        public FourAnswersQuestionModel getQuestion() {
-            return fourAnswersQuestionModel;
+        public FourAnswersQuestionBindingModel getQuestion() {
+            return fourAnswersQuestionBindingModel;
         }
     }
 
     public static class SaveEvent extends QuestionFormEvent {
-        SaveEvent(QuestionForm source, FourAnswersQuestionModel fourAnswersQuestionModel) {
-            super(source, fourAnswersQuestionModel);
+        SaveEvent(QuestionForm source, FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel) {
+            super(source, fourAnswersQuestionBindingModel);
         }
     }
 
     public static class DeleteEvent extends QuestionFormEvent {
-        DeleteEvent(QuestionForm source, FourAnswersQuestionModel fourAnswersQuestionModel) {
-            super(source, fourAnswersQuestionModel);
+        DeleteEvent(QuestionForm source, FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel) {
+            super(source, fourAnswersQuestionBindingModel);
         }
 
     }

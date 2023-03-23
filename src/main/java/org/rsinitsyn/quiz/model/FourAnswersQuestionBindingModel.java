@@ -5,10 +5,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Length;
 
+/**
+ * Data model for Create/Edit/Delete quiz question.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class FourAnswersQuestionModel {
+public class FourAnswersQuestionBindingModel {
     private String id;
     @Length(min = 1, max = 300)
     private String text;

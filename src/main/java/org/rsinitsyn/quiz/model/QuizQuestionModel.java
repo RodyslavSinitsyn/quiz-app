@@ -1,26 +1,23 @@
 package org.rsinitsyn.quiz.model;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ViktorinaQuestion {
-
+public class QuizQuestionModel implements Serializable {
     private String text;
-    private Set<ViktorinaAnswer> answers = new HashSet<>();
+    private Set<QuizAnswerModel> answers = new HashSet<>();
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ViktorinaAnswer {
+    public static class QuizAnswerModel implements Serializable {
         private String text;
         private boolean correct;
     }

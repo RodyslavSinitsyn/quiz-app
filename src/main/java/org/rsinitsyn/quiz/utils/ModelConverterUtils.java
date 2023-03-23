@@ -1,37 +1,40 @@
 package org.rsinitsyn.quiz.utils;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
-import org.rsinitsyn.quiz.model.FourAnswersQuestionModel;
-import org.rsinitsyn.quiz.model.ViktorinaQuestion;
+import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
+import org.rsinitsyn.quiz.model.QuizQuestionModel;
 
 @UtilityClass
 public class ModelConverterUtils {
 
-    public List<ViktorinaQuestion> toViktorinaQuestions(Collection<FourAnswersQuestionModel> fourAnswersQuestionModels) {
-        return fourAnswersQuestionModels.stream().map(ModelConverterUtils::toViktorinaQuestion).collect(Collectors.toList());
+    public List<QuizQuestionModel> toViktorinaQuestions(Collection<FourAnswersQuestionBindingModel> fourAnswersQuestionBindingModels) {
+        return fourAnswersQuestionBindingModels.stream().map(ModelConverterUtils::toViktorinaQuestion).collect(Collectors.toList());
     }
 
-    public ViktorinaQuestion toViktorinaQuestion(FourAnswersQuestionModel fourAnswersQuestionModel) {
-        return new ViktorinaQuestion(fourAnswersQuestionModel.getText(),
-                Collections.singleton(new ViktorinaQuestion.ViktorinaAnswer(fourAnswersQuestionModel.getCorrectAnswerText(), true)));
+    public QuizQuestionModel toViktorinaQuestion(FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel) {
+        return new QuizQuestionModel(fourAnswersQuestionBindingModel.getText(),
+                Set.of(new QuizQuestionModel.QuizAnswerModel(fourAnswersQuestionBindingModel.getCorrectAnswerText(), true),
+                        new QuizQuestionModel.QuizAnswerModel(fourAnswersQuestionBindingModel.getSecondOptionAnswerText(), false),
+                        new QuizQuestionModel.QuizAnswerModel(fourAnswersQuestionBindingModel.getThirdOptionAnswerText(), false),
+                        new QuizQuestionModel.QuizAnswerModel(fourAnswersQuestionBindingModel.getFourthOptionAnswerText(), false)));
     }
 
-    public List<FourAnswersQuestionModel> toQuestionModels(Collection<QuestionEntity> questionEntities) {
+    public List<FourAnswersQuestionBindingModel> toQuestionModels(Collection<QuestionEntity> questionEntities) {
         return questionEntities.stream().map(ModelConverterUtils::toQuestionModel).collect(Collectors.toList());
     }
 
-    public FourAnswersQuestionModel toQuestionModel(QuestionEntity questionEntity) {
+    public FourAnswersQuestionBindingModel toQuestionModel(QuestionEntity questionEntity) {
         List<AnswerEntity> answers = questionEntity.getAnswers().stream()
-                        .sorted(Comparator.comparing(AnswerEntity::isCorrect, Comparator.reverseOrder()))
+                .sorted(Comparator.comparing(AnswerEntity::isCorrect, Comparator.reverseOrder()))
                 .toList();
-        return new FourAnswersQuestionModel(
+        return new FourAnswersQuestionBindingModel(
                 questionEntity.getId(),
                 questionEntity.getText(),
                 answers.get(0).getAnswerText(),
@@ -40,15 +43,15 @@ public class ModelConverterUtils {
                 answers.get(3).getAnswerText());
     }
 
-    public QuestionEntity toQuestionEntity(FourAnswersQuestionModel fourAnswersQuestionModel) {
+    public QuestionEntity toQuestionEntity(FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel) {
         QuestionEntity questionEntity = new QuestionEntity();
-        questionEntity.setId(fourAnswersQuestionModel.getId());
-        questionEntity.setText(fourAnswersQuestionModel.getText());
+        questionEntity.setId(fourAnswersQuestionBindingModel.getId());
+        questionEntity.setText(fourAnswersQuestionBindingModel.getText());
 
-        questionEntity.addAnswer(createAnswerEntity(fourAnswersQuestionModel.getCorrectAnswerText(), true));
-        questionEntity.addAnswer(createAnswerEntity(fourAnswersQuestionModel.getSecondOptionAnswerText(), false));
-        questionEntity.addAnswer(createAnswerEntity(fourAnswersQuestionModel.getThirdOptionAnswerText(), false));
-        questionEntity.addAnswer(createAnswerEntity(fourAnswersQuestionModel.getFourthOptionAnswerText(), false));
+        questionEntity.addAnswer(createAnswerEntity(fourAnswersQuestionBindingModel.getCorrectAnswerText(), true));
+        questionEntity.addAnswer(createAnswerEntity(fourAnswersQuestionBindingModel.getSecondOptionAnswerText(), false));
+        questionEntity.addAnswer(createAnswerEntity(fourAnswersQuestionBindingModel.getThirdOptionAnswerText(), false));
+        questionEntity.addAnswer(createAnswerEntity(fourAnswersQuestionBindingModel.getFourthOptionAnswerText(), false));
 
         return questionEntity;
     }

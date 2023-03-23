@@ -18,14 +18,14 @@ import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.QuestionForm;
 import org.rsinitsyn.quiz.dao.QuestionDao;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
-import org.rsinitsyn.quiz.model.FourAnswersQuestionModel;
+import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.service.ImportService;
 import org.rsinitsyn.quiz.utils.ModelConverterUtils;
 
 @Route(value = "/list", layout = MainLayout.class)
 @PageTitle("Questions")
 public class QuestionsListPage extends VerticalLayout {
-    private Grid<FourAnswersQuestionModel> grid = new Grid<>(FourAnswersQuestionModel.class);
+    private Grid<FourAnswersQuestionBindingModel> grid = new Grid<>(FourAnswersQuestionBindingModel.class);
     private TextField filterText = new TextField();
     private QuestionForm form;
     private QuestionDao questionDao;
@@ -46,8 +46,8 @@ public class QuestionsListPage extends VerticalLayout {
     private void configureGrid() {
         grid.setSizeFull();
         grid.removeAllColumns();
-        grid.addColumn(FourAnswersQuestionModel::getText).setHeader("Text");
-        grid.addColumn(FourAnswersQuestionModel::getCorrectAnswerText).setHeader("Answer");
+        grid.addColumn(FourAnswersQuestionBindingModel::getText).setHeader("Text");
+        grid.addColumn(FourAnswersQuestionBindingModel::getCorrectAnswerText).setHeader("Answer");
         grid.getColumns().forEach(col -> col.setAutoWidth(true));
         grid.asSingleSelect().addValueChangeListener(event -> {
             editQuestion(event.getValue());
@@ -59,11 +59,11 @@ public class QuestionsListPage extends VerticalLayout {
         grid.setItems(ModelConverterUtils.toQuestionModels(questionDao.findAll()));
     }
 
-    private void editQuestion(FourAnswersQuestionModel fourAnswersQuestionModel) {
-        if (fourAnswersQuestionModel == null) {
+    private void editQuestion(FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel) {
+        if (fourAnswersQuestionBindingModel == null) {
             closeForm();
         } else {
-            form.setQuestion(fourAnswersQuestionModel);
+            form.setQuestion(fourAnswersQuestionBindingModel);
             form.setVisible(true);
         }
     }
@@ -118,7 +118,7 @@ public class QuestionsListPage extends VerticalLayout {
 
     private void addQuestion() {
         grid.asSingleSelect().clear();
-        editQuestion(new FourAnswersQuestionModel());
+        editQuestion(new FourAnswersQuestionBindingModel());
     }
 
     private Component createBody() {

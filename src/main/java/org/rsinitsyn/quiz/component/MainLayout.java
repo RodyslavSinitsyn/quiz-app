@@ -1,5 +1,6 @@
 package org.rsinitsyn.quiz.component;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.tabs.Tab;
@@ -8,6 +9,7 @@ import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.rsinitsyn.quiz.page.GameTypePage;
 import org.rsinitsyn.quiz.page.QuestionsListPage;
+import org.rsinitsyn.quiz.page.StatisticPage;
 
 public class MainLayout extends AppLayout {
 
@@ -20,22 +22,23 @@ public class MainLayout extends AppLayout {
         logo.addClassNames(
                 LumoUtility.FontSize.LARGE,
                 LumoUtility.TextAlignment.LEFT,
-                LumoUtility.Margin.SMALL);
-        logo.add(new RouterLink(GameTypePage.class));
+                LumoUtility.Margin.MEDIUM);
 
         addToNavbar(logo, createTabs());
     }
 
     private Tabs createTabs() {
-        Tab playTab = new Tab("Играть");
-        playTab.add(new RouterLink(GameTypePage.class));
-
-        Tab listTab = new Tab("Вопросы");
-        listTab.add(new RouterLink(QuestionsListPage.class));
-
-        Tab aboutUsTab = new Tab("О нас");
-
-        Tabs tabs = new Tabs(playTab, listTab, aboutUsTab);
+        Tabs tabs = new Tabs();
+        tabs.add(createTab("Играть", GameTypePage.class));
+        tabs.add(createTab("Вопросы", QuestionsListPage.class));
+        tabs.add(createTab("Статистика", StatisticPage.class));
         return tabs;
+    }
+
+    private Tab createTab(String text, Class<? extends Component> navigateTo) {
+        Tab tab = new Tab(text);
+        RouterLink link = new RouterLink(navigateTo);
+        tab.add(link); // TODO Fix style
+        return tab;
     }
 }

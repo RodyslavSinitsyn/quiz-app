@@ -4,6 +4,7 @@ import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.KeyModifier;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.router.PageTitle;
@@ -16,6 +17,7 @@ import org.rsinitsyn.quiz.component.MainLayout;
 @PageTitle("Game")
 public class GameTypePage extends VerticalLayout {
 
+    H2 title = new H2("Новая игра");
     Button configButton;
     Select<String> gameTypeSelect;
 
@@ -24,7 +26,7 @@ public class GameTypePage extends VerticalLayout {
         configButton = createNextStepButton();
         gameTypeSelect = createGameTypeSelect();
 
-        add(gameTypeSelect, configButton);
+        add(title, gameTypeSelect, configButton);
     }
 
     private Button createNextStepButton() {
