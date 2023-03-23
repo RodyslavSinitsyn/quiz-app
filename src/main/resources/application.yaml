@@ -1,1 +1,24 @@
+spring:
+  devtools:
+    restart:
+      poll-interval: 2s
+      quiet-period: 1s
+      enabled: true
 
+  # DB properties
+  datasource:
+    url: jdbc:h2:file:./db/data
+    username: sa
+    password:
+    driverClassName: org.h2.Driver
+  jpa:
+    hibernate:
+      # TODO none
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
