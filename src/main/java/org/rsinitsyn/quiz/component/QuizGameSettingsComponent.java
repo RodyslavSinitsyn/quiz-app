@@ -4,6 +4,7 @@ import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Label;
@@ -21,40 +22,42 @@ import com.vaadin.flow.shared.Registration;
 import java.util.List;
 import lombok.Getter;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
-import org.rsinitsyn.quiz.model.GameStateModel;
+import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
 import org.rsinitsyn.quiz.utils.ModelConverterUtils;
 
-public class GameSettingsComponent extends FormLayout {
+public class QuizGameSettingsComponent extends FormLayout {
 
-    GameStateModel model = new GameStateModel();
-    TextField gameName;
-    TextField playerName;
-    MultiSelectListBox<QuizQuestionModel> questions = new MultiSelectListBox<>();
-    Binder<GameStateModel> binder = new BeanValidationBinder<>(GameStateModel.class);
+    private QuizGameStateModel model = new QuizGameStateModel();
+    private TextField gameName;
+    private TextField playerName;
+    private Checkbox answerOptionsEnabled;
+    private Checkbox timerEnabled;
+    private MultiSelectListBox<QuizQuestionModel> questions = new MultiSelectListBox<>();
+    private Binder<QuizGameStateModel> binder = new BeanValidationBinder<>(QuizGameStateModel.class);
 
-    H2 title = new H2("Настройки игры");
-    Button playButton = new Button("Играть");
+    private H2 title = new H2("Настройки игры");
+    private Button playButton = new Button("Играть");
 
-    List<FourAnswersQuestionBindingModel> fourAnswersQuestionBindingModelList;
+    private List<FourAnswersQuestionBindingModel> fourAnswersQuestionBindingModelList;
 
-    public GameSettingsComponent(List<FourAnswersQuestionBindingModel> fourAnswersQuestionBindingModelList) {
+    public QuizGameSettingsComponent(List<FourAnswersQuestionBindingModel> fourAnswersQuestionBindingModelList) {
         setResponsiveSteps(new ResponsiveStep("0", 1));
         setWidth("50em");
 
         this.fourAnswersQuestionBindingModelList = fourAnswersQuestionBindingModelList;
         this.gameName = createTextInput("Название игры");
         this.playerName = createTextInput("Создатель игры");
+        this.answerOptionsEnabled = createCheckbox("Варианты ответов");
+        this.timerEnabled = createCheckbox("Таймер 60 сек");
+
         configureBinder();
         configureQuestionsList();
         configurePlayButton();
 
-        add(title, gameName, playerName, questions, playButton);
+        add(title, gameName, playerName, answerOptionsEnabled, timerEnabled, questions, playButton);
     }
 
-    private void configureBinder() {
-        binder.bindInstanceFields(this);
-    }
 
     private TextField createTextInput(String labelText) {
         TextField field = new TextField(labelText);
@@ -64,6 +67,15 @@ public class GameSettingsComponent extends FormLayout {
             fireEvent(new UpdateGameEvent(this, model));
         });
         return field;
+    }
+
+    private Checkbox createCheckbox(String text) {
+        Checkbox checkbox = new Checkbox(text);
+        return checkbox;
+    }
+
+    private void configureBinder() {
+        binder.bindInstanceFields(this);
     }
 
     private void configureQuestionsList() {
@@ -97,28 +109,28 @@ public class GameSettingsComponent extends FormLayout {
     }
 
     @Getter
-    public static class StartGameEvent extends ComponentEvent<GameSettingsComponent> {
-        private GameStateModel model;
+    public static class StartGameEvent extends ComponentEvent<QuizGameSettingsComponent> {
+        private QuizGameStateModel model;
 
-        public StartGameEvent(GameSettingsComponent source, boolean fromClient) {
+        public StartGameEvent(QuizGameSettingsComponent source, boolean fromClient) {
             super(source, fromClient);
         }
 
-        public StartGameEvent(GameSettingsComponent source, GameStateModel model) {
+        public StartGameEvent(QuizGameSettingsComponent source, QuizGameStateModel model) {
             this(source, false);
             this.model = model;
         }
     }
 
     @Getter
-    public static class UpdateGameEvent extends ComponentEvent<GameSettingsComponent> {
-        private GameStateModel model;
+    public static class UpdateGameEvent extends ComponentEvent<QuizGameSettingsComponent> {
+        private QuizGameStateModel model;
 
-        public UpdateGameEvent(GameSettingsComponent source, boolean fromClient) {
+        public UpdateGameEvent(QuizGameSettingsComponent source, boolean fromClient) {
             super(source, fromClient);
         }
 
-        public UpdateGameEvent(GameSettingsComponent source, GameStateModel model) {
+        public UpdateGameEvent(QuizGameSettingsComponent source, QuizGameStateModel model) {
             this(source, false);
             this.model = model;
         }

@@ -8,7 +8,7 @@ import org.rsinitsyn.quiz.dao.GameDao;
 import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.GameType;
-import org.rsinitsyn.quiz.model.GameStateModel;
+import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,15 +44,15 @@ public class GameService {
 
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public void finish(String id, GameStateModel gameStateModel) {
+    public void finish(String id, QuizGameStateModel quizGameStateModel) {
         gameDao.findById(UUID.fromString(id))
                 .ifPresent(gameEntity -> {
                     gameEntity.setStatus(GameStatus.FINISHED);
-                    gameEntity.setResult(calculateResult(gameStateModel));
+                    gameEntity.setResult(calculateResult(quizGameStateModel));
                 });
     }
 
-    public int calculateResult(GameStateModel gameStateModel) {
-        return (gameStateModel.getCorrect().size() * 100) / gameStateModel.getQuestions().size();
+    public int calculateResult(QuizGameStateModel quizGameStateModel) {
+        return (quizGameStateModel.getCorrect().size() * 100) / quizGameStateModel.getQuestions().size();
     }
 }

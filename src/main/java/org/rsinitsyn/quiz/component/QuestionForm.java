@@ -15,7 +15,7 @@ import com.vaadin.flow.shared.Registration;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
 
 public class QuestionForm extends FormLayout {
-    FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel = new FourAnswersQuestionBindingModel();
+    FourAnswersQuestionBindingModel model = new FourAnswersQuestionBindingModel();
     TextField text = new TextField("Question text");
     TextField correctAnswerText = new TextField("Correct answer text");
     TextField secondOptionAnswerText = new TextField("Answer text 2");
@@ -47,7 +47,7 @@ public class QuestionForm extends FormLayout {
         close.addClickShortcut(Key.ESCAPE);
 
         save.addClickListener(event -> validateAndSave());
-        delete.addClickListener(event -> fireEvent(new DeleteEvent(this, fourAnswersQuestionBindingModel)));
+        delete.addClickListener(event -> fireEvent(new DeleteEvent(this, model)));
         close.addClickListener(event -> fireEvent(new CloseEvent(this)));
 
         return new HorizontalLayout(save, delete, close);
@@ -56,15 +56,15 @@ public class QuestionForm extends FormLayout {
 
     private void validateAndSave() {
         try {
-            questionBinder.writeBean(fourAnswersQuestionBindingModel);
-            fireEvent(new SaveEvent(this, fourAnswersQuestionBindingModel));
+            questionBinder.writeBean(model);
+            fireEvent(new SaveEvent(this, model));
         } catch (ValidationException e) {
             e.printStackTrace();
         }
     }
 
     public void setQuestion(FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel) {
-        this.fourAnswersQuestionBindingModel = fourAnswersQuestionBindingModel;
+        this.model = fourAnswersQuestionBindingModel;
         questionBinder.readBean(fourAnswersQuestionBindingModel);
     }
 

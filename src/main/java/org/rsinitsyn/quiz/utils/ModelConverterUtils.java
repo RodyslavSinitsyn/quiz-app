@@ -18,12 +18,12 @@ public class ModelConverterUtils {
         return fourAnswersQuestionBindingModels.stream().map(ModelConverterUtils::toViktorinaQuestion).collect(Collectors.toList());
     }
 
-    public QuizQuestionModel toViktorinaQuestion(FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel) {
-        return new QuizQuestionModel(fourAnswersQuestionBindingModel.getText(),
-                Set.of(new QuizQuestionModel.QuizAnswerModel(fourAnswersQuestionBindingModel.getCorrectAnswerText(), true),
-                        new QuizQuestionModel.QuizAnswerModel(fourAnswersQuestionBindingModel.getSecondOptionAnswerText(), false),
-                        new QuizQuestionModel.QuizAnswerModel(fourAnswersQuestionBindingModel.getThirdOptionAnswerText(), false),
-                        new QuizQuestionModel.QuizAnswerModel(fourAnswersQuestionBindingModel.getFourthOptionAnswerText(), false)));
+    public QuizQuestionModel toViktorinaQuestion(FourAnswersQuestionBindingModel model) {
+        return new QuizQuestionModel(model.getText(),
+                Set.of(new QuizQuestionModel.QuizAnswerModel(model.getCorrectAnswerText(), true),
+                        new QuizQuestionModel.QuizAnswerModel(model.getSecondOptionAnswerText(), false),
+                        new QuizQuestionModel.QuizAnswerModel(model.getThirdOptionAnswerText(), false),
+                        new QuizQuestionModel.QuizAnswerModel(model.getFourthOptionAnswerText(), false)));
     }
 
     public List<FourAnswersQuestionBindingModel> toQuestionModels(Collection<QuestionEntity> questionEntities) {

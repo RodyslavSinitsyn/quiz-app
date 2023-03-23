@@ -1,7 +1,7 @@
 package org.rsinitsyn.quiz.page;
 
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -25,8 +25,9 @@ import org.rsinitsyn.quiz.utils.ModelConverterUtils;
 @Route(value = "/list", layout = MainLayout.class)
 @PageTitle("Questions")
 public class QuestionsListPage extends VerticalLayout {
-    private Grid<FourAnswersQuestionBindingModel> grid = new Grid<>(FourAnswersQuestionBindingModel.class);
+    private Grid<FourAnswersQuestionBindingModel> grid;
     private TextField filterText = new TextField();
+    private Dialog questionFormDialog;
     private QuestionForm form;
     private QuestionDao questionDao;
     private ImportService importService;
@@ -39,11 +40,19 @@ public class QuestionsListPage extends VerticalLayout {
         setSizeFull();
         configureGrid();
         configureForm();
+        configureDialog();
 
-        add(title, createToolbar(), createBody());
+        add(title, createToolbar(), grid);
+    }
+
+    private void configureDialog() {
+        questionFormDialog = new Dialog(form);
+        questionFormDialog.close();
+        questionFormDialog.setHeaderTitle("Управление");
     }
 
     private void configureGrid() {
+        grid = new Grid<>(FourAnswersQuestionBindingModel.class);
         grid.setSizeFull();
         grid.removeAllColumns();
         grid.addColumn(FourAnswersQuestionBindingModel::getText).setHeader("Text");
@@ -63,8 +72,8 @@ public class QuestionsListPage extends VerticalLayout {
         if (fourAnswersQuestionBindingModel == null) {
             closeForm();
         } else {
+            questionFormDialog.open();
             form.setQuestion(fourAnswersQuestionBindingModel);
-            form.setVisible(true);
         }
     }
 
@@ -83,12 +92,12 @@ public class QuestionsListPage extends VerticalLayout {
             closeForm();
         });
         form.addListener(QuestionForm.CloseEvent.class, event -> closeForm());
-        closeForm();
+        form.setQuestion(null);
     }
 
     private void closeForm() {
         form.setQuestion(null);
-        form.setVisible(false);
+        questionFormDialog.close();
     }
 
     private HorizontalLayout createToolbar() {
@@ -119,14 +128,6 @@ public class QuestionsListPage extends VerticalLayout {
     private void addQuestion() {
         grid.asSingleSelect().clear();
         editQuestion(new FourAnswersQuestionBindingModel());
-    }
-
-    private Component createBody() {
-        HorizontalLayout body = new HorizontalLayout(grid, form);
-        body.setFlexGrow(2, grid);
-        body.setFlexGrow(1, form);
-        body.setSizeFull();
-        return body;
     }
 
     private void filterList() {

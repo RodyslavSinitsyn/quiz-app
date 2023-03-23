@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// TODO Need entities ID here
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
