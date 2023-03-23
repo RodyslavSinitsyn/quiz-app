@@ -21,10 +21,8 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.shared.Registration;
 import java.util.List;
 import lombok.Getter;
-import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
-import org.rsinitsyn.quiz.utils.ModelConverterUtils;
 
 public class QuizGameSettingsComponent extends FormLayout {
 
@@ -39,13 +37,13 @@ public class QuizGameSettingsComponent extends FormLayout {
     private H2 title = new H2("Настройки игры");
     private Button playButton = new Button("Играть");
 
-    private List<FourAnswersQuestionBindingModel> fourAnswersQuestionBindingModelList;
+    private List<QuizQuestionModel> quizQuestionModelList;
 
-    public QuizGameSettingsComponent(List<FourAnswersQuestionBindingModel> fourAnswersQuestionBindingModelList) {
+    public QuizGameSettingsComponent(List<QuizQuestionModel> quizQuestionModelList) {
         setResponsiveSteps(new ResponsiveStep("0", 1));
         setWidth("50em");
 
-        this.fourAnswersQuestionBindingModelList = fourAnswersQuestionBindingModelList;
+        this.quizQuestionModelList = quizQuestionModelList;
         this.gameName = createTextInput("Название игры");
         this.playerName = createTextInput("Создатель игры");
         this.answerOptionsEnabled = createCheckbox("Варианты ответов");
@@ -80,7 +78,7 @@ public class QuizGameSettingsComponent extends FormLayout {
 
     private void configureQuestionsList() {
         questions.setId("questions-list-box");
-        questions.setItems(ModelConverterUtils.toViktorinaQuestions(fourAnswersQuestionBindingModelList));
+        questions.setItems(quizQuestionModelList);
         questions.setRenderer(new ComponentRenderer<>(question -> {
             HorizontalLayout row = new HorizontalLayout();
             row.setAlignItems(FlexComponent.Alignment.CENTER);

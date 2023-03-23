@@ -6,7 +6,6 @@ import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.router.Route;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
@@ -19,7 +18,6 @@ import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.utils.ModelConverterUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@PreserveOnRefresh
 @Route(value = "/game", layout = MainLayout.class)
 @PageTitle("Game")
 @Slf4j
@@ -47,7 +45,7 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
         if (event.isRefreshEvent()) {
-            log.debug("Refresh page happened");
+            log.info("Refresh page happened");
             return;
         }
         configureGameSettingsComponent();
@@ -65,7 +63,8 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
 
     private void configureGameSettingsComponent() {
         quizGameSettingsComponent = new QuizGameSettingsComponent(
-                ModelConverterUtils.toQuestionModels(questionDao.findAll()));
+                ModelConverterUtils.toQuizQuestionModels(questionDao.findAll())
+        );
 
         quizGameSettingsComponent.addListener(QuizGameSettingsComponent.StartGameEvent.class, event -> {
             remove(quizGameSettingsComponent);
@@ -89,6 +88,6 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
     }
 
     private void createGameIfNotExists() {
-        gameService.create(gameId);
+        gameService.createIfNotExists(gameId);
     }
 }

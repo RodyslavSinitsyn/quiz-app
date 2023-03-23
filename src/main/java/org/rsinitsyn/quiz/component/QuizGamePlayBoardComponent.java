@@ -2,20 +2,26 @@ package org.rsinitsyn.quiz.component;
 
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
+import com.vaadin.flow.router.BeforeLeaveEvent;
+import com.vaadin.flow.router.BeforeLeaveObserver;
+import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.shared.Registration;
 import java.util.Iterator;
 import java.util.Set;
 import lombok.Getter;
+import lombok.SneakyThrows;
+import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
 import org.rsinitsyn.quiz.service.AudioService;
 
-public class QuizGamePlayBoardComponent extends VerticalLayout {
+public class QuizGamePlayBoardComponent extends VerticalLayout implements BeforeLeaveObserver {
 
     private Paragraph questionTextParagraph;
     private QuizGameAnswersComponent answersComponent;
@@ -43,7 +49,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout {
         currQuestion = questionIterator.next();
 
         removeAll();
-        questionTextParagraph = createQuestionParagraph(currQuestion.getText());
+        questionTextParagraph = createQuestionParagraph(currQuestion);
         answersComponent = createAnswersComponent(currQuestion.getAnswers());
         progressBar = createProgressBar(questionNumber++);
 
@@ -60,9 +66,20 @@ public class QuizGamePlayBoardComponent extends VerticalLayout {
     }
 
 
-    private Paragraph createQuestionParagraph(String questionText) {
+    @SneakyThrows
+    private Paragraph createQuestionParagraph(QuizQuestionModel questionModel) {
+        // TODO Refactor
+        if (questionModel.getType().equals(QuestionType.PHOTO)) {
+            Image image = new Image();
+            image.setSrc(new StreamResource(
+                    questionModel.getPhotoFilename(),
+                    () -> questionModel.openStream()));
+            image.setWidth("25em");
+            add(image);
+        }
+
         Paragraph paragraph = new Paragraph();
-        paragraph.setText(questionText);
+        paragraph.setText(questionModel.getText());
         return paragraph;
     }
 
@@ -84,6 +101,11 @@ public class QuizGamePlayBoardComponent extends VerticalLayout {
         }
         String notifyText = correct ? "Good!" : "Wrong...";
         Notification.show(notifyText, 2_000, Notification.Position.MIDDLE);
+    }
+
+    @Override
+    public void beforeLeave(BeforeLeaveEvent event) {
+        quizGameStateModel.getQuestions().forEach(QuizQuestionModel::closePhotoStream);
     }
 
     @Getter

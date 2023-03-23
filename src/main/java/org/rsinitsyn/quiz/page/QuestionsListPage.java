@@ -21,6 +21,7 @@ import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.service.ImportService;
 import org.rsinitsyn.quiz.utils.ModelConverterUtils;
+import org.rsinitsyn.quiz.utils.QuizResourceUtils;
 
 @Route(value = "/list", layout = MainLayout.class)
 @PageTitle("Questions")
@@ -65,7 +66,7 @@ public class QuestionsListPage extends VerticalLayout {
     }
 
     private void updateList() {
-        grid.setItems(ModelConverterUtils.toQuestionModels(questionDao.findAll()));
+        grid.setItems(ModelConverterUtils.toFourAnswersQuestionBindingModels(questionDao.findAll()));
     }
 
     private void editQuestion(FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel) {
@@ -81,6 +82,8 @@ public class QuestionsListPage extends VerticalLayout {
         form = new QuestionForm();
         form.setWidth("25em");
         form.addListener(QuestionForm.SaveEvent.class, event -> {
+            String photoFilename = QuizResourceUtils.saveImageAndGetFilename(event.getQuestion().getPhotoLocation());
+            event.getQuestion().setPhotoLocation(photoFilename);
             questionDao.save(ModelConverterUtils.toQuestionEntity(event.getQuestion()));
             updateList();
             closeForm();
@@ -131,7 +134,7 @@ public class QuestionsListPage extends VerticalLayout {
     }
 
     private void filterList() {
-        grid.setItems(ModelConverterUtils.toQuestionModels(questionDao.findAll()).stream()
+        grid.setItems(ModelConverterUtils.toFourAnswersQuestionBindingModels(questionDao.findAll()).stream()
                 .filter(question -> question.getText().contains(filterText.getValue()))
                 .collect(Collectors.toList()));
     }

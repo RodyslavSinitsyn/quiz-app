@@ -8,57 +8,74 @@ import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
+import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
 
 @UtilityClass
 public class ModelConverterUtils {
 
-    public List<QuizQuestionModel> toViktorinaQuestions(Collection<FourAnswersQuestionBindingModel> fourAnswersQuestionBindingModels) {
-        return fourAnswersQuestionBindingModels.stream().map(ModelConverterUtils::toViktorinaQuestion).collect(Collectors.toList());
+    public List<QuizQuestionModel> toQuizQuestionModels(Collection<QuestionEntity> questionEntities) {
+        return questionEntities.stream().map(ModelConverterUtils::toQuizQuestionModel).collect(Collectors.toList());
     }
 
-    public QuizQuestionModel toViktorinaQuestion(FourAnswersQuestionBindingModel model) {
-        return new QuizQuestionModel(model.getText(),
-                Set.of(new QuizQuestionModel.QuizAnswerModel(model.getCorrectAnswerText(), true),
-                        new QuizQuestionModel.QuizAnswerModel(model.getSecondOptionAnswerText(), false),
-                        new QuizQuestionModel.QuizAnswerModel(model.getThirdOptionAnswerText(), false),
-                        new QuizQuestionModel.QuizAnswerModel(model.getFourthOptionAnswerText(), false)));
+    public QuizQuestionModel toQuizQuestionModel(QuestionEntity entity) {
+        return new QuizQuestionModel(entity.getText(),
+                entity.getType(),
+                entity.getPhotoFilename(),
+                toQuizQueestionAnswerModels(entity.getAnswers()));
     }
 
-    public List<FourAnswersQuestionBindingModel> toQuestionModels(Collection<QuestionEntity> questionEntities) {
-        return questionEntities.stream().map(ModelConverterUtils::toQuestionModel).collect(Collectors.toList());
+    private Set<QuizQuestionModel.QuizAnswerModel> toQuizQueestionAnswerModels(Set<AnswerEntity> answers) {
+        return answers.stream()
+                .map(answerEntity -> new QuizQuestionModel.QuizAnswerModel(
+                        answerEntity.getText(),
+                        answerEntity.isCorrect()))
+                .collect(Collectors.toSet());
     }
 
-    public FourAnswersQuestionBindingModel toQuestionModel(QuestionEntity questionEntity) {
+
+    public List<FourAnswersQuestionBindingModel> toFourAnswersQuestionBindingModels(Collection<QuestionEntity> questionEntities) {
+        return questionEntities.stream().map(ModelConverterUtils::toFourAnswersQuestionBindingModel).collect(Collectors.toList());
+    }
+
+    public FourAnswersQuestionBindingModel toFourAnswersQuestionBindingModel(QuestionEntity questionEntity) {
         List<AnswerEntity> answers = questionEntity.getAnswers().stream()
                 .sorted(Comparator.comparing(AnswerEntity::isCorrect, Comparator.reverseOrder()))
                 .toList();
         return new FourAnswersQuestionBindingModel(
                 questionEntity.getId(),
                 questionEntity.getText(),
-                answers.get(0).getAnswerText(),
-                answers.get(1).getAnswerText(),
-                answers.get(2).getAnswerText(),
-                answers.get(3).getAnswerText());
+                answers.get(0).getText(),
+                answers.get(1).getText(),
+                answers.get(2).getText(),
+                answers.get(3).getText(),
+                questionEntity.getPhotoFilename());
     }
 
-    public QuestionEntity toQuestionEntity(FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel) {
+    public QuestionEntity toQuestionEntity(FourAnswersQuestionBindingModel model) {
         QuestionEntity questionEntity = new QuestionEntity();
-        questionEntity.setId(fourAnswersQuestionBindingModel.getId());
-        questionEntity.setText(fourAnswersQuestionBindingModel.getText());
+        questionEntity.setId(model.getId());
+        questionEntity.setText(model.getText());
 
-        questionEntity.addAnswer(createAnswerEntity(fourAnswersQuestionBindingModel.getCorrectAnswerText(), true));
-        questionEntity.addAnswer(createAnswerEntity(fourAnswersQuestionBindingModel.getSecondOptionAnswerText(), false));
-        questionEntity.addAnswer(createAnswerEntity(fourAnswersQuestionBindingModel.getThirdOptionAnswerText(), false));
-        questionEntity.addAnswer(createAnswerEntity(fourAnswersQuestionBindingModel.getFourthOptionAnswerText(), false));
+        questionEntity.addAnswer(createAnswerEntity(model.getCorrectAnswerText(), true));
+        questionEntity.addAnswer(createAnswerEntity(model.getSecondOptionAnswerText(), false));
+        questionEntity.addAnswer(createAnswerEntity(model.getThirdOptionAnswerText(), false));
+        questionEntity.addAnswer(createAnswerEntity(model.getFourthOptionAnswerText(), false));
+
+        if (model.getPhotoLocation() != null) {
+            questionEntity.setType(QuestionType.PHOTO);
+            questionEntity.setPhotoFilename(model.getPhotoLocation());
+        } else {
+            questionEntity.setType(QuestionType.TEXT);
+        }
 
         return questionEntity;
     }
 
     private AnswerEntity createAnswerEntity(String text, boolean correct) {
         AnswerEntity answerEntity = new AnswerEntity();
-        answerEntity.setAnswerText(text);
+        answerEntity.setText(text);
         answerEntity.setCorrect(correct);
         return answerEntity;
     }

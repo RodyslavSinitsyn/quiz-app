@@ -25,7 +25,6 @@ public class GameTypePage extends VerticalLayout {
         setSizeFull();
         configButton = createNextStepButton();
         gameTypeSelect = createGameTypeSelect();
-
         add(title, gameTypeSelect, configButton);
     }
 

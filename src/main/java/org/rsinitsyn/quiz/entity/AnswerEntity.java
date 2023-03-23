@@ -30,14 +30,14 @@ public class AnswerEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     @Column(nullable = false)
-    private String answerText;
+    private String text;
     private boolean correct;
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "questionId", referencedColumnName = "id")
     private QuestionEntity question;
 
-    public AnswerEntity(String answerText, boolean correct) {
-        this.answerText = answerText;
+    public AnswerEntity(String text, boolean correct) {
+        this.text = text;
         this.correct = correct;
     }
 }

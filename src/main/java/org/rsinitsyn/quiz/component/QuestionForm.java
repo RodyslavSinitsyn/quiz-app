@@ -21,6 +21,7 @@ public class QuestionForm extends FormLayout {
     TextField secondOptionAnswerText = new TextField("Answer text 2");
     TextField thirdOptionAnswerText = new TextField("Answer text 3");
     TextField fourthOptionAnswerText = new TextField("Answer text 4");
+    TextField photoLocation = new TextField("Photo location");
 
     Binder<FourAnswersQuestionBindingModel> questionBinder = new BeanValidationBinder<>(FourAnswersQuestionBindingModel.class);
 
@@ -35,6 +36,7 @@ public class QuestionForm extends FormLayout {
                 secondOptionAnswerText,
                 thirdOptionAnswerText,
                 fourthOptionAnswerText,
+                photoLocation,
                 createButtonsLayout());
     }
 

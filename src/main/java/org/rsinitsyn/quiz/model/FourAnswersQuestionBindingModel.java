@@ -23,4 +23,5 @@ public class FourAnswersQuestionBindingModel {
     private String thirdOptionAnswerText;
     @Length(min = 1, max = 100)
     private String fourthOptionAnswerText;
+    private String photoLocation;
 }

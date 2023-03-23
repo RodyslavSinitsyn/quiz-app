@@ -1,6 +1,7 @@
 package org.rsinitsyn.quiz.service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class GameService {
     private final GameDao gameDao;
 
-    public void create(String id) {
+    public void createIfNotExists(String id) {
+        Optional<GameEntity> gameEntityOptional = gameDao.findById(UUID.fromString(id));
+        if (gameEntityOptional.isPresent()) {
+            log.info("Game already exists, id: {}", id);
+            return;
+        }
         GameEntity entity = new GameEntity();
         entity.setId(UUID.fromString(id));
         entity.setStatus(GameStatus.NOT_STARTED);
