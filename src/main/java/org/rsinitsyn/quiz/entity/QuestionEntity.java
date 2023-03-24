@@ -9,9 +9,11 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.Getter;
@@ -31,7 +33,13 @@ public class QuestionEntity {
     private String text;
     @Enumerated(EnumType.STRING)
     private QuestionType type;
+    private String createdBy;
+    @Column(nullable = false)
+    private LocalDateTime creationDate;
     private String photoFilename;
+    @ManyToOne(fetch = FetchType.EAGER, optional = true)
+    @JoinColumn(name = "categoryId", referencedColumnName = "id")
+    private QuestionCategoryEntity category;
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<AnswerEntity> answers = new HashSet<>();
 

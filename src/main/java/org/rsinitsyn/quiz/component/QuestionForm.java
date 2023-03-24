@@ -5,6 +5,7 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -12,32 +13,41 @@ import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.shared.Registration;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
 
+@Slf4j
 public class QuestionForm extends FormLayout {
     FourAnswersQuestionBindingModel model = new FourAnswersQuestionBindingModel();
-    TextField text = new TextField("Question text");
-    TextField correctAnswerText = new TextField("Correct answer text");
-    TextField secondOptionAnswerText = new TextField("Answer text 2");
-    TextField thirdOptionAnswerText = new TextField("Answer text 3");
-    TextField fourthOptionAnswerText = new TextField("Answer text 4");
-    TextField photoLocation = new TextField("Photo location");
+    TextField text = new TextField("Текст вопроса");
+    ComboBox<String> category = new ComboBox<>();
+    TextField correctAnswerText = new TextField("Верный ответ");
+    TextField secondOptionAnswerText = new TextField("Вариант 2");
+    TextField thirdOptionAnswerText = new TextField("Вариант 3");
+    TextField fourthOptionAnswerText = new TextField("Вариант 4");
+    TextField photoLocation = new TextField("Ссылка на фото");
 
-    Binder<FourAnswersQuestionBindingModel> questionBinder = new BeanValidationBinder<>(FourAnswersQuestionBindingModel.class);
+    Binder<FourAnswersQuestionBindingModel> binder = new BeanValidationBinder<>(FourAnswersQuestionBindingModel.class);
+
+    private List<String> categoryList;
 
     Button save = new Button("Save");
     Button delete = new Button("Delete");
     Button close = new Button("Cancel");
 
-    public QuestionForm() {
-        questionBinder.bindInstanceFields(this);
+    public QuestionForm(List<QuestionCategoryEntity> categoryEntityList) {
+        setCategoryList(categoryEntityList);
         add(text,
+                category,
                 correctAnswerText,
                 secondOptionAnswerText,
                 thirdOptionAnswerText,
                 fourthOptionAnswerText,
                 photoLocation,
                 createButtonsLayout());
+        binder.bindInstanceFields(this);
     }
 
     private HorizontalLayout createButtonsLayout() {
@@ -58,28 +68,34 @@ public class QuestionForm extends FormLayout {
 
     private void validateAndSave() {
         try {
-            questionBinder.writeBean(model);
+            binder.writeBean(model);
             fireEvent(new SaveEvent(this, model));
         } catch (ValidationException e) {
-            e.printStackTrace();
+            log.warn("Question form contains errors. {}", e.getMessage());
         }
     }
 
     public void setQuestion(FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel) {
         this.model = fourAnswersQuestionBindingModel;
-        questionBinder.readBean(fourAnswersQuestionBindingModel);
+        binder.readBean(fourAnswersQuestionBindingModel);
+    }
+
+    public void setCategoryList(List<QuestionCategoryEntity> entities) {
+        categoryList = entities.stream().map(QuestionCategoryEntity::getName).toList();
+        category.setItems(categoryList);
+        category.setLabel("Тема вопроса");
     }
 
     public static abstract class QuestionFormEvent extends ComponentEvent<QuestionForm> {
-        private FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel;
+        private FourAnswersQuestionBindingModel model;
 
-        protected QuestionFormEvent(QuestionForm source, FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel) {
+        protected QuestionFormEvent(QuestionForm source, FourAnswersQuestionBindingModel model) {
             super(source, false);
-            this.fourAnswersQuestionBindingModel = fourAnswersQuestionBindingModel;
+            this.model = model;
         }
 
         public FourAnswersQuestionBindingModel getQuestion() {
-            return fourAnswersQuestionBindingModel;
+            return model;
         }
     }
 

@@ -2,6 +2,7 @@ package org.rsinitsyn.quiz.component;
 
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
@@ -41,9 +42,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 
     private void renderQuestion() {
         if (!questionIterator.hasNext()) {
-            removeAll();
-            add(new Span("Game over!"));
-            fireEvent(new FinishGameEvent(this, quizGameStateModel));
+            finishGame();
             return;
         }
         currQuestion = questionIterator.next();
@@ -55,6 +54,15 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 
         add(questionTextParagraph, answersComponent, progressBar);
     }
+
+    private void finishGame() {
+        removeAll();
+        closeOpenResources();
+        quizGameStateModel.setFinished(true);
+        add(new Span("Game over!"));
+        fireEvent(new FinishGameEvent(this, quizGameStateModel));
+    }
+
 
     private QuizGameAnswersComponent createAnswersComponent(Set<QuizQuestionModel.QuizAnswerModel> answers) {
         var answersComponent = new QuizGameAnswersComponent(answers);
@@ -105,8 +113,22 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 
     @Override
     public void beforeLeave(BeforeLeaveEvent event) {
+        if (!quizGameStateModel.isFinished()) {
+            BeforeLeaveEvent.ContinueNavigationAction leaveAction =
+                    event.postpone();
+            ConfirmDialog confirmDialog = new ConfirmDialog();
+            confirmDialog.setText("Покинув страницу придется начать с начала!");
+            confirmDialog.setCancelable(true);
+            confirmDialog.addConfirmListener(e -> leaveAction.proceed());
+            confirmDialog.open();
+        }
+        closeOpenResources();
+    }
+
+    private void closeOpenResources() {
         quizGameStateModel.getQuestions().forEach(QuizQuestionModel::closePhotoStream);
     }
+
 
     @Getter
     public static class FinishGameEvent extends ComponentEvent<QuizGamePlayBoardComponent> {

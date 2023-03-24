@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
-import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
 
@@ -40,43 +39,20 @@ public class ModelConverterUtils {
     }
 
     public FourAnswersQuestionBindingModel toFourAnswersQuestionBindingModel(QuestionEntity questionEntity) {
+        if (questionEntity == null) {
+            return new FourAnswersQuestionBindingModel();
+        }
         List<AnswerEntity> answers = questionEntity.getAnswers().stream()
                 .sorted(Comparator.comparing(AnswerEntity::isCorrect, Comparator.reverseOrder()))
                 .toList();
         return new FourAnswersQuestionBindingModel(
                 questionEntity.getId(),
                 questionEntity.getText(),
+                questionEntity.getCategory().getName(),
                 answers.get(0).getText(),
                 answers.get(1).getText(),
                 answers.get(2).getText(),
                 answers.get(3).getText(),
                 questionEntity.getPhotoFilename());
-    }
-
-    public QuestionEntity toQuestionEntity(FourAnswersQuestionBindingModel model) {
-        QuestionEntity questionEntity = new QuestionEntity();
-        questionEntity.setId(model.getId());
-        questionEntity.setText(model.getText());
-
-        questionEntity.addAnswer(createAnswerEntity(model.getCorrectAnswerText(), true));
-        questionEntity.addAnswer(createAnswerEntity(model.getSecondOptionAnswerText(), false));
-        questionEntity.addAnswer(createAnswerEntity(model.getThirdOptionAnswerText(), false));
-        questionEntity.addAnswer(createAnswerEntity(model.getFourthOptionAnswerText(), false));
-
-        if (model.getPhotoLocation() != null) {
-            questionEntity.setType(QuestionType.PHOTO);
-            questionEntity.setPhotoFilename(model.getPhotoLocation());
-        } else {
-            questionEntity.setType(QuestionType.TEXT);
-        }
-
-        return questionEntity;
-    }
-
-    private AnswerEntity createAnswerEntity(String text, boolean correct) {
-        AnswerEntity answerEntity = new AnswerEntity();
-        answerEntity.setText(text);
-        answerEntity.setCorrect(correct);
-        return answerEntity;
     }
 }

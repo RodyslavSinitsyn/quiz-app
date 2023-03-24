@@ -11,10 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.QuizGamePlayBoardComponent;
 import org.rsinitsyn.quiz.component.QuizGameSettingsComponent;
-import org.rsinitsyn.quiz.dao.QuestionDao;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.rsinitsyn.quiz.service.GameService;
+import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.ModelConverterUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -28,12 +28,12 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
     private QuizGameSettingsComponent quizGameSettingsComponent;
     private QuizGamePlayBoardComponent quizGamePlayBoardComponent;
 
-    private QuestionDao questionDao;
+    private QuestionService questionService;
     private GameService gameService;
 
     @Autowired
-    public GamePage(QuestionDao questionDao, GameService gameService) {
-        this.questionDao = questionDao;
+    public GamePage(QuestionService questionService, GameService gameService) {
+        this.questionService = questionService;
         this.gameService = gameService;
     }
 
@@ -63,7 +63,7 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
 
     private void configureGameSettingsComponent() {
         quizGameSettingsComponent = new QuizGameSettingsComponent(
-                ModelConverterUtils.toQuizQuestionModels(questionDao.findAll())
+                ModelConverterUtils.toQuizQuestionModels(questionService.findAll())
         );
 
         quizGameSettingsComponent.addListener(QuizGameSettingsComponent.StartGameEvent.class, event -> {

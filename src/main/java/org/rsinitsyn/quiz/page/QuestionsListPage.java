@@ -1,5 +1,6 @@
 package org.rsinitsyn.quiz.page;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
@@ -15,102 +16,116 @@ import com.vaadin.flow.router.Route;
 import java.io.InputStream;
 import java.util.stream.Collectors;
 import org.rsinitsyn.quiz.component.MainLayout;
+import org.rsinitsyn.quiz.component.QuestionCategoryForm;
 import org.rsinitsyn.quiz.component.QuestionForm;
-import org.rsinitsyn.quiz.dao.QuestionDao;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
+import org.rsinitsyn.quiz.model.QuestionCategoryBindingModel;
 import org.rsinitsyn.quiz.service.ImportService;
+import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.ModelConverterUtils;
-import org.rsinitsyn.quiz.utils.QuizResourceUtils;
 
 @Route(value = "/list", layout = MainLayout.class)
 @PageTitle("Questions")
 public class QuestionsListPage extends VerticalLayout {
-    private Grid<FourAnswersQuestionBindingModel> grid;
-    private TextField filterText = new TextField();
-    private Dialog questionFormDialog;
-    private QuestionForm form;
-    private QuestionDao questionDao;
-    private ImportService importService;
     private H2 title = new H2("База вопросов");
 
-    public QuestionsListPage(QuestionDao questionDao, ImportService importService) {
-        this.questionDao = questionDao;
+    private Grid<QuestionEntity> grid;
+    private TextField filterText;
+    private Dialog formDialog;
+    private QuestionForm form;
+    private QuestionCategoryForm categoryForm;
+
+    private QuestionService questionService;
+    private ImportService importService;
+
+    public QuestionsListPage(QuestionService questionService, ImportService importService) {
+        this.questionService = questionService;
         this.importService = importService;
 
         setSizeFull();
         configureGrid();
         configureForm();
+        configureCategoryForm();
         configureDialog();
 
         add(title, createToolbar(), grid);
     }
 
     private void configureDialog() {
-        questionFormDialog = new Dialog(form);
-        questionFormDialog.close();
-        questionFormDialog.setHeaderTitle("Управление");
+        formDialog = new Dialog();
+        formDialog.close();
+        formDialog.setHeaderTitle("Управление");
     }
 
     private void configureGrid() {
-        grid = new Grid<>(FourAnswersQuestionBindingModel.class);
+        grid = new Grid<>(QuestionEntity.class);
         grid.setSizeFull();
         grid.removeAllColumns();
-        grid.addColumn(FourAnswersQuestionBindingModel::getText).setHeader("Text");
-        grid.addColumn(FourAnswersQuestionBindingModel::getCorrectAnswerText).setHeader("Answer");
+        grid.addColumn(QuestionEntity::getText).setHeader("Текст вопроса");
+        grid.addColumn(QuestionEntity::getCreatedBy).setHeader("Автор");
+        grid.addColumn(QuestionEntity::getCreationDate).setHeader("Дата создания");
         grid.getColumns().forEach(col -> col.setAutoWidth(true));
         grid.asSingleSelect().addValueChangeListener(event -> {
-            editQuestion(event.getValue());
+            editQuestion(ModelConverterUtils.toFourAnswersQuestionBindingModel(event.getValue()));
         });
         updateList();
     }
 
     private void updateList() {
-        grid.setItems(ModelConverterUtils.toFourAnswersQuestionBindingModels(questionDao.findAll()));
-    }
-
-    private void editQuestion(FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel) {
-        if (fourAnswersQuestionBindingModel == null) {
-            closeForm();
-        } else {
-            questionFormDialog.open();
-            form.setQuestion(fourAnswersQuestionBindingModel);
-        }
+        grid.setItems(questionService.findAll());
     }
 
     private void configureForm() {
-        form = new QuestionForm();
+        form = new QuestionForm(questionService.findAllCategories());
         form.setWidth("25em");
         form.addListener(QuestionForm.SaveEvent.class, event -> {
-            String photoFilename = QuizResourceUtils.saveImageAndGetFilename(event.getQuestion().getPhotoLocation());
-            event.getQuestion().setPhotoLocation(photoFilename);
-            questionDao.save(ModelConverterUtils.toQuestionEntity(event.getQuestion()));
+            questionService.save(event.getQuestion());
             updateList();
-            closeForm();
+            form.setQuestion(null);
+            formDialog.close();
         });
         form.addListener(QuestionForm.DeleteEvent.class, event -> {
-            QuestionEntity questionEntity = ModelConverterUtils.toQuestionEntity(event.getQuestion());
-            questionDao.delete(questionEntity);
+            questionService.deleteById(event.getQuestion().getId());
             updateList();
-            closeForm();
+            form.setQuestion(null);
+            formDialog.close();
         });
-        form.addListener(QuestionForm.CloseEvent.class, event -> closeForm());
+        form.addListener(QuestionForm.CloseEvent.class, event -> {
+            form.setQuestion(null);
+            formDialog.close();
+        });
         form.setQuestion(null);
     }
 
-    private void closeForm() {
-        form.setQuestion(null);
-        questionFormDialog.close();
+
+    private void configureCategoryForm() {
+        categoryForm = new QuestionCategoryForm(questionService.findAllCategories(), new QuestionCategoryBindingModel());
+        categoryForm.setWidth("25em");
+        categoryForm.addListener(QuestionCategoryForm.SaveCategoryEvent.class, event -> {
+            questionService.saveQuestionCategory(event.getModel());
+            formDialog.close();
+            categoryForm.setModel(null);
+            categoryForm.setCategories(questionService.findAllCategories());
+        });
+        categoryForm.addListener(QuestionCategoryForm.CloseCategoryFormEvent.class, event -> {
+            categoryForm.setModel(null);
+            formDialog.close();
+        });
     }
 
     private HorizontalLayout createToolbar() {
-        filterText.setPlaceholder("Filter by name...");
+        filterText = new TextField();
+        filterText.setPlaceholder("Поиск...");
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
         filterText.addValueChangeListener(event -> filterList());
 
-        Button addQuestionButton = new Button("Add question");
-        addQuestionButton.addClickListener(event -> addQuestion());
+        Button addQuestionButton = new Button("Создать вопрос");
+        addQuestionButton.addClickListener(event -> {
+            grid.asSingleSelect().clear();
+            editQuestion(new FourAnswersQuestionBindingModel());
+        });
 
         MemoryBuffer buffer = new MemoryBuffer();
         Upload upload = new Upload(buffer);
@@ -122,19 +137,38 @@ public class QuestionsListPage extends VerticalLayout {
             updateList();
         });
 
-        HorizontalLayout toolbar = new HorizontalLayout(filterText, addQuestionButton, upload);
+        Button addCategoryButton = new Button("Добавить категорию");
+        addCategoryButton.addClickListener(event -> {
+            categoryForm.setModel(new QuestionCategoryBindingModel());
+            addAndOpenDialog(categoryForm);
+        });
+
+        HorizontalLayout toolbar = new HorizontalLayout(filterText, addQuestionButton, upload, addCategoryButton);
         toolbar.setAlignItems(Alignment.CENTER);
         toolbar.setDefaultVerticalComponentAlignment(Alignment.CENTER);
+
         return toolbar;
     }
 
-    private void addQuestion() {
-        grid.asSingleSelect().clear();
-        editQuestion(new FourAnswersQuestionBindingModel());
+    private void editQuestion(FourAnswersQuestionBindingModel model) {
+        if (model == null) {
+            formDialog.close();
+            form.setQuestion(null);
+        } else {
+            addAndOpenDialog(form);
+            form.setCategoryList(questionService.findAllCategories());
+            form.setQuestion(model);
+        }
+    }
+
+    private void addAndOpenDialog(Component component) {
+        formDialog.removeAll();
+        formDialog.add(component);
+        formDialog.open();
     }
 
     private void filterList() {
-        grid.setItems(ModelConverterUtils.toFourAnswersQuestionBindingModels(questionDao.findAll()).stream()
+        grid.setItems(questionService.findAll().stream()
                 .filter(question -> question.getText().contains(filterText.getValue()))
                 .collect(Collectors.toList()));
     }

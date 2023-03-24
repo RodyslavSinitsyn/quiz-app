@@ -17,6 +17,9 @@ public class QuizGameStateModel {
     private String playerName;
     private boolean answerOptionsEnabled;
     private boolean timerEnabled;
+
+    // state props
     private Set<QuizQuestionModel> questions = new HashSet<>();
     private Set<QuizQuestionModel> correct = new HashSet<>();
+    private boolean finished = false;
 }
