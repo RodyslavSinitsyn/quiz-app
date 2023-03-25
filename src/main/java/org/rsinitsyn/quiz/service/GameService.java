@@ -54,11 +54,8 @@ public class GameService {
         gameDao.findById(UUID.fromString(id))
                 .ifPresent(gameEntity -> {
                     gameEntity.setStatus(GameStatus.FINISHED);
-                    gameEntity.setResult(calculateResult(quizGameStateModel));
+                    gameEntity.setResult(quizGameStateModel.calculateAndGetResult());
                 });
     }
 
-    public int calculateResult(QuizGameStateModel quizGameStateModel) {
-        return (quizGameStateModel.getCorrect().size() * 100) / quizGameStateModel.getQuestions().size();
-    }
 }

@@ -2,6 +2,7 @@ package org.rsinitsyn.quiz.component;
 
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -18,13 +19,16 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.router.BeforeLeaveEvent;
+import com.vaadin.flow.router.BeforeLeaveObserver;
+import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.shared.Registration;
 import java.util.List;
 import lombok.Getter;
 import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
 
-public class QuizGameSettingsComponent extends FormLayout {
+public class QuizGameSettingsComponent extends FormLayout implements BeforeLeaveObserver {
 
     private QuizGameStateModel model = new QuizGameStateModel();
     private TextField gameName;
@@ -45,7 +49,7 @@ public class QuizGameSettingsComponent extends FormLayout {
 
         this.quizQuestionModelList = quizQuestionModelList;
         this.gameName = createTextInput("Название игры");
-        this.playerName = createTextInput("Создатель игры");
+        this.playerName = createTextInput("Игрок");
         this.answerOptionsEnabled = createCheckbox("Варианты ответов");
         this.timerEnabled = createCheckbox("Таймер 60 сек");
 
@@ -69,6 +73,7 @@ public class QuizGameSettingsComponent extends FormLayout {
 
     private Checkbox createCheckbox(String text) {
         Checkbox checkbox = new Checkbox(text);
+        checkbox.setEnabled(false);// TODO Later
         return checkbox;
     }
 
@@ -81,9 +86,17 @@ public class QuizGameSettingsComponent extends FormLayout {
         questions.setItems(quizQuestionModelList);
         questions.setRenderer(new ComponentRenderer<>(question -> {
             HorizontalLayout row = new HorizontalLayout();
-            row.setAlignItems(FlexComponent.Alignment.CENTER);
-            row.add(new Span(question.getText()));
             row.getStyle().set("border", "1px solid blue");
+            row.getStyle().set("border-radius", ".25em");
+            row.getStyle().set("padding", ".5em");
+            row.setAlignItems(FlexComponent.Alignment.CENTER);
+            if (question.getPhotoFilename() != null) {
+                Avatar smallPhoto = new Avatar();
+                smallPhoto.setImageResource(
+                        new StreamResource(question.getPhotoFilename(), () -> question.openStream()));
+                row.add(smallPhoto);
+            }
+            row.add(new Span(question.getText()));
             return row;
         }));
 
@@ -104,6 +117,11 @@ public class QuizGameSettingsComponent extends FormLayout {
                 e.printStackTrace();
             }
         });
+    }
+
+    @Override
+    public void beforeLeave(BeforeLeaveEvent event) {
+        model.getQuestions().forEach(QuizQuestionModel::closePhotoStream);
     }
 
     @Getter

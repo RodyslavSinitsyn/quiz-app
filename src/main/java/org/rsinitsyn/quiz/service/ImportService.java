@@ -1,5 +1,6 @@
 package org.rsinitsyn.quiz.service;
 
+import com.vaadin.flow.server.VaadinSession;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -11,6 +12,7 @@ import org.apache.commons.io.IOUtils;
 import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
+import org.rsinitsyn.quiz.utils.QuizResourceUtils;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -41,7 +43,7 @@ public class ImportService {
         entity.addAnswer(new AnswerEntity(tokens[4], false));
 
         entity.setPhotoFilename(null);
-        entity.setCreatedBy("Admin");
+        entity.setCreatedBy(QuizResourceUtils.getLoggedUser());
         entity.setCreationDate(LocalDateTime.now());
         entity.setType(QuestionType.TEXT);
         entity.setCategory(questionService.getOrCreateDefaultCategory());

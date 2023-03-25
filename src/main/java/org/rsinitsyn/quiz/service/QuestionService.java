@@ -3,6 +3,7 @@ package org.rsinitsyn.quiz.service;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,8 @@ import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.model.QuestionCategoryBindingModel;
 import org.rsinitsyn.quiz.utils.QuizResourceUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -41,11 +44,18 @@ public class QuestionService {
         return questionDao.findAll();
     }
 
+    public List<QuestionEntity> findAllByCurrentUser() { // Todo temp solution replace with FILTERS
+        String loggedUser = QuizResourceUtils.getLoggedUser();
+        return questionDao.findAll()
+                .stream().filter(entity -> entity.getCreatedBy().equals(loggedUser))
+                .toList();
+    }
+
     public void saveAll(Collection<QuestionEntity> entities) {
         questionDao.saveAll(entities);
     }
 
-    public void save(QuestionEntity entity) {
+    public void saveOrUpdate(QuestionEntity entity) {
         questionDao.save(entity);
     }
 
@@ -57,18 +67,33 @@ public class QuestionService {
         return questionCategoryDao.findAll();
     }
 
-    public void save(FourAnswersQuestionBindingModel model) {
-        QuestionEntity entity = toQuestionEntity(model);
-        QuestionEntity saved = questionDao.save(entity);
-        log.info("Question saved: {}", saved);
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void saveOrUpdate(FourAnswersQuestionBindingModel model) {
+        if (model.getId() == null) {
+            QuestionEntity saved = questionDao.save(toQuestionEntity(model, Optional.empty()));
+            log.info("Question saved: {}", saved);
+        } else {
+            QuestionEntity updated = questionDao.save(toQuestionEntity(model, questionDao.findById(UUID.fromString(model.getId()))));
+            log.info("Question updated: {}", updated);
+        }
     }
 
-    public QuestionEntity toQuestionEntity(FourAnswersQuestionBindingModel model) {
+    public QuestionEntity toQuestionEntity(FourAnswersQuestionBindingModel model, Optional<QuestionEntity> optEntity) {
+        boolean update = optEntity.isPresent();
+
         QuestionEntity entity = new QuestionEntity();
-        entity.setId(model.getId());
+
+        if (update) {
+            entity.setId(UUID.fromString(model.getId()));
+            entity.setCreationDate(optEntity.get().getCreationDate());
+            entity.setCreatedBy(optEntity.get().getCreatedBy());
+        } else {
+            entity.setId(UUID.randomUUID());
+            entity.setCreationDate(LocalDateTime.now());
+            entity.setCreatedBy(QuizResourceUtils.getLoggedUser());
+        }
+
         entity.setText(model.getText());
-        entity.setCreationDate(LocalDateTime.now());
-        entity.setCreatedBy("Admin");
 
         entity.addAnswer(createAnswerEntity(model.getCorrectAnswerText(), true));
         entity.addAnswer(createAnswerEntity(model.getSecondOptionAnswerText(), false));
@@ -81,6 +106,7 @@ public class QuestionService {
             entity.setPhotoFilename(photoFilename);
         } else {
             entity.setType(QuestionType.TEXT);
+            entity.setPhotoFilename(null);
         }
 
         questionCategoryDao.findByName(model.getCategory())

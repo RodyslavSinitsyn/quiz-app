@@ -55,15 +55,17 @@ public class QuestionsListPage extends VerticalLayout {
     private void configureDialog() {
         formDialog = new Dialog();
         formDialog.close();
-        formDialog.setHeaderTitle("Управление");
     }
 
     private void configureGrid() {
         grid = new Grid<>(QuestionEntity.class);
         grid.setSizeFull();
         grid.removeAllColumns();
-        grid.addColumn(QuestionEntity::getText).setHeader("Текст вопроса");
+        grid.addColumn(entity -> entity.getText().length() > 30
+                ? entity.getText().substring(0, 30).concat("...")
+                : entity.getText()).setHeader("Текст");
         grid.addColumn(QuestionEntity::getCreatedBy).setHeader("Автор");
+        grid.addColumn(entity -> entity.getCategory().getName()).setHeader("Тема");
         grid.addColumn(QuestionEntity::getCreationDate).setHeader("Дата создания");
         grid.getColumns().forEach(col -> col.setAutoWidth(true));
         grid.asSingleSelect().addValueChangeListener(event -> {
@@ -73,14 +75,14 @@ public class QuestionsListPage extends VerticalLayout {
     }
 
     private void updateList() {
-        grid.setItems(questionService.findAll());
+        grid.setItems(questionService.findAllByCurrentUser());
     }
 
     private void configureForm() {
         form = new QuestionForm(questionService.findAllCategories());
-        form.setWidth("25em");
+        form.setWidth("30em");
         form.addListener(QuestionForm.SaveEvent.class, event -> {
-            questionService.save(event.getQuestion());
+            questionService.saveOrUpdate(event.getQuestion());
             updateList();
             form.setQuestion(null);
             formDialog.close();
@@ -101,7 +103,7 @@ public class QuestionsListPage extends VerticalLayout {
 
     private void configureCategoryForm() {
         categoryForm = new QuestionCategoryForm(questionService.findAllCategories(), new QuestionCategoryBindingModel());
-        categoryForm.setWidth("25em");
+        categoryForm.setWidth("30em");
         categoryForm.addListener(QuestionCategoryForm.SaveCategoryEvent.class, event -> {
             questionService.saveQuestionCategory(event.getModel());
             formDialog.close();
@@ -129,7 +131,7 @@ public class QuestionsListPage extends VerticalLayout {
 
         MemoryBuffer buffer = new MemoryBuffer();
         Upload upload = new Upload(buffer);
-        upload.setUploadButton(new Button("Import Questions"));
+        upload.setUploadButton(new Button("Импортировать вопросы"));
         upload.setAcceptedFileTypes(".txt");
         upload.addSucceededListener(event -> {
             InputStream inputStream = buffer.getInputStream();
@@ -168,7 +170,7 @@ public class QuestionsListPage extends VerticalLayout {
     }
 
     private void filterList() {
-        grid.setItems(questionService.findAll().stream()
+        grid.setItems(questionService.findAllByCurrentUser().stream()
                 .filter(question -> question.getText().contains(filterText.getValue()))
                 .collect(Collectors.toList()));
     }

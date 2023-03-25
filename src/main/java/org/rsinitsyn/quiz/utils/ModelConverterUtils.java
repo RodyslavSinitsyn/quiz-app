@@ -46,7 +46,7 @@ public class ModelConverterUtils {
                 .sorted(Comparator.comparing(AnswerEntity::isCorrect, Comparator.reverseOrder()))
                 .toList();
         return new FourAnswersQuestionBindingModel(
-                questionEntity.getId(),
+                questionEntity.getId().toString(),
                 questionEntity.getText(),
                 questionEntity.getCategory().getName(),
                 answers.get(0).getText(),

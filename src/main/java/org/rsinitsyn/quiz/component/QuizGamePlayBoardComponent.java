@@ -7,12 +7,14 @@ import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.router.BeforeLeaveEvent;
 import com.vaadin.flow.router.BeforeLeaveObserver;
 import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.shared.Registration;
+import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.Iterator;
 import java.util.Set;
 import lombok.Getter;
@@ -76,18 +78,25 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 
     @SneakyThrows
     private Paragraph createQuestionParagraph(QuizQuestionModel questionModel) {
+        Paragraph paragraph = new Paragraph();
+        paragraph.addClassNames(LumoUtility.AlignSelf.CENTER);
+        paragraph.setText(questionModel.getText());
+
         // TODO Refactor
         if (questionModel.getType().equals(QuestionType.PHOTO)) {
             Image image = new Image();
+            image.addClassNames(LumoUtility.AlignSelf.CENTER);
             image.setSrc(new StreamResource(
                     questionModel.getPhotoFilename(),
                     () -> questionModel.openStream()));
-            image.setWidth("25em");
+            image.setWidth("20em");
             add(image);
+
+            paragraph.addClassNames(LumoUtility.FontSize.XLARGE);
+        } else {
+            paragraph.addClassNames(LumoUtility.FontSize.XXLARGE);
         }
 
-        Paragraph paragraph = new Paragraph();
-        paragraph.setText(questionModel.getText());
         return paragraph;
     }
 
@@ -101,14 +110,18 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 
     private void validateAnswer(QuizQuestionModel.QuizAnswerModel answerModel) {
         boolean correct = answerModel.isCorrect();
+        NotificationVariant variant;
         if (correct) {
             quizGameStateModel.getCorrect().add(currQuestion);
             new AudioService().playSound("correct-answer-1.mp3");
+            variant = NotificationVariant.LUMO_SUCCESS;
         } else {
             new AudioService().playSound("wrong-answer-1.mp3");
+            variant = NotificationVariant.LUMO_ERROR;
         }
-        String notifyText = correct ? "Good!" : "Wrong...";
-        Notification.show(notifyText, 2_000, Notification.Position.MIDDLE);
+        String notifyText = correct ? "Правильный ответ!" : "Неверно...";
+        Notification notification = Notification.show(notifyText, 3_000, Notification.Position.TOP_STRETCH);
+        notification.addThemeVariants(variant);
     }
 
     @Override

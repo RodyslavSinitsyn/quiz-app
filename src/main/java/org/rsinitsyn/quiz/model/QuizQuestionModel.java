@@ -31,6 +31,7 @@ public class QuizQuestionModel {
 
     @SneakyThrows
     public InputStream openStream() {
+        closePhotoStream();
         photoInputStream = new FileInputStream(QuizResourceUtils.getImageFile(photoFilename));
         return photoInputStream;
     }

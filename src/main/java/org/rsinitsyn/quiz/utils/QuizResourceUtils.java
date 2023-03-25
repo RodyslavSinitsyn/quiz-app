@@ -1,5 +1,6 @@
 package org.rsinitsyn.quiz.utils;
 
+import com.vaadin.flow.server.VaadinSession;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,6 +8,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.io.FilenameUtils;
@@ -35,5 +37,17 @@ public class QuizResourceUtils {
     @SneakyThrows
     public File getImageFile(String imageFilename) {
         return org.springframework.util.ResourceUtils.getFile(RESOURCES_PATH + IMAGE_PATH + imageFilename);
+    }
+
+    public String getLoggedUser() {
+        return StringUtils.defaultIfEmpty(
+                (String) VaadinSession.getCurrent().getAttribute("user"),
+                "Аноним"
+        );
+    }
+
+    @SneakyThrows
+    public void sleep(int sec) {
+        TimeUnit.SECONDS.sleep(sec);
     }
 }

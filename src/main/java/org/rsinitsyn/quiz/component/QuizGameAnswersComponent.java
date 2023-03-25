@@ -5,6 +5,7 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.shared.Registration;
+import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +27,8 @@ public class QuizGameAnswersComponent extends VerticalLayout {
 
     private Button createAnswerButton(QuizQuestionModel.QuizAnswerModel answer) {
         var button = new Button(answer.getText());
+        button.addClassNames(LumoUtility.FontSize.XLARGE,
+                LumoUtility.FontWeight.BOLD);
         button.addClickListener(event -> {
             fireEvent(new AnswerChoosenEvent(this, answer));
         });

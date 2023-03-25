@@ -10,12 +10,14 @@ import com.vaadin.flow.router.Route;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.QuizGamePlayBoardComponent;
+import org.rsinitsyn.quiz.component.QuizGameResultComponent;
 import org.rsinitsyn.quiz.component.QuizGameSettingsComponent;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.ModelConverterUtils;
+import org.rsinitsyn.quiz.utils.QuizResourceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Route(value = "/game", layout = MainLayout.class)
@@ -27,6 +29,7 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
 
     private QuizGameSettingsComponent quizGameSettingsComponent;
     private QuizGamePlayBoardComponent quizGamePlayBoardComponent;
+    private QuizGameResultComponent quizGameResultComponent;
 
     private QuestionService questionService;
     private GameService gameService;
@@ -57,13 +60,21 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
         quizGamePlayBoardComponent = new QuizGamePlayBoardComponent(quizGameStateModel);
         quizGamePlayBoardComponent.addListener(QuizGamePlayBoardComponent.FinishGameEvent.class, event -> {
             gameService.finish(gameId, event.getModel());
+            remove(quizGamePlayBoardComponent);
+            add(configureQuizGameResultComponent(event.getModel()));
         });
         return quizGamePlayBoardComponent;
     }
 
+    private QuizGameResultComponent configureQuizGameResultComponent(QuizGameStateModel model) {
+        quizGameResultComponent = new QuizGameResultComponent(model);
+        return quizGameResultComponent;
+    }
+
+
     private void configureGameSettingsComponent() {
         quizGameSettingsComponent = new QuizGameSettingsComponent(
-                ModelConverterUtils.toQuizQuestionModels(questionService.findAll())
+                ModelConverterUtils.toQuizQuestionModels(questionService.findAllByCurrentUser())
         );
 
         quizGameSettingsComponent.addListener(QuizGameSettingsComponent.StartGameEvent.class, event -> {
@@ -71,7 +82,7 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
             add(configurePlayGameComponent(event.getModel()));
             gameService.update(gameId,
                     event.getModel().getGameName(),
-                    event.getModel().getPlayerName(),
+                    QuizResourceUtils.getLoggedUser(),
                     GameStatus.STARTED,
                     event.getModel().getQuestions().size(),
                     null);
@@ -80,7 +91,7 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
         quizGameSettingsComponent.addListener(QuizGameSettingsComponent.UpdateGameEvent.class, event -> {
             gameService.update(gameId,
                     event.getModel().getGameName(),
-                    event.getModel().getPlayerName(),
+                    QuizResourceUtils.getLoggedUser(),
                     GameStatus.NOT_STARTED,
                     event.getModel().getQuestions().size(),
                     null);

@@ -16,6 +16,7 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -28,8 +29,8 @@ import lombok.Setter;
 public class QuestionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
-    @Column(nullable = false)
+    private UUID id;
+    @Column(nullable = false, columnDefinition = "CHARACTER VARYING(1000)")
     private String text;
     @Enumerated(EnumType.STRING)
     private QuestionType type;

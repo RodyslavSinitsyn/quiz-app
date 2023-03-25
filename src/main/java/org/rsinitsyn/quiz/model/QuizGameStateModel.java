@@ -12,9 +12,9 @@ import org.hibernate.validator.constraints.Length;
 @Data
 public class QuizGameStateModel {
     @Length(min = 1, max = 30)
-    private String gameName;
+    private String gameName = "Test";
     @Length(min = 1, max = 30)
-    private String playerName;
+    private String playerName = "Test";
     private boolean answerOptionsEnabled;
     private boolean timerEnabled;
 
@@ -22,4 +22,14 @@ public class QuizGameStateModel {
     private Set<QuizQuestionModel> questions = new HashSet<>();
     private Set<QuizQuestionModel> correct = new HashSet<>();
     private boolean finished = false;
+    private int result = 0;
+
+    public int calculateAndGetResult() {
+        this.result = (getCorrect().size() * 100) / getQuestions().size();
+        return this.result;
+    }
+
+    public String getCorrectToTotalAnswers() {
+        return correct.size() + "/" + questions.size();
+    }
 }

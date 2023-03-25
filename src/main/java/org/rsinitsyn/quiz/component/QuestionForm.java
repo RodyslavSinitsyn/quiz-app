@@ -8,10 +8,12 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.shared.Registration;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +23,7 @@ import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
 @Slf4j
 public class QuestionForm extends FormLayout {
     FourAnswersQuestionBindingModel model = new FourAnswersQuestionBindingModel();
-    TextField text = new TextField("Текст вопроса");
+    TextArea text = new TextArea("Текст вопроса");
     ComboBox<String> category = new ComboBox<>();
     TextField correctAnswerText = new TextField("Верный ответ");
     TextField secondOptionAnswerText = new TextField("Вариант 2");
@@ -39,15 +41,24 @@ public class QuestionForm extends FormLayout {
 
     public QuestionForm(List<QuestionCategoryEntity> categoryEntityList) {
         setCategoryList(categoryEntityList);
+        configureInputs();
         add(text,
-                category,
                 correctAnswerText,
                 secondOptionAnswerText,
                 thirdOptionAnswerText,
                 fourthOptionAnswerText,
+                category,
                 photoLocation,
                 createButtonsLayout());
         binder.bindInstanceFields(this);
+    }
+
+    private void configureInputs() {
+        text.setMaxLength(FourAnswersQuestionBindingModel.TEXT_LENGTH_LIMIT);
+        text.setValueChangeMode(ValueChangeMode.EAGER);
+        text.addValueChangeListener(e -> {
+            e.getSource().setHelperText(e.getValue().length() + "/" + text.getMaxLength());
+        });
     }
 
     private HorizontalLayout createButtonsLayout() {
@@ -65,15 +76,21 @@ public class QuestionForm extends FormLayout {
         return new HorizontalLayout(save, delete, close);
     }
 
-
     private void validateAndSave() {
         try {
+
             binder.writeBean(model);
+            if (model.optionsRepeated()) {
+                correctAnswerText.setErrorMessage("Варианты ответов должны быть уникальные");
+                correctAnswerText.setInvalid(true);
+                throw new IllegalArgumentException("Варианты ответ не валидны");
+            }
             fireEvent(new SaveEvent(this, model));
-        } catch (ValidationException e) {
+        } catch (ValidationException | IllegalArgumentException e) {
             log.warn("Question form contains errors. {}", e.getMessage());
         }
     }
+
 
     public void setQuestion(FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel) {
         this.model = fourAnswersQuestionBindingModel;
