@@ -2,6 +2,7 @@ package org.rsinitsyn.quiz.service;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,7 +17,7 @@ import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.model.QuestionCategoryBindingModel;
-import org.rsinitsyn.quiz.utils.QuizResourceUtils;
+import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,10 +45,26 @@ public class QuestionService {
         return questionDao.findAll();
     }
 
-    public List<QuestionEntity> findAllByCurrentUser() { // Todo temp solution replace with FILTERS
-        String loggedUser = QuizResourceUtils.getLoggedUser();
+    public List<QuestionEntity> findAllNewFirst() {
         return questionDao.findAll()
+                .stream()
+                .sorted(Comparator.comparing(QuestionEntity::getCreationDate, Comparator.reverseOrder()))
+                .toList();
+    }
+
+    public List<QuestionEntity> findAllByCurrentUser() { // Todo temp solution replace with FILTERS
+        String loggedUser = QuizUtils.getLoggedUser();
+        if (loggedUser.equals("admin")) {
+            return findAllNewFirst();
+        }
+        return findAllNewFirst()
                 .stream().filter(entity -> entity.getCreatedBy().equals(loggedUser))
+                .toList();
+    }
+
+    public List<QuestionEntity> findAllSortedByCategory() {
+        return questionDao.findAll().stream()
+                .sorted(Comparator.comparing(entity -> entity.getCategory().getName()))
                 .toList();
     }
 
@@ -59,8 +76,13 @@ public class QuestionService {
         questionDao.save(entity);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void deleteById(String id) {
-        questionDao.deleteById(UUID.fromString(id));
+        Optional<QuestionEntity> toDelete = questionDao.findById(UUID.fromString(id));
+        toDelete.ifPresent(entity -> {
+            questionDao.delete(entity);
+            QuizUtils.deleteImageFile(entity.getPhotoFilename());
+        });
     }
 
     public List<QuestionCategoryEntity> findAllCategories() {
@@ -71,9 +93,11 @@ public class QuestionService {
     public void saveOrUpdate(FourAnswersQuestionBindingModel model) {
         if (model.getId() == null) {
             QuestionEntity saved = questionDao.save(toQuestionEntity(model, Optional.empty()));
+            QuizUtils.saveImage(saved.getPhotoFilename(), saved.getOriginalPhotoUrl());
             log.info("Question saved: {}", saved);
         } else {
             QuestionEntity updated = questionDao.save(toQuestionEntity(model, questionDao.findById(UUID.fromString(model.getId()))));
+            QuizUtils.saveImage(updated.getPhotoFilename(), updated.getOriginalPhotoUrl());
             log.info("Question updated: {}", updated);
         }
     }
@@ -90,7 +114,7 @@ public class QuestionService {
         } else {
             entity.setId(UUID.randomUUID());
             entity.setCreationDate(LocalDateTime.now());
-            entity.setCreatedBy(QuizResourceUtils.getLoggedUser());
+            entity.setCreatedBy(QuizUtils.getLoggedUser());
         }
 
         entity.setText(model.getText());
@@ -102,11 +126,12 @@ public class QuestionService {
 
         if (StringUtils.isNotBlank(model.getPhotoLocation())) {
             entity.setType(QuestionType.PHOTO);
-            String photoFilename = QuizResourceUtils.saveImageAndGetFilename(model.getPhotoLocation());
-            entity.setPhotoFilename(photoFilename);
+            entity.setOriginalPhotoUrl(model.getPhotoLocation());
+            entity.setPhotoFilename(QuizUtils.generateFilename(model.getPhotoLocation()));
         } else {
             entity.setType(QuestionType.TEXT);
             entity.setPhotoFilename(null);
+            entity.setOriginalPhotoUrl(null);
         }
 
         questionCategoryDao.findByName(model.getCategory())
@@ -118,6 +143,12 @@ public class QuestionService {
                         });
 
         return entity;
+    }
+
+    private void deletePhotoFromDisk(String photoFilename) {
+        if (StringUtils.isNotEmpty(photoFilename)) {
+            QuizUtils.deleteImageFile(photoFilename);
+        }
     }
 
     private AnswerEntity createAnswerEntity(String text, boolean correct) {

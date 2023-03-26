@@ -21,7 +21,7 @@ public class AudioService {
             Player player = new Player(buffer);
             player.play();
         } catch (IOException | JavaLayerException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 }

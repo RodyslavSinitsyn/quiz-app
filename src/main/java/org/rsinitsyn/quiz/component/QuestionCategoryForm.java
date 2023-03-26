@@ -6,6 +6,7 @@ import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.Binder;
@@ -73,6 +74,7 @@ public class QuestionCategoryForm extends FormLayout {
             fireEvent(new SaveCategoryEvent(this, model));
         } catch (ValidationException e) {
             log.warn(e.getMessage());
+            throw new IllegalArgumentException("BLA");
         }
     }
 

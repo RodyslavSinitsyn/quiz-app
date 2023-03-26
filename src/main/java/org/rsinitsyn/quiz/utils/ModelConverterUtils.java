@@ -15,13 +15,14 @@ import org.rsinitsyn.quiz.model.QuizQuestionModel;
 public class ModelConverterUtils {
 
     public List<QuizQuestionModel> toQuizQuestionModels(Collection<QuestionEntity> questionEntities) {
-        return questionEntities.stream().map(ModelConverterUtils::toQuizQuestionModel).collect(Collectors.toList());
+        return questionEntities.stream().map(ModelConverterUtils::toQuizQuestionModel).toList();
     }
 
     public QuizQuestionModel toQuizQuestionModel(QuestionEntity entity) {
         return new QuizQuestionModel(entity.getText(),
                 entity.getType(),
                 entity.getPhotoFilename(),
+                entity.getCategory().getName(),
                 toQuizQueestionAnswerModels(entity.getAnswers()));
     }
 
@@ -53,6 +54,6 @@ public class ModelConverterUtils {
                 answers.get(1).getText(),
                 answers.get(2).getText(),
                 answers.get(3).getText(),
-                questionEntity.getPhotoFilename());
+                questionEntity.getOriginalPhotoUrl());
     }
 }

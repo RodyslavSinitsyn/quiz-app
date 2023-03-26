@@ -29,6 +29,7 @@ public class FourAnswersQuestionBindingModel {
     private String thirdOptionAnswerText;
     @Length(min = 1, max = 255)
     private String fourthOptionAnswerText;
+    @Length(max = 1000)
     @PhotoUrlValid
     private String photoLocation;
 

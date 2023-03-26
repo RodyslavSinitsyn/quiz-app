@@ -37,6 +37,8 @@ public class QuestionEntity {
     private String createdBy;
     @Column(nullable = false)
     private LocalDateTime creationDate;
+    @Column(columnDefinition = "CHARACTER VARYING(1000)")
+    private String originalPhotoUrl;
     private String photoFilename;
     @ManyToOne(fetch = FetchType.EAGER, optional = true)
     @JoinColumn(name = "categoryId", referencedColumnName = "id")

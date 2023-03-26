@@ -17,7 +17,7 @@ import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.ModelConverterUtils;
-import org.rsinitsyn.quiz.utils.QuizResourceUtils;
+import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Route(value = "/game", layout = MainLayout.class)
@@ -82,7 +82,7 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
             add(configurePlayGameComponent(event.getModel()));
             gameService.update(gameId,
                     event.getModel().getGameName(),
-                    QuizResourceUtils.getLoggedUser(),
+                    QuizUtils.getLoggedUser(),
                     GameStatus.STARTED,
                     event.getModel().getQuestions().size(),
                     null);
@@ -91,7 +91,7 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
         quizGameSettingsComponent.addListener(QuizGameSettingsComponent.UpdateGameEvent.class, event -> {
             gameService.update(gameId,
                     event.getModel().getGameName(),
-                    QuizResourceUtils.getLoggedUser(),
+                    QuizUtils.getLoggedUser(),
                     GameStatus.NOT_STARTED,
                     event.getModel().getQuestions().size(),
                     null);

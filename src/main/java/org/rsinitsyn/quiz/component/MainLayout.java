@@ -20,7 +20,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.rsinitsyn.quiz.page.GameTypePage;
 import org.rsinitsyn.quiz.page.QuestionsListPage;
 import org.rsinitsyn.quiz.page.StatisticPage;
-import org.rsinitsyn.quiz.utils.QuizResourceUtils;
+import org.rsinitsyn.quiz.utils.QuizUtils;
 
 public class MainLayout extends AppLayout {
 
@@ -82,13 +82,13 @@ public class MainLayout extends AppLayout {
         exitButton.setText("Выйти");
         exitButton.addClickListener(event -> {
             renderAfterLogout();
-            VaadinSession.getCurrent().setAttribute("user", null);
+            VaadinSession.getCurrent().close();
         });
 
-        if (QuizResourceUtils.getLoggedUser().equals("Аноним")) {
+        if (QuizUtils.getLoggedUser().equals("Аноним")) {
             renderAfterLogout();
         } else {
-            renderAfterLogin(QuizResourceUtils.getLoggedUser());
+            renderAfterLogin(QuizUtils.getLoggedUser());
         }
     }
 
