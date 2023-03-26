@@ -142,6 +142,10 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
     }
 
     private void configureItemsForCategoryListBox() {
+        if (quizQuestionModelList.isEmpty()) {
+            questions.setEnabled(false);
+            return;
+        }
         Comparator<QuizQuestionModel> specificComparator = (q1, q2) -> {
             if (q1.getCategoryName().equals(GENERAL_CATEGORY)) {
                 return q2.getCategoryName().equals(GENERAL_CATEGORY) ? 0 : -1;
@@ -181,6 +185,7 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
                 log.warn(e.getMessage());
             }
         });
+        playButton.setEnabled(!quizQuestionModelList.isEmpty());
     }
 
     @Override

@@ -50,6 +50,7 @@ public class ModelConverterUtils {
                 questionEntity.getId().toString(),
                 questionEntity.getText(),
                 questionEntity.getCategory().getName(),
+                questionEntity.getCreatedBy(),
                 answers.get(0).getText(),
                 answers.get(1).getText(),
                 answers.get(2).getText(),

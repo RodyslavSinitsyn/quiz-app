@@ -1,7 +1,10 @@
 package org.rsinitsyn.quiz.utils;
 
+import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.server.VaadinSession;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -28,12 +31,14 @@ public class QuizUtils {
     public static final String AUDIO_PATH = "audio/";
     public static final String IMAGE_PATH = "image/";
 
+    // Date
     public String formatDate(LocalDateTime dateTime) {
         return DATE_FORMAT.format(
                 Date.from(dateTime.atZone(ZoneId.systemDefault()).toInstant())
         );
     }
 
+    // Image
     public String saveImageAndGetFilename(String urlPath) {
         String filename = generateFilename(urlPath);
         saveImage(filename, urlPath);
@@ -73,6 +78,17 @@ public class QuizUtils {
         }
     }
 
+    public StreamResource createStreamResourceForPhoto(String photoFilename) {
+        return new StreamResource(photoFilename, () -> {
+            try {
+                return new FileInputStream(getImageFile(photoFilename));
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    // Other Utils
     public String getLoggedUser() {
         return StringUtils.defaultIfEmpty(
                 (String) VaadinSession.getCurrent().getAttribute("user"),

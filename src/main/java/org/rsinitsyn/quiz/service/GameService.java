@@ -10,6 +10,7 @@ import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.GameType;
 import org.rsinitsyn.quiz.model.QuizGameStateModel;
+import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,11 +37,12 @@ public class GameService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public void update(String id, String name, String createdBy, GameStatus status, Integer questionsCount, Integer percentageResult) {
+    public void update(String id, String name, String playerName, GameStatus status, Integer questionsCount, Integer percentageResult) {
         gameDao.findById(UUID.fromString(id))
                 .ifPresent(gameEntity -> {
                     gameEntity.setName(name);
-                    gameEntity.setCreatedBy(createdBy);
+                    gameEntity.setCreatedBy(QuizUtils.getLoggedUser());
+                    gameEntity.setPlayerName(playerName);
                     gameEntity.setStatus(status);
                     gameEntity.setQuestionsCount(questionsCount);
                     gameEntity.setResult(percentageResult);

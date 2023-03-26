@@ -28,6 +28,7 @@ public class GameEntity {
     private UUID id;
     private String name;
     private String createdBy;
+    private String playerName;
     @Enumerated(value = EnumType.STRING)
     private GameStatus status;
     @Enumerated(value = EnumType.STRING)

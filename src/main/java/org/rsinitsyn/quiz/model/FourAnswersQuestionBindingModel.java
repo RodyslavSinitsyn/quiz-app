@@ -21,6 +21,7 @@ public class FourAnswersQuestionBindingModel {
     @Length(min = 1, max = TEXT_LENGTH_LIMIT)
     private String text;
     private String category;
+    private String author;
     @Length(min = 1, max = 100)
     private String correctAnswerText;
     @Length(min = 1, max = 100)

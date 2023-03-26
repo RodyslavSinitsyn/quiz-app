@@ -20,12 +20,14 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Table(name = "questions")
 @Getter
 @Setter
 @NoArgsConstructor
+@ToString(exclude = "answers")
 public class QuestionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

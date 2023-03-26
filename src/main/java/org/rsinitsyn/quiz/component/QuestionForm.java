@@ -18,6 +18,7 @@ import com.vaadin.flow.shared.Registration;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
+import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
 
 @Slf4j
@@ -25,6 +26,7 @@ public class QuestionForm extends FormLayout {
     FourAnswersQuestionBindingModel model = new FourAnswersQuestionBindingModel();
     TextArea text = new TextArea("Текст вопроса");
     ComboBox<String> category = new ComboBox<>();
+    ComboBox<String> author = new ComboBox<>();
     TextField correctAnswerText = new TextField("Верный ответ");
     TextField secondOptionAnswerText = new TextField("Вариант 2");
     TextField thirdOptionAnswerText = new TextField("Вариант 3");
@@ -34,12 +36,14 @@ public class QuestionForm extends FormLayout {
     Binder<FourAnswersQuestionBindingModel> binder = new BeanValidationBinder<>(FourAnswersQuestionBindingModel.class);
 
     private List<String> categoryList;
+    private List<String> usersList;
 
-    Button save = new Button("Save");
-    Button delete = new Button("Delete");
-    Button close = new Button("Cancel");
+    Button save = new Button("Сохранить");
+    Button delete = new Button("Удалить");
+    Button close = new Button("Отмена");
 
-    public QuestionForm(List<QuestionCategoryEntity> categoryEntityList) {
+    public QuestionForm(List<QuestionCategoryEntity> categoryEntityList, List<UserEntity> usersList) {
+        setUsersList(usersList);
         setCategoryList(categoryEntityList);
         configureInputs();
         add(text,
@@ -48,6 +52,7 @@ public class QuestionForm extends FormLayout {
                 thirdOptionAnswerText,
                 fourthOptionAnswerText,
                 category,
+                author,
                 photoLocation,
                 createButtonsLayout());
         binder.bindInstanceFields(this);
@@ -101,6 +106,12 @@ public class QuestionForm extends FormLayout {
         categoryList = entities.stream().map(QuestionCategoryEntity::getName).toList();
         category.setItems(categoryList);
         category.setLabel("Тема вопроса");
+    }
+
+    public void setUsersList(List<UserEntity> users) {
+        usersList = users.stream().map(UserEntity::getUsername).toList();
+        author.setItems(usersList);
+        author.setLabel("Автор");
     }
 
     public static abstract class QuestionFormEvent extends ComponentEvent<QuestionForm> {

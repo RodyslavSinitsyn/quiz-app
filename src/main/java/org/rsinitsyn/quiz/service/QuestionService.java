@@ -110,7 +110,7 @@ public class QuestionService {
         if (update) {
             entity.setId(UUID.fromString(model.getId()));
             entity.setCreationDate(optEntity.get().getCreationDate());
-            entity.setCreatedBy(optEntity.get().getCreatedBy());
+            entity.setCreatedBy(model.getAuthor());
         } else {
             entity.setId(UUID.randomUUID());
             entity.setCreationDate(LocalDateTime.now());

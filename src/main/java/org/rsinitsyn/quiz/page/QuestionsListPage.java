@@ -1,17 +1,21 @@
 package org.rsinitsyn.quiz.page;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -19,6 +23,7 @@ import java.io.InputStream;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.QuestionCategoryForm;
 import org.rsinitsyn.quiz.component.QuestionForm;
@@ -28,6 +33,7 @@ import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.model.QuestionCategoryBindingModel;
 import org.rsinitsyn.quiz.service.ImportService;
 import org.rsinitsyn.quiz.service.QuestionService;
+import org.rsinitsyn.quiz.service.UserService;
 import org.rsinitsyn.quiz.utils.ModelConverterUtils;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 
@@ -46,10 +52,12 @@ public class QuestionsListPage extends VerticalLayout {
 
     private QuestionService questionService;
     private ImportService importService;
+    private UserService userService;
 
-    public QuestionsListPage(QuestionService questionService, ImportService importService) {
+    public QuestionsListPage(QuestionService questionService, ImportService importService, UserService userService) {
         this.questionService = questionService;
         this.importService = importService;
+        this.userService = userService;
 
         setSizeFull();
         configureGrid();
@@ -68,11 +76,21 @@ public class QuestionsListPage extends VerticalLayout {
     private void configureGrid() {
         grid = new Grid<>(QuestionEntity.class, false);
         grid.setSizeFull();
-        grid.addColumn(entity ->
-                entity.getText().length() > 300
-                        ? entity.getText().substring(0, 300).concat("...")
-                        : entity.getText()
-        ).setHeader("Текст").setFlexGrow(5);
+        grid.addColumn(new ComponentRenderer<>(entity -> {
+            HorizontalLayout row = new HorizontalLayout();
+            row.setAlignItems(FlexComponent.Alignment.CENTER);
+            if (StringUtils.isNotEmpty(entity.getPhotoFilename())) {
+                Avatar smallPhoto = new Avatar();
+                smallPhoto.setImageResource(
+                        QuizUtils.createStreamResourceForPhoto(entity.getPhotoFilename()));
+                row.add(smallPhoto);
+            }
+            row.add(new Span(
+                    entity.getText().length() > 300
+                            ? entity.getText().substring(0, 300).concat("...")
+                            : entity.getText()));
+            return row;
+        })).setHeader("Текст").setFlexGrow(5);
         grid.addColumn(QuestionEntity::getCreatedBy).setHeader("Автор");
         grid.addColumn(entity -> entity.getCategory().getName()).setHeader("Тема");
         grid.addColumn(entity -> QuizUtils.formatDate(entity.getCreationDate())).setHeader("Дата создания");
@@ -88,7 +106,9 @@ public class QuestionsListPage extends VerticalLayout {
     }
 
     private void configureForm() {
-        form = new QuestionForm(questionService.findAllCategories());
+        form = new QuestionForm(
+                questionService.findAllCategories(),
+                userService.findAllOrderByVisitDateDesc());
         form.setWidth("30em");
         form.addListener(QuestionForm.SaveEvent.class, event -> {
             questionService.saveOrUpdate(event.getQuestion());
@@ -132,7 +152,7 @@ public class QuestionsListPage extends VerticalLayout {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
         filterText.addValueChangeListener(event ->
                 updateListByFilter(entity -> entity.getText().contains(event.getValue())));
-        filterText.setEnabled(false);
+        filterText.setReadOnly(true); // TODO Back later
 
         categoryComboBox.setPlaceholder("Выбрать тему...");
         categoryComboBox.setItems(questionService.findAllCategories());
@@ -161,13 +181,13 @@ public class QuestionsListPage extends VerticalLayout {
             updateList();
         });
 
-        Button addCategoryButton = new Button("Добавить категорию");
+        Button addCategoryButton = new Button("Добавить тему");
         addCategoryButton.addClickListener(event -> {
             categoryForm.setModel(new QuestionCategoryBindingModel());
             addAndOpenDialog(categoryForm);
         });
 
-        HorizontalLayout toolbar = new HorizontalLayout(filterText, categoryComboBox, addQuestionButton, upload, addCategoryButton);
+        HorizontalLayout toolbar = new HorizontalLayout(categoryComboBox, addQuestionButton, upload, addCategoryButton);
         toolbar.setAlignItems(Alignment.CENTER);
         toolbar.setDefaultVerticalComponentAlignment(Alignment.CENTER);
 
