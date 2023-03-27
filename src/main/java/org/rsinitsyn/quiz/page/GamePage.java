@@ -1,5 +1,7 @@
 package org.rsinitsyn.quiz.page;
 
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.AfterNavigationObserver;
@@ -7,6 +9,7 @@ import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.QuizGamePlayBoardComponent;
@@ -63,6 +66,11 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
             remove(quizGamePlayBoardComponent);
             add(configureQuizGameResultComponent(event.getModel()));
         });
+        quizGamePlayBoardComponent.addListener(QuizGamePlayBoardComponent.SubmitAnswerEvent.class, event -> {
+            gameService.submitAnswer(gameId,
+                    event.getQuestion().getId().toString(),
+                    event.getAnswer());
+        });
         return quizGamePlayBoardComponent;
     }
 
@@ -78,14 +86,9 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
         );
 
         quizGameSettingsComponent.addListener(QuizGameSettingsComponent.StartGameEvent.class, event -> {
+            gameService.updateBeforeStart(gameId, event.getModel());
             remove(quizGameSettingsComponent);
             add(configurePlayGameComponent(event.getModel()));
-            gameService.update(gameId,
-                    event.getModel().getGameName(),
-                    QuizUtils.getLoggedUser(),
-                    GameStatus.STARTED,
-                    event.getModel().getQuestions().size(),
-                    null);
         });
 
         quizGameSettingsComponent.addListener(QuizGameSettingsComponent.UpdateGameEvent.class, event -> {
@@ -99,6 +102,12 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
     }
 
     private void createGameIfNotExists() {
-        gameService.createIfNotExists(gameId);
+        boolean gameCreated = gameService.createIfNotExists(gameId);
+        if (!gameCreated) {
+            Notification notification = Notification.show("Нет возможности продолжить созданную игру. Создайте новую игру!", 3_000, Notification.Position.MIDDLE);
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            removeAll();
+            getUI().ifPresent(ui -> ui.navigate(GamePage.class, UUID.randomUUID().toString()));
+        }
     }
 }

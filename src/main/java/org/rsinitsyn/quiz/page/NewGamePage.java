@@ -5,27 +5,43 @@ import com.vaadin.flow.component.KeyModifier;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import java.util.Collections;
 import java.util.UUID;
+import org.rsinitsyn.quiz.component.GameListComponent;
 import org.rsinitsyn.quiz.component.MainLayout;
+import org.rsinitsyn.quiz.service.GameService;
 
 @Route(value = "/", layout = MainLayout.class)
 @PageTitle("Game")
-public class GameTypePage extends VerticalLayout {
+public class NewGamePage extends VerticalLayout {
 
-    H2 title = new H2("Новая игра");
-    Button configButton;
-    Select<String> gameTypeSelect;
+    private H2 title = new H2("Новая игра");
+    private Button configButton;
+    private Select<String> gameTypeSelect;
+    private H3 gameListTitle = new H3("Недавние игры");
+    private GameListComponent gameListComponent = new GameListComponent(Collections.emptyList());
 
-    public GameTypePage() {
+    private GameService gameService;
+
+    public NewGamePage(GameService gameService) {
+        this.gameService = gameService;
         setSizeFull();
         configButton = createNextStepButton();
         gameTypeSelect = createGameTypeSelect();
-        add(title, gameTypeSelect, configButton);
+        configureGameList();
+        add(title, gameTypeSelect, configButton,
+                gameListTitle, gameListComponent);
+    }
+
+    private void configureGameList() {
+        gameListComponent = new GameListComponent(gameService.findAllFinishedNewFirst());
+        gameListComponent.setSizeFull();
     }
 
     private Button createNextStepButton() {

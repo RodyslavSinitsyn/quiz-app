@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,6 +16,7 @@ import org.rsinitsyn.quiz.utils.QuizUtils;
 @Data
 @NoArgsConstructor
 public class QuizQuestionModel {
+    private UUID id;
     private String text;
     private QuestionType type;
     private String photoFilename;
@@ -23,7 +25,8 @@ public class QuizQuestionModel {
 
     private InputStream photoInputStream;
 
-    public QuizQuestionModel(String text, QuestionType type, String photoFilename, String categoryName, Set<QuizAnswerModel> answers) {
+    public QuizQuestionModel(UUID id, String text, QuestionType type, String photoFilename, String categoryName, Set<QuizAnswerModel> answers) {
+        this.id = id;
         this.text = text;
         this.type = type;
         this.photoFilename = photoFilename;

@@ -17,7 +17,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import org.rsinitsyn.quiz.page.GameTypePage;
+import org.rsinitsyn.quiz.page.NewGamePage;
 import org.rsinitsyn.quiz.page.QuestionsListPage;
 import org.rsinitsyn.quiz.page.StatisticPage;
 import org.rsinitsyn.quiz.service.UserService;
@@ -67,15 +67,16 @@ public class MainLayout extends AppLayout {
     }
 
     private void configureTabs() {
-        tabs.add(createTab("Играть", GameTypePage.class));
+        tabs.add(createTab("Играть", NewGamePage.class));
         tabs.add(createTab("Вопросы", QuestionsListPage.class));
         tabs.add(createTab("Статистика", StatisticPage.class));
     }
 
     private Tab createTab(String text, Class<? extends Component> navigateTo) {
-        Tab tab = new Tab(text);
+        Tab tab = new Tab();
         RouterLink link = new RouterLink(navigateTo);
-        tab.add(link); // TODO Fix style
+        link.setText(text);
+        tab.add(link);
         return tab;
     }
 

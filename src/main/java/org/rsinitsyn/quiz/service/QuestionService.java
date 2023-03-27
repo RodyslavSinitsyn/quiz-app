@@ -30,6 +30,10 @@ public class QuestionService {
     private final QuestionDao questionDao;
     private final QuestionCategoryDao questionCategoryDao;
 
+    public QuestionEntity findByIdLazy(UUID id) {
+        return questionDao.getReferenceById(id);
+    }
+
     public void saveQuestionCategory(QuestionCategoryBindingModel model) {
         QuestionCategoryEntity entity = new QuestionCategoryEntity();
         entity.setName(model.getCategoryName());

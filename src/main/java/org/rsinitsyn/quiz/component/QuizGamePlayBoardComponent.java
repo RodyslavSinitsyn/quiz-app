@@ -3,6 +3,7 @@ package org.rsinitsyn.quiz.component;
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
@@ -15,10 +16,10 @@ import com.vaadin.flow.router.BeforeLeaveObserver;
 import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import java.util.Iterator;
 import java.util.Set;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
@@ -28,53 +29,50 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 
     private Paragraph questionTextParagraph;
     private QuizGameAnswersComponent answersComponent;
-    private ProgressBar progressBar;
+    private Div progressBarLabel = new Div();
+    private ProgressBar progressBar = new ProgressBar();
 
     private QuizGameStateModel quizGameStateModel;
 
-    private Iterator<QuizQuestionModel> questionIterator;
     private QuizQuestionModel currQuestion;
-    private int questionNumber = 0;
 
     public QuizGamePlayBoardComponent(QuizGameStateModel quizGameStateModel) {
         this.quizGameStateModel = quizGameStateModel;
-        this.questionIterator = quizGameStateModel.getQuestions().iterator();
         renderQuestion();
     }
 
     private void renderQuestion() {
-        if (!questionIterator.hasNext()) {
+        currQuestion = quizGameStateModel.getNextQuestion();
+        if (currQuestion == null) {
             finishGame();
             return;
         }
-        currQuestion = questionIterator.next();
-
         removeAll();
         questionTextParagraph = createQuestionParagraph(currQuestion);
         answersComponent = createAnswersComponent(currQuestion.getAnswers());
-        progressBar = createProgressBar(questionNumber++);
+        progressBarLabel = createProgressBarLabel();
+        progressBar = createProgressBar();
 
-        add(questionTextParagraph, answersComponent, progressBar);
+        add(questionTextParagraph, answersComponent, progressBarLabel, progressBar);
     }
 
     private void finishGame() {
         removeAll();
         closeOpenResources();
-        quizGameStateModel.setFinished(true);
+        quizGameStateModel.setStatus(GameStatus.FINISHED);
         add(new Span("Game over!"));
         fireEvent(new FinishGameEvent(this, quizGameStateModel));
     }
-
 
     private QuizGameAnswersComponent createAnswersComponent(Set<QuizQuestionModel.QuizAnswerModel> answers) {
         var answersComponent = new QuizGameAnswersComponent(answers);
         answersComponent.addListener(QuizGameAnswersComponent.AnswerChoosenEvent.class, event -> {
             validateAnswer(event.getAnswer());
+            fireEvent(new SubmitAnswerEvent(this, currQuestion, event.getAnswer()));
             renderQuestion();
         });
         return answersComponent;
     }
-
 
     @SneakyThrows
     private Paragraph createQuestionParagraph(QuizQuestionModel questionModel) {
@@ -100,11 +98,19 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         return paragraph;
     }
 
-    private ProgressBar createProgressBar(int value) {
+    private Div createProgressBarLabel() {
+        var label = new Div();
+        label.setText(String.format("Ответов (%d/%d)",
+                quizGameStateModel.getCurrentQuestionNumber() - 1,
+                quizGameStateModel.getQuestionsCount()));
+        return label;
+    }
+
+    private ProgressBar createProgressBar() {
         var progressBar = new ProgressBar();
-        progressBar.setMax(quizGameStateModel.getQuestions().size());
+        progressBar.setMax(quizGameStateModel.getQuestionsCount());
         progressBar.setMin(0);
-        progressBar.setValue(value);
+        progressBar.setValue(quizGameStateModel.getCurrentQuestionNumber() - 1);
         return progressBar;
     }
 
@@ -126,7 +132,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 
     @Override
     public void beforeLeave(BeforeLeaveEvent event) {
-        if (!quizGameStateModel.isFinished()) {
+        if (!GameStatus.FINISHED.equals(quizGameStateModel.getStatus())) {
             BeforeLeaveEvent.ContinueNavigationAction leaveAction =
                     event.postpone();
             ConfirmDialog confirmDialog = new ConfirmDialog();
@@ -154,6 +160,22 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         public FinishGameEvent(QuizGamePlayBoardComponent source, QuizGameStateModel model) {
             this(source, false);
             this.model = model;
+        }
+    }
+
+    @Getter
+    public static class SubmitAnswerEvent extends ComponentEvent<QuizGamePlayBoardComponent> {
+        private QuizQuestionModel question;
+        private QuizQuestionModel.QuizAnswerModel answer;
+
+        public SubmitAnswerEvent(QuizGamePlayBoardComponent source, boolean fromClient) {
+            super(source, fromClient);
+        }
+
+        public SubmitAnswerEvent(QuizGamePlayBoardComponent source, QuizQuestionModel question, QuizQuestionModel.QuizAnswerModel answer) {
+            this(source, false);
+            this.question = question;
+            this.answer = answer;
         }
     }
 

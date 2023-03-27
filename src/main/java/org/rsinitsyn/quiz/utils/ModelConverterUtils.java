@@ -19,7 +19,9 @@ public class ModelConverterUtils {
     }
 
     public QuizQuestionModel toQuizQuestionModel(QuestionEntity entity) {
-        return new QuizQuestionModel(entity.getText(),
+        return new QuizQuestionModel(
+                entity.getId(),
+                entity.getText(),
                 entity.getType(),
                 entity.getPhotoFilename(),
                 entity.getCategory().getName(),

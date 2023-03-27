@@ -23,13 +23,13 @@ public class QuizGameResultComponent extends VerticalLayout {
 
     private void configureComponents() {
         title.setText("Результаты игрока: " + quizGameStateModel.getPlayerName());
-        resultPercent.setText("Процент верных ответов: " + quizGameStateModel.calculateAndGetResult() + "%");
-        resultCount.setText("Верных ответов: " + quizGameStateModel.getCorrectToTotalAnswers());
+        resultPercent.setText("Процент верных ответов: " + quizGameStateModel.calculateAndGetAnswersResult() + "%");
+        resultCount.setText("Верных ответов: " + quizGameStateModel.getAnswersStatistic());
         reaction.setText(getResultReaction());
     }
 
     private String getResultReaction() {
-        int res = quizGameStateModel.calculateAndGetResult();
+        int res = quizGameStateModel.calculateAndGetAnswersResult();
         String reaction = "";
         if (res >= 90) {
             reaction = "Великолепно!";
