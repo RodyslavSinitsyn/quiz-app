@@ -222,7 +222,7 @@ public class QuestionsListPage extends VerticalLayout {
         Button addCategoryButton = new Button("Добавить тему");
         addCategoryButton.addClickListener(event -> {
             categoryForm.setModel(new QuestionCategoryBindingModel());
-            addAndOpenDialog(categoryForm);
+            addToDialogAndOpen(categoryForm);
         });
 
         HorizontalLayout toolbar = new HorizontalLayout(categoryComboBox, addQuestionButton, upload, addCategoryButton);
@@ -237,13 +237,13 @@ public class QuestionsListPage extends VerticalLayout {
             formDialog.close();
             form.setQuestion(null);
         } else {
-            addAndOpenDialog(form);
+            addToDialogAndOpen(form);
             form.setCategoryList(questionService.findAllCategories());
             form.setQuestion(model);
         }
     }
 
-    private void addAndOpenDialog(Component component) {
+    private void addToDialogAndOpen(Component component) {
         formDialog.removeAll();
         formDialog.add(component);
         formDialog.open();

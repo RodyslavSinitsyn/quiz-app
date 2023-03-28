@@ -65,6 +65,7 @@ public class QuestionForm extends FormLayout {
         text.addValueChangeListener(e -> {
             e.getSource().setHelperText(e.getValue().length() + "/" + text.getMaxLength());
         });
+        text.setRequired(true);
     }
 
     private HorizontalLayout createButtonsLayout() {

@@ -1,8 +1,10 @@
 package org.rsinitsyn.quiz.model;
 
+import jakarta.validation.constraints.NotBlank;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.validator.constraints.Length;
@@ -15,8 +17,10 @@ import org.rsinitsyn.quiz.entity.GameStatus;
 @Getter
 @Setter
 public class QuizGameStateModel {
+    @NotBlank
     @Length(min = 1, max = 30)
     private String gameName = "Test";
+    @NotBlank
     @Length(min = 1, max = 30)
     private String playerName = "Test";
     private boolean answerOptionsEnabled;
@@ -24,6 +28,7 @@ public class QuizGameStateModel {
     private Set<QuizQuestionModel> questions = new HashSet<>();
 
     // state props
+    private UUID gameId;
     private Set<QuizQuestionModel> correct = new HashSet<>();
     private GameStatus status;
     private int result = 0;
@@ -43,7 +48,7 @@ public class QuizGameStateModel {
     }
 
     public String getAnswersStatistic() {
-        return correct.size() + "/" + questions.size();
+        return correct.size() + "/" + getQuestionsCount();
     }
 
     public int getQuestionsCount() {

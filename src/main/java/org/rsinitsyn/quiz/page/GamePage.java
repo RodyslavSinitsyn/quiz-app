@@ -19,6 +19,7 @@ import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
+import org.rsinitsyn.quiz.service.UserService;
 import org.rsinitsyn.quiz.utils.ModelConverterUtils;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,11 +37,13 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
 
     private QuestionService questionService;
     private GameService gameService;
+    private UserService userService;
 
     @Autowired
-    public GamePage(QuestionService questionService, GameService gameService) {
+    public GamePage(QuestionService questionService, GameService gameService, UserService userService) {
         this.questionService = questionService;
         this.gameService = gameService;
+        this.userService = userService;
     }
 
     @Override
@@ -75,15 +78,15 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
     }
 
     private QuizGameResultComponent configureQuizGameResultComponent(QuizGameStateModel model) {
-        quizGameResultComponent = new QuizGameResultComponent(model);
+        quizGameResultComponent = new QuizGameResultComponent(model, gameService.findById(gameId));
         return quizGameResultComponent;
     }
 
-
     private void configureGameSettingsComponent() {
         quizGameSettingsComponent = new QuizGameSettingsComponent(
-                ModelConverterUtils.toQuizQuestionModels(questionService.findAllByCurrentUser())
-        );
+                gameId,
+                ModelConverterUtils.toQuizQuestionModels(questionService.findAllByCurrentUser()),
+                userService.findAllExceptLogged());
 
         quizGameSettingsComponent.addListener(QuizGameSettingsComponent.StartGameEvent.class, event -> {
             gameService.updateBeforeStart(gameId, event.getModel());

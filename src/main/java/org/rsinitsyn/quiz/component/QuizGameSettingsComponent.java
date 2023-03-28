@@ -6,6 +6,7 @@ import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Hr;
@@ -28,11 +29,13 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
 
@@ -41,9 +44,9 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
 
     private static final String GENERAL_CATEGORY = "Общие";
 
-    private QuizGameStateModel model = new QuizGameStateModel();
+    private QuizGameStateModel gameState = new QuizGameStateModel();
     private TextField gameName;
-    private TextField playerName;
+    private ComboBox<String> playerName = new ComboBox<>();
     private Checkbox answerOptionsEnabled = new Checkbox();
     private Checkbox timerEnabled = new Checkbox();
     private MultiSelectListBox<QuizQuestionModel> questions = new MultiSelectListBox<>();
@@ -54,19 +57,24 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
     private Button playButton = new Button("Играть");
 
     private List<QuizQuestionModel> quizQuestionModelList;
+    private List<UserEntity> userEntityList;
 
-    public QuizGameSettingsComponent(List<QuizQuestionModel> quizQuestionModelList) {
-        setResponsiveSteps(new ResponsiveStep("0", 1));
-        setWidth("50em");
-
+    public QuizGameSettingsComponent(String gameId,
+                                     List<QuizQuestionModel> quizQuestionModelList,
+                                     List<UserEntity> userEntityList) {
         this.quizQuestionModelList = quizQuestionModelList;
-        this.gameName = createTextInput("Название игры");
-        this.playerName = createTextInput("Игрок");
+        this.userEntityList = userEntityList;
+        this.gameState.setGameId(UUID.fromString(gameId)); // TODO Remove ID Attr from Service classes ?
 
+        this.gameName = createTextInput("Название игры");
+        configureUserComboBox();
         configureCheckBoxes();
         configureBinder();
         configureQuestionsList();
         configurePlayButton();
+
+        setResponsiveSteps(new ResponsiveStep("0", 1));
+        setWidth("50em");
 
         add(title, gameName, playerName, answerOptionsEnabled, timerEnabled, selectAllCheckbox, questions, playButton);
     }
@@ -76,10 +84,15 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
         TextField field = new TextField(labelText);
         field.setValueChangeMode(ValueChangeMode.ON_BLUR);
         field.addValueChangeListener(event -> {
-            binder.writeBeanAsDraft(model);
-            fireEvent(new UpdateGameEvent(this, model));
+            binder.writeBeanAsDraft(gameState);
+            fireEvent(new UpdateGameEvent(this, gameState));
         });
         return field;
+    }
+
+    private void configureUserComboBox() {
+        playerName.setLabel("Игрок");
+        playerName.setItems(userEntityList.stream().map(UserEntity::getUsername).toList());
     }
 
     private void configureCheckBoxes() {
@@ -130,6 +143,7 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
         questions.addSelectionListener(event -> {
             selectAllCheckbox.setValue(
                     event.getValue().size() == quizQuestionModelList.size());
+            playButton.setEnabled(!event.getValue().isEmpty());
         });
         configureItemsForCategoryListBox();
 
@@ -176,21 +190,21 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
     }
 
     private void configurePlayButton() {
+        playButton.setEnabled(false);
         playButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         playButton.addClickListener(event -> {
             try {
-                binder.writeBean(model);
-                fireEvent(new StartGameEvent(this, model));
+                binder.writeBean(gameState);
+                fireEvent(new StartGameEvent(this, gameState));
             } catch (ValidationException e) {
                 log.warn(e.getMessage());
             }
         });
-        playButton.setEnabled(!quizQuestionModelList.isEmpty());
     }
 
     @Override
     public void beforeLeave(BeforeLeaveEvent event) {
-        model.getQuestions().forEach(QuizQuestionModel::closePhotoStream);
+        gameState.getQuestions().forEach(QuizQuestionModel::closePhotoStream);
     }
 
     @Getter

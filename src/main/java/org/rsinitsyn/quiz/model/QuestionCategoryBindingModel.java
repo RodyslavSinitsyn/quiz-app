@@ -1,10 +1,12 @@
 package org.rsinitsyn.quiz.model;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
 @Data
 public class QuestionCategoryBindingModel {
+    @NotBlank
     @Length(min = 1, max = 30)
     private String categoryName;
 }

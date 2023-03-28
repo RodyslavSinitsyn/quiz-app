@@ -6,6 +6,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.rsinitsyn.quiz.dao.UserDao;
 import org.rsinitsyn.quiz.entity.UserEntity;
+import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +33,13 @@ public class UserService {
     public List<UserEntity> findAllOrderByVisitDateDesc() {
         return userDao.findAll().stream()
                 .sorted(Comparator.comparing(UserEntity::getLastVisitDate, Comparator.reverseOrder()))
+                .toList();
+    }
+
+    public List<UserEntity> findAllExceptLogged() {
+        return findAllOrderByVisitDateDesc()
+                .stream()
+                .filter(userEntity -> !userEntity.getUsername().equals(QuizUtils.getLoggedUser()))
                 .toList();
     }
 }

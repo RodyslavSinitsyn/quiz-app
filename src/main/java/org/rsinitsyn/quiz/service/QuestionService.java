@@ -27,6 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class QuestionService {
 
+    public static final String GENERAL_CATEGORY = "Общие";
+
     private final QuestionDao questionDao;
     private final QuestionCategoryDao questionCategoryDao;
 
@@ -159,11 +161,10 @@ public class QuestionService {
     }
 
     public QuestionCategoryEntity getOrCreateDefaultCategory() {
-        final String defaultName = "Общие";
-        return questionCategoryDao.findByName(defaultName)
+        return questionCategoryDao.findByName(GENERAL_CATEGORY)
                 .orElseGet(() -> {
                     QuestionCategoryEntity categoryEntity = new QuestionCategoryEntity();
-                    categoryEntity.setName("Общие");
+                    categoryEntity.setName(GENERAL_CATEGORY);
                     return questionCategoryDao.save(categoryEntity);
                 });
 
