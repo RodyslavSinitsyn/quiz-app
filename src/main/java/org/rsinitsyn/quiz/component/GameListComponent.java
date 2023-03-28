@@ -19,6 +19,7 @@ public class GameListComponent extends VerticalLayout {
     }
 
     private void configureGrid() {
+        treeGrid.setAllRowsVisible(true);
         treeGrid.addHierarchyColumn(gameEntity -> QuizUtils.formatDate(gameEntity.getFinishDate())).setHeader("Дата");
         treeGrid.addColumn(GameEntity::getName).setHeader("Название");
         treeGrid.addColumn(GameEntity::getPlayerName).setHeader("Игрок");

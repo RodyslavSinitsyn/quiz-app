@@ -8,6 +8,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -16,10 +17,12 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
+import com.vaadin.flow.data.renderer.LocalDateTimeRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import java.io.InputStream;
+import java.util.Comparator;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -77,26 +80,36 @@ public class QuestionsListPage extends VerticalLayout {
         grid = new Grid<>(QuestionEntity.class, false);
         grid.setSizeFull();
         grid.addColumn(new ComponentRenderer<>(entity -> {
-            HorizontalLayout row = new HorizontalLayout();
-            row.setAlignItems(FlexComponent.Alignment.CENTER);
-            if (StringUtils.isNotEmpty(entity.getPhotoFilename())) {
-                Avatar smallPhoto = new Avatar();
-                smallPhoto.setImageResource(
-                        QuizUtils.createStreamResourceForPhoto(entity.getPhotoFilename()));
-                row.add(smallPhoto);
-            }
-            row.add(new Span(
-                    entity.getText().length() > 300
-                            ? entity.getText().substring(0, 300).concat("...")
-                            : entity.getText()));
-            return row;
-        })).setHeader("Текст").setFlexGrow(5);
-        grid.addColumn(QuestionEntity::getCreatedBy).setHeader("Автор");
-        grid.addColumn(entity -> entity.getCategory().getName()).setHeader("Тема");
-        grid.addColumn(entity -> QuizUtils.formatDate(entity.getCreationDate())).setHeader("Дата создания");
+                    HorizontalLayout row = new HorizontalLayout();
+                    row.setAlignItems(FlexComponent.Alignment.CENTER);
+                    if (StringUtils.isNotEmpty(entity.getPhotoFilename())) {
+                        Avatar smallPhoto = new Avatar();
+                        smallPhoto.setImageResource(
+                                QuizUtils.createStreamResourceForPhoto(entity.getPhotoFilename()));
+                        row.add(smallPhoto);
+                    }
+                    row.add(new Span(
+                            entity.getText().length() > 300
+                                    ? entity.getText().substring(0, 300).concat("...")
+                                    : entity.getText()));
+                    return row;
+                }))
+                .setHeader("Текст")
+                .setFlexGrow(5);
+        grid.addColumn(QuestionEntity::getCreatedBy)
+                .setHeader("Автор")
+                .setSortable(true);
+        grid.addColumn(entity -> entity.getCategory().getName())
+                .setHeader("Тема")
+                .setSortable(true);
+        grid.addColumn(new LocalDateTimeRenderer<>(QuestionEntity::getCreationDate, QuizUtils.DATE_FORMAT_VALUE))
+                .setHeader("Дата создания")
+                .setSortable(true)
+                .setComparator(Comparator.comparing(QuestionEntity::getCreationDate));
         grid.asSingleSelect().addValueChangeListener(event -> {
             editQuestion(ModelConverterUtils.toFourAnswersQuestionBindingModel(event.getValue()));
         });
+        grid.setAllRowsVisible(true);
         grid.addThemeVariants(GridVariant.LUMO_WRAP_CELL_CONTENT);
         updateList();
     }
@@ -174,6 +187,7 @@ public class QuestionsListPage extends VerticalLayout {
         MemoryBuffer buffer = new MemoryBuffer();
         Upload upload = new Upload(buffer);
         upload.setUploadButton(new Button("Импортировать вопросы"));
+        upload.setDropLabel(new Label(""));
         upload.setAcceptedFileTypes(".txt");
         upload.addSucceededListener(event -> {
             InputStream inputStream = buffer.getInputStream();

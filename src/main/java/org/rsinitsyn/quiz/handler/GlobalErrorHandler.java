@@ -17,12 +17,6 @@ public class GlobalErrorHandler extends DefaultErrorHandler {
     public void error(ErrorEvent event) {
         var errMessage = event.getThrowable().getMessage();
         log.error("Server error.", event.getThrowable());
-        // TODO Notification is short (< sec)
-//        Notification notification = Notification.show(errMessage, 3_000, Notification.Position.TOP_END);
-//        notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-//        notification.addClassNames(LumoUtility.FontSize.MEDIUM);
-
-        // TODO Temp
         Optional.ofNullable(UI.getCurrent())
                 .ifPresent(ui -> {
                     ui.access(() -> {

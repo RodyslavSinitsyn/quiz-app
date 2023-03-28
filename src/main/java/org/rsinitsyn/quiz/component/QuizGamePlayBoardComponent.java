@@ -119,10 +119,10 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         NotificationVariant variant;
         if (correct) {
             quizGameStateModel.getCorrect().add(currQuestion);
-            new AudioService().playSound("correct-answer-1.mp3");
+            new AudioService().playSoundAsync("correct-answer-1.mp3");
             variant = NotificationVariant.LUMO_SUCCESS;
         } else {
-            new AudioService().playSound("wrong-answer-1.mp3");
+            new AudioService().playSoundAsync("wrong-answer-1.mp3");
             variant = NotificationVariant.LUMO_ERROR;
         }
         String notifyText = correct ? "Правильный ответ!" : "Неверно...";

@@ -10,11 +10,11 @@ public class AudioService {
 
     private static final String AUDIO_FILES_FOLDER = "audio/";
 
-    public void playSound(String audioFileName) {
-        CompletableFuture.runAsync(() -> playSoundAsync(audioFileName));
+    public void playSoundAsync(String audioFileName) {
+        CompletableFuture.runAsync(() -> playSound(audioFileName));
     }
 
-    public void playSoundAsync(String audioFileName) {
+    private void playSound(String audioFileName) {
         final String path = AUDIO_FILES_FOLDER + audioFileName;
         try (BufferedInputStream buffer = new BufferedInputStream(
                 getClass().getClassLoader().getResourceAsStream(path))) {
