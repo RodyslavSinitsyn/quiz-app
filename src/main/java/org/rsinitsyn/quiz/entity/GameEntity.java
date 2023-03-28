@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -18,6 +19,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.SortComparator;
 
 @Entity
 @Table(name = "games")
@@ -43,5 +45,6 @@ public class GameEntity {
     private LocalDateTime creationDate;
     private LocalDateTime finishDate;
     @OneToMany(mappedBy = "game", fetch = FetchType.EAGER)
+    @OrderBy(value = "orderNumber")
     private Set<GameQuestionEntity> gameQuestions = new HashSet<>();
 }

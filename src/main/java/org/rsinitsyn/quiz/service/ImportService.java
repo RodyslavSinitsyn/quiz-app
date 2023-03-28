@@ -24,14 +24,20 @@ public class ImportService {
     public void importQuestions(InputStream fileContent) {
         String data = IOUtils.toString(fileContent, StandardCharsets.UTF_8);
         IOUtils.close(fileContent);
-
         String[] lines = data.split("\n");
+        if (lines.length == 0) {
+            throw new RuntimeException("Невалидный формат импортируемого файла");
+        }
         List<QuestionEntity> questionEntities = Arrays.stream(lines).map(this::toEntity).toList();
-        questionService.saveAll(questionEntities);
+        questionEntities.forEach(questionService::saveEntityAndImage);
     }
 
     private QuestionEntity toEntity(String line) {
         String[] tokens = line.split("[|]");
+
+        if (tokens.length < 5) {
+            throw new RuntimeException("Невалидный формат импортируемого файла");
+        }
 
         QuestionEntity entity = new QuestionEntity();
         entity.setText(tokens[0]);
@@ -40,8 +46,10 @@ public class ImportService {
         entity.addAnswer(new AnswerEntity(tokens[2], false));
         entity.addAnswer(new AnswerEntity(tokens[3], false));
         entity.addAnswer(new AnswerEntity(tokens[4], false));
-
-        entity.setPhotoFilename(null);
+        if (tokens.length > 5) {
+            entity.setPhotoFilename(QuizUtils.generateFilename(tokens[5]));
+            entity.setOriginalPhotoUrl(tokens[5]);
+        }
         entity.setCreatedBy(QuizUtils.getLoggedUser());
         entity.setCreationDate(LocalDateTime.now());
         entity.setType(QuestionType.TEXT);

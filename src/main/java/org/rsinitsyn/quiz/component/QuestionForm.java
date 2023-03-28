@@ -59,6 +59,7 @@ public class QuestionForm extends FormLayout {
     }
 
     private void configureInputs() {
+        text.setTooltipText("Shift + Enter для переноса");
         text.setMaxLength(FourAnswersQuestionBindingModel.TEXT_LENGTH_LIMIT);
         text.setValueChangeMode(ValueChangeMode.EAGER);
         text.addValueChangeListener(e -> {
@@ -88,7 +89,7 @@ public class QuestionForm extends FormLayout {
             if (model.optionsRepeated()) {
                 correctAnswerText.setErrorMessage("Варианты ответов должны быть уникальные");
                 correctAnswerText.setInvalid(true);
-                throw new IllegalArgumentException("Варианты ответ не валидны");
+                throw new IllegalArgumentException("Варианты ответов не валидны");
             }
             fireEvent(new SaveEvent(this, model));
         } catch (ValidationException | IllegalArgumentException e) {

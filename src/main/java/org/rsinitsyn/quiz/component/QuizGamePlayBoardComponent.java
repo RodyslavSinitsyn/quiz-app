@@ -27,7 +27,7 @@ import org.rsinitsyn.quiz.service.AudioService;
 
 public class QuizGamePlayBoardComponent extends VerticalLayout implements BeforeLeaveObserver {
 
-    private Paragraph questionTextParagraph;
+    private VerticalLayout questionLayout;
     private QuizGameAnswersComponent answersComponent;
     private Div progressBarLabel = new Div();
     private ProgressBar progressBar = new ProgressBar();
@@ -48,12 +48,12 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
             return;
         }
         removeAll();
-        questionTextParagraph = createQuestionParagraph(currQuestion);
+        questionLayout = createQuestionLayour(currQuestion);
         answersComponent = createAnswersComponent(currQuestion.getAnswers());
         progressBarLabel = createProgressBarLabel();
         progressBar = createProgressBar();
 
-        add(questionTextParagraph, answersComponent, progressBarLabel, progressBar);
+        add(questionLayout, answersComponent, progressBarLabel, progressBar);
     }
 
     private void finishGame() {
@@ -75,12 +75,13 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     }
 
     @SneakyThrows
-    private Paragraph createQuestionParagraph(QuizQuestionModel questionModel) {
+    private VerticalLayout createQuestionLayour(QuizQuestionModel questionModel) {
+        VerticalLayout layout = new VerticalLayout();
+
         Paragraph paragraph = new Paragraph();
         paragraph.addClassNames(LumoUtility.AlignSelf.CENTER);
         paragraph.setText(questionModel.getText());
 
-        // TODO Refactor
         if (questionModel.getType().equals(QuestionType.PHOTO)) {
             Image image = new Image();
             image.addClassNames(LumoUtility.AlignSelf.CENTER);
@@ -88,14 +89,14 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
                     questionModel.getPhotoFilename(),
                     () -> questionModel.openStream()));
             image.setWidth("20em");
-            add(image);
-
+            layout.add(image);
             paragraph.addClassNames(LumoUtility.FontSize.XLARGE);
         } else {
             paragraph.addClassNames(LumoUtility.FontSize.XXLARGE);
         }
+        layout.add(paragraph);
 
-        return paragraph;
+        return layout;
     }
 
     private Div createProgressBarLabel() {

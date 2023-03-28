@@ -12,7 +12,6 @@ import lombok.SneakyThrows;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 
-// TODO Need entities ID here
 @Data
 @NoArgsConstructor
 public class QuizQuestionModel {

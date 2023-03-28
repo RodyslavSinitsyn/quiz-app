@@ -23,6 +23,8 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import java.io.InputStream;
 import java.util.Comparator;
+import java.util.List;
+import java.util.StringJoiner;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.QuestionCategoryForm;
 import org.rsinitsyn.quiz.component.QuestionForm;
+import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
@@ -69,6 +72,27 @@ public class QuestionsListPage extends VerticalLayout {
         configureDialog();
 
         add(title, createToolbar(), grid);
+    }
+
+    // todo temp
+    private void exportCode() {
+        String res = questionService.findAll().stream().
+                map(entity -> {
+                    List<AnswerEntity> answers = entity.getAnswers().stream()
+                            .sorted(Comparator.comparing(AnswerEntity::isCorrect, Comparator.reverseOrder()))
+                            .toList();
+                    StringJoiner joiner = new StringJoiner("|")
+                            .add(entity.getText())
+                            .add(answers.get(0).getText())
+                            .add(answers.get(1).getText())
+                            .add(answers.get(2).getText())
+                            .add(answers.get(3).getText());
+                    if (StringUtils.isNotEmpty(entity.getOriginalPhotoUrl())) {
+                        joiner.add(entity.getOriginalPhotoUrl());
+                    }
+                    return joiner.toString();
+                })
+                .collect(Collectors.joining("\n"));
     }
 
     private void configureDialog() {

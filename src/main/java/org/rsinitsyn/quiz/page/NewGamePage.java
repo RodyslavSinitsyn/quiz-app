@@ -45,9 +45,8 @@ public class NewGamePage extends VerticalLayout {
     }
 
     private Button createNextStepButton() {
-        Button button = new Button("Перейти к настройкам");
+        Button button = new Button("Играть");
         button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        button.setEnabled(false);
         button.addClickListener(event -> getUI()
                 .ifPresent(ui -> ui.navigate(
                         GamePage.class,
@@ -66,8 +65,8 @@ public class NewGamePage extends VerticalLayout {
                 "Викторина",
                 "Своя Игра");
         select.setPlaceholder("Тип игры");
+        select.setValue("Викторина");
         select.setItemEnabledProvider(item -> !"Своя Игра".equals(item));
-        select.addValueChangeListener(event -> configButton.setEnabled(true));
         return select;
     }
 }

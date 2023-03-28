@@ -66,18 +66,14 @@ public class QuestionService {
                 .toList();
     }
 
-    public List<QuestionEntity> findAllSortedByCategory() {
-        return questionDao.findAll().stream()
-                .sorted(Comparator.comparing(entity -> entity.getCategory().getName()))
-                .toList();
-    }
-
     public void saveAll(Collection<QuestionEntity> entities) {
         questionDao.saveAll(entities);
     }
 
-    public void saveOrUpdate(QuestionEntity entity) {
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void saveEntityAndImage(QuestionEntity entity) {
         questionDao.save(entity);
+        QuizUtils.saveImage(entity.getPhotoFilename(), entity.getOriginalPhotoUrl());
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
