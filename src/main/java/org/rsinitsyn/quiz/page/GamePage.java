@@ -22,7 +22,6 @@ import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.service.UserService;
-import org.rsinitsyn.quiz.utils.ModelConverterUtils;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -72,7 +71,7 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
             add(configureQuizGameResultComponent(event.getModel()));
         });
         quizGamePlayBoardComponent.addListener(QuizGamePlayBoardComponent.SubmitAnswerEvent.class, event -> {
-            gameService.submitAnswer(gameId,
+            gameService.submitAnswers(gameId,
                     event.getQuestion().getId().toString(),
                     event.getAnswer());
         });

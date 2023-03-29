@@ -19,7 +19,7 @@ import com.vaadin.flow.router.BeforeLeaveObserver;
 import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import java.util.Collections;
+import java.util.Set;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
@@ -32,7 +32,7 @@ import org.rsinitsyn.quiz.service.AudioService;
 public class QuizGamePlayBoardComponent extends VerticalLayout implements BeforeLeaveObserver {
 
     private VerticalLayout questionLayout = new VerticalLayout();
-    private QuizGameAnswersComponent answersComponent = new QuizGameAnswersComponent(Collections.emptyList());
+    private QuizGameAnswersComponent answersComponent;
     private HorizontalLayout hintsLayout = new HorizontalLayout();
     private Div progressBarLabel = new Div();
     private ProgressBar progressBar = new ProgressBar();
@@ -64,7 +64,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     private HorizontalLayout createHintsLayout() {
         var layout = new HorizontalLayout();
 
-        if (!gameState.isHintsEnabled()) {
+        if (!gameState.isHintsEnabled() || currQuestion.getType().equals(QuestionType.MULTI)) {
             layout.setVisible(false);
             return layout;
         }
@@ -101,7 +101,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     }
 
     private QuizGameAnswersComponent createAnswersComponent() {
-        var answersComponent = new QuizGameAnswersComponent(currQuestion.getShuffledAnswers());
+        var answersComponent = new QuizGameAnswersComponent(currQuestion.getShuffledAnswers(), currQuestion.getType());
         answersComponent.addListener(QuizGameAnswersComponent.AnswerChoosenEvent.class, event -> {
             validateAnswer(event.getAnswer());
             fireEvent(new SubmitAnswerEvent(this, currQuestion, event.getAnswer()));
@@ -152,8 +152,8 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         return progressBar;
     }
 
-    private void validateAnswer(QuizQuestionModel.QuizAnswerModel answerModel) {
-        boolean correct = answerModel.isCorrect();
+    private void validateAnswer(Set<QuizQuestionModel.QuizAnswerModel> answerModels) {
+        boolean correct = answerModels.stream().allMatch(QuizQuestionModel.QuizAnswerModel::isCorrect);
         NotificationVariant variant;
         if (correct) {
             gameState.getCorrect().add(currQuestion);
@@ -204,13 +204,13 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     @Getter
     public static class SubmitAnswerEvent extends ComponentEvent<QuizGamePlayBoardComponent> {
         private QuizQuestionModel question;
-        private QuizQuestionModel.QuizAnswerModel answer;
+        private Set<QuizQuestionModel.QuizAnswerModel> answer;
 
         public SubmitAnswerEvent(QuizGamePlayBoardComponent source, boolean fromClient) {
             super(source, fromClient);
         }
 
-        public SubmitAnswerEvent(QuizGamePlayBoardComponent source, QuizQuestionModel question, QuizQuestionModel.QuizAnswerModel answer) {
+        public SubmitAnswerEvent(QuizGamePlayBoardComponent source, QuizQuestionModel question, Set<QuizQuestionModel.QuizAnswerModel> answer) {
             this(source, false);
             this.question = question;
             this.answer = answer;

@@ -11,4 +11,6 @@ import org.springframework.stereotype.Repository;
 public interface QuestionDao extends JpaRepository<QuestionEntity, UUID> {
     @Query("from QuestionEntity q join fetch q.answers")
     public List<QuestionEntity> findAllWithAnswers();
+
+    List<QuestionEntity> findAllByCreatedBy(String createdBy);
 }

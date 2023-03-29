@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
@@ -37,11 +38,11 @@ public class GameService {
 
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public void submitAnswer(String gameId, String questionId, QuizQuestionModel.QuizAnswerModel answerModel) {
+    public void submitAnswers(String gameId, String questionId, Set<QuizQuestionModel.QuizAnswerModel> answerModel) {
         var primaryKey = new GameQuestionPrimaryKey(
                 UUID.fromString(gameId), UUID.fromString(questionId));
         GameQuestionEntity gameQuestionEntity = gameQuestionDao.findById(primaryKey).orElseThrow();
-        gameQuestionEntity.setAnswered(answerModel.isCorrect());
+        gameQuestionEntity.setAnswered(answerModel.stream().allMatch(QuizQuestionModel.QuizAnswerModel::isCorrect));
     }
 
     public boolean createIfNotExists(String id) {
