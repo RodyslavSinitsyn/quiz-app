@@ -7,7 +7,7 @@ spring:
 
   # DB properties
   datasource:
-    url: jdbc:h2:file:./db/data
+    url: jdbc:h2:file:./db/quiz-db;AUTO_SERVER=TRUE
     username: sa
     password:
     driverClassName: org.h2.Driver

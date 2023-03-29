@@ -1,0 +1,3 @@
+spring:
+  datasource:
+    url: jdbc:h2:file:./db/quiz-db-dev;AUTO_SERVER=TRUE
