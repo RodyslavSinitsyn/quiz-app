@@ -7,7 +7,9 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
@@ -15,22 +17,24 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.shared.Registration;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
+import org.rsinitsyn.quiz.сustom.AnswerField;
 
 @Slf4j
 public class QuestionForm extends FormLayout {
-    FourAnswersQuestionBindingModel model = new FourAnswersQuestionBindingModel();
+
+    FourAnswersQuestionBindingModel questionModel = new FourAnswersQuestionBindingModel();
     TextArea text = new TextArea("Текст вопроса");
     ComboBox<String> category = new ComboBox<>();
     ComboBox<String> author = new ComboBox<>();
-    TextField correctAnswerText = new TextField("Верный ответ");
-    TextField secondOptionAnswerText = new TextField("Вариант 2");
-    TextField thirdOptionAnswerText = new TextField("Вариант 3");
-    TextField fourthOptionAnswerText = new TextField("Вариант 4");
+    VerticalLayout inputsLayout = new VerticalLayout();
+    List<AnswerField> answers = new ArrayList<>();
     TextField photoLocation = new TextField("Ссылка на фото");
 
     Binder<FourAnswersQuestionBindingModel> binder = new BeanValidationBinder<>(FourAnswersQuestionBindingModel.class);
@@ -45,21 +49,50 @@ public class QuestionForm extends FormLayout {
     public QuestionForm(List<QuestionCategoryEntity> categoryEntityList, List<UserEntity> usersList) {
         setUsersList(usersList);
         setCategoryList(categoryEntityList);
-        configureInputs();
-        add(text,
-                correctAnswerText,
-                secondOptionAnswerText,
-                thirdOptionAnswerText,
-                fourthOptionAnswerText,
-                category,
+        configureTextInput();
+
+        inputsLayout.setAlignItems(FlexComponent.Alignment.START);
+        inputsLayout.setDefaultHorizontalComponentAlignment(FlexComponent.Alignment.STRETCH);
+        inputsLayout.setMargin(false);
+        inputsLayout.setPadding(false);
+        inputsLayout.setSpacing(false);
+
+        add(text);
+        add(inputsLayout);
+        add(category,
                 author,
                 photoLocation,
                 createButtonsLayout());
         binder.bindInstanceFields(this);
     }
 
-    private void configureInputs() {
+    private void configureAnswerInputs() {
+        cleanupAnswers();
+        if (questionModel.getAnswers().isEmpty()) {
+            questionModel.initWith4Answers();
+        }
+        for (FourAnswersQuestionBindingModel.AnswerBindingModel answerBindingModel :
+                questionModel.getAnswers()) { // TODO REFACTOR
+            AnswerField answerField = new AnswerField(answerBindingModel);
+            answerField.setWidthFull();
+            answers.add(answerField);
+            inputsLayout.add(answerField);
+            binder.forField(answerField)
+                    .withValidator(a -> a != null && StringUtils.isNotEmpty(a.getText()), "пустой вопрос")
+                    .bind(m -> m.getAnswers().stream().filter(a -> a.getIndex() == answerField.getIndex()).findFirst().orElse(null),
+                            (m, value) -> m.getAnswers().set(value.getIndex(), value));
+        }
+    }
+
+    private void cleanupAnswers() {
+        inputsLayout.removeAll();
+        answers.forEach(binder::removeBinding);
+        answers.clear();
+    }
+
+    private void configureTextInput() {
         text.setTooltipText("Shift + Enter для переноса");
+        text.setSizeFull();
         text.setMaxLength(FourAnswersQuestionBindingModel.TEXT_LENGTH_LIMIT);
         text.setValueChangeMode(ValueChangeMode.EAGER);
         text.addValueChangeListener(e -> {
@@ -77,7 +110,7 @@ public class QuestionForm extends FormLayout {
         close.addClickShortcut(Key.ESCAPE);
 
         save.addClickListener(event -> validateAndSave());
-        delete.addClickListener(event -> fireEvent(new DeleteEvent(this, model)));
+        delete.addClickListener(event -> fireEvent(new DeleteEvent(this, questionModel)));
         close.addClickListener(event -> fireEvent(new CloseEvent(this)));
 
         return new HorizontalLayout(save, delete, close);
@@ -86,22 +119,32 @@ public class QuestionForm extends FormLayout {
     private void validateAndSave() {
         try {
 
-            binder.writeBean(model);
-            if (model.optionsRepeated()) {
-                correctAnswerText.setErrorMessage("Варианты ответов должны быть уникальные");
-                correctAnswerText.setInvalid(true);
+            binder.writeBean(questionModel);
+            System.out.println(1);
+            if (questionModel.optionsRepeated()) {
+                answers.get(0).setErrorMessage("Варианты ответов должны быть уникальные");
+                answers.get(0).setInvalid(true);
                 throw new IllegalArgumentException("Варианты ответов не валидны");
             }
-            fireEvent(new SaveEvent(this, model));
+            if (questionModel.noCorrectOption()) {
+                answers.get(0).setErrorMessage("Не указан верный ответ");
+                answers.get(0).setInvalid(true);
+                throw new IllegalArgumentException("Не выбран верны ответ");
+            }
+            fireEvent(new SaveEvent(this, questionModel));
         } catch (ValidationException | IllegalArgumentException e) {
             log.warn("Question form contains errors. {}", e.getMessage());
         }
     }
 
 
-    public void setQuestion(FourAnswersQuestionBindingModel fourAnswersQuestionBindingModel) {
-        this.model = fourAnswersQuestionBindingModel;
-        binder.readBean(fourAnswersQuestionBindingModel);
+    public void setQuestion(FourAnswersQuestionBindingModel model) {
+        this.questionModel = model;
+        if (model != null) {
+            configureAnswerInputs();
+        }
+        binder.readBean(model);
+        System.out.println(1);
     }
 
     public void setCategoryList(List<QuestionCategoryEntity> entities) {

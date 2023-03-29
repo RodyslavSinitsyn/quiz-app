@@ -12,9 +12,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 import lombok.EqualsAndHashCode;
@@ -48,7 +49,8 @@ public class QuestionEntity {
     @JoinColumn(name = "categoryId", referencedColumnName = "id")
     private QuestionCategoryEntity category;
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<AnswerEntity> answers = new HashSet<>();
+    @OrderBy("number")
+    private Set<AnswerEntity> answers = new LinkedHashSet<>();
 
     public void addAnswer(AnswerEntity answerEntity) {
         answerEntity.setQuestion(this);

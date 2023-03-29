@@ -154,6 +154,7 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
         questions.setId("questions-list-box");
         questions.addClassNames(LumoUtility.Margin.MEDIUM);
         questions.setRenderer(createQuestionRowComponent());
+
         questions.addSelectionListener(event -> {
             selectAllCheckbox.setValue(
                     event.getValue().size() == quizQuestionModelList.size());
@@ -185,6 +186,14 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
             Span spanText = new Span(question.getText());
             spanText.addClassNames(LumoUtility.FontWeight.MEDIUM);
             row.add(spanText);
+
+//            Checkbox disableOptionsCheckbox = new Checkbox(false);
+//            disableOptionsCheckbox.addClassNames(LumoUtility.AlignSelf.END);
+//            disableOptionsCheckbox.addValueChangeListener(event -> {
+//                question.setOptionsEnabled(event.getValue());
+//            });
+//            row.add(disableOptionsCheckbox);
+
             return row;
         });
     }

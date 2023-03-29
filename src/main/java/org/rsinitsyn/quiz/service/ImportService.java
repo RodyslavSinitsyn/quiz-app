@@ -42,10 +42,10 @@ public class ImportService {
         QuestionEntity entity = new QuestionEntity();
         entity.setText(tokens[0]);
 
-        entity.addAnswer(new AnswerEntity(tokens[1], true));
-        entity.addAnswer(new AnswerEntity(tokens[2], false));
-        entity.addAnswer(new AnswerEntity(tokens[3], false));
-        entity.addAnswer(new AnswerEntity(tokens[4], false));
+        entity.addAnswer(new AnswerEntity(tokens[1], true, 0));
+        entity.addAnswer(new AnswerEntity(tokens[2], false, 1));
+        entity.addAnswer(new AnswerEntity(tokens[3], false, 2));
+        entity.addAnswer(new AnswerEntity(tokens[4], false, 3));
         if (tokens.length > 5) {
             entity.setPhotoFilename(QuizUtils.generateFilename(tokens[5]));
             entity.setOriginalPhotoUrl(tokens[5]);

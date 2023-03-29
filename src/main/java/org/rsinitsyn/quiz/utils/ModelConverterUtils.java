@@ -1,11 +1,10 @@
 package org.rsinitsyn.quiz.utils;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
-import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
 
@@ -20,18 +19,23 @@ public class ModelConverterUtils {
         if (questionEntity == null) {
             return new FourAnswersQuestionBindingModel();
         }
-        List<AnswerEntity> answers = questionEntity.getAnswers().stream()
-                .sorted(Comparator.comparing(AnswerEntity::isCorrect, Comparator.reverseOrder()))
-                .toList();
+
+        List<FourAnswersQuestionBindingModel.AnswerBindingModel> answerBindingModels = new ArrayList<>();
+        questionEntity.getAnswers()
+                .stream()
+                .map(answerEntity ->
+                        new FourAnswersQuestionBindingModel.AnswerBindingModel(
+                                answerEntity.isCorrect(),
+                                answerEntity.getText(),
+                                answerEntity.getNumber()))
+                .forEach(answerBindingModels::add);
+
         return new FourAnswersQuestionBindingModel(
                 questionEntity.getId().toString(),
                 questionEntity.getText(),
+                answerBindingModels,
                 questionEntity.getCategory().getName(),
                 questionEntity.getCreatedBy(),
-                answers.get(0).getText(),
-                answers.get(1).getText(),
-                answers.get(2).getText(),
-                answers.get(3).getText(),
                 questionEntity.getOriginalPhotoUrl());
     }
 }

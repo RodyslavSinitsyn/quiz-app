@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -131,6 +132,7 @@ public class QuestionService {
                             .answers(toQuizAnswerModel(question.getAnswers()))
                             .photoFilename(question.getPhotoFilename())
                             .playersAnswersHistory(answerHistoryMap)
+                            .optionsEnabled(true)
                             .build();
                 })
                 .toList();
@@ -191,22 +193,27 @@ public class QuestionService {
             entity.setCreationDate(LocalDateTime.now());
             entity.setCreatedBy(QuizUtils.getLoggedUser());
         }
-
         entity.setText(model.getText());
 
-        entity.addAnswer(createAnswerEntity(model.getCorrectAnswerText(), true));
-        entity.addAnswer(createAnswerEntity(model.getSecondOptionAnswerText(), false));
-        entity.addAnswer(createAnswerEntity(model.getThirdOptionAnswerText(), false));
-        entity.addAnswer(createAnswerEntity(model.getFourthOptionAnswerText(), false));
+        AtomicInteger number = new AtomicInteger(0);
+        model.getAnswers().forEach(answerBindingModel -> {
+            entity.addAnswer(createAnswerEntity(answerBindingModel.getText(),
+                    answerBindingModel.isCorrect(),
+                    number.getAndIncrement()));
+        });
 
         if (StringUtils.isNotBlank(model.getPhotoLocation())) {
-            entity.setType(QuestionType.TEXT);
             entity.setOriginalPhotoUrl(model.getPhotoLocation());
             entity.setPhotoFilename(QuizUtils.generateFilename(model.getPhotoLocation()));
         } else {
-            entity.setType(QuestionType.TEXT);
             entity.setPhotoFilename(null);
             entity.setOriginalPhotoUrl(null);
+        }
+
+        if (model.hasMultiCorrectOptions()) {
+            entity.setType(QuestionType.MULTI);
+        } else {
+            entity.setType(QuestionType.TEXT);
         }
 
         questionCategoryDao.findByName(model.getCategory())
@@ -216,7 +223,6 @@ public class QuestionService {
                             QuestionCategoryEntity defaultCategory = getOrCreateDefaultCategory();
                             entity.setCategory(defaultCategory);
                         });
-
         return entity;
     }
 
@@ -226,10 +232,11 @@ public class QuestionService {
         }
     }
 
-    private AnswerEntity createAnswerEntity(String text, boolean correct) {
+    private AnswerEntity createAnswerEntity(String text, boolean correct, int number) {
         AnswerEntity answerEntity = new AnswerEntity();
         answerEntity.setText(text);
         answerEntity.setCorrect(correct);
+        answerEntity.setNumber(number);
         return answerEntity;
     }
 }

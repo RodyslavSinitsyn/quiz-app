@@ -117,6 +117,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         Paragraph paragraph = new Paragraph();
         paragraph.addClassNames(LumoUtility.AlignSelf.CENTER);
         paragraph.setText(questionModel.getText());
+        paragraph.getStyle().set("white-space", "pre-line");
 
         if (StringUtils.isNotEmpty(questionModel.getPhotoFilename())) {
             Image image = new Image();

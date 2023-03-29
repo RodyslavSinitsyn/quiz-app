@@ -147,6 +147,7 @@ public class QuestionsListPage extends VerticalLayout {
                 questionService.findAllCategories(),
                 userService.findAllOrderByVisitDateDesc());
         form.setWidth("30em");
+        form.setHeightFull();
         form.addListener(QuestionForm.SaveEvent.class, event -> {
             questionService.saveOrUpdate(event.getQuestion());
             updateList();

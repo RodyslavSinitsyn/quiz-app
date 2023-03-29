@@ -1,8 +1,10 @@
 package org.rsinitsyn.quiz.model;
 
 import jakarta.validation.constraints.NotBlank;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,7 +16,6 @@ import org.rsinitsyn.quiz.validator.PhotoUrlValid;
  */
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class FourAnswersQuestionBindingModel {
     public static final int TEXT_LENGTH_LIMIT = 1000;
     private String id;
@@ -23,28 +24,53 @@ public class FourAnswersQuestionBindingModel {
     private String text;
     private String category;
     private String author;
-    @NotBlank
-    @Length(min = 1, max = 100)
-    private String correctAnswerText;
-    @NotBlank
-    @Length(min = 1, max = 100)
-    private String secondOptionAnswerText;
-    @NotBlank
-    @Length(min = 1, max = 100)
-    private String thirdOptionAnswerText;
-    @NotBlank
-    @Length(min = 1, max = 255)
-    private String fourthOptionAnswerText;
     @Length(max = 1000)
     @PhotoUrlValid
     private String photoLocation;
+    private List<AnswerBindingModel> answers = new ArrayList<>();
+
+    public void initWith4Answers() {
+        IntStream.range(0, 4)
+                .mapToObj(index -> new AnswerBindingModel(index == 0, "", index))
+                .forEach(answerBindingModel -> answers.add(answerBindingModel));
+    }
+
 
     public boolean optionsRepeated() {
-        Set<String> options = new HashSet<>();
-        options.add(correctAnswerText);
-        options.add(secondOptionAnswerText);
-        options.add(thirdOptionAnswerText);
-        options.add(fourthOptionAnswerText);
-        return options.size() != 4;
+        return answers.size()
+                != answers.stream().map(AnswerBindingModel::getText).collect(Collectors.toSet()).size();
+    }
+
+    public boolean noCorrectOption() {
+        return answers.stream().noneMatch(FourAnswersQuestionBindingModel.AnswerBindingModel::isCorrect);
+    }
+
+    public boolean hasMultiCorrectOptions() {
+        return answers.stream().filter(AnswerBindingModel::isCorrect)
+                .count() > 1;
+    }
+
+    public FourAnswersQuestionBindingModel(String id,
+                                           String text,
+                                           List<AnswerBindingModel> answers,
+                                           String category,
+                                           String author,
+                                           String photoLocation) {
+        this.id = id;
+        this.text = text;
+        this.answers = answers;
+        this.category = category;
+        this.author = author;
+        this.photoLocation = photoLocation;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class AnswerBindingModel {
+        private boolean correct;
+        @NotBlank
+        @Length(min = 1, max = 255)
+        private String text;
+        private int index;
     }
 }

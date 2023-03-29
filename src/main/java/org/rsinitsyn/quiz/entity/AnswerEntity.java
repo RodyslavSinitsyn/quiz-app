@@ -32,12 +32,14 @@ public class AnswerEntity {
     @Column(nullable = false)
     private String text;
     private boolean correct;
+    private int number;
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "questionId", referencedColumnName = "id")
     private QuestionEntity question;
 
-    public AnswerEntity(String text, boolean correct) {
+    public AnswerEntity(String text, boolean correct, int number) {
         this.text = text;
         this.correct = correct;
+        this.number = number;
     }
 }
