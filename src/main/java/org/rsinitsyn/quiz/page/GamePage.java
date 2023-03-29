@@ -9,6 +9,7 @@ import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
@@ -16,6 +17,7 @@ import org.rsinitsyn.quiz.component.QuizGamePlayBoardComponent;
 import org.rsinitsyn.quiz.component.QuizGameResultComponent;
 import org.rsinitsyn.quiz.component.QuizGameSettingsComponent;
 import org.rsinitsyn.quiz.entity.GameStatus;
+import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
@@ -83,10 +85,11 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
     }
 
     private void configureGameSettingsComponent() {
+        List<UserEntity> playerList = userService.findAllExceptCurrent();
         quizGameSettingsComponent = new QuizGameSettingsComponent(
                 gameId,
-                ModelConverterUtils.toQuizQuestionModels(questionService.findAllByCurrentUser()),
-                userService.findAllExceptLogged());
+                questionService.findAllByCurrentUserAsModel(playerList),
+                playerList);
 
         quizGameSettingsComponent.addListener(QuizGameSettingsComponent.StartGameEvent.class, event -> {
             gameService.updateBeforeStart(gameId, event.getModel());
@@ -107,7 +110,10 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
     private void createGameIfNotExists() {
         boolean gameCreated = gameService.createIfNotExists(gameId);
         if (!gameCreated) {
-            Notification notification = Notification.show("Нет возможности продолжить созданную игру. Создайте новую игру!", 3_000, Notification.Position.MIDDLE);
+            Notification notification =
+                    Notification.show("Нет возможности продолжить созданную игру. Создайте новую игру!",
+                            3_000,
+                            Notification.Position.TOP_CENTER);
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
             removeAll();
             getUI().ifPresent(ui -> ui.navigate(GamePage.class, UUID.randomUUID().toString()));

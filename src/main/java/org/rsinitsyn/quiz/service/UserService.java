@@ -36,7 +36,7 @@ public class UserService {
                 .toList();
     }
 
-    public List<UserEntity> findAllExceptLogged() {
+    public List<UserEntity> findAllExceptCurrent() {
         return findAllOrderByVisitDateDesc()
                 .stream()
                 .filter(userEntity -> !userEntity.getUsername().equals(QuizUtils.getLoggedUser()))

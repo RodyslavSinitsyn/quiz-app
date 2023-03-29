@@ -25,6 +25,7 @@ public class QuizGameStateModel {
     private String playerName = "Test";
     private boolean answerOptionsEnabled;
     private boolean timerEnabled;
+    private boolean hintsEnabled;
     private Set<QuizQuestionModel> questions = new HashSet<>();
 
     // state props
@@ -33,6 +34,8 @@ public class QuizGameStateModel {
     private GameStatus status;
     private int result = 0;
     private int currentQuestionNumber = 0;
+    private boolean halfHintUsed = false;
+    private boolean threeLeftHintUsed = false;
 
     public QuizQuestionModel getNextQuestion() {
         return getByIndex(currentQuestionNumber++);

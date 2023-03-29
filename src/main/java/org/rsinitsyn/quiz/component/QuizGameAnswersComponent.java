@@ -6,23 +6,22 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import lombok.Getter;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
 
 public class QuizGameAnswersComponent extends VerticalLayout {
 
-    private Set<QuizQuestionModel.QuizAnswerModel> answerSet;
+    private List<QuizQuestionModel.QuizAnswerModel> answerList;
 
-    public QuizGameAnswersComponent(Set<QuizQuestionModel.QuizAnswerModel> answerSet) {
-        this.answerSet = answerSet;
-        List<QuizQuestionModel.QuizAnswerModel> answerList = new ArrayList<>(answerSet);
-        Collections.shuffle(answerList);
-        answerList.forEach(quizAnswerModel -> add(createAnswerButton(quizAnswerModel)));
+    public QuizGameAnswersComponent(List<QuizQuestionModel.QuizAnswerModel> answerList) {
+        this.answerList = answerList;
+        renderAnswers();
         setAlignItems(Alignment.STRETCH);
+    }
+
+    private void renderAnswers() {
+        answerList.forEach(quizAnswerModel -> add(createAnswerButton(quizAnswerModel)));
     }
 
     private Button createAnswerButton(QuizQuestionModel.QuizAnswerModel answer) {
@@ -33,6 +32,15 @@ public class QuizGameAnswersComponent extends VerticalLayout {
             fireEvent(new AnswerChoosenEvent(this, answer));
         });
         return button;
+    }
+
+    public void removeWrongAnswersAndRerender(int answersToRemove) {
+        removeAll();
+        answerList.removeAll(answerList.stream()
+                .filter(answerModel -> !answerModel.isCorrect())
+                .limit(answersToRemove)
+                .toList());
+        renderAnswers();
     }
 
     @Getter

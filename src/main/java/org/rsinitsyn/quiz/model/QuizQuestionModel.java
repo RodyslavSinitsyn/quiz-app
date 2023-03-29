@@ -2,35 +2,41 @@ package org.rsinitsyn.quiz.model;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 
 @Data
-@NoArgsConstructor
+@Builder
 public class QuizQuestionModel {
     private UUID id;
     private String text;
     private QuestionType type;
     private String photoFilename;
     private String categoryName;
-    private Set<QuizAnswerModel> answers = new HashSet<>();
+    private Map<String, AnswerHistory> playersAnswersHistory;
+    private Set<QuizAnswerModel> answers;
+    private boolean optionsEnabled = true;
 
+    @Setter(AccessLevel.NONE)
     private InputStream photoInputStream;
 
-    public QuizQuestionModel(UUID id, String text, QuestionType type, String photoFilename, String categoryName, Set<QuizAnswerModel> answers) {
-        this.id = id;
-        this.text = text;
-        this.type = type;
-        this.photoFilename = photoFilename;
-        this.categoryName = categoryName;
-        this.answers = answers;
+    public List<QuizAnswerModel> getShuffledAnswers() {
+        List<QuizQuestionModel.QuizAnswerModel> answerList = new ArrayList<>(answers);
+        Collections.shuffle(answerList);
+        return answerList;
     }
 
     @SneakyThrows
