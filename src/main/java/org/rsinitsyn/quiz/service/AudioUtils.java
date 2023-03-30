@@ -6,7 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.Player;
 
-public class AudioService {
+public class AudioUtils {
 
     private static final String AUDIO_FILES_FOLDER = "audio/";
 

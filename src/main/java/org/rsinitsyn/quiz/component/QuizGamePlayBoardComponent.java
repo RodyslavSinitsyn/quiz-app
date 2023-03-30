@@ -27,7 +27,7 @@ import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
-import org.rsinitsyn.quiz.service.AudioService;
+import org.rsinitsyn.quiz.service.AudioUtils;
 
 public class QuizGamePlayBoardComponent extends VerticalLayout implements BeforeLeaveObserver {
 
@@ -157,10 +157,10 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         NotificationVariant variant;
         if (correct) {
             gameState.getCorrect().add(currQuestion);
-            new AudioService().playSoundAsync("correct-answer-1.mp3");
+            new AudioUtils().playSoundAsync("correct-answer-1.mp3");
             variant = NotificationVariant.LUMO_SUCCESS;
         } else {
-            new AudioService().playSoundAsync("wrong-answer-1.mp3");
+            new AudioUtils().playSoundAsync("wrong-answer-1.mp3");
             variant = NotificationVariant.LUMO_ERROR;
         }
         String notifyText = correct ? "Правильный ответ!" : "Неверно...";

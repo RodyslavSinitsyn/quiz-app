@@ -4,3 +4,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: false
+    show-sql: true
+
+quiz:
+  profiling: false
