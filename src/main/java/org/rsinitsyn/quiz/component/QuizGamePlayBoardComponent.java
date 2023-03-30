@@ -153,7 +153,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     }
 
     private void validateAnswer(Set<QuizQuestionModel.QuizAnswerModel> answerModels) {
-        boolean correct = answerModels.stream().allMatch(QuizQuestionModel.QuizAnswerModel::isCorrect);
+        boolean correct = currQuestion.areAnswersCorrect(answerModels);
         NotificationVariant variant;
         if (correct) {
             gameState.getCorrect().add(currQuestion);

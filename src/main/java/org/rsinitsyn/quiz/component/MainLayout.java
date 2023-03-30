@@ -8,12 +8,14 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.dom.Element;
 import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
@@ -85,12 +87,14 @@ public class MainLayout extends AppLayout {
         warningMessageAboutLogin.addClassNames(LumoUtility.TextColor.ERROR);
 
         loginButton.setText("Войти");
+        loginButton.setIcon(VaadinIcon.SIGN_IN.create());
         loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         loginButton.addClickListener(event -> {
             dialog.open();
         });
 
         exitButton.setText("Выйти");
+        exitButton.setIcon(VaadinIcon.SIGN_OUT.create());
         exitButton.addClickListener(event -> {
             renderAfterLogout();
             VaadinSession.getCurrent().close();

@@ -14,13 +14,18 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
+import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.rsinitsyn.quiz.entity.AnswerEntity;
 
 @UtilityClass
 public class QuizUtils {
@@ -101,4 +106,25 @@ public class QuizUtils {
     public void sleep(int sec) {
         TimeUnit.SECONDS.sleep(sec);
     }
+//
+//    // todo temp
+//    private void exportCode() {
+//        String res = questionService.findAll().stream().
+//                map(entity -> {
+//                    List<AnswerEntity> answers = entity.getAnswers().stream()
+//                            .sorted(Comparator.comparing(AnswerEntity::isCorrect, Comparator.reverseOrder()))
+//                            .toList();
+//                    StringJoiner joiner = new StringJoiner("|")
+//                            .add(entity.getText())
+//                            .add(answers.get(0).isCorrect() ? "_" + answers.get(0).getText() : answers.get(0).getText())
+//                            .add(answers.get(1).isCorrect() ? "_" + answers.get(1).getText() : answers.get(1).getText())
+//                            .add(answers.get(2).isCorrect() ? "_" + answers.get(2).getText() : answers.get(2).getText())
+//                            .add(answers.get(3).isCorrect() ? "_" + answers.get(3).getText() : answers.get(3).getText());
+//                    if (StringUtils.isNotEmpty(entity.getOriginalPhotoUrl())) {
+//                        joiner.add(entity.getOriginalPhotoUrl());
+//                    }
+//                    return joiner.toString();
+//                })
+//                .collect(Collectors.joining("\n"));
+//    }
 }

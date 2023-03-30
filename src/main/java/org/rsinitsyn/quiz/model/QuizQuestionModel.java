@@ -39,6 +39,13 @@ public class QuizQuestionModel {
         return answerList;
     }
 
+    public boolean areAnswersCorrect(Set<QuizAnswerModel> userAnswers) {
+        long correctAnswersCount = this.answers.stream().filter(QuizAnswerModel::isCorrect).count();
+        long userCorrectAnswersCount = userAnswers.stream().filter(QuizAnswerModel::isCorrect).count();
+        boolean userHasOnlyCorrectAnswers = userCorrectAnswersCount == userAnswers.size();
+        return userHasOnlyCorrectAnswers && correctAnswersCount == userCorrectAnswersCount;
+    }
+
     @SneakyThrows
     public InputStream openStream() {
         closePhotoStream();

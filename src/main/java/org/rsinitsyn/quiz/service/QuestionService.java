@@ -241,4 +241,8 @@ public class QuestionService {
         answerEntity.setNumber(number);
         return answerEntity;
     }
+
+    public void deleteAll(Collection<QuestionEntity> questions) {
+        questionDao.deleteAll(questions);
+    }
 }

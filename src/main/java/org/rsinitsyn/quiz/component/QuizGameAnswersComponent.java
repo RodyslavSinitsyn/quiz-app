@@ -37,16 +37,16 @@ public class QuizGameAnswersComponent extends VerticalLayout {
     private void renderAnswers() {
         if (questionType.equals(QuestionType.TEXT)) {
             answerListBox.setItems(answerList);
-            answerListBox.addValueChangeListener(event -> {
-                fireEvent(new AnswerChoosenEvent(this, Collections.singleton(event.getValue())));
-            });
             answerListBox.setRenderer(new ComponentRenderer<Component, QuizQuestionModel.QuizAnswerModel>(
-                    this::createAnswerButton
+                    answerModel -> createAnswerButton(answerModel, true)
             ));
             add(answerListBox);
         } else if (questionType.equals(QuestionType.MULTI)) {
             multiAnswerListBox.setItems(answerList);
-            multiAnswerListBox.setRenderer(new ComponentRenderer<Component, QuizQuestionModel.QuizAnswerModel>(this::createAnswerButton));
+            multiAnswerListBox.setRenderer(
+                    new ComponentRenderer<Component, QuizQuestionModel.QuizAnswerModel>(
+                            answerModel -> createAnswerButton(answerModel, false)
+                    ));
 
             var submitButton = new Button();
             submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -58,10 +58,13 @@ public class QuizGameAnswersComponent extends VerticalLayout {
         }
     }
 
-    private Button createAnswerButton(QuizQuestionModel.QuizAnswerModel answer) {
+    private Button createAnswerButton(QuizQuestionModel.QuizAnswerModel answer, boolean withHandler) {
         var button = new Button(answer.getText());
         button.addClassNames(LumoUtility.FontSize.XLARGE,
                 LumoUtility.FontWeight.BOLD);
+        if (withHandler) {
+            button.addClickListener(event -> fireEvent(new AnswerChoosenEvent(this, Collections.singleton(answer))));
+        }
         button.setWidthFull();
         return button;
     }

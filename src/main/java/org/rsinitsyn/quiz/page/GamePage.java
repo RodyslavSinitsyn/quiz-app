@@ -72,7 +72,7 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
         });
         quizGamePlayBoardComponent.addListener(QuizGamePlayBoardComponent.SubmitAnswerEvent.class, event -> {
             gameService.submitAnswers(gameId,
-                    event.getQuestion().getId().toString(),
+                    event.getQuestion(),
                     event.getAnswer());
         });
         return quizGamePlayBoardComponent;

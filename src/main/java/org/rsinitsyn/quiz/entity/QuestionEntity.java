@@ -15,6 +15,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -30,7 +31,7 @@ import lombok.ToString;
 @Setter
 @NoArgsConstructor
 @EqualsAndHashCode(of = {"id"})
-@ToString(exclude = "answers")
+@ToString(exclude = {"answers", "gameQuestions"})
 public class QuestionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -51,6 +52,9 @@ public class QuestionEntity {
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("number")
     private Set<AnswerEntity> answers = new LinkedHashSet<>();
+    @OneToMany(mappedBy = "question", fetch = FetchType.EAGER)
+    @OrderBy(value = "orderNumber")
+    private Set<GameQuestionEntity> gameQuestions = new HashSet<>();
 
     public void addAnswer(AnswerEntity answerEntity) {
         answerEntity.setQuestion(this);

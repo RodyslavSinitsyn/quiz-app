@@ -38,11 +38,11 @@ public class GameService {
 
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public void submitAnswers(String gameId, String questionId, Set<QuizQuestionModel.QuizAnswerModel> answerModel) {
+    public void submitAnswers(String gameId, QuizQuestionModel questionModel, Set<QuizQuestionModel.QuizAnswerModel> answerModels) {
         var primaryKey = new GameQuestionPrimaryKey(
-                UUID.fromString(gameId), UUID.fromString(questionId));
+                UUID.fromString(gameId), questionModel.getId());
         GameQuestionEntity gameQuestionEntity = gameQuestionDao.findById(primaryKey).orElseThrow();
-        gameQuestionEntity.setAnswered(answerModel.stream().allMatch(QuizQuestionModel.QuizAnswerModel::isCorrect));
+        gameQuestionEntity.setAnswered(questionModel.areAnswersCorrect(answerModels));
     }
 
     public boolean createIfNotExists(String id) {

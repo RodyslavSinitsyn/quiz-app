@@ -3,13 +3,17 @@ package org.rsinitsyn.quiz.page;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -51,7 +55,8 @@ public class QuestionsListPage extends VerticalLayout {
 
     private Grid<QuestionEntity> grid;
     private TextField filterText = new TextField();
-    private MultiSelectComboBox<QuestionCategoryEntity> categoryComboBox = new MultiSelectComboBox<>();
+    private MultiSelectComboBox<QuestionCategoryEntity> categoryFilter = new MultiSelectComboBox<>();
+    private HorizontalLayout groupedOperations = new HorizontalLayout();
     private Dialog formDialog;
     private QuestionForm form;
     private QuestionCategoryForm categoryForm;
@@ -74,27 +79,6 @@ public class QuestionsListPage extends VerticalLayout {
         add(title, createToolbar(), grid);
     }
 
-    // todo temp
-    private void exportCode() {
-        String res = questionService.findAll().stream().
-                map(entity -> {
-                    List<AnswerEntity> answers = entity.getAnswers().stream()
-                            .sorted(Comparator.comparing(AnswerEntity::isCorrect, Comparator.reverseOrder()))
-                            .toList();
-                    StringJoiner joiner = new StringJoiner("|")
-                            .add(entity.getText())
-                            .add(answers.get(0).getText())
-                            .add(answers.get(1).getText())
-                            .add(answers.get(2).getText())
-                            .add(answers.get(3).getText());
-                    if (StringUtils.isNotEmpty(entity.getOriginalPhotoUrl())) {
-                        joiner.add(entity.getOriginalPhotoUrl());
-                    }
-                    return joiner.toString();
-                })
-                .collect(Collectors.joining("\n"));
-    }
-
     private void configureDialog() {
         formDialog = new Dialog();
         formDialog.close();
@@ -105,6 +89,11 @@ public class QuestionsListPage extends VerticalLayout {
         grid.setSizeFull();
         grid.addColumn(new ComponentRenderer<>(entity -> {
                     HorizontalLayout row = new HorizontalLayout();
+                    if (!entity.getGameQuestions().isEmpty()) {
+                        Icon icon = VaadinIcon.LINK.create();
+                        icon.setTooltipText("Вопрос связан с игрой и не может быть удален");
+                        row.add(icon);
+                    }
                     row.setAlignItems(FlexComponent.Alignment.CENTER);
                     if (StringUtils.isNotEmpty(entity.getPhotoFilename())) {
                         Avatar smallPhoto = new Avatar();
@@ -130,11 +119,19 @@ public class QuestionsListPage extends VerticalLayout {
                 .setHeader("Дата создания")
                 .setSortable(true)
                 .setComparator(Comparator.comparing(QuestionEntity::getCreationDate));
-        grid.asSingleSelect().addValueChangeListener(event -> {
-            editQuestion(ModelConverterUtils.toFourAnswersQuestionBindingModel(event.getValue()));
-        });
         grid.setAllRowsVisible(true);
         grid.addThemeVariants(GridVariant.LUMO_WRAP_CELL_CONTENT);
+        grid.setSelectionMode(Grid.SelectionMode.MULTI);
+        grid.addSelectionListener(event -> {
+            if (!event.isFromClient()) {
+                return;
+            }
+            groupedOperations.setVisible(event.getAllSelectedItems().size() > 1);
+        });
+        grid.addItemClickListener(event -> {
+            grid.select(event.getItem());
+            editQuestion(ModelConverterUtils.toFourAnswersQuestionBindingModel(event.getItem()));
+        });
         updateList();
     }
 
@@ -153,16 +150,19 @@ public class QuestionsListPage extends VerticalLayout {
             updateList();
             form.setQuestion(null);
             formDialog.close();
+            grid.asMultiSelect().clear();
         });
         form.addListener(QuestionForm.DeleteEvent.class, event -> {
             questionService.deleteById(event.getQuestion().getId());
             updateList();
             form.setQuestion(null);
             formDialog.close();
+            grid.asMultiSelect().clear();
         });
         form.addListener(QuestionForm.CloseEvent.class, event -> {
             form.setQuestion(null);
             formDialog.close();
+            grid.asMultiSelect().clear();
         });
         form.setQuestion(null);
     }
@@ -176,7 +176,7 @@ public class QuestionsListPage extends VerticalLayout {
             formDialog.close();
             categoryForm.setModel(null);
             categoryForm.setCategories(questionService.findAllCategories());
-            categoryComboBox.setItems(questionService.findAllCategories());
+            categoryFilter.setItems(questionService.findAllCategories());
         });
         categoryForm.addListener(QuestionCategoryForm.CloseCategoryFormEvent.class, event -> {
             categoryForm.setModel(null);
@@ -192,10 +192,10 @@ public class QuestionsListPage extends VerticalLayout {
                 updateListByFilter(entity -> entity.getText().contains(event.getValue())));
         filterText.setReadOnly(true); // TODO Back later
 
-        categoryComboBox.setPlaceholder("Выбрать тему...");
-        categoryComboBox.setItems(questionService.findAllCategories());
-        categoryComboBox.setItemLabelGenerator(item -> item.getName());
-        categoryComboBox.addSelectionListener(event -> {
+        categoryFilter.setPlaceholder("Выбрать тему...");
+        categoryFilter.setItems(questionService.findAllCategories());
+        categoryFilter.setItemLabelGenerator(item -> item.getName());
+        categoryFilter.addSelectionListener(event -> {
             if (event.getValue().isEmpty()) {
                 updateList();
             } else {
@@ -205,7 +205,7 @@ public class QuestionsListPage extends VerticalLayout {
 
         Button addQuestionButton = new Button("Создать вопрос");
         addQuestionButton.addClickListener(event -> {
-            grid.asSingleSelect().clear();
+            grid.asMultiSelect().clear();
             editQuestion(new FourAnswersQuestionBindingModel());
         });
 
@@ -226,11 +226,51 @@ public class QuestionsListPage extends VerticalLayout {
             addToDialogAndOpen(categoryForm);
         });
 
-        HorizontalLayout toolbar = new HorizontalLayout(categoryComboBox, addQuestionButton, upload, addCategoryButton);
+        configureGroupedActions();
+
+        HorizontalLayout toolbar = new HorizontalLayout(
+                categoryFilter,
+                addQuestionButton,
+                upload,
+                addCategoryButton,
+                upload,
+                groupedOperations);
         toolbar.setAlignItems(Alignment.CENTER);
         toolbar.setDefaultVerticalComponentAlignment(Alignment.CENTER);
-
         return toolbar;
+    }
+
+    private void configureGroupedActions() {
+        groupedOperations.setVisible(false);
+
+        Button deleteAllButton = new Button("Удалить");
+
+        deleteAllButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        deleteAllButton.setIcon(VaadinIcon.CLOSE_SMALL.create());
+        deleteAllButton.addClickListener(event -> {
+            ConfirmDialog groupedDeleteDialog = new ConfirmDialog();
+            groupedDeleteDialog.setCancelable(true);
+            groupedDeleteDialog.setCloseOnEsc(true);
+
+            groupedDeleteDialog.setHeader("Удалить все вопросы ниже?");
+
+            Span text = new Span(grid.getSelectedItems().stream()
+                    .map(QuestionEntity::getText)
+                    .collect(Collectors.joining(System.lineSeparator())));
+            text.getStyle().set("white-space", "pre-line");
+
+            groupedDeleteDialog.setText(text);
+
+            groupedDeleteDialog.addConfirmListener(e -> {
+                questionService.deleteAll(grid.getSelectedItems());
+                groupedDeleteDialog.close();
+                updateList();
+            });
+
+            groupedDeleteDialog.open();
+        });
+
+        groupedOperations.add(deleteAllButton);
     }
 
     private void editQuestion(FourAnswersQuestionBindingModel model) {
