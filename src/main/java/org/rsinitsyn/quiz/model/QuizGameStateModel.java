@@ -35,8 +35,10 @@ public class QuizGameStateModel {
     private GameStatus status;
     private int result = 0;
     private int currentQuestionNumber = 0;
+    // hints
     private boolean halfHintUsed = false;
     private boolean threeLeftHintUsed = false;
+    private boolean revelCountHintUsed = false;
 
     public QuizQuestionModel getNextQuestion() {
         return getByIndex(currentQuestionNumber++);

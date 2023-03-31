@@ -8,7 +8,6 @@ import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -66,11 +65,25 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     private HorizontalLayout createHintsLayout() {
         var layout = new HorizontalLayout();
 
-        if (!gameState.isHintsEnabled() || currQuestion.getType().equals(QuestionType.MULTI)) {
+        if (!gameState.isHintsEnabled()) {
             layout.setVisible(false);
             return layout;
         }
 
+        if (currQuestion.getType().equals(QuestionType.MULTI)) {
+            Button revealCountHint = new Button("Количество ответов");
+            revealCountHint.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            revealCountHint.setEnabled(!gameState.isRevelCountHintUsed());
+            revealCountHint.addClickListener(event -> {
+                revealCountHint.setText("Верных ответов: "
+                        + currQuestion.getAnswers().stream().filter(QuizQuestionModel.QuizAnswerModel::isCorrect).count());
+                revealCountHint.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
+            });
+            layout.add(revealCountHint);
+            return layout;
+        }
+
+        // For QuestionType.TEXT
         Button halfHint = new Button("50 на 50");
         halfHint.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         halfHint.addClickListener(event -> {
@@ -98,7 +111,6 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         removeAll();
         closeOpenResources();
         gameState.setStatus(GameStatus.FINISHED);
-        add(new Span("Game over!"));
         fireEvent(new FinishGameEvent(this, gameState));
     }
 
