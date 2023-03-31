@@ -13,4 +13,6 @@ public interface QuestionDao extends JpaRepository<QuestionEntity, UUID> {
     public List<QuestionEntity> findAllWithAnswers();
 
     List<QuestionEntity> findAllByCreatedBy(String createdBy);
+
+    List<QuestionEntity> findAllByIdIn(Iterable<UUID> questionIds);
 }

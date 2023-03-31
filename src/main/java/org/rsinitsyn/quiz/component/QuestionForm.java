@@ -120,7 +120,6 @@ public class QuestionForm extends FormLayout {
         try {
 
             binder.writeBean(questionModel);
-            System.out.println(1);
             if (questionModel.optionsRepeated()) {
                 answers.get(0).setErrorMessage("Варианты ответов должны быть уникальные");
                 answers.get(0).setInvalid(true);
@@ -144,7 +143,6 @@ public class QuestionForm extends FormLayout {
             configureAnswerInputs();
         }
         binder.readBean(model);
-        System.out.println(1);
     }
 
     public void setCategoryList(List<QuestionCategoryEntity> entities) {

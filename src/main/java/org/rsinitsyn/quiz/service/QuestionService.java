@@ -245,4 +245,10 @@ public class QuestionService {
     public void deleteAll(Collection<QuestionEntity> questions) {
         questionDao.deleteAll(questions);
     }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void updateCategory(Set<QuestionEntity> questions, QuestionCategoryEntity category) {
+        List<QuestionEntity> persistentQuestions = questionDao.findAllByIdIn(questions.stream().map(QuestionEntity::getId).toList());
+        persistentQuestions.forEach(entity -> entity.setCategory(category));
+    }
 }

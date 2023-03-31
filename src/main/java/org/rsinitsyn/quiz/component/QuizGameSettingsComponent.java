@@ -54,6 +54,7 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
     private Checkbox answerOptionsEnabled = new Checkbox();
     private Checkbox timerEnabled = new Checkbox();
     private Checkbox hintsEnabled = new Checkbox();
+    private Checkbox intrigueEnabled = new Checkbox();
     private MultiSelectListBox<QuizQuestionModel> questions = new MultiSelectListBox<>();
     private Binder<QuizGameStateModel> binder = new BeanValidationBinder<>(QuizGameStateModel.class);
 
@@ -89,6 +90,7 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
                 answerOptionsEnabled,
                 timerEnabled,
                 hintsEnabled,
+                intrigueEnabled,
                 new Hr(),
                 selectAllCheckbox,
                 filterAnsweredCheckbox,
@@ -128,6 +130,10 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
         hintsEnabled.setLabel("Включить подсказки");
         hintsEnabled.setTooltipText("[50 на 50], [3/4]");
         hintsEnabled.setValue(true);
+
+        intrigueEnabled.setLabel("Включить интригу");
+        intrigueEnabled.setTooltipText("Результат ответа будет отображен с задержкой, для интриги");
+        intrigueEnabled.setValue(false);
 
         filterAnsweredCheckbox.setLabel("Скрыть пройденые вопросы");
         filterAnsweredCheckbox.setValue(false);

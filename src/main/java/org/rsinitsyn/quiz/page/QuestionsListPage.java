@@ -17,6 +17,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
@@ -27,8 +28,6 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import java.io.InputStream;
 import java.util.Comparator;
-import java.util.List;
-import java.util.StringJoiner;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +35,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.QuestionCategoryForm;
 import org.rsinitsyn.quiz.component.QuestionForm;
-import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
@@ -244,33 +242,53 @@ public class QuestionsListPage extends VerticalLayout {
         groupedOperations.setVisible(false);
 
         Button deleteAllButton = new Button("Удалить");
-
         deleteAllButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
         deleteAllButton.setIcon(VaadinIcon.CLOSE_SMALL.create());
         deleteAllButton.addClickListener(event -> {
-            ConfirmDialog groupedDeleteDialog = new ConfirmDialog();
-            groupedDeleteDialog.setCancelable(true);
-            groupedDeleteDialog.setCloseOnEsc(true);
-
-            groupedDeleteDialog.setHeader("Удалить все вопросы ниже?");
-
+            ConfirmDialog dialog = new ConfirmDialog();
+            dialog.setCancelable(true);
+            dialog.setCloseOnEsc(true);
+            dialog.setHeader("Удалить все вопросы ниже?");
             Span text = new Span(grid.getSelectedItems().stream()
                     .map(QuestionEntity::getText)
                     .collect(Collectors.joining(System.lineSeparator())));
             text.getStyle().set("white-space", "pre-line");
-
-            groupedDeleteDialog.setText(text);
-
-            groupedDeleteDialog.addConfirmListener(e -> {
+            dialog.setText(text);
+            dialog.addConfirmListener(e -> {
                 questionService.deleteAll(grid.getSelectedItems());
-                groupedDeleteDialog.close();
+                dialog.close();
+                grid.asMultiSelect().deselectAll();
                 updateList();
             });
-
-            groupedDeleteDialog.open();
+            dialog.open();
         });
 
-        groupedOperations.add(deleteAllButton);
+        Button updateCategoryButton = new Button("Обновить категорию");
+        updateCategoryButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        updateCategoryButton.setIcon(VaadinIcon.EDIT.create());
+        updateCategoryButton.addClickListener(event -> {
+            ConfirmDialog dialog = new ConfirmDialog();
+            dialog.setCancelable(true);
+            dialog.setCloseOnEsc(true);
+            dialog.setHeader("Выберите тему");
+
+            Select<QuestionCategoryEntity> select = new Select<>();
+            select.setPlaceholder("Тема");
+            select.setItems(questionService.findAllCategories());
+            select.setRenderer(new ComponentRenderer<Component, QuestionCategoryEntity>(
+                    category -> new Span(category.getName())));
+
+            dialog.add(select);
+            dialog.addConfirmListener(e -> {
+                questionService.updateCategory(grid.getSelectedItems(), select.getValue());
+                dialog.close();
+                grid.asMultiSelect().deselectAll();
+                updateList();
+            });
+            dialog.open();
+        });
+
+        groupedOperations.add(deleteAllButton, updateCategoryButton);
     }
 
     private void editQuestion(FourAnswersQuestionBindingModel model) {

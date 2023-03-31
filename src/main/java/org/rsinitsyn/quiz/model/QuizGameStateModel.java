@@ -26,6 +26,7 @@ public class QuizGameStateModel {
     private boolean answerOptionsEnabled;
     private boolean timerEnabled;
     private boolean hintsEnabled;
+    private boolean intrigueEnabled;
     private Set<QuizQuestionModel> questions = new HashSet<>();
 
     // state props

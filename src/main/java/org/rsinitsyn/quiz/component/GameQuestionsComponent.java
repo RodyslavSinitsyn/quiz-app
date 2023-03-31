@@ -5,6 +5,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.Optional;
 import org.rsinitsyn.quiz.entity.GameEntity;
 
@@ -34,8 +35,10 @@ public class GameQuestionsComponent extends VerticalLayout {
                 answerSpan = new Span(VaadinIcon.CLOSE_SMALL.create());
                 answerSpan.getElement().getThemeList().add("badge error");
             }
+            Span categoryName = new Span(question.getQuestion().getCategory().getName());
+            categoryName.addClassNames(LumoUtility.FontSize.XXSMALL, LumoUtility.FontWeight.EXTRALIGHT);
 
-            column.add(answerSpan, text);
+            column.add(answerSpan, text, categoryName);
             add(column);
             Optional.ofNullable(rowSeparator).ifPresent(this::add);
         });

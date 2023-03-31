@@ -2,12 +2,21 @@ package org.rsinitsyn.quiz.component;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.theme.lumo.LumoUtility;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.rsinitsyn.quiz.entity.GameEntity;
+import org.rsinitsyn.quiz.entity.GameQuestionEntity;
 import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.rsinitsyn.quiz.page.NewGamePage;
 
@@ -21,6 +30,7 @@ public class QuizGameResultComponent extends VerticalLayout {
     private H4 resultPercent = new H4();
     private H4 resultCount = new H4();
     private H4 reaction = new H4();
+    private Grid<CategoryResultDto> categoryDetailsGrid = new Grid<>(CategoryResultDto.class, false);
     private GameQuestionsComponent gameQuestionsComponent;
     private Button newGameButton = new Button("Новая игра");
 
@@ -29,8 +39,32 @@ public class QuizGameResultComponent extends VerticalLayout {
         this.gameState = gameState;
         this.gameEntity = gameEntity;
         configureComponents();
+        configureGrid();
         configureGameListComponent();
-        add(title, resultCount, resultPercent, reaction, gameQuestionsComponent, newGameButton);
+        add(title, resultCount, resultPercent, reaction, categoryDetailsGrid, gameQuestionsComponent, newGameButton);
+    }
+
+    private void configureGrid() {
+        List<CategoryResultDto> gridItems = gameEntity.getGameQuestions()
+                .stream()
+                .collect(Collectors.groupingBy(gqe -> gqe.getQuestion().getCategory().getName()))
+                .entrySet()
+                .stream()
+                .map(entry -> new CategoryResultDto(
+                        entry.getKey(),
+                        (int) entry.getValue().stream().filter(GameQuestionEntity::getAnswered).count(),
+                        entry.getValue().size()))
+                .sorted(Comparator.comparing(CategoryResultDto::getAnswersRate, Comparator.reverseOrder()))
+                .toList();
+
+        categoryDetailsGrid.addThemeVariants(GridVariant.LUMO_COMPACT);
+        categoryDetailsGrid.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.FontWeight.BOLD);
+        categoryDetailsGrid.setWidth("30em");
+        categoryDetailsGrid.setAllRowsVisible(true);
+        categoryDetailsGrid.setItems(gridItems);
+        categoryDetailsGrid.addColumn(CategoryResultDto::getCategoryName).setHeader("Категория").setFlexGrow(2);
+        categoryDetailsGrid.addColumn(dto -> dto.getCorrectAnswersCount() + "/" + dto.getTotalAnswersCount()).setHeader("Ответы");
+        categoryDetailsGrid.addColumn(dto -> dto.getAnswersRate() + "%").setHeader("Процент");
     }
 
     private void configureGameListComponent() {
@@ -66,5 +100,17 @@ public class QuizGameResultComponent extends VerticalLayout {
             reaction = "Ты полное днище :))))00))";
         }
         return reaction;
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class CategoryResultDto {
+        private String categoryName;
+        private int correctAnswersCount;
+        private int totalAnswersCount;
+
+        public int getAnswersRate() {
+            return (correctAnswersCount * 100 / totalAnswersCount);
+        }
     }
 }

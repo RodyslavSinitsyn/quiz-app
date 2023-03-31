@@ -27,7 +27,7 @@ import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
-import org.rsinitsyn.quiz.service.AudioUtils;
+import org.rsinitsyn.quiz.utils.AudioUtils;
 
 public class QuizGamePlayBoardComponent extends VerticalLayout implements BeforeLeaveObserver {
 
@@ -52,13 +52,15 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
             return;
         }
         removeAll();
-        questionLayout = createQuestionLayour(currQuestion);
+        questionLayout = createQuestionLayout();
         hintsLayout = createHintsLayout();
         answersComponent = createAnswersComponent();
         progressBarLabel = createProgressBarLabel();
         progressBar = createProgressBar();
 
         add(questionLayout, hintsLayout, answersComponent, progressBarLabel, progressBar);
+
+        setPadding(false);
     }
 
     private HorizontalLayout createHintsLayout() {
@@ -103,29 +105,71 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     private QuizGameAnswersComponent createAnswersComponent() {
         var answersComponent = new QuizGameAnswersComponent(currQuestion.getShuffledAnswers(), currQuestion.getType());
         answersComponent.addListener(QuizGameAnswersComponent.AnswerChoosenEvent.class, event -> {
-            validateAnswer(event.getAnswer());
-            fireEvent(new SubmitAnswerEvent(this, currQuestion, event.getAnswer()));
-            renderQuestion();
+            if (!gameState.isIntrigueEnabled()) {
+                submitAnswer(event.getAnswers());
+                return;
+            }
+            setEnabled(false);
+            Notification notification = Notification.show("Ответ принят...", 3_000, Notification.Position.TOP_STRETCH);
+            notification.addThemeVariants(NotificationVariant.LUMO_CONTRAST);
+            AudioUtils.playSoundAsync("submit-answer-1.mp3")
+                    .thenRun(() -> {
+                        getUI().ifPresent(ui -> {
+                            ui.access(() -> {
+                                submitAnswer(event.getAnswers());
+                            });
+                        });
+                    });
         });
         return answersComponent;
     }
 
+    private void submitAnswer(Set<QuizQuestionModel.QuizAnswerModel> answers) {
+        setEnabled(true);
+        validateAnswer(answers);
+        fireEvent(new SubmitAnswerEvent(this, currQuestion, answers));
+        renderQuestion();
+    }
+
     @SneakyThrows
-    private VerticalLayout createQuestionLayour(QuizQuestionModel questionModel) {
+    private VerticalLayout createQuestionLayout() {
         VerticalLayout layout = new VerticalLayout();
+        layout.setSpacing(false);
+        layout.setPadding(false);
 
         Paragraph paragraph = new Paragraph();
         paragraph.addClassNames(LumoUtility.AlignSelf.CENTER);
-        paragraph.setText(questionModel.getText());
+        paragraph.setText(currQuestion.getText());
         paragraph.getStyle().set("white-space", "pre-line");
 
-        if (StringUtils.isNotEmpty(questionModel.getPhotoFilename())) {
+        if (StringUtils.isNotEmpty(currQuestion.getPhotoFilename())) {
             Image image = new Image();
             image.addClassNames(LumoUtility.AlignSelf.CENTER);
             image.setSrc(new StreamResource(
-                    questionModel.getPhotoFilename(),
-                    () -> questionModel.openStream()));
-            image.setWidth("20em");
+                    currQuestion.getPhotoFilename(),
+                    () -> currQuestion.openStream()));
+            image.setMaxHeight("25em");
+//            image.addClickListener(event -> {
+//                ConfirmDialog dialog = new ConfirmDialog();
+//                dialog.setSizeFull();
+//                dialog.setCancelable(false);
+//                dialog.setRejectable(false);
+//                dialog.setCloseOnEsc(true);
+//                dialog.setConfirmText("...");
+//                dialog.addCancelListener(e -> {
+//                    e.getSource().close();
+//                    e.getSource().remove(image);
+//                    image.setWidth("25em");
+//                    layout.addComponentAsFirst(image);
+//                });
+//                image.setHeightFull();
+//                image.setWidth("auto");
+//                image.setMaxHeight("100%");
+//                image.setMaxWidth("100%");
+//                dialog.add(image);
+//                dialog.setSizeUndefined();
+//                dialog.open();
+//            });
             layout.add(image);
             paragraph.addClassNames(LumoUtility.FontSize.XLARGE);
         } else {
@@ -157,10 +201,10 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         NotificationVariant variant;
         if (correct) {
             gameState.getCorrect().add(currQuestion);
-            new AudioUtils().playSoundAsync("correct-answer-1.mp3");
+            AudioUtils.playSoundAsync("correct-answer-1.mp3");
             variant = NotificationVariant.LUMO_SUCCESS;
         } else {
-            new AudioUtils().playSoundAsync("wrong-answer-1.mp3");
+            AudioUtils.playSoundAsync("wrong-answer-1.mp3");
             variant = NotificationVariant.LUMO_ERROR;
         }
         String notifyText = correct ? "Правильный ответ!" : "Неверно...";

@@ -20,7 +20,7 @@ import org.rsinitsyn.quiz.model.QuizQuestionModel;
 
 public class QuizGameAnswersComponent extends VerticalLayout {
 
-    private List<QuizQuestionModel.QuizAnswerModel> answerList;
+    private List<QuizQuestionModel.QuizAnswerModel> copiedAnswerList;
     private QuestionType questionType;
 
     private ListBox<QuizQuestionModel.QuizAnswerModel> answerListBox = new ListBox<>();
@@ -28,50 +28,46 @@ public class QuizGameAnswersComponent extends VerticalLayout {
 
     public QuizGameAnswersComponent(List<QuizQuestionModel.QuizAnswerModel> answerList,
                                     QuestionType questionType) {
-        this.answerList = answerList;
+        this.copiedAnswerList = answerList;
         this.questionType = questionType;
         renderAnswers();
         setAlignItems(Alignment.STRETCH);
     }
 
     private void renderAnswers() {
+        removeAll();
+        answerListBox = new ListBox<>();
+        multiAnswerListBox = new MultiSelectListBox<>();
+
         if (questionType.equals(QuestionType.TEXT)) {
-            answerListBox.setItems(answerList);
-            answerListBox.setRenderer(new ComponentRenderer<Component, QuizQuestionModel.QuizAnswerModel>(
-                    answerModel -> createAnswerButton(answerModel, true)
-            ));
+            answerListBox.setItems(copiedAnswerList);
+            answerListBox.setRenderer(
+                    new ComponentRenderer<Component, QuizQuestionModel.QuizAnswerModel>(this::createAnswerButton));
+            answerListBox.addValueChangeListener(event -> fireEvent(new AnswerChoosenEvent(this, Collections.singleton(event.getValue()))));
             add(answerListBox);
         } else if (questionType.equals(QuestionType.MULTI)) {
-            multiAnswerListBox.setItems(answerList);
+            multiAnswerListBox.setItems(copiedAnswerList);
             multiAnswerListBox.setRenderer(
-                    new ComponentRenderer<Component, QuizQuestionModel.QuizAnswerModel>(
-                            answerModel -> createAnswerButton(answerModel, false)
-                    ));
+                    new ComponentRenderer<Component, QuizQuestionModel.QuizAnswerModel>(this::createAnswerButton));
 
             var submitButton = new Button();
             submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
             submitButton.setText("Подтвердить ответ");
-            submitButton.addClickListener(event -> {
-                fireEvent(new AnswerChoosenEvent(this, multiAnswerListBox.getSelectedItems()));
-            });
+            submitButton.addClickListener(event -> fireEvent(new AnswerChoosenEvent(this, multiAnswerListBox.getSelectedItems())));
             add(multiAnswerListBox, submitButton);
         }
     }
 
-    private Button createAnswerButton(QuizQuestionModel.QuizAnswerModel answer, boolean withHandler) {
+    private Button createAnswerButton(QuizQuestionModel.QuizAnswerModel answer) {
         var button = new Button(answer.getText());
         button.addClassNames(LumoUtility.FontSize.XLARGE,
                 LumoUtility.FontWeight.BOLD);
-        if (withHandler) {
-            button.addClickListener(event -> fireEvent(new AnswerChoosenEvent(this, Collections.singleton(answer))));
-        }
-        button.setWidthFull();
+        button.setSizeFull();
         return button;
     }
 
     public void removeWrongAnswersAndRerender(int answersToRemove) {
-        removeAll();
-        answerList.removeAll(answerList.stream()
+        copiedAnswerList.removeAll(copiedAnswerList.stream()
                 .filter(answerModel -> !answerModel.isCorrect())
                 .limit(answersToRemove)
                 .toList());
@@ -80,15 +76,15 @@ public class QuizGameAnswersComponent extends VerticalLayout {
 
     @Getter
     public static class AnswerChoosenEvent extends ComponentEvent<QuizGameAnswersComponent> {
-        private Set<QuizQuestionModel.QuizAnswerModel> answer;
+        private Set<QuizQuestionModel.QuizAnswerModel> answers;
 
         public AnswerChoosenEvent(QuizGameAnswersComponent source, boolean fromClient) {
             super(source, fromClient);
         }
 
-        public AnswerChoosenEvent(QuizGameAnswersComponent source, Set<QuizQuestionModel.QuizAnswerModel> answer) {
+        public AnswerChoosenEvent(QuizGameAnswersComponent source, Set<QuizQuestionModel.QuizAnswerModel> answers) {
             this(source, false);
-            this.answer = answer;
+            this.answers = answers;
         }
     }
 
