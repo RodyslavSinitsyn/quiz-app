@@ -42,6 +42,7 @@ import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.model.AnswerHistory;
 import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
+import org.rsinitsyn.quiz.utils.QuizComponents;
 
 @Slf4j
 public class QuizGameSettingsComponent extends FormLayout implements BeforeLeaveObserver {
@@ -118,9 +119,8 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
 
     private void configureCheckBoxes() {
         answerOptionsEnabled.setLabel("Варианты ответов");
+        answerOptionsEnabled.setTooltipText("Для некоторых вопросов будут отключены варианты ответов");
         answerOptionsEnabled.setValue(true);
-        answerOptionsEnabled.setReadOnly(true);
-        answerOptionsEnabled.setEnabled(false);
 
         timerEnabled.setLabel("Таймер");
         timerEnabled.setValue(false);
@@ -133,7 +133,7 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
 
         intrigueEnabled.setLabel("Включить интригу");
         intrigueEnabled.setTooltipText("Результат ответа будет отображен с задержкой, для интриги");
-        intrigueEnabled.setValue(false);
+        intrigueEnabled.setValue(true);
 
         filterAnsweredCheckbox.setLabel("Скрыть пройденые вопросы");
         filterAnsweredCheckbox.setValue(false);
@@ -181,7 +181,6 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
             row.getStyle().set("border-bottom", "1px solid blue");
             row.getStyle().set("padding", ".25em");
             row.setAlignItems(FlexComponent.Alignment.CENTER);
-
             appendIconToQuestionRowComponent(row, question);
             if (StringUtils.isNotEmpty(question.getPhotoFilename())) {
                 Avatar smallPhoto = new Avatar();
@@ -193,13 +192,7 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
             spanText.addClassNames(LumoUtility.FontWeight.MEDIUM);
             row.add(spanText);
 
-//            Checkbox disableOptionsCheckbox = new Checkbox(false);
-//            disableOptionsCheckbox.addClassNames(LumoUtility.AlignSelf.END);
-//            disableOptionsCheckbox.addValueChangeListener(event -> {
-//                question.setOptionsEnabled(event.getValue());
-//            });
-//            row.add(disableOptionsCheckbox);
-
+            row.add(QuizComponents.questionMechanicSpan(question.isOptionsOnly(), question.getType()));
             return row;
         });
     }

@@ -22,3 +22,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
+
+quiz:
+  audio-folder: prod
+  profiling: false

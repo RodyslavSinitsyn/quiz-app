@@ -10,4 +10,5 @@ spring:
     show-sql: true
 
 quiz:
+  audio-folder: dev
   profiling: false

@@ -46,6 +46,8 @@ public class QuestionEntity {
     @Column(columnDefinition = "CHARACTER VARYING(1000)")
     private String originalPhotoUrl;
     private String photoFilename;
+    @Column(columnDefinition = "BOOLEAN DEFAULT TRUE")
+    private boolean optionsOnly = true;
     @ManyToOne(fetch = FetchType.EAGER, optional = true)
     @JoinColumn(name = "categoryId", referencedColumnName = "id")
     private QuestionCategoryEntity category;

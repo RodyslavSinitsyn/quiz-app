@@ -44,6 +44,7 @@ public class QuestionService {
     private final QuestionDao questionDao;
     private final QuestionCategoryDao questionCategoryDao;
     private final GameQuestionDao gameQuestionDao;
+    private final ResourceService resourceService;
 
 
     public List<QuestionCategoryEntity> findAllCategories() {
@@ -134,7 +135,7 @@ public class QuestionService {
                             .answers(toQuizAnswerModel(question.getAnswers()))
                             .photoFilename(question.getPhotoFilename())
                             .playersAnswersHistory(answerHistoryMap)
-                            .optionsEnabled(true)
+                            .optionsOnly(question.isOptionsOnly())
                             .build();
                 })
                 .toList();
@@ -155,7 +156,7 @@ public class QuestionService {
     @Transactional(propagation = Propagation.REQUIRED)
     public void saveEntityAndImage(QuestionEntity entity) {
         questionDao.save(entity);
-        QuizUtils.saveImage(entity.getPhotoFilename(), entity.getOriginalPhotoUrl());
+        resourceService.saveImage(entity.getPhotoFilename(), entity.getOriginalPhotoUrl());
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
@@ -163,7 +164,7 @@ public class QuestionService {
         Optional<QuestionEntity> toDelete = questionDao.findById(UUID.fromString(id));
         toDelete.ifPresent(entity -> {
             questionDao.delete(entity);
-            QuizUtils.deleteImageFile(entity.getPhotoFilename());
+            resourceService.deleteImageFile(entity.getPhotoFilename());
         });
     }
 
@@ -172,11 +173,11 @@ public class QuestionService {
     public void saveOrUpdate(FourAnswersQuestionBindingModel model) {
         if (model.getId() == null) {
             QuestionEntity saved = questionDao.save(toQuestionEntity(model, Optional.empty()));
-            QuizUtils.saveImage(saved.getPhotoFilename(), saved.getOriginalPhotoUrl());
+            resourceService.saveImage(saved.getPhotoFilename(), saved.getOriginalPhotoUrl());
             log.info("Question saved: {}", saved);
         } else {
             QuestionEntity updated = questionDao.save(toQuestionEntity(model, questionDao.findById(UUID.fromString(model.getId()))));
-            QuizUtils.saveImage(updated.getPhotoFilename(), updated.getOriginalPhotoUrl());
+            resourceService.saveImage(updated.getPhotoFilename(), updated.getOriginalPhotoUrl());
             log.info("Question updated: {}", updated);
         }
     }
@@ -228,12 +229,6 @@ public class QuestionService {
         return entity;
     }
 
-    private void deletePhotoFromDisk(String photoFilename) {
-        if (StringUtils.isNotEmpty(photoFilename)) {
-            QuizUtils.deleteImageFile(photoFilename);
-        }
-    }
-
     private AnswerEntity createAnswerEntity(String text, boolean correct, int number) {
         AnswerEntity answerEntity = new AnswerEntity();
         answerEntity.setText(text);
@@ -250,5 +245,11 @@ public class QuestionService {
     public void updateCategory(Set<QuestionEntity> questions, QuestionCategoryEntity category) {
         List<QuestionEntity> persistentQuestions = questionDao.findAllByIdIn(questions.stream().map(QuestionEntity::getId).toList());
         persistentQuestions.forEach(entity -> entity.setCategory(category));
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void updateOptionsOnlyProperty(Set<QuestionEntity> questions) {
+        questionDao.findAllByIdIn(questions.stream().map(QuestionEntity::getId).toList())
+                .forEach(entity -> entity.setOptionsOnly(!entity.isOptionsOnly()));
     }
 }

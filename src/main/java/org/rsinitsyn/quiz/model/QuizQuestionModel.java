@@ -26,9 +26,9 @@ public class QuizQuestionModel {
     private QuestionType type;
     private String photoFilename;
     private String categoryName;
+    private boolean optionsOnly;
     private Map<String, AnswerHistory> playersAnswersHistory;
     private Set<QuizAnswerModel> answers;
-    private boolean optionsEnabled = true;
 
     @Setter(AccessLevel.NONE)
     private InputStream photoInputStream;
@@ -49,7 +49,7 @@ public class QuizQuestionModel {
     @SneakyThrows
     public InputStream openStream() {
         closePhotoStream();
-        photoInputStream = new FileInputStream(QuizUtils.getImageFile(photoFilename));
+        photoInputStream = new FileInputStream(QuizUtils.readFile(photoFilename));
         return photoInputStream;
     }
 

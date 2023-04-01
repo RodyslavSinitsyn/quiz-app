@@ -143,6 +143,7 @@ public class MainLayout extends AppLayout {
     private void renderAfterLogin(String loggedUserName) {
         loggedUserNameSpan.setVisible(true);
         loggedUserNameSpan.setText(loggedUserName);
+        loggedUserNameSpan.addClassNames(LumoUtility.FontWeight.BOLD);
         loginButton.setVisible(false);
         warningMessageAboutLogin.setVisible(false);
         exitButton.setVisible(true);

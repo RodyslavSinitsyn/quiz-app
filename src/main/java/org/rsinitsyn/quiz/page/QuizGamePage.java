@@ -25,10 +25,10 @@ import org.rsinitsyn.quiz.service.UserService;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@Route(value = "/game", layout = MainLayout.class)
+@Route(value = "/quiz", layout = MainLayout.class)
 @PageTitle("Game")
 @Slf4j
-public class GamePage extends VerticalLayout implements HasUrlParameter<String>, AfterNavigationObserver {
+public class QuizGamePage extends VerticalLayout implements HasUrlParameter<String>, AfterNavigationObserver {
 
     private String gameId;
 
@@ -41,7 +41,7 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
     private UserService userService;
 
     @Autowired
-    public GamePage(QuestionService questionService, GameService gameService, UserService userService) {
+    public QuizGamePage(QuestionService questionService, GameService gameService, UserService userService) {
         this.questionService = questionService;
         this.gameService = gameService;
         this.userService = userService;
@@ -115,7 +115,7 @@ public class GamePage extends VerticalLayout implements HasUrlParameter<String>,
                             Notification.Position.TOP_CENTER);
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
             removeAll();
-            getUI().ifPresent(ui -> ui.navigate(GamePage.class, UUID.randomUUID().toString()));
+            getUI().ifPresent(ui -> ui.navigate(QuizGamePage.class, UUID.randomUUID().toString()));
         }
     }
 }

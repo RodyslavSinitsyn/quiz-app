@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.validator.constraints.Length;
@@ -31,7 +32,8 @@ public class QuizGameStateModel {
 
     // state props
     private UUID gameId;
-    private Set<QuizQuestionModel> correct = new HashSet<>();
+    @Setter(AccessLevel.NONE)
+    private int correctAnswersCounter;
     private GameStatus status;
     private int result = 0;
     private int currentQuestionNumber = 0;
@@ -49,16 +51,20 @@ public class QuizGameStateModel {
     }
 
     public int calculateAndGetAnswersResult() {
-        this.result = (getCorrect().size() * 100) / getQuestionsCount();
+        this.result = (correctAnswersCounter * 100) / getQuestionsCount();
         return this.result;
     }
 
     public String getAnswersStatistic() {
-        return correct.size() + "/" + getQuestionsCount();
+        return correctAnswersCounter + "/" + getQuestionsCount();
     }
 
     public int getQuestionsCount() {
         return questions.size();
+    }
+
+    public void incrementCorrectAnswersCounter() {
+        correctAnswersCounter++;
     }
 
     private QuizQuestionModel getByIndex(int index) {

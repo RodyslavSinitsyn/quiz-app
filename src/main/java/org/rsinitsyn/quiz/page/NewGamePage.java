@@ -49,7 +49,7 @@ public class NewGamePage extends VerticalLayout {
         button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         button.addClickListener(event -> getUI()
                 .ifPresent(ui -> ui.navigate(
-                        GamePage.class,
+                        QuizGamePage.class,
                         UUID.randomUUID().toString())));
         return button;
     }

@@ -43,6 +43,7 @@ import org.rsinitsyn.quiz.service.ImportService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.service.UserService;
 import org.rsinitsyn.quiz.utils.ModelConverterUtils;
+import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 
 @Slf4j
@@ -113,6 +114,11 @@ public class QuestionsListPage extends VerticalLayout {
         grid.addColumn(entity -> entity.getCategory().getName())
                 .setHeader("Тема")
                 .setSortable(true);
+        grid.addColumn(new ComponentRenderer<>(QuizComponents::questionMechanicSpan))
+                .setHeader("Механика вопроса")
+                .setTooltipGenerator(entity -> entity.isOptionsOnly()
+                        ? "Вопрос задается только с вариантами"
+                        : "Вопрос может быть задан без вариантов");
         grid.addColumn(new LocalDateTimeRenderer<>(QuestionEntity::getCreationDate, QuizUtils.DATE_FORMAT_VALUE))
                 .setHeader("Дата создания")
                 .setSortable(true)
@@ -124,7 +130,7 @@ public class QuestionsListPage extends VerticalLayout {
             if (!event.isFromClient()) {
                 return;
             }
-            groupedOperations.setVisible(event.getAllSelectedItems().size() > 1);
+            groupedOperations.setVisible(!event.getAllSelectedItems().isEmpty());
         });
         grid.addItemClickListener(event -> {
             grid.select(event.getItem());
@@ -259,6 +265,7 @@ public class QuestionsListPage extends VerticalLayout {
                 dialog.close();
                 grid.asMultiSelect().deselectAll();
                 updateList();
+                groupedOperations.setVisible(false);
             });
             dialog.open();
         });
@@ -284,11 +291,24 @@ public class QuestionsListPage extends VerticalLayout {
                 dialog.close();
                 grid.asMultiSelect().deselectAll();
                 updateList();
+                groupedOperations.setVisible(false);
             });
             dialog.open();
         });
 
-        groupedOperations.add(deleteAllButton, updateCategoryButton);
+        Button updateOptionsOnly = new Button("Поменять механику");
+        updateOptionsOnly.setTooltipText("Вопросы которые можно задать только с вариантами становятся сингл и наоборот." +
+                "По усмотрению автора");
+        updateOptionsOnly.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        updateOptionsOnly.setIcon(VaadinIcon.OPTIONS.create());
+        updateOptionsOnly.addClickListener(event -> {
+            questionService.updateOptionsOnlyProperty(grid.getSelectedItems());
+            grid.asMultiSelect().deselectAll();
+            updateList();
+            groupedOperations.setVisible(false);
+        });
+
+        groupedOperations.add(deleteAllButton, updateCategoryButton, updateOptionsOnly);
     }
 
     private void editQuestion(FourAnswersQuestionBindingModel model) {

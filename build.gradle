@@ -32,6 +32,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-aop'
     implementation 'com.vaadin:vaadin-spring-boot-starter'
     implementation 'com.github.umjammer:jlayer:1.0.2'
+    implementation 'com.google.guava:guava:30.1.1-jre'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

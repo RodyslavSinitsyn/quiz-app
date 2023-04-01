@@ -10,7 +10,7 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class AudioUtils {
 
-    private static final String AUDIO_FILES_FOLDER = "audio/";
+    private static final String AUDIO_FILES_FOLDER = "audio/static/";
 
     public CompletableFuture<Void> playSoundAsync(String audioFileName) {
         return CompletableFuture.runAsync(() -> playSound(audioFileName));
