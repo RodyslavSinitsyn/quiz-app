@@ -10,7 +10,6 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -20,7 +19,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
-import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.LocalDateTimeRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
@@ -213,16 +211,13 @@ public class QuestionsListPage extends VerticalLayout {
             editQuestion(new FourAnswersQuestionBindingModel());
         });
 
-        MemoryBuffer buffer = new MemoryBuffer();
-        Upload upload = new Upload(buffer);
-        upload.setUploadButton(new Button("Импортировать вопросы"));
-        upload.setDropLabel(new Label(""));
-        upload.setAcceptedFileTypes(".txt");
-        upload.addSucceededListener(event -> {
-            InputStream inputStream = buffer.getInputStream();
-            importService.importQuestions(inputStream);
-            updateList();
-        });
+        Upload uploadComponent = QuizComponents.uploadComponent(
+                "Импортировать",
+                (buffer, event) -> {
+                    InputStream inputStream = buffer.getInputStream();
+                    importService.importQuestions(inputStream);
+                    updateList();
+                }, ".txt");
 
         Button addCategoryButton = new Button("Добавить тему");
         addCategoryButton.addClickListener(event -> {
@@ -235,9 +230,8 @@ public class QuestionsListPage extends VerticalLayout {
         HorizontalLayout toolbar = new HorizontalLayout(
                 categoryFilter,
                 addQuestionButton,
-                upload,
+                uploadComponent,
                 addCategoryButton,
-                upload,
                 groupedOperations);
         toolbar.setAlignItems(Alignment.CENTER);
         toolbar.setDefaultVerticalComponentAlignment(Alignment.CENTER);

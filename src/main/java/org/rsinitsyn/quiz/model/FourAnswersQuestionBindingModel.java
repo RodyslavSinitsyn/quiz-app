@@ -1,6 +1,7 @@
 package org.rsinitsyn.quiz.model;
 
 import jakarta.validation.constraints.NotBlank;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,6 +28,7 @@ public class FourAnswersQuestionBindingModel {
     @Length(max = 1000)
     @PhotoUrlValid
     private String photoLocation;
+    private InputStream audio;
     private List<AnswerBindingModel> answers = new ArrayList<>();
 
     public void initWith4Answers() {

@@ -49,6 +49,10 @@ public class QuizUtils {
         return UUID.randomUUID() + extension;
     }
 
+    public String generateFilenameWithExt(String extension) {
+        return UUID.randomUUID() + extension;
+    }
+
     @SneakyThrows
     public File readFile(String pathToFile) {
         return org.springframework.util.ResourceUtils.getFile(RESOURCES_PATH + IMAGE_PATH + pathToFile);

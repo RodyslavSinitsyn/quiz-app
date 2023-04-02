@@ -12,11 +12,13 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.shared.Registration;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
+import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.сustom.AnswerField;
 
 @Slf4j
@@ -57,11 +60,18 @@ public class QuestionForm extends FormLayout {
         inputsLayout.setPadding(false);
         inputsLayout.setSpacing(false);
 
+        Upload uploadComponent = QuizComponents.uploadComponent("Импортировать аудио",
+                (buffer, event) -> {
+                    InputStream inputStream = buffer.getInputStream();
+                    questionModel.setAudio(inputStream);
+                }, ".mp3");
+
         add(text);
         add(inputsLayout);
         add(category,
                 author,
                 photoLocation,
+                uploadComponent,
                 createButtonsLayout());
         binder.bindInstanceFields(this);
     }

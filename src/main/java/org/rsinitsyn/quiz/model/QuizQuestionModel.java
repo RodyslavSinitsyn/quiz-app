@@ -25,6 +25,7 @@ public class QuizQuestionModel {
     private String text;
     private QuestionType type;
     private String photoFilename;
+    private String audioFilename;
     private String categoryName;
     private boolean optionsOnly;
     private Map<String, AnswerHistory> playersAnswersHistory;

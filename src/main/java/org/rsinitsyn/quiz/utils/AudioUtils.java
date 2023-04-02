@@ -10,12 +10,18 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class AudioUtils {
 
-    private static final String AUDIO_FILES_FOLDER = "audio/static/";
+    private static final String AUDIO_FILES_FOLDER = "audio/";
+    private static final String STATIC_FILES_FOLDER = "static/";
 
     public CompletableFuture<Void> playSoundAsync(String audioFileName) {
         return CompletableFuture.runAsync(() -> playSound(audioFileName));
     }
 
+    public CompletableFuture<Void> playStaticSoundAsync(String audioFileName) {
+        return CompletableFuture.runAsync(() -> playSound(STATIC_FILES_FOLDER + audioFileName));
+    }
+
+    // todo NEED TO REALOD APP AFTER ADDING CUSTOM AUDIO TODO FIX LATER
     public void playSound(String audioFileName) {
         final String path = AUDIO_FILES_FOLDER + audioFileName;
         try (BufferedInputStream buffer = new BufferedInputStream(

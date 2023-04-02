@@ -10,6 +10,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -148,7 +149,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
                 renderQuestion();
             });
             dialog.open();
-            AudioUtils.playSoundAsync(REVEAL_ANSWER_AUDIOS.next());
+            AudioUtils.playStaticSoundAsync(REVEAL_ANSWER_AUDIOS.next());
         };
         button.addClickListener(event -> {
             if (!gameState.isIntrigueEnabled()) {
@@ -246,6 +247,17 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         layout.add(categorySpan);
 
         layout.add(textParagraph);
+
+        if (StringUtils.isNotEmpty(currQuestion.getAudioFilename())) {
+            Button playAudioButton = new Button("Слушать");
+            playAudioButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_PRIMARY);
+            playAudioButton.setIcon(VaadinIcon.PLAY_CIRCLE.create());
+            playAudioButton.addClickListener(event -> {
+                AudioUtils.playSoundAsync(currQuestion.getAudioFilename());
+            });
+            layout.add(playAudioButton);
+        }
+
         return layout;
     }
 
@@ -276,10 +288,10 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         NotificationVariant variant;
         if (correct) {
             gameState.incrementCorrectAnswersCounter();
-            AudioUtils.playSoundAsync(CORRECT_ANSWER_AUDIOS.next());
+            AudioUtils.playStaticSoundAsync(CORRECT_ANSWER_AUDIOS.next());
             variant = NotificationVariant.LUMO_SUCCESS;
         } else {
-            AudioUtils.playSoundAsync(WRONG_ANSWER_AUDIOS.next());
+            AudioUtils.playStaticSoundAsync(WRONG_ANSWER_AUDIOS.next());
             variant = NotificationVariant.LUMO_ERROR;
         }
         String notifyText = correct ? "Правильный ответ!" : "Неверно...";
@@ -291,7 +303,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         setEnabled(false);
         Notification notification = Notification.show("Ответ принят...", 3_000, Notification.Position.TOP_STRETCH);
         notification.addThemeVariants(NotificationVariant.LUMO_CONTRAST);
-        AudioUtils.playSoundAsync(SUBMIT_ANSWER_AUDIOS.next())
+        AudioUtils.playStaticSoundAsync(SUBMIT_ANSWER_AUDIOS.next())
                 .thenRun(() -> {
                     getUI().ifPresent(ui -> ui.access(action::run));
                 });

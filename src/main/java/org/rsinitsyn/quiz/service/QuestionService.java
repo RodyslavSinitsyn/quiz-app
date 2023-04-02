@@ -29,6 +29,7 @@ import org.rsinitsyn.quiz.model.AnswerHistory;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.model.QuestionCategoryBindingModel;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
+import org.rsinitsyn.quiz.properties.QuizAppProperties;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -45,7 +46,7 @@ public class QuestionService {
     private final QuestionCategoryDao questionCategoryDao;
     private final GameQuestionDao gameQuestionDao;
     private final ResourceService resourceService;
-
+    private final QuizAppProperties properties;
 
     public List<QuestionCategoryEntity> findAllCategories() {
         return questionCategoryDao.findAll();
@@ -134,6 +135,7 @@ public class QuestionService {
                             .categoryName(question.getCategory().getName())
                             .answers(toQuizAnswerModel(question.getAnswers()))
                             .photoFilename(question.getPhotoFilename())
+                            .audioFilename(question.getAudioFilename())
                             .playersAnswersHistory(answerHistoryMap)
                             .optionsOnly(question.isOptionsOnly())
                             .build();
@@ -174,6 +176,7 @@ public class QuestionService {
         if (model.getId() == null) {
             QuestionEntity saved = questionDao.save(toQuestionEntity(model, Optional.empty()));
             resourceService.saveImage(saved.getPhotoFilename(), saved.getOriginalPhotoUrl());
+            resourceService.saveAudio(saved.getAudioFilename(), model.getAudio());
             log.info("Question saved: {}", saved);
         } else {
             QuestionEntity updated = questionDao.save(toQuestionEntity(model, questionDao.findById(UUID.fromString(model.getId()))));
@@ -191,10 +194,18 @@ public class QuestionService {
             entity.setId(UUID.fromString(model.getId()));
             entity.setCreationDate(optEntity.get().getCreationDate());
             entity.setCreatedBy(model.getAuthor());
+            entity.setOptionsOnly(optEntity.get().isOptionsOnly());
+
+            entity.setAudioFilename(optEntity.get().getAudioFilename());
         } else {
             entity.setId(UUID.randomUUID());
             entity.setCreationDate(LocalDateTime.now());
             entity.setCreatedBy(QuizUtils.getLoggedUser());
+            entity.setOptionsOnly(true);
+
+            if (model.getAudio() != null) {
+                entity.setAudioFilename(properties.getAudioFolder() + QuizUtils.generateFilenameWithExt(".mp3"));
+            }
         }
         entity.setText(model.getText());
 
