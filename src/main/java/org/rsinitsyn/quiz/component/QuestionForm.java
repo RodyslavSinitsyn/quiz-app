@@ -27,7 +27,7 @@ import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.utils.QuizComponents;
-import org.rsinitsyn.quiz.сustom.AnswerField;
+import org.rsinitsyn.quiz.component.сustom.AnswerField;
 
 @Slf4j
 public class QuestionForm extends FormLayout {

@@ -8,7 +8,7 @@ import org.rsinitsyn.quiz.dao.GameDao;
 import org.rsinitsyn.quiz.dao.QuestionDao;
 import org.rsinitsyn.quiz.dao.UserDao;
 import org.rsinitsyn.quiz.entity.GameEntity;
-import org.rsinitsyn.quiz.entity.GameQuestionEntity;
+import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.UserEntity;
@@ -35,10 +35,10 @@ public class StatisticService {
                     List<GameEntity> gamesPlayed = gameDao.findAllByPlayerName(userEntity.getUsername())
                             .stream().filter(gameEntity -> gameEntity.getStatus().equals(GameStatus.FINISHED)).toList();
 
-                    List<Set<GameQuestionEntity>> allQuestions = gamesPlayed.stream().map(GameEntity::getGameQuestions).toList();
+                    List<Set<GameQuestionUserEntity>> allQuestions = gamesPlayed.stream().map(GameEntity::getGameQuestions).toList();
 
                     long totalAnsweredCount = allQuestions.stream().mapToLong(Collection::size).sum();
-                    long correctAnswersCount = allQuestions.stream().flatMap(Collection::stream).filter(GameQuestionEntity::getAnswered).count();
+                    long correctAnswersCount = allQuestions.stream().flatMap(Collection::stream).filter(GameQuestionUserEntity::getAnswered).count();
 
                     return new UserStatsModel(
                             userEntity.getUsername(),

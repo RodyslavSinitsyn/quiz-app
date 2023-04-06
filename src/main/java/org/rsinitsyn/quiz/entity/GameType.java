@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum GameType {
     QUIZ(true),
+    CLEVEREST(true),
     SI_GAME(false);
     private final boolean enabled;
 }

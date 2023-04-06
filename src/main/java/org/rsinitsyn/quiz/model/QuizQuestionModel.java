@@ -50,7 +50,7 @@ public class QuizQuestionModel {
     @SneakyThrows
     public InputStream openStream() {
         closePhotoStream();
-        photoInputStream = new FileInputStream(QuizUtils.readFile(photoFilename));
+        photoInputStream = new FileInputStream(QuizUtils.readImageFile(photoFilename));
         return photoInputStream;
     }
 

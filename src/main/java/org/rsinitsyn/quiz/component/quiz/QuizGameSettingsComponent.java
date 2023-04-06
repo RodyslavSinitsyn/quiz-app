@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.component;
+package org.rsinitsyn.quiz.component.quiz;
 
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;

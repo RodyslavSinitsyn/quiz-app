@@ -42,4 +42,8 @@ public class UserService {
                 .filter(userEntity -> !userEntity.getUsername().equals(QuizUtils.getLoggedUser()))
                 .toList();
     }
+
+    public UserEntity findAllByUsername(String username) {
+        return userDao.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found " + username));
+    }
 }

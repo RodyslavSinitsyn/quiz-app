@@ -1,6 +1,7 @@
 package org.rsinitsyn.quiz.utils;
 
 import java.io.BufferedInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import javazoom.jl.decoder.JavaLayerException;
@@ -25,7 +26,7 @@ public class AudioUtils {
     public void playSound(String audioFileName) {
         final String path = AUDIO_FILES_FOLDER + audioFileName;
         try (BufferedInputStream buffer = new BufferedInputStream(
-                AudioUtils.class.getClassLoader().getResourceAsStream(path))) {
+                new FileInputStream(QuizUtils.readFileFromResources(path)))) {
             Player player = new Player(buffer);
             player.play();
         } catch (IOException | JavaLayerException e) {

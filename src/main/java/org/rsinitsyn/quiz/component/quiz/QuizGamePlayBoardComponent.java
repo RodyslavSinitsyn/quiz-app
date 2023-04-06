@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.component;
+package org.rsinitsyn.quiz.component.quiz;
 
 import com.google.common.collect.Iterables;
 import com.vaadin.flow.component.ComponentEvent;

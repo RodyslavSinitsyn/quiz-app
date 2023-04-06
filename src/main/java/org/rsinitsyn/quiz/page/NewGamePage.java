@@ -1,19 +1,22 @@
 package org.rsinitsyn.quiz.page;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Key;
-import com.vaadin.flow.component.KeyModifier;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
+import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.Collections;
 import java.util.UUID;
-import org.rsinitsyn.quiz.component.GameListComponent;
+import org.rsinitsyn.quiz.component.GameListGrid;
+import org.rsinitsyn.quiz.component.GameQuestionsComponent;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.service.GameService;
 
@@ -25,7 +28,7 @@ public class NewGamePage extends VerticalLayout {
     private Button configButton;
     private Select<String> gameTypeSelect;
     private H3 gameListTitle = new H3("Недавние игры");
-    private GameListComponent gameListComponent = new GameListComponent(Collections.emptyList());
+    private GameListGrid gameListGrid = new GameListGrid(Collections.emptyList());
 
     private GameService gameService;
 
@@ -36,37 +39,44 @@ public class NewGamePage extends VerticalLayout {
         gameTypeSelect = createGameTypeSelect();
         configureGameList();
         add(title, gameTypeSelect, configButton,
-                gameListTitle, gameListComponent);
+                gameListTitle, gameListGrid);
     }
 
     private void configureGameList() {
-        gameListComponent = new GameListComponent(gameService.findAllFinishedNewFirst());
-        gameListComponent.setSizeFull();
+        gameListGrid = new GameListGrid(gameService.findAllFinishedNewFirst());
+        gameListGrid.setSizeFull();
+        gameListGrid.setDetailsVisibleOnClick(true);
+        gameListGrid.setItemDetailsRenderer(new ComponentRenderer<>(GameQuestionsComponent::new));
     }
 
     private Button createNextStepButton() {
         Button button = new Button("Играть");
         button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        button.addClickListener(event -> getUI()
-                .ifPresent(ui -> ui.navigate(
-                        QuizGamePage.class,
-                        UUID.randomUUID().toString())));
+        button.addClickListener(event -> {
+            Class targetClass;
+            switch (gameTypeSelect.getValue()) {
+                case "Викторина" -> targetClass = QuizGamePage.class;
+                case "Самый умный (мультиплеер)" -> targetClass = CleverestGamePage.class;
+                default -> targetClass = QuizGamePage.class;
+            }
+
+            getUI().ifPresent(ui -> ui.navigate(targetClass, UUID.randomUUID().toString()));
+        });
         return button;
     }
 
     private Select<String> createGameTypeSelect() {
         Select<String> select = new Select<>();
-        select.addFocusShortcut(Key.ENTER, KeyModifier.ALT);
+        select.addFocusShortcut(Key.ENTER);
         select.setAutofocus(true);
         select.addClassNames(
                 LumoUtility.FontSize.LARGE,
                 LumoUtility.FontWeight.BOLD);
         select.setItems(
                 "Викторина",
-                "Своя Игра");
+                "Самый умный (мультиплеер)");
         select.setPlaceholder("Тип игры");
         select.setValue("Викторина");
-        select.setItemEnabledProvider(item -> !"Своя Игра".equals(item));
         return select;
     }
 }

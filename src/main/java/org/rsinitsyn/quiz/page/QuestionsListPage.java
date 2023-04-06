@@ -1,38 +1,32 @@
 package org.rsinitsyn.quiz.page;
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
-import com.vaadin.flow.data.renderer.LocalDateTimeRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import java.io.InputStream;
-import java.util.Comparator;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.QuestionCategoryForm;
 import org.rsinitsyn.quiz.component.QuestionForm;
+import org.rsinitsyn.quiz.component.QuestionListGrid;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
@@ -42,7 +36,6 @@ import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.service.UserService;
 import org.rsinitsyn.quiz.utils.ModelConverterUtils;
 import org.rsinitsyn.quiz.utils.QuizComponents;
-import org.rsinitsyn.quiz.utils.QuizUtils;
 
 @Slf4j
 @Route(value = "/list", layout = MainLayout.class)
@@ -50,7 +43,7 @@ import org.rsinitsyn.quiz.utils.QuizUtils;
 public class QuestionsListPage extends VerticalLayout {
     private H2 title = new H2("База вопросов");
 
-    private Grid<QuestionEntity> grid;
+    private QuestionListGrid grid;
     private TextField filterText = new TextField();
     private MultiSelectComboBox<QuestionCategoryEntity> categoryFilter = new MultiSelectComboBox<>();
     private HorizontalLayout groupedOperations = new HorizontalLayout();
@@ -82,47 +75,8 @@ public class QuestionsListPage extends VerticalLayout {
     }
 
     private void configureGrid() {
-        grid = new Grid<>(QuestionEntity.class, false);
+        grid = new QuestionListGrid(questionService.findAllByCurrentUser());
         grid.setSizeFull();
-        grid.addColumn(new ComponentRenderer<>(entity -> {
-                    HorizontalLayout row = new HorizontalLayout();
-                    if (!entity.getGameQuestions().isEmpty()) {
-                        Icon icon = VaadinIcon.LINK.create();
-                        icon.setTooltipText("Вопрос связан с игрой и не может быть удален");
-                        row.add(icon);
-                    }
-                    row.setAlignItems(FlexComponent.Alignment.CENTER);
-                    if (StringUtils.isNotEmpty(entity.getPhotoFilename())) {
-                        Avatar smallPhoto = new Avatar();
-                        smallPhoto.setImageResource(
-                                QuizUtils.createStreamResourceForPhoto(entity.getPhotoFilename()));
-                        row.add(smallPhoto);
-                    }
-                    row.add(new Span(
-                            entity.getText().length() > 300
-                                    ? entity.getText().substring(0, 300).concat("...")
-                                    : entity.getText()));
-                    return row;
-                }))
-                .setHeader("Текст")
-                .setFlexGrow(5);
-        grid.addColumn(QuestionEntity::getCreatedBy)
-                .setHeader("Автор")
-                .setSortable(true);
-        grid.addColumn(entity -> entity.getCategory().getName())
-                .setHeader("Тема")
-                .setSortable(true);
-        grid.addColumn(new ComponentRenderer<>(QuizComponents::questionMechanicSpan))
-                .setHeader("Механика вопроса")
-                .setTooltipGenerator(entity -> entity.isOptionsOnly()
-                        ? "Вопрос задается только с вариантами"
-                        : "Вопрос может быть задан без вариантов");
-        grid.addColumn(new LocalDateTimeRenderer<>(QuestionEntity::getCreationDate, QuizUtils.DATE_FORMAT_VALUE))
-                .setHeader("Дата создания")
-                .setSortable(true)
-                .setComparator(Comparator.comparing(QuestionEntity::getCreationDate));
-        grid.setAllRowsVisible(true);
-        grid.addThemeVariants(GridVariant.LUMO_WRAP_CELL_CONTENT);
         grid.setSelectionMode(Grid.SelectionMode.MULTI);
         grid.addSelectionListener(event -> {
             if (!event.isFromClient()) {

@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.component;
+package org.rsinitsyn.quiz.component.quiz;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -15,8 +15,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.rsinitsyn.quiz.component.GameQuestionsComponent;
 import org.rsinitsyn.quiz.entity.GameEntity;
-import org.rsinitsyn.quiz.entity.GameQuestionEntity;
+import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
 import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.rsinitsyn.quiz.page.NewGamePage;
 
@@ -52,7 +53,7 @@ public class QuizGameResultComponent extends VerticalLayout {
                 .stream()
                 .map(entry -> new CategoryResultDto(
                         entry.getKey(),
-                        (int) entry.getValue().stream().filter(GameQuestionEntity::getAnswered).count(),
+                        (int) entry.getValue().stream().filter(GameQuestionUserEntity::getAnswered).count(),
                         entry.getValue().size()))
                 .sorted(Comparator.comparing(CategoryResultDto::getAnswersRate, Comparator.reverseOrder()))
                 .toList();

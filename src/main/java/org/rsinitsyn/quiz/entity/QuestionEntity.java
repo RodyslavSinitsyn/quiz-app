@@ -57,7 +57,7 @@ public class QuestionEntity {
     private Set<AnswerEntity> answers = new LinkedHashSet<>();
     @OneToMany(mappedBy = "question", fetch = FetchType.EAGER)
     @OrderBy(value = "orderNumber")
-    private Set<GameQuestionEntity> gameQuestions = new HashSet<>();
+    private Set<GameQuestionUserEntity> gameQuestions = new HashSet<>();
 
     public void addAnswer(AnswerEntity answerEntity) {
         answerEntity.setQuestion(this);

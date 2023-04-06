@@ -7,22 +7,21 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "games_questions",
-        uniqueConstraints = @UniqueConstraint(name = "gq_gameid_ordernumber_uq", columnNames = {"gameId", "orderNumber"}))
+@Table(name = "games_questions")
+//        uniqueConstraints = @UniqueConstraint(name = "gq_gameid_ordernumber_uq", columnNames = {"gameId", "orderNumber"}))
 @Getter
 @Setter
 @NoArgsConstructor
 @EqualsAndHashCode(of = {"id", "answered", "orderNumber"})
-public class GameQuestionEntity {
+public class GameQuestionUserEntity {
     @EmbeddedId
-    private GameQuestionPrimaryKey id;
+    private GameQuestionUserPrimaryKey id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("gameId")
@@ -33,6 +32,11 @@ public class GameQuestionEntity {
     @MapsId("questionId")
     @JoinColumn(name = "questionId")
     private QuestionEntity question;
+
+    @ManyToOne(fetch = FetchType.EAGER, optional = true)
+    @MapsId("userId")
+    @JoinColumn(name = "userId", referencedColumnName = "id")
+    private UserEntity userEntity;
 
     // Null - not answered yet
     // True - correct answer

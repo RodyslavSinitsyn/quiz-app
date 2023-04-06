@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.сustom;
+package org.rsinitsyn.quiz.component.сustom;
 
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.customfield.CustomField;

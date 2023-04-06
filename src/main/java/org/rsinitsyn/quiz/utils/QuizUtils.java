@@ -1,5 +1,7 @@
 package org.rsinitsyn.quiz.utils;
 
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.server.Command;
 import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.server.VaadinSession;
 import java.io.File;
@@ -10,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
@@ -36,7 +39,7 @@ public class QuizUtils {
     public StreamResource createStreamResourceForPhoto(String photoFilename) {
         return new StreamResource(photoFilename, () -> {
             try {
-                return new FileInputStream(readFile(photoFilename));
+                return new FileInputStream(readImageFile(photoFilename));
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }
@@ -54,8 +57,13 @@ public class QuizUtils {
     }
 
     @SneakyThrows
-    public File readFile(String pathToFile) {
-        return org.springframework.util.ResourceUtils.getFile(RESOURCES_PATH + IMAGE_PATH + pathToFile);
+    public File readImageFile(String pathToFile) {
+        return readFileFromResources(IMAGE_PATH + pathToFile);
+    }
+
+    @SneakyThrows
+    public File readFileFromResources(String pathToFile) {
+        return org.springframework.util.ResourceUtils.getFile(RESOURCES_PATH + pathToFile);
     }
 
     // Other Utils
@@ -64,6 +72,11 @@ public class QuizUtils {
                 (String) VaadinSession.getCurrent().getAttribute("user"),
                 "Аноним"
         );
+    }
+
+    public void runActionInUi(Optional<UI> optUi, Command action) {
+        UI ui = optUi.orElseThrow(() -> new RuntimeException("UI not exists!"));
+        ui.access(action);
     }
 
     @SneakyThrows

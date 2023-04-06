@@ -13,10 +13,11 @@ import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
-import org.rsinitsyn.quiz.component.QuizGamePlayBoardComponent;
-import org.rsinitsyn.quiz.component.QuizGameResultComponent;
-import org.rsinitsyn.quiz.component.QuizGameSettingsComponent;
+import org.rsinitsyn.quiz.component.quiz.QuizGamePlayBoardComponent;
+import org.rsinitsyn.quiz.component.quiz.QuizGameResultComponent;
+import org.rsinitsyn.quiz.component.quiz.QuizGameSettingsComponent;
 import org.rsinitsyn.quiz.entity.GameStatus;
+import org.rsinitsyn.quiz.entity.GameType;
 import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.rsinitsyn.quiz.service.GameService;
@@ -71,7 +72,9 @@ public class QuizGamePage extends VerticalLayout implements HasUrlParameter<Stri
             add(configureQuizGameResultComponent(event.getModel()));
         });
         quizGamePlayBoardComponent.addListener(QuizGamePlayBoardComponent.SubmitAnswerEvent.class, event -> {
-            gameService.submitAnswers(gameId,
+            gameService.submitAnswers(
+                    gameId,
+                    quizGameStateModel.getPlayerName(),
                     event.getQuestion(),
                     event.getAnswer());
         });
@@ -87,7 +90,7 @@ public class QuizGamePage extends VerticalLayout implements HasUrlParameter<Stri
         List<UserEntity> playerList = userService.findAllExceptCurrent();
         quizGameSettingsComponent = new QuizGameSettingsComponent(
                 gameId,
-                questionService.findAllByCurrentUserAsModel(playerList),
+                questionService.findAllByCurrentUserAsModel(),
                 playerList);
 
         quizGameSettingsComponent.addListener(QuizGameSettingsComponent.StartGameEvent.class, event -> {
@@ -107,7 +110,7 @@ public class QuizGamePage extends VerticalLayout implements HasUrlParameter<Stri
     }
 
     private void createGameIfNotExists() {
-        boolean gameCreated = gameService.createIfNotExists(gameId);
+        boolean gameCreated = gameService.createIfNotExists(gameId, GameType.QUIZ);
         if (!gameCreated) {
             Notification notification =
                     Notification.show("Нет возможности продолжить созданную игру. Создайте новую игру!",

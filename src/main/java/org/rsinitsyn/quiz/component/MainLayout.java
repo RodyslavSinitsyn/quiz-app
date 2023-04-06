@@ -18,6 +18,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import org.rsinitsyn.quiz.page.CleverestGamePage;
 import org.rsinitsyn.quiz.page.NewGamePage;
 import org.rsinitsyn.quiz.page.QuestionsListPage;
 import org.rsinitsyn.quiz.page.StatisticPage;
@@ -71,6 +72,13 @@ public class MainLayout extends AppLayout {
         tabs.add(createTab("Играть", NewGamePage.class));
         tabs.add(createTab("Вопросы", QuestionsListPage.class));
         tabs.add(createTab("Статистика", StatisticPage.class));
+
+        Tab tab = new Tab();
+        RouterLink link = new RouterLink(CleverestGamePage.class);
+        link.setText("Мультиплеер (new)");
+        tab.add(link);
+
+        tabs.add(tab);
     }
 
     private Tab createTab(String text, Class<? extends Component> navigateTo) {
@@ -101,6 +109,7 @@ public class MainLayout extends AppLayout {
 
         if (QuizUtils.getLoggedUser().equals("Аноним")) {
             renderAfterLogout();
+            dialog.open();
         } else {
             renderAfterLogin(QuizUtils.getLoggedUser());
         }

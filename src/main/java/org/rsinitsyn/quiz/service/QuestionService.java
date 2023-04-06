@@ -19,12 +19,11 @@ import org.rsinitsyn.quiz.dao.GameQuestionDao;
 import org.rsinitsyn.quiz.dao.QuestionCategoryDao;
 import org.rsinitsyn.quiz.dao.QuestionDao;
 import org.rsinitsyn.quiz.entity.AnswerEntity;
-import org.rsinitsyn.quiz.entity.GameQuestionEntity;
+import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
-import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.model.AnswerHistory;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.model.QuestionCategoryBindingModel;
@@ -95,17 +94,17 @@ public class QuestionService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
-    public List<QuizQuestionModel> findAllByCurrentUserAsModel(List<UserEntity> players) {
+    public List<QuizQuestionModel> findAllByCurrentUserAsModel() {
 
         List<QuestionEntity> questionsCreatedByCurrentUser = findAllByCurrentUser();
-        List<GameQuestionEntity> questionsFromAllGames =
+        List<GameQuestionUserEntity> questionsFromAllGames =
                 gameQuestionDao.findAllByQuestionIdIn(
                         questionsCreatedByCurrentUser.stream()
                                 .map(QuestionEntity::getId)
                                 .collect(Collectors.toList())
                 );
 
-        Function<QuestionEntity, List<GameQuestionEntity>> getQuestionHistory =
+        Function<QuestionEntity, List<GameQuestionUserEntity>> getQuestionHistory =
                 qe -> questionsFromAllGames.stream()
                         .filter(gqe -> gqe.getGame().getStatus().equals(GameStatus.FINISHED))
                         .filter(gqe -> !gqe.getGame().getPlayerName().equals(QuizUtils.getLoggedUser()))
@@ -117,30 +116,34 @@ public class QuestionService {
                 .map(question -> {
                     Map<String, AnswerHistory> answerHistoryMap = new HashMap<>();
 
-                    List<GameQuestionEntity> questionHistory = getQuestionHistory.apply(question);
-
+                    List<GameQuestionUserEntity> questionHistory = getQuestionHistory.apply(question);
                     if (!questionHistory.isEmpty()) {
                         answerHistoryMap = questionHistory.stream()
-                                .sorted(Comparator.comparing(GameQuestionEntity::getAnswered, Comparator.reverseOrder()))
+                                .sorted(Comparator.comparing(GameQuestionUserEntity::getAnswered, Comparator.reverseOrder()))
                                 .collect(Collectors.toMap(
                                         gqe -> gqe.getGame().getPlayerName(),
                                         gqe -> AnswerHistory.ofAnswerResult(gqe.getAnswered()),
                                         (gqeRight, gqeWrong) -> gqeRight));
                     }
 
-                    return QuizQuestionModel.builder()
-                            .id(question.getId())
-                            .text(question.getText())
-                            .type(question.getType())
-                            .categoryName(question.getCategory().getName())
-                            .answers(toQuizAnswerModel(question.getAnswers()))
-                            .photoFilename(question.getPhotoFilename())
-                            .audioFilename(question.getAudioFilename())
-                            .playersAnswersHistory(answerHistoryMap)
-                            .optionsOnly(question.isOptionsOnly())
-                            .build();
+                    QuizQuestionModel questionModel = toQuizQuestionModel(question);
+                    questionModel.setPlayersAnswersHistory(answerHistoryMap);
+                    return questionModel;
                 })
                 .toList();
+    }
+
+    public QuizQuestionModel toQuizQuestionModel(QuestionEntity question) {
+        return QuizQuestionModel.builder()
+                .id(question.getId())
+                .text(question.getText())
+                .type(question.getType())
+                .categoryName(question.getCategory().getName())
+                .answers(toQuizAnswerModel(question.getAnswers()))
+                .photoFilename(question.getPhotoFilename())
+                .audioFilename(question.getAudioFilename())
+                .optionsOnly(question.isOptionsOnly())
+                .build();
     }
 
     private Set<QuizQuestionModel.QuizAnswerModel> toQuizAnswerModel(Set<AnswerEntity> answerEntitySet) {
