@@ -1,6 +1,5 @@
 package org.rsinitsyn.quiz.page;
 
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -9,7 +8,6 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
-import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
@@ -53,14 +51,10 @@ public class NewGamePage extends VerticalLayout {
         Button button = new Button("Играть");
         button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         button.addClickListener(event -> {
-            Class targetClass;
             switch (gameTypeSelect.getValue()) {
-                case "Викторина" -> targetClass = QuizGamePage.class;
-                case "Самый умный (мультиплеер)" -> targetClass = CleverestGamePage.class;
-                default -> targetClass = QuizGamePage.class;
+                case "Викторина" -> getUI().ifPresent(ui -> ui.navigate(QuizGamePage.class, UUID.randomUUID().toString()));
+                case "Самый умный (мультиплеер)" -> getUI().ifPresent(ui -> ui.navigate(CleverestGamePage.class));
             }
-
-            getUI().ifPresent(ui -> ui.navigate(targetClass, UUID.randomUUID().toString()));
         });
         return button;
     }

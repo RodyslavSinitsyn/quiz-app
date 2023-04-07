@@ -28,11 +28,22 @@ public class QuizQuestionModel {
     private String audioFilename;
     private String categoryName;
     private boolean optionsOnly;
+    private Integer validRange;
     private Map<String, AnswerHistory> playersAnswersHistory;
     private Set<QuizAnswerModel> answers;
 
+    // for cleverest
+    private boolean special = false;
+
     @Setter(AccessLevel.NONE)
     private InputStream photoInputStream;
+
+    public QuizAnswerModel getFirstCorrectAnswer() {
+        return answers.stream()
+                .filter(QuizAnswerModel::isCorrect)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No correct answer!"));
+    }
 
     public List<QuizAnswerModel> getShuffledAnswers() {
         List<QuizQuestionModel.QuizAnswerModel> answerList = new ArrayList<>(answers);
@@ -41,10 +52,23 @@ public class QuizQuestionModel {
     }
 
     public boolean areAnswersCorrect(Set<QuizAnswerModel> userAnswers) {
-        long correctAnswersCount = this.answers.stream().filter(QuizAnswerModel::isCorrect).count();
-        long userCorrectAnswersCount = userAnswers.stream().filter(QuizAnswerModel::isCorrect).count();
-        boolean userHasOnlyCorrectAnswers = userCorrectAnswersCount == userAnswers.size();
-        return userHasOnlyCorrectAnswers && correctAnswersCount == userCorrectAnswersCount;
+        if (type.equals(QuestionType.TEXT)) {
+            return userAnswers.stream().anyMatch(QuizAnswerModel::isCorrect);
+        } else if (type.equals(QuestionType.MULTI)) {
+            long correctAnswersCount = this.answers.stream().filter(QuizAnswerModel::isCorrect).count();
+            long userCorrectAnswersCount = userAnswers.stream().filter(QuizAnswerModel::isCorrect).count();
+            boolean userHasOnlyCorrectAnswers = userCorrectAnswersCount == userAnswers.size();
+            return userHasOnlyCorrectAnswers && correctAnswersCount == userCorrectAnswersCount;
+        } else if (type.equals(QuestionType.PRECISION)) {
+            QuizAnswerModel answerModel = userAnswers.stream().findFirst().orElseThrow(() -> new RuntimeException("No answer"));
+            int userAnswer = Integer.parseInt(answerModel.getText());
+            int validAnswer = Integer.parseInt(answers.stream().findFirst().orElseThrow().getText());
+            return Math.abs(validAnswer - userAnswer) <= validRange;
+        } else if (type.equals(QuestionType.TOP)) {
+            return false;
+        } else {
+            throw new IllegalStateException("QuestionType not defined");
+        }
     }
 
     @SneakyThrows

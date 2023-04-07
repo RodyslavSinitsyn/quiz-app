@@ -2,8 +2,7 @@ package org.rsinitsyn.quiz.page;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
-import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
-import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEvent;
@@ -16,8 +15,11 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.cleverest.CleverestGamePlayBoardComponent;
@@ -26,6 +28,7 @@ import org.rsinitsyn.quiz.component.cleverest.CleverestWaitingRoomComponent;
 import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.GameType;
+import org.rsinitsyn.quiz.model.QuizQuestionModel;
 import org.rsinitsyn.quiz.service.CleverestBroadcastService;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
@@ -65,14 +68,19 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
             return;
         }
         this.gameId = parameter;
-
         GameEntity gameEntity = gameService.findById(gameId);
         if (gameEntity == null) {
-            getUI().ifPresent(ui -> ui.navigate(getClass(), UUID.randomUUID().toString()));
             Notification.show("Game not exists");
+            event.getUI().navigate(NewGamePage.class);
+            return;
+        }
+        if (broadcastService.getState(gameId) == null) {
+            Notification.show("Game state not exists");
+            event.getUI().navigate(NewGamePage.class);
             return;
         }
 
+        subscribeOnEvens(event.getUI());
         this.isAdmin = gameEntity.getCreatedBy().equals(QuizUtils.getLoggedUser());
         renderComponents(gameEntity);
     }
@@ -85,13 +93,11 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
                     gameService.createIfNotExists(newGameId, GameType.CLEVEREST);
                     broadcastService.createState(
                             newGameId,
+                            QuizUtils.getLoggedUser(),
                             event.getFirstRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toSet()),
-                            event.getSecondRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toSet())
-                    );
-                    broadcastService.getState(newGameId).setRoundFirstQuestions(
-                            event.getFirstRound().stream()
-                                    .map(entity -> questionService.toQuizQuestionModel(entity))
-                                    .collect(Collectors.toSet())
+                            event.getSecondRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toSet()),
+                            event.getThirdRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toSet()),
+                            event.getSpecial().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toSet())
                     );
                     getUI().ifPresent(ui -> ui.navigate(this.getClass(), newGameId));
                 });
@@ -121,13 +127,27 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
+        // nothing
+    }
+
+    private void subscribeOnEvens(UI ui) {
         subscriptions.add(broadcastService.subscribe(
                 CleverestBroadcastService.AllUsersReadyEvent.class, event -> {
                     // TODO LINK QUESTIONS AND USERS WITH GAME
                     if (isAdmin) {
+                        Set<QuizQuestionModel> firstAndSecondRoundQuestions =
+                                Stream.concat(
+                                        broadcastService.getState(gameId).getRoundFirstQuestions().stream(),
+                                        broadcastService.getState(gameId).getRoundSecondQuestions().stream()
+                                ).collect(Collectors.toSet());
                         gameService.update(gameId, null, null, GameStatus.STARTED, null, null);
+                        gameService.linkQuestionsAndUsersWithGame(
+                                gameId,
+                                event.getUsernames(),
+                                firstAndSecondRoundQuestions
+                        );
                     }
-                    QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
+                    QuizUtils.runActionInUi(Optional.ofNullable(ui), () -> {
                         removeAll();
                         configurePlayBoardComponent();
                         add(playBoardComponent);
@@ -142,6 +162,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
         }
     }
 
+
     private void configurePlayBoardComponent() {
         playBoardComponent = new CleverestGamePlayBoardComponent(gameId, broadcastService, isAdmin);
     }
@@ -154,20 +175,20 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
 
     @Override
     public void beforeLeave(BeforeLeaveEvent event) {
-        if (StringUtils.isBlank(gameId)) {
-            event.postpone().proceed();
-            return;
-        }
-        if (gameService.findById(gameId).getStatus().equals(GameStatus.STARTED)) {
-            BeforeLeaveEvent.ContinueNavigationAction leaveAction =
-                    event.postpone();
-            Dialog confirmDialog = new Dialog();
-            confirmDialog.setHeaderTitle("К сожалению нельзя покинуть игру!");
-            confirmDialog.setCloseOnOutsideClick(true);
-            confirmDialog.addDialogCloseActionListener(e -> {
-                confirmDialog.close();
-            });
-            confirmDialog.open();
-        }
+//        if (StringUtils.isBlank(gameId) || broadcastService.getState(gameId) == null) {
+//            event.postpone().proceed();
+//            return;
+//        }
+//        if (gameService.findById(gameId).getStatus().equals(GameStatus.STARTED)) {
+//            BeforeLeaveEvent.ContinueNavigationAction leaveAction =
+//                    event.postpone();
+//            Dialog confirmDialog = new Dialog();
+//            confirmDialog.setHeaderTitle("К сожалению нельзя покинуть игру!");
+//            confirmDialog.setCloseOnOutsideClick(true);
+//            confirmDialog.addDialogCloseActionListener(e -> {
+//                confirmDialog.close();
+//            });
+//            confirmDialog.open();
+//        }
     }
 }

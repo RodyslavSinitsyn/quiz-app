@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.rsinitsyn.quiz.dao.GameQuestionDao;
+import org.rsinitsyn.quiz.dao.GameQuestionUserDao;
 import org.rsinitsyn.quiz.dao.QuestionCategoryDao;
 import org.rsinitsyn.quiz.dao.QuestionDao;
 import org.rsinitsyn.quiz.entity.AnswerEntity;
@@ -26,6 +26,7 @@ import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.AnswerHistory;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
+import org.rsinitsyn.quiz.model.PrecisionQuestionBindingModel;
 import org.rsinitsyn.quiz.model.QuestionCategoryBindingModel;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
 import org.rsinitsyn.quiz.properties.QuizAppProperties;
@@ -43,7 +44,7 @@ public class QuestionService {
 
     private final QuestionDao questionDao;
     private final QuestionCategoryDao questionCategoryDao;
-    private final GameQuestionDao gameQuestionDao;
+    private final GameQuestionUserDao gameQuestionUserDao;
     private final ResourceService resourceService;
     private final QuizAppProperties properties;
 
@@ -98,7 +99,7 @@ public class QuestionService {
 
         List<QuestionEntity> questionsCreatedByCurrentUser = findAllByCurrentUser();
         List<GameQuestionUserEntity> questionsFromAllGames =
-                gameQuestionDao.findAllByQuestionIdIn(
+                gameQuestionUserDao.findAllByQuestionIdIn(
                         questionsCreatedByCurrentUser.stream()
                                 .map(QuestionEntity::getId)
                                 .collect(Collectors.toList())
@@ -143,6 +144,7 @@ public class QuestionService {
                 .photoFilename(question.getPhotoFilename())
                 .audioFilename(question.getAudioFilename())
                 .optionsOnly(question.isOptionsOnly())
+                .validRange(question.getValidRange())
                 .build();
     }
 
@@ -173,6 +175,27 @@ public class QuestionService {
         });
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void saveOrUpdate(PrecisionQuestionBindingModel model) {
+        if (model.getId() == null) {
+            QuestionEntity question = new QuestionEntity();
+            question.setText(model.getText());
+            question.setCreatedBy(QuizUtils.getLoggedUser());
+            question.setCreationDate(LocalDateTime.now());
+            question.setType(QuestionType.PRECISION);
+            question.setOptionsOnly(false);
+            question.setCategory(getOrCreateDefaultCategory());
+            question.setValidRange(model.getRange().intValue());
+
+            AnswerEntity answer = new AnswerEntity();
+            answer.setCorrect(true);
+            answer.setNumber(0);
+            answer.setText(String.valueOf(model.getAnswerText().intValue()));
+            question.addAnswer(answer);
+
+            questionDao.save(question);
+        }
+    }
 
     @Transactional(propagation = Propagation.REQUIRED)
     public void saveOrUpdate(FourAnswersQuestionBindingModel model) {

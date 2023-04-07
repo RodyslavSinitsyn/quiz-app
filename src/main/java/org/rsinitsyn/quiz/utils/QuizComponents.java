@@ -27,10 +27,16 @@ public class QuizComponents {
         } else {
             result.getElement().getThemeList().add("badge");
         }
-        Icon optionsOnlyIcon = questionType.equals(QuestionType.MULTI)
-                ? VaadinIcon.LIST_OL.create()
-                : VaadinIcon.PUZZLE_PIECE.create();
-        result.add(optionsOnlyIcon);
+        Icon typeIcon = null;
+        if (questionType.equals(QuestionType.MULTI)) {
+            typeIcon = VaadinIcon.LIST_OL.create();
+        } else if (questionType.equals(QuestionType.TEXT)) {
+            typeIcon = VaadinIcon.QUESTION.create();
+        } else {
+            typeIcon = VaadinIcon.DOT_CIRCLE.create();
+        }
+
+        result.add(typeIcon);
         return result;
     }
 

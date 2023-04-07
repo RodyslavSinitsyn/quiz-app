@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
+import org.rsinitsyn.quiz.model.PrecisionQuestionBindingModel;
 
 @UtilityClass
 public class ModelConverterUtils {
@@ -37,5 +38,19 @@ public class ModelConverterUtils {
                 questionEntity.getCategory().getName(),
                 questionEntity.getCreatedBy(),
                 questionEntity.getOriginalPhotoUrl());
+    }
+
+    public PrecisionQuestionBindingModel toPrecisionQuestionBindingModel(QuestionEntity questionEntity) {
+        if (questionEntity == null) {
+            return new PrecisionQuestionBindingModel();
+        }
+
+        PrecisionQuestionBindingModel model = new PrecisionQuestionBindingModel();
+        model.setId(questionEntity.getId().toString());
+        model.setText(questionEntity.getText());
+        model.setRange(Double.valueOf(questionEntity.getValidRange()));
+        model.setAnswerText(Double.valueOf(questionEntity.getAnswers().stream().findFirst().orElseThrow().getText()));
+
+        return model;
     }
 }

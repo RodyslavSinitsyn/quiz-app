@@ -9,6 +9,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -24,12 +25,15 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
+import org.rsinitsyn.quiz.component.PrecisionQuestionForm;
 import org.rsinitsyn.quiz.component.QuestionCategoryForm;
 import org.rsinitsyn.quiz.component.QuestionForm;
 import org.rsinitsyn.quiz.component.QuestionListGrid;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
+import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
+import org.rsinitsyn.quiz.model.PrecisionQuestionBindingModel;
 import org.rsinitsyn.quiz.model.QuestionCategoryBindingModel;
 import org.rsinitsyn.quiz.service.ImportService;
 import org.rsinitsyn.quiz.service.QuestionService;
@@ -50,6 +54,7 @@ public class QuestionsListPage extends VerticalLayout {
     private Dialog formDialog;
     private QuestionForm form;
     private QuestionCategoryForm categoryForm;
+    private PrecisionQuestionForm precisionQuestionForm;
 
     private QuestionService questionService;
     private ImportService importService;
@@ -64,6 +69,7 @@ public class QuestionsListPage extends VerticalLayout {
         configureGrid();
         configureForm();
         configureCategoryForm();
+        configurePrecisionForm();
         configureDialog();
 
         add(title, createToolbar(), grid);
@@ -76,6 +82,17 @@ public class QuestionsListPage extends VerticalLayout {
 
     private void configureGrid() {
         grid = new QuestionListGrid(questionService.findAllByCurrentUser());
+        grid.addColumn(new ComponentRenderer<>(entity -> {
+                    if (!entity.getGameQuestions().isEmpty()) {
+                        Icon icon = VaadinIcon.LINK.create();
+                        icon.setTooltipText("Вопрос связан с игрой и не может быть удален");
+                        return new Span(icon);
+                    }
+                    return new Span();
+                }))
+                .setHeader("Связь")
+                .setFlexGrow(0);
+        grid.addDefaultColumns();
         grid.setSizeFull();
         grid.setSelectionMode(Grid.SelectionMode.MULTI);
         grid.addSelectionListener(event -> {
@@ -86,7 +103,12 @@ public class QuestionsListPage extends VerticalLayout {
         });
         grid.addItemClickListener(event -> {
             grid.select(event.getItem());
-            editQuestion(ModelConverterUtils.toFourAnswersQuestionBindingModel(event.getItem()));
+            if (event.getItem().getType().equals(QuestionType.PRECISION)) {
+                precisionQuestionForm.setModel(ModelConverterUtils.toPrecisionQuestionBindingModel(event.getItem()));
+                addToDialogAndOpen(precisionQuestionForm);
+            } else {
+                editQuestion(ModelConverterUtils.toFourAnswersQuestionBindingModel(event.getItem()));
+            }
         });
         updateList();
     }
@@ -123,6 +145,20 @@ public class QuestionsListPage extends VerticalLayout {
         form.setQuestion(null);
     }
 
+    private void configurePrecisionForm() {
+        precisionQuestionForm = new PrecisionQuestionForm();
+        precisionQuestionForm.addListener(PrecisionQuestionForm.SaveEvent.class, event -> {
+            questionService.saveOrUpdate(event.getSource().getModel());
+            updateList();
+            precisionQuestionForm.setModel(null);
+            formDialog.close();
+        });
+        precisionQuestionForm.addListener(PrecisionQuestionForm.CancelEvent.class, event -> {
+            precisionQuestionForm.setModel(null);
+            formDialog.close();
+        });
+        precisionQuestionForm.setModel(null);
+    }
 
     private void configureCategoryForm() {
         categoryForm = new QuestionCategoryForm(questionService.findAllCategories(), new QuestionCategoryBindingModel());
@@ -165,6 +201,13 @@ public class QuestionsListPage extends VerticalLayout {
             editQuestion(new FourAnswersQuestionBindingModel());
         });
 
+        Button addPrecisionQuestionButton = new Button("Создать точный вопрос");
+        addPrecisionQuestionButton.addClickListener(event -> {
+            grid.asMultiSelect().clear();
+            precisionQuestionForm.setModel(new PrecisionQuestionBindingModel());
+            addToDialogAndOpen(precisionQuestionForm);
+        });
+
         Upload uploadComponent = QuizComponents.uploadComponent(
                 "Импортировать",
                 (buffer, event) -> {
@@ -184,6 +227,7 @@ public class QuestionsListPage extends VerticalLayout {
         HorizontalLayout toolbar = new HorizontalLayout(
                 categoryFilter,
                 addQuestionButton,
+                addPrecisionQuestionButton,
                 uploadComponent,
                 addCategoryButton,
                 groupedOperations);

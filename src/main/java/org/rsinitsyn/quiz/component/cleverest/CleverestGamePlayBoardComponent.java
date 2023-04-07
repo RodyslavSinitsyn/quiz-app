@@ -5,6 +5,7 @@ import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
@@ -14,14 +15,15 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
 import org.rsinitsyn.quiz.service.CleverestBroadcastService;
+import org.rsinitsyn.quiz.service.CleverestGameState;
 import org.rsinitsyn.quiz.utils.AudioUtils;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 
@@ -31,6 +33,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     private final CleverestBroadcastService broadcastService;
     private final boolean isAdmin;
 
+    private Div personalScoreContainer = new Div();
+    private VerticalLayout categoriesLayout = new VerticalLayout();
     private VerticalLayout usersScoreLayout = new VerticalLayout();
     private VerticalLayout questionLayout = new VerticalLayout();
     private VerticalLayout answersLayout = new VerticalLayout();
@@ -38,64 +42,76 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     private List<Registration> subs = new ArrayList<>();
 
     public CleverestGamePlayBoardComponent(String gameId, CleverestBroadcastService broadcastService, boolean isAdmin) {
+        System.out.println("Init gameId: " + gameId);
         this.gameId = gameId;
         this.broadcastService = broadcastService;
         this.isAdmin = isAdmin;
 
-        renderRoundRules(broadcastService.getState(gameId).getRoundNumber());
-        renderQuestion(broadcastService.getState(gameId).getRoundNumber());
+        if (!isAdmin) {
+            updateUserPersonalScore();
+            add(personalScoreContainer);
+        } else {
+            renderRoundRules(broadcastService.getState(gameId).getRoundNumber());
+            add(categoriesLayout);
+        }
 
-        add(usersScoreLayout, questionLayout, answersLayout);
+        add(questionLayout, answersLayout);
     }
 
     private void renderRoundRules(int roundNumber) {
-        if (isAdmin) {
-            String roundNumberText = "Раунд " + roundNumber;
-            Notification notification = Notification.show(roundNumberText, 3_000, Notification.Position.MIDDLE);
-            notification.addThemeVariants(NotificationVariant.LUMO_PRIMARY);
-        }
+        Span rules = new Span("Lorem Ipsum - это текст-\"рыба\", часто используемый в печати и вэб-дизайне. Lorem Ipsum является стандартной \"рыбой\" для текстов на латинице с начала XVI века. В то время некий безымянный печатник создал большую коллекцию размеров и форм шрифтов, используя Lorem Ipsum для распечатки образцов. Lorem Ipsum не только успешно пережил без заметных изменений пять веков, но и перешагнул в электронный дизайн. Его популяризации в новое время послужили публикация листов Letraset с образцами Lorem Ipsum в 60-х годах и, в более недавнее время, программы электронной вёрстки типа Aldus PageMaker, в шаблонах которых используется Lorem Ipsum.");
+        rules.addClassNames(LumoUtility.FontSize.LARGE);
+        Dialog rulesDialog = CleverestComponents.defaultDialog(
+                rules,
+                "Новый раунд",
+                () -> {
+                    if (roundNumber == 3) {
+                        broadcastService.sendRenderCategoriesEvent(gameId, null, null);
+                    } else {
+                        broadcastService.sendNextQuestionEvent(gameId);
+                    }
+                }
+        );
+        rulesDialog.open();
     }
 
-    private void renderQuestion(int roundNumber) {
-        QuizQuestionModel questionModel = broadcastService.getState(gameId).getCurrent();
-        if (questionModel == null) {
-            new Span("Finish...");
+    private void renderQuestion(QuizQuestionModel question, int roundNumber) {
+        setEnabled(true);
+        renderQuestionLayout(question, roundNumber);
+        boolean singleAnswer = roundNumber == 2 || question.isSpecial();
+        renderOptions(question, singleAnswer);
+    }
+
+    private void renderOptions(QuizQuestionModel questionModel,
+                               boolean singleAnswer) {
+        answersLayout.removeAll();
+
+        if (questionModel.isSpecial()) {
             return;
         }
-        setEnabled(true);
-        renderQuestionLayout(questionModel, roundNumber);
-        renderOptions(questionModel, roundNumber);
-        updateUsersScore();
-    }
 
-    private void renderOptions(QuizQuestionModel questionModel, int roundNumber) {
-        answersLayout.removeAll();
-        if (roundNumber == 1) {
-            questionModel.getAnswers().forEach(answerModel -> {
-                Button button = new Button();
-                button.setText(answerModel.getText());
-                button.addClickListener(event -> {
-                    broadcastService.submitAnswer(gameId, QuizUtils.getLoggedUser(), answerModel);
+        if (!singleAnswer) {
+            questionModel.getShuffledAnswers().forEach(answerModel -> {
+                Button button = CleverestComponents.optionButton(answerModel.getText(), () -> {
+                    if (isAdmin) {
+                        return;
+                    }
+                    broadcastService.submitAnswerAndIncrease(gameId, QuizUtils.getLoggedUser(), questionModel, answerModel);
                 });
                 answersLayout.add(button);
             });
-
-        } else if (roundNumber == 2) {
-
-            if (!isAdmin) {
-                TextField textField = new TextField("Введите ответ");
-                Button submit = new Button("Ответить");
-
-                textField.setValueChangeMode(ValueChangeMode.EAGER);
-                textField.addValueChangeListener(event -> submit.setEnabled(!event.getValue().isBlank()));
-
-                submit.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-                submit.setEnabled(false);
-                submit.addClickListener(event -> {
-                    broadcastService.submitAnswer(gameId, QuizUtils.getLoggedUser(), textField.getValue());
-                });
-                answersLayout.add(textField, submit);
+        } else {
+            if (isAdmin) {
+                return;
             }
+            Button submit = CleverestComponents.submitButton();
+            TextField textField = CleverestComponents.defaultInput(event -> {
+                submit.setEnabled(!event.getValue().isBlank());
+            });
+            submit.addClickListener(event -> {
+                broadcastService.submitAnswer(gameId, QuizUtils.getLoggedUser(), questionModel, textField.getValue());
+            });
+            answersLayout.add(textField, submit);
         }
     }
 
@@ -107,6 +123,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
         Paragraph textParagraph = new Paragraph();
         textParagraph.setText(questionModel.getText());
+        textParagraph.setWidthFull();
         textParagraph.getStyle().set("white-space", "pre-line");
 
         if (StringUtils.isNotEmpty(questionModel.getPhotoFilename())) {
@@ -114,13 +131,13 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             image.setSrc(QuizUtils.createStreamResourceForPhoto(questionModel.getPhotoFilename()));
             image.setMaxHeight("25em");
             questionLayout.add(image);
-            textParagraph.addClassNames(LumoUtility.FontSize.XXLARGE);
+            textParagraph.addClassNames(LumoUtility.FontSize.LARGE);
         } else {
-            textParagraph.addClassNames(LumoUtility.FontSize.XXXLARGE);
+            textParagraph.addClassNames(LumoUtility.FontSize.XLARGE);
         }
 
         Span categorySpan = new Span(questionModel.getCategoryName());
-        categorySpan.addClassNames(LumoUtility.FontWeight.SEMIBOLD, LumoUtility.FontSize.MEDIUM);
+        categorySpan.addClassNames(LumoUtility.FontWeight.SEMIBOLD, LumoUtility.FontSize.SMALL);
         questionLayout.add(categorySpan);
 
         questionLayout.add(textParagraph);
@@ -136,50 +153,97 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         }
     }
 
-    private void updateUsersScore() {
-        usersScoreLayout.removeAll();
-        broadcastService.getState(gameId).getUsers().forEach((name, score) -> {
-            usersScoreLayout.add(new Span(name + " : " + score.getScore()));
+    private void renderCategoriesTable(Map<String, List<QuizQuestionModel>> data) {
+        categoriesLayout.removeAll();
+        categoriesLayout.addClassNames(LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.LIGHT);
+        categoriesLayout.setAlignItems(Alignment.CENTER);
+        categoriesLayout.setDefaultHorizontalComponentAlignment(Alignment.CENTER);
+        categoriesLayout.setSpacing(true);
+
+        data.forEach((category, questions) -> {
+            Button btn = new Button(category + " (" + questions.size() + ")");
+            btn.setWidthFull();
+            btn.addClickListener(event -> {
+                QuizQuestionModel question = questions.stream().findFirst().orElseThrow();
+                Dialog dialog = CleverestComponents.defaultDialog(new Span(question.getText()), "Вопрос", () -> {
+                    showCorrectAnswer(question,
+                            broadcastService.getState(gameId).getSortedByScoreUsers(),
+                            false,
+                            true,
+                            () -> broadcastService.sendRenderCategoriesEvent(gameId, category, question));
+                });
+                dialog.open();
+            });
+            categoriesLayout.add(btn);
         });
     }
 
+    private void updateUserPersonalScore() {
+        personalScoreContainer.removeAll();
+        personalScoreContainer.add(CleverestComponents.userScore(
+                QuizUtils.getLoggedUser(),
+                broadcastService.getState(gameId).getUsers().get(QuizUtils.getLoggedUser()).getScore(),
+                LumoUtility.FontSize.LARGE
+        ));
+    }
 
-    private void showUserAnswers(int roundNumber, boolean roundOver, boolean gameFinished) {
-        Dialog dialog = new Dialog();
+    private void showUsersScore(boolean roundOver, Runnable onCloseAction) {
+        usersScoreLayout.removeAll();
+        broadcastService.getState(gameId).getSortedByScoreUsers().forEach((username, userGameState) -> {
+            usersScoreLayout.add(CleverestComponents.userScore(username, userGameState.getScore(), LumoUtility.FontSize.XXXLARGE));
+        });
+        Dialog usersScoreDialog = CleverestComponents.defaultDialog(
+                usersScoreLayout,
+                "",
+                () -> {
+                    if (roundOver) {
+                        broadcastService.sendNewRoundEvent(gameId);
+                        return;
+                    }
+                    onCloseAction.run();
+                });
+        usersScoreDialog.open();
+    }
 
-        broadcastService.getState(gameId).getUsers().forEach((username, userGameState) -> {
-            Span span = new Span();
-            span.setText(username + " = " + userGameState.getLatestAnswer());
+    private void showCorrectAnswer(QuizQuestionModel question,
+                                   Map<String, CleverestGameState.UserGameState> users,
+                                   boolean roundOver,
+                                   boolean appendApproveButton,
+                                   Runnable onCloseAction) {
+        VerticalLayout answers = new VerticalLayout();
+        answers.setSpacing(true);
+        answers.setDefaultHorizontalComponentAlignment(Alignment.START);
+        answers.setAlignItems(Alignment.CENTER);
 
-            Button answerCorrectButton = new Button();
-            answerCorrectButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
-            answerCorrectButton.setText("+");
-            answerCorrectButton.addClickListener(event -> {
-                event.getSource().setEnabled(false);
-                broadcastService.getState(gameId).getUsers().get(username).increaseScore();
-            });
-            dialog.setCloseOnOutsideClick(true);
-            dialog.addDialogCloseActionListener(event -> {
-                updateUsersScore();
-                event.getSource().close();
-                broadcastService.sendNextQuestionEvent();
-                if (gameFinished) {
-                    broadcastService.finishGame();
-                    return;
-                }
-                if (roundOver) {
-                    renderRoundRules(broadcastService.getState(gameId).getRoundNumber());
-                }
-            });
-
-            dialog.add(span);
-            if (roundNumber == 2) {
-                dialog.add(answerCorrectButton);
+        answers.add(CleverestComponents.correctAnswerSpan(question, LumoUtility.FontSize.XXLARGE, LumoUtility.FontWeight.SEMIBOLD));
+        users.forEach((username, userGameState) -> {
+            Span userAnswer = CleverestComponents.userAnswer(username + "(" + userGameState.getLatestResponseTimeMs() + ")", userGameState.getLatestAnswer(), LumoUtility.FontSize.XXXLARGE);
+            if (!appendApproveButton) {
+                answers.add(userAnswer);
+            } else {
+                Button approveButton = new Button();
+                approveButton.addThemeVariants(
+                        ButtonVariant.LUMO_SUCCESS,
+                        ButtonVariant.LUMO_PRIMARY,
+                        ButtonVariant.LUMO_SMALL);
+                approveButton.setIcon(VaadinIcon.CHECK.create());
+                approveButton.addClickListener(event -> {
+                    event.getSource().setEnabled(false);
+                    broadcastService.getState(gameId).getUsers().get(username).increaseScore();
+                });
+                answers.add(new Span(userAnswer, approveButton));
             }
-            dialog.add(new Hr());
+            answers.add(new Hr());
         });
 
-        dialog.open();
+        Dialog revealAnswerDialog = CleverestComponents.defaultDialog(
+                answers,
+                "Ответы",
+                () -> {
+                    showUsersScore(roundOver, onCloseAction);
+                    broadcastService.sendUpdatePersonalScoreEvent();
+                });
+        revealAnswerDialog.open();
     }
 
     private void renderResults() {
@@ -190,41 +254,75 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         subs.add(broadcastService.subscribe(CleverestBroadcastService.UserAnsweredEvent.class, event -> {
-                    QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
-                        Notification notification = Notification.show(event.getUsername(), 1_000, Notification.Position.TOP_CENTER);
-                        notification.addThemeVariants(NotificationVariant.LUMO_CONTRAST);
+            QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
+                System.out.println(event.getClass().getName() + " - " + QuizUtils.getLoggedUser());
+                Notification notification = Notification.show(event.getUsername(), 1_000, Notification.Position.TOP_CENTER);
+                notification.addThemeVariants(NotificationVariant.LUMO_CONTRAST);
 
-                        if (event.getUsername().equals(QuizUtils.getLoggedUser())) {
-                            setEnabled(false);
-                        }
-                    });
-                })
-        );
+                if (event.getUsername().equals(QuizUtils.getLoggedUser())) {
+                    setEnabled(false);
+                }
+            });
+        }));
 
         subs.add(broadcastService.subscribe(CleverestBroadcastService.AllUsersAnsweredEvent.class, event -> {
             QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
+                System.out.println(event.getClass().getName() + " - " + QuizUtils.getLoggedUser());
                 if (isAdmin) {
-                    showUserAnswers(event.getCurrentRoundNumber(), event.isRoundOver(), event.isGameFinished());
+                    boolean approveManually = event.getCurrentRoundNumber() == 2
+                            || event.getQuestion().isSpecial();
+                    showCorrectAnswer(
+                            event.getQuestion(),
+                            broadcastService.getState(gameId).getSortedByResponseTimeUsers(),
+                            event.isRoundOver(),
+                            approveManually,
+                            () -> broadcastService.sendNextQuestionEvent(gameId));
                 }
             });
         }));
 
         subs.add(broadcastService.subscribe(CleverestBroadcastService.NextQuestionEvent.class, event -> {
             QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
-                renderQuestion(broadcastService.getState(gameId).getRoundNumber());
+                System.out.println(event.getClass().getName() + " - " + QuizUtils.getLoggedUser());
+                renderQuestion(event.getQuestion(), event.getRoundNumber());
             });
         }));
 
+        subs.add(broadcastService.subscribe(CleverestBroadcastService.RenderCategoriesEvent.class, event -> {
+            QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
+                questionLayout.removeAll();
+                answersLayout.removeAll();
+                if (isAdmin) {
+                    System.out.println(event.getClass().getName() + " - " + QuizUtils.getLoggedUser());
+                    renderCategoriesTable(event.getData());
+                } else {
+                    questionLayout.add(new Span("Внимание на экран..."));
+                }
+            });
+        }));
+
+
         subs.add(broadcastService.subscribe(CleverestBroadcastService.NextRoundEvent.class, event -> {
             QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
+                System.out.println(event.getClass().getName() + " - " + QuizUtils.getLoggedUser());
                 if (isAdmin) {
                     renderRoundRules(event.getRoundNumber());
                 }
             });
         }));
 
+        subs.add(broadcastService.subscribe(CleverestBroadcastService.UpdatePersonalScoreEvent.class, event -> {
+            QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
+                System.out.println(event.getClass().getName() + " - " + QuizUtils.getLoggedUser());
+                if (!isAdmin) {
+                    updateUserPersonalScore();
+                }
+            });
+        }));
+
         subs.add(broadcastService.subscribe(CleverestBroadcastService.GameFinishedEvent.class, event -> {
             QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
+                System.out.println(event.getClass().getName() + " - " + QuizUtils.getLoggedUser());
                 renderResults();
             });
         }));

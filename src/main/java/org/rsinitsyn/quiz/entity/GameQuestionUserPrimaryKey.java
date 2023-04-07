@@ -21,6 +21,6 @@ public class GameQuestionUserPrimaryKey implements Serializable {
     private UUID gameId;
     @Column(nullable = false)
     private UUID questionId;
-    @Column(nullable = true)
+    @Column(nullable = false)
     private UUID userId;
 }

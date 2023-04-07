@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface GameQuestionDao extends JpaRepository<GameQuestionUserEntity, GameQuestionUserPrimaryKey> {
+public interface GameQuestionUserDao extends JpaRepository<GameQuestionUserEntity, GameQuestionUserPrimaryKey> {
 
     @Query("from GameQuestionUserEntity gqe WHERE gqe.question.id in (:questionIds)")
     List<GameQuestionUserEntity> findAllByQuestionIdIn(@Param("questionIds") Iterable<UUID> questionIds);

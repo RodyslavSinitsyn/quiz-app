@@ -14,7 +14,6 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "games_questions")
-//        uniqueConstraints = @UniqueConstraint(name = "gq_gameid_ordernumber_uq", columnNames = {"gameId", "orderNumber"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,10 +32,10 @@ public class GameQuestionUserEntity {
     @JoinColumn(name = "questionId")
     private QuestionEntity question;
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = true)
+    @ManyToOne(fetch = FetchType.EAGER)
     @MapsId("userId")
-    @JoinColumn(name = "userId", referencedColumnName = "id")
-    private UserEntity userEntity;
+    @JoinColumn(name = "userId")
+    private UserEntity user;
 
     // Null - not answered yet
     // True - correct answer

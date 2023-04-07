@@ -67,7 +67,7 @@ public class QuizGamePage extends VerticalLayout implements HasUrlParameter<Stri
     private QuizGamePlayBoardComponent configurePlayGameComponent(QuizGameStateModel quizGameStateModel) {
         quizGamePlayBoardComponent = new QuizGamePlayBoardComponent(quizGameStateModel);
         quizGamePlayBoardComponent.addListener(QuizGamePlayBoardComponent.FinishGameEvent.class, event -> {
-            gameService.finish(gameId, event.getModel());
+            gameService.finishQuizGame(gameId, event.getModel());
             remove(quizGamePlayBoardComponent);
             add(configureQuizGameResultComponent(event.getModel()));
         });
@@ -94,7 +94,7 @@ public class QuizGamePage extends VerticalLayout implements HasUrlParameter<Stri
                 playerList);
 
         quizGameSettingsComponent.addListener(QuizGameSettingsComponent.StartGameEvent.class, event -> {
-            gameService.updateBeforeStart(gameId, event.getModel());
+            gameService.linkQuestionsWithGame(gameId, event.getModel());
             remove(quizGameSettingsComponent);
             add(configurePlayGameComponent(event.getModel()));
         });

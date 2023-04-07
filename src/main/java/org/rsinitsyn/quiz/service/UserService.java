@@ -43,7 +43,7 @@ public class UserService {
                 .toList();
     }
 
-    public UserEntity findAllByUsername(String username) {
+    public UserEntity findByUsername(String username) {
         return userDao.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found " + username));
     }
 }

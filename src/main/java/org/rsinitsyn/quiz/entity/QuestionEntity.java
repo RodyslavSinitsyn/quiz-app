@@ -49,6 +49,7 @@ public class QuestionEntity {
     private String audioFilename;
     @Column(columnDefinition = "BOOLEAN DEFAULT TRUE")
     private boolean optionsOnly = true;
+    private Integer validRange;
     @ManyToOne(fetch = FetchType.EAGER, optional = true)
     @JoinColumn(name = "categoryId", referencedColumnName = "id")
     private QuestionCategoryEntity category;

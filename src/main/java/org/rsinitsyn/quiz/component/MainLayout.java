@@ -19,6 +19,7 @@ import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.rsinitsyn.quiz.page.CleverestGamePage;
+import org.rsinitsyn.quiz.page.FontsPage;
 import org.rsinitsyn.quiz.page.NewGamePage;
 import org.rsinitsyn.quiz.page.QuestionsListPage;
 import org.rsinitsyn.quiz.page.StatisticPage;
@@ -77,8 +78,9 @@ public class MainLayout extends AppLayout {
         RouterLink link = new RouterLink(CleverestGamePage.class);
         link.setText("Мультиплеер (new)");
         tab.add(link);
-
         tabs.add(tab);
+
+        tabs.add(createTab("Шрифты (dev)", FontsPage.class));
     }
 
     private Tab createTab(String text, Class<? extends Component> navigateTo) {

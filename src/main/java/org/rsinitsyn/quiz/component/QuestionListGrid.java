@@ -4,8 +4,6 @@ import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -21,17 +19,11 @@ public class QuestionListGrid extends Grid<QuestionEntity> {
 
     public QuestionListGrid(List<QuestionEntity> questionEntityList) {
         setItems(questionEntityList);
-        configure();
     }
 
-    private void configure() {
+    public void addDefaultColumns() {
         addColumn(new ComponentRenderer<>(entity -> {
             HorizontalLayout row = new HorizontalLayout();
-            if (!entity.getGameQuestions().isEmpty()) {
-                Icon icon = VaadinIcon.LINK.create();
-                icon.setTooltipText("Вопрос связан с игрой и не может быть удален");
-                row.add(icon);
-            }
             row.setAlignItems(FlexComponent.Alignment.CENTER);
             if (StringUtils.isNotEmpty(entity.getPhotoFilename())) {
                 Avatar smallPhoto = new Avatar();

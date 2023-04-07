@@ -35,11 +35,6 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         add(usersGrid);
         if (isAdmin) {
             configureAdminComponents(gameId);
-        } else {
-            if (QuizUtils.getLoggedUser().equals("Аноним")) {
-                return; // TODO Кастыль
-            }
-            broadcastService.addUserToGame(gameId, QuizUtils.getLoggedUser());
         }
         addProgressBar();
     }
@@ -59,7 +54,8 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
     }
 
     private void updatePlayersGrid() {
-        if (!broadcastService.getState(gameId).getUsers().isEmpty()) {
+        if (broadcastService.getState(gameId).getUsers() != null
+                && !broadcastService.getState(gameId).getUsers().isEmpty()) {
             usersGrid.setItems(broadcastService.getState(gameId).getUsers().keySet());
         }
     }
@@ -69,10 +65,14 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         link.getElement().setAttribute("target", "_blank");
         add(link);
 
+        Anchor prodLink = new Anchor("http://192.168.0.106:8080/cleverest/" + gameId + "?player", "Prod Invite link");
+        prodLink.getElement().setAttribute("target", "_blank");
+        add(prodLink);
+
         Button button = new Button("Начать игру");
         button.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
         button.addClickListener(event -> {
-            broadcastService.allPlayersReady();
+            broadcastService.allPlayersReady(gameId);
         });
         add(button);
     }
@@ -86,8 +86,12 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
     protected void onAttach(AttachEvent attachEvent) {
         subscriptions.add(
                 broadcastService.subscribe(CleverestBroadcastService.UserJoinedEvent.class, event -> {
-                    QuizUtils.runActionInUi(getUI(), this::updatePlayersGrid);
+                    QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
+                        updatePlayersGrid();
+                    });
                 }));
+
+        broadcastService.addUserToGame(gameId, QuizUtils.getLoggedUser());
     }
 
     @Override
