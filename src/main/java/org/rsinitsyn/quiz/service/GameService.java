@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.dao.GameDao;
@@ -40,8 +41,17 @@ public class GameService {
                 .orElse(null);
     }
 
+    public void submitAnswersBatch(String gameId, QuizQuestionModel question, List<CleverestGameState.UserGameState> userStates) {
+        userStates.forEach(userGameState -> {
+            submitAnswers(gameId, userGameState.getUsername(), question, userGameState::isLastWasCorrect);
+        });
+    }
+
     @Transactional(propagation = Propagation.REQUIRED)
-    public void submitAnswers(String gameId, String playerName, QuizQuestionModel questionModel, Set<QuizQuestionModel.QuizAnswerModel> userAnswers) {
+    public void submitAnswers(String gameId,
+                              String playerName,
+                              QuizQuestionModel questionModel,
+                              Supplier<Boolean> correctAnswerResolver) {
         UserEntity user = userService.findByUsername(playerName);
         var primaryKey = new GameQuestionUserPrimaryKey(
                 UUID.fromString(gameId),
@@ -50,7 +60,7 @@ public class GameService {
         Optional<GameQuestionUserEntity> optEntity = gameQuestionUserDao.findById(primaryKey);
         if (optEntity.isPresent()) {
             GameQuestionUserEntity persistent = optEntity.get();
-            persistent.setAnswered(questionModel.areAnswersCorrect(userAnswers));
+            persistent.setAnswered(correctAnswerResolver.get());
 
             gameQuestionUserDao.save(persistent);
         } else {
@@ -59,7 +69,7 @@ public class GameService {
             newEntity.setQuestion(questionService.findByIdLazy(questionModel.getId()));
             newEntity.setUser(user);
             newEntity.setGame(findById(gameId));
-            newEntity.setAnswered(questionModel.areAnswersCorrect(userAnswers));
+            newEntity.setAnswered(correctAnswerResolver.get());
             newEntity.setOrderNumber(0);
 
             gameQuestionUserDao.save(newEntity);

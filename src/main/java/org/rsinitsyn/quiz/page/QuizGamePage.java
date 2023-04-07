@@ -76,7 +76,7 @@ public class QuizGamePage extends VerticalLayout implements HasUrlParameter<Stri
                     gameId,
                     quizGameStateModel.getPlayerName(),
                     event.getQuestion(),
-                    event.getAnswer());
+                    () -> event.getQuestion().areAnswersCorrect(event.getAnswer()));
         });
         return quizGamePlayBoardComponent;
     }

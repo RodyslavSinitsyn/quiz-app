@@ -12,13 +12,17 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode(exclude = {"photoInputStream", "playersAnswersHistory", "answers"})
 @Builder
 public class QuizQuestionModel {
     private UUID id;

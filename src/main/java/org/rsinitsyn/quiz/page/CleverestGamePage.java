@@ -137,8 +137,8 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
                     if (isAdmin) {
                         Set<QuizQuestionModel> firstAndSecondRoundQuestions =
                                 Stream.concat(
-                                        broadcastService.getState(gameId).getRoundFirstQuestions().stream(),
-                                        broadcastService.getState(gameId).getRoundSecondQuestions().stream()
+                                        broadcastService.getState(gameId).getFirstQuestions().stream(),
+                                        broadcastService.getState(gameId).getSecondQuestions().stream()
                                 ).collect(Collectors.toSet());
                         gameService.update(gameId, null, null, GameStatus.STARTED, null, null);
                         gameService.linkQuestionsAndUsersWithGame(
@@ -165,8 +165,12 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
 
     private void configurePlayBoardComponent() {
         playBoardComponent = new CleverestGamePlayBoardComponent(gameId, broadcastService, isAdmin);
+        subscriptions.add(playBoardComponent.subscribe(CleverestBroadcastService.SaveUserAnswersEvent.class, event -> {
+            if (isAdmin) {
+                gameService.submitAnswersBatch(gameId, event.getQuestion(), event.getUserStates());
+            }
+        }));
     }
-
 
     @Override
     protected void onDetach(DetachEvent detachEvent) {

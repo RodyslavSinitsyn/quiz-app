@@ -33,30 +33,13 @@ import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuizGameStateModel;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
 import org.rsinitsyn.quiz.utils.AudioUtils;
+import org.rsinitsyn.quiz.utils.StaticValuesHolder;
+
+import static org.rsinitsyn.quiz.utils.StaticValuesHolder.CORRECT_ANSWER_AUDIOS;
+import static org.rsinitsyn.quiz.utils.StaticValuesHolder.SUBMIT_ANSWER_AUDIOS;
+import static org.rsinitsyn.quiz.utils.StaticValuesHolder.WRONG_ANSWER_AUDIOS;
 
 public class QuizGamePlayBoardComponent extends VerticalLayout implements BeforeLeaveObserver {
-
-    private static final Iterator<String> REVEAL_ANSWER_AUDIOS = Iterables.cycle(
-            "reveal-answer-1.mp3", "reveal-answer-2.mp3").iterator();
-
-    private static final Iterator<String> SUBMIT_ANSWER_AUDIOS = Iterables.cycle(
-                    "submit-answer-1.mp3",
-                    "submit-answer-2.mp3",
-                    "submit-answer-3.mp3")
-            .iterator();
-
-    private static final Iterator<String> CORRECT_ANSWER_AUDIOS = Iterables.cycle(
-                    "correct-answer-1.mp3",
-                    "correct-answer-2.mp3",
-                    "correct-answer-3.mp3",
-                    "correct-answer-4.mp3",
-                    "correct-answer-5.mp3")
-            .iterator();
-
-    private static final Iterator<String> WRONG_ANSWER_AUDIOS = Iterables.cycle(
-                    "wrong-answer-1.mp3",
-                    "wrong-answer-2.mp3")
-            .iterator();
 
     private VerticalLayout questionLayout = new VerticalLayout();
     private QuizGameAnswersComponent answersComponent;
@@ -149,7 +132,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
                 renderQuestion();
             });
             dialog.open();
-            AudioUtils.playStaticSoundAsync(REVEAL_ANSWER_AUDIOS.next());
+            AudioUtils.playStaticSoundAsync(StaticValuesHolder.REVEAL_ANSWER_AUDIOS.next());
         };
         button.addClickListener(event -> {
             if (!gameState.isIntrigueEnabled()) {

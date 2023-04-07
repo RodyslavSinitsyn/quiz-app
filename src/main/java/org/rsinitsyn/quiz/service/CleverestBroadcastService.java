@@ -47,7 +47,9 @@ public class CleverestBroadcastService {
                 || QuizUtils.getLoggedUser().equals(gameState.getCreatedBy())) {
             return; // TODO Кастыль не регаем в игре
         }
-        gameState.getUsers().put(username, new CleverestGameState.UserGameState());
+        CleverestGameState.UserGameState emptyUserGameState = new CleverestGameState.UserGameState();
+        emptyUserGameState.setUsername(username);
+        gameState.getUsers().put(username, emptyUserGameState);
         eventBus.fireEvent(new UserJoinedEvent(username));
     }
 
@@ -55,6 +57,25 @@ public class CleverestBroadcastService {
     public void allPlayersReady(String gameId) {
         eventBus.fireEvent(new AllUsersReadyEvent(gameStateMap.get(gameId).getUsers().keySet()));
     }
+
+    public void updateHistoryBatchAndSendEvent(String gameId, QuizQuestionModel question) {
+        gameStateMap.get(gameId).getUsers().keySet().forEach(username -> {
+            updateHistory(gameId, question, username, false);
+        });
+        eventBus.fireEvent(new SaveUserAnswersEvent(
+                question,
+                gameStateMap.get(gameId).getHistory().get(question)));
+    }
+
+    public void updateHistory(String gameId, QuizQuestionModel question, String username, boolean sendEvent) {
+        gameStateMap.get(gameId).updateHistory(question, username);
+        if (sendEvent) {
+            eventBus.fireEvent(new SaveUserAnswersEvent(
+                    question,
+                    gameStateMap.get(gameId).getHistory().get(question)));
+        }
+    }
+
 
     // SubmitUserAnswerEvent && AllUsersAnsweredEvent
     public void submitAnswerAndIncrease(String gameId, String username, QuizQuestionModel questionModel, QuizQuestionModel.QuizAnswerModel answer) {
@@ -126,19 +147,19 @@ public class CleverestBroadcastService {
         CleverestGameState gameState = gameStateMap.get(gameId);
         gameState.getUsers().values().forEach(CleverestGameState.UserGameState::prepareForNext);
         if (category != null && question != null) {
-            gameState.getRoundThirdQuestions().get(category).remove(question);
+            gameState.getThirdQuestions().get(category).remove(question);
         }
-        Set<String> finishedCategories = gameState.getRoundThirdQuestions().entrySet()
+        Set<String> finishedCategories = gameState.getThirdQuestions().entrySet()
                 .stream()
                 .filter(entry -> entry.getValue().isEmpty())
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toSet());
-        finishedCategories.forEach(key -> gameState.getRoundThirdQuestions().remove(key));
-        if (gameState.getRoundThirdQuestions().isEmpty()) {
+        finishedCategories.forEach(key -> gameState.getThirdQuestions().remove(key));
+        if (gameState.getThirdQuestions().isEmpty()) {
             eventBus.fireEvent(new GameFinishedEvent());
             return;
         }
-        eventBus.fireEvent(new RenderCategoriesEvent(gameStateMap.get(gameId).getRoundThirdQuestions()));
+        eventBus.fireEvent(new RenderCategoriesEvent(gameStateMap.get(gameId).getThirdQuestions()));
     }
 
     @Getter
@@ -225,6 +246,18 @@ public class CleverestBroadcastService {
         public RenderCategoriesEvent(Map<String, List<QuizQuestionModel>> data) {
             super(new Div(), false);
             this.data = data;
+        }
+    }
+
+    @Getter
+    public static class SaveUserAnswersEvent extends ComponentEvent<Div> {
+        private QuizQuestionModel question;
+        private List<CleverestGameState.UserGameState> userStates;
+
+        public SaveUserAnswersEvent(QuizQuestionModel question, List<CleverestGameState.UserGameState> userStates) {
+            super(new Div(), false);
+            this.question = question;
+            this.userStates = userStates;
         }
     }
 
