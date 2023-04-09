@@ -6,11 +6,9 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Image;
-import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -19,11 +17,11 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
@@ -57,17 +55,21 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             updateUserPersonalScore();
             add(personalScoreContainer);
         } else {
-            renderRoundRules(broadcastService.getState(gameId).getRoundNumber());
+            int currRound = broadcastService.getState(gameId).getRoundNumber();
+            renderRoundRules(currRound, broadcastService.getState(gameId).getRoundRules().get(currRound));
             add(categoriesLayout);
         }
 
         add(questionLayout, answersLayout);
     }
 
-    private void renderRoundRules(int roundNumber) {
-        Span rules = new Span("Lorem Ipsum - это текст-\"рыба\", часто используемый в печати и вэб-дизайне. Lorem Ipsum является стандартной \"рыбой\" для текстов на латинице с начала XVI века. В то время некий безымянный печатник создал большую коллекцию размеров и форм шрифтов, используя Lorem Ipsum для распечатки образцов. Lorem Ipsum не только успешно пережил без заметных изменений пять веков, но и перешагнул в электронный дизайн. Его популяризации в новое время послужили публикация листов Letraset с образцами Lorem Ipsum в 60-х годах и, в более недавнее время, программы электронной вёрстки типа Aldus PageMaker, в шаблонах которых используется Lorem Ipsum.");
-        rules.addClassNames(LumoUtility.FontSize.LARGE);
-        Dialog rulesDialog = CleverestComponents.defaultDialog(
+    private void renderRoundRules(int roundNumber, String rulesText) {
+        Span rules = new Span(rulesText);
+        rules.addClassNames(LumoUtility.FontSize.XXXLARGE,
+                LumoUtility.FontWeight.SEMIBOLD,
+                LumoUtility.TextAlignment.CENTER);
+        rules.setWidthFull();
+        CleverestComponents.openDialog(
                 rules,
                 "Новый раунд",
                 () -> {
@@ -78,7 +80,6 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     }
                 }
         );
-        rulesDialog.open();
     }
 
     private void renderQuestion(QuizQuestionModel question, int roundNumber) {
@@ -91,6 +92,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     private void renderOptions(QuizQuestionModel questionModel,
                                boolean singleAnswer) {
         answersLayout.removeAll();
+        answersLayout.setPadding(false);
 
         if (questionModel.isSpecial()) {
             return;
@@ -110,10 +112,14 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             if (isAdmin) {
                 return;
             }
-            Button submit = CleverestComponents.submitButton();
-            TextField textField = CleverestComponents.defaultInput(event -> {
+            Button submit = CleverestComponents.primaryButton("Ответить", e -> {
+            });
+            submit.setWidthFull();
+
+            TextField textField = CleverestComponents.answerInput(event -> {
                 submit.setEnabled(!event.getValue().isBlank());
             });
+            submit.setEnabled(false);
             submit.addClickListener(event -> {
                 broadcastService.submitAnswer(gameId, QuizUtils.getLoggedUser(), questionModel, textField.getValue());
             });
@@ -127,26 +133,25 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         questionLayout.setPadding(false);
         questionLayout.setDefaultHorizontalComponentAlignment(Alignment.CENTER);
 
-        Paragraph textParagraph = new Paragraph();
-        textParagraph.setText(questionModel.getText());
-        textParagraph.setWidthFull();
-        textParagraph.getStyle().set("white-space", "pre-line");
+        List<String> questionClasses = isAdmin
+                ? List.of(LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.SEMIBOLD)
+                : List.of(LumoUtility.FontSize.XXLARGE, LumoUtility.FontWeight.LIGHT);
 
         if (StringUtils.isNotEmpty(questionModel.getPhotoFilename())) {
             Image image = new Image();
             image.setSrc(QuizUtils.createStreamResourceForPhoto(questionModel.getPhotoFilename()));
-            image.setMaxHeight("25em");
+            image.setMaxHeight(isAdmin ? "25em" : "15em");
             questionLayout.add(image);
-            textParagraph.addClassNames(LumoUtility.FontSize.LARGE);
-        } else {
-            textParagraph.addClassNames(LumoUtility.FontSize.XLARGE);
         }
 
         Span categorySpan = new Span(questionModel.getCategoryName());
         categorySpan.addClassNames(LumoUtility.FontWeight.SEMIBOLD, LumoUtility.FontSize.SMALL);
         questionLayout.add(categorySpan);
 
-        questionLayout.add(textParagraph);
+        Span textContent = CleverestComponents.questionTextSpan(
+                questionModel.getText(),
+                questionClasses.toArray(new String[]{}));
+        questionLayout.add(textContent);
 
         if (StringUtils.isNotEmpty(questionModel.getAudioFilename())) {
             Button playAudioButton = new Button("Слушать");
@@ -159,30 +164,39 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         }
     }
 
-    private void renderCategoriesTable(Map<String, List<QuizQuestionModel>> data) {
+    private void renderCategoriesTable(CleverestGameState.UserGameState userToAnswer, Map<String, List<QuizQuestionModel>> data) {
         categoriesLayout.removeAll();
         categoriesLayout.addClassNames(LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.LIGHT);
         categoriesLayout.setAlignItems(Alignment.CENTER);
         categoriesLayout.setDefaultHorizontalComponentAlignment(Alignment.CENTER);
         categoriesLayout.setSpacing(true);
 
+        categoriesLayout.add(new Span(new Span("Отвечает: "),
+                CleverestComponents.userNameSpan(
+                        userToAnswer.getUsername(),
+                        userToAnswer.getColor())));
+
         data.forEach((category, questions) -> {
             Button btn = new Button(category + " (" + questions.size() + ")");
             btn.setWidthFull();
             btn.addClickListener(event -> {
                 QuizQuestionModel question = questions.stream().findFirst().orElseThrow();
-                Dialog dialog = CleverestComponents.defaultDialog(new Span(question.getText()), "Вопрос", () -> {
+
+                // TODO KASTIL
+                broadcastService.getState(gameId).refreshQuestionRenderTime();
+                broadcastService.getState(gameId).submitAnswer(userToAnswer.getUsername(), "");
+
+                CleverestComponents.openDialog(new Span(question.getText()), "Вопрос", () -> {
                     showCorrectAnswer(question,
-                            broadcastService.getState(gameId).getSortedByScoreUsers(),
+                            Collections.singletonList(userToAnswer),
                             false,
                             true,
                             uName -> {
                                 broadcastService.getState(gameId).getUsers().get(uName).increaseScore();
-                                broadcastService.updateHistory(gameId, question, uName, true);
+                                broadcastService.sendUpdatePersonalScoreEvent();
                             },
                             () -> broadcastService.sendRenderCategoriesEvent(gameId, category, question));
                 });
-                dialog.open();
             });
             categoriesLayout.add(btn);
         });
@@ -190,37 +204,42 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
     private void updateUserPersonalScore() {
         personalScoreContainer.removeAll();
+        personalScoreContainer.setWidthFull();
         personalScoreContainer.add(CleverestComponents.userScore(
                 QuizUtils.getLoggedUser(),
+                broadcastService.getState(gameId).getUsers().get(QuizUtils.getLoggedUser()).getColor(),
                 broadcastService.getState(gameId).getUsers().get(QuizUtils.getLoggedUser()).getScore(),
-                LumoUtility.FontSize.LARGE
+                LumoUtility.FontSize.XXLARGE,
+                LumoUtility.FontWeight.LIGHT
         ));
     }
 
     private void showUsersScore(QuizQuestionModel question, boolean roundOver, Runnable onCloseAction) {
         usersScoreLayout.removeAll();
         broadcastService.getState(gameId).getSortedByScoreUsers().forEach((username, userGameState) -> {
-            usersScoreLayout.add(CleverestComponents.userScore(username, userGameState.getScore(), LumoUtility.FontSize.XXXLARGE));
+            usersScoreLayout.add(CleverestComponents.userScore(username,
+                    userGameState.getColor(),
+                    userGameState.getScore(),
+                    LumoUtility.FontSize.XXXLARGE));
         });
-        Dialog usersScoreDialog = CleverestComponents.defaultDialog(
+        CleverestComponents.openDialog(
                 usersScoreLayout,
                 "",
                 () -> {
-                    broadcastService.updateHistoryBatchAndSendEvent(gameId, question);
+                    broadcastService.updateHistoryAndSendEvent(gameId, question);
                     if (roundOver) {
                         broadcastService.sendNewRoundEvent(gameId);
                         return;
                     }
                     onCloseAction.run();
                 });
-        usersScoreDialog.open();
     }
 
     private void showCorrectAnswer(QuizQuestionModel question,
-                                   Map<String, CleverestGameState.UserGameState> users,
+                                   Collection<CleverestGameState.UserGameState> users,
                                    boolean roundOver,
                                    boolean appendApproveButton,
-                                   Consumer<String> onApproveAction,
+                                   Consumer<String> leftApproveAction,
                                    Runnable onCloseAction) {
         AudioUtils.playStaticSoundAsync(StaticValuesHolder.REVEAL_ANSWER_AUDIOS.next());
         VerticalLayout answers = new VerticalLayout();
@@ -228,42 +247,42 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         answers.setDefaultHorizontalComponentAlignment(Alignment.START);
         answers.setAlignItems(Alignment.CENTER);
 
-        answers.add(CleverestComponents.correctAnswerSpan(question, LumoUtility.FontSize.XXLARGE, LumoUtility.FontWeight.SEMIBOLD));
-        users.forEach((username, userGameState) -> {
+        answers.add(CleverestComponents.correctAnswerSpan(question,
+                LumoUtility.FontSize.XXLARGE,
+                LumoUtility.FontWeight.SEMIBOLD));
+        users.forEach(userGameState -> {
             Span userAnswer = CleverestComponents
-                    .userAnswer(username + "(" + userGameState.getLastResponseTime() + ")",
-                            userGameState.getLastAnswerText(), LumoUtility.FontSize.XXXLARGE);
+                    .userAnswer(userGameState.getUsername(),
+                            userGameState.getColor(),
+                            userGameState.getLastAnswerText(),
+                            userGameState.isLastWasCorrect(),
+                            LumoUtility.FontSize.XXXLARGE);
             if (!appendApproveButton) {
                 answers.add(userAnswer);
             } else {
-                Button approveButton = new Button();
-                approveButton.addThemeVariants(
-                        ButtonVariant.LUMO_SUCCESS,
+                Button approveButton = CleverestComponents.approveButton(
+                        () -> leftApproveAction.accept(userGameState.getUsername()),
                         ButtonVariant.LUMO_PRIMARY,
-                        ButtonVariant.LUMO_SMALL);
-                approveButton.setIcon(VaadinIcon.CHECK.create());
-                approveButton.addClickListener(event -> {
-                    event.getSource().setEnabled(false);
-                    onApproveAction.accept(username);
-                });
+                        ButtonVariant.LUMO_SUCCESS);
                 answers.add(new Span(userAnswer, approveButton));
             }
             answers.add(new Hr());
         });
 
-        Dialog revealAnswerDialog = CleverestComponents.defaultDialog(
+        CleverestComponents.openDialog(
                 answers,
                 "Ответы",
                 () -> {
                     showUsersScore(question, roundOver, onCloseAction);
                     broadcastService.sendUpdatePersonalScoreEvent();
                 });
-        revealAnswerDialog.open();
     }
 
     private void renderResults() {
         removeAll();
-        add(new Span("finish..."));
+        add(new CleverestResultComponent(
+                broadcastService.getState(gameId).getUsers(),
+                broadcastService.getState(gameId).getHistory()));
     }
 
     @Override
@@ -284,21 +303,24 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             if (!isAdmin) {
                 return;
             }
-            AudioUtils.playStaticSoundAsync(StaticValuesHolder.SUBMIT_ANSWER_AUDIOS.next())
-                    .thenRun(() -> {
-                        QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
+//            AudioUtils.playStaticSoundAsync(StaticValuesHolder.SUBMIT_ANSWER_AUDIOS.next())
+//                    .thenRun(() -> {
+            QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
 
-                            boolean approveManually = event.getCurrentRoundNumber() == 2
-                                    || event.getQuestion().isSpecial();
-                            showCorrectAnswer(
-                                    event.getQuestion(),
-                                    broadcastService.getState(gameId).getSortedByResponseTimeUsers(),
-                                    event.isRoundOver(),
-                                    approveManually,
-                                    uName -> broadcastService.getState(gameId).getUsers().get(uName).increaseScore(),
-                                    () -> broadcastService.sendNextQuestionEvent(gameId));
-                        });
-                    });
+                boolean approveManually = event.getCurrentRoundNumber() == 2
+                        || event.getQuestion().isSpecial();
+                showCorrectAnswer(
+                        event.getQuestion(),
+                        broadcastService.getState(gameId).getSortedByResponseTimeUsers().values(),
+                        event.isRoundOver(),
+                        approveManually,
+                        uName -> {
+                            broadcastService.getState(gameId).getUsers().get(uName).increaseScore();
+                            broadcastService.sendUpdatePersonalScoreEvent();
+                        },
+                        () -> broadcastService.sendNextQuestionEvent(gameId));
+            });
+//                    });
         }));
 
         subs.add(broadcastService.subscribe(CleverestBroadcastService.NextQuestionEvent.class, event -> {
@@ -314,20 +336,24 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 answersLayout.removeAll();
                 if (isAdmin) {
                     System.out.println(event.getClass().getName() + " - " + QuizUtils.getLoggedUser());
-                    renderCategoriesTable(event.getData());
+                    renderCategoriesTable(event.getUserToAnswer(), event.getData());
                 } else {
-                    questionLayout.add(new Span("Внимание на экран..."));
+                    // TODO STYLES
+                    if (QuizUtils.getLoggedUser().equals(event.getUserToAnswer().getUsername())) {
+                        questionLayout.add(new Span("Выберайте категорию!!!"));
+                    } else {
+                        questionLayout.add(new Span("Внимание на экран..."));
+                    }
                 }
             });
         }));
-
 
         subs.add(broadcastService.subscribe(CleverestBroadcastService.NextRoundEvent.class, event -> {
             if (!isAdmin) {
                 return;
             }
             QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
-                renderRoundRules(event.getRoundNumber());
+                renderRoundRules(event.getRoundNumber(), event.getRules());
             });
         }));
 

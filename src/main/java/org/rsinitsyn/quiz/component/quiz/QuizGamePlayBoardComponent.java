@@ -1,6 +1,5 @@
 package org.rsinitsyn.quiz.component.quiz;
 
-import com.google.common.collect.Iterables;
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
@@ -22,7 +21,6 @@ import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;

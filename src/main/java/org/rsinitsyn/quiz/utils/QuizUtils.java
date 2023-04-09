@@ -74,6 +74,14 @@ public class QuizUtils {
         );
     }
 
+    public void setAnswerGivenValue(boolean attrValue) {
+        VaadinSession.getCurrent().setAttribute("cc-answer-given", attrValue);
+    }
+
+    public boolean getIsAnswerGivenValue() {
+        return (boolean) VaadinSession.getCurrent().getAttribute("cc-answer-given");
+    }
+
     public void runActionInUi(Optional<UI> optUi, Command action) {
         UI ui = optUi.orElseThrow(() -> new RuntimeException("UI not exists!"));
         ui.access(action);

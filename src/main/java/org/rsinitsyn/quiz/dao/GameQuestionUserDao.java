@@ -12,6 +12,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface GameQuestionUserDao extends JpaRepository<GameQuestionUserEntity, GameQuestionUserPrimaryKey> {
 
-    @Query("from GameQuestionUserEntity gqe WHERE gqe.question.id in (:questionIds)")
+    @Query("FROM GameQuestionUserEntity gqe WHERE gqe.question.id in (:questionIds)")
     List<GameQuestionUserEntity> findAllByQuestionIdIn(@Param("questionIds") Iterable<UUID> questionIds);
+
+    @Query(value = "SELECT MAX(gque.orderNumber) FROM GameQuestionUserEntity gque " +
+            "WHERE gque.id.gameId=:gameId")
+    int getMaxOrderNumber(@Param("gameId") UUID gameId);
 }

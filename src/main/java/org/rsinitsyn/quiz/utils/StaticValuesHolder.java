@@ -26,4 +26,6 @@ public class StaticValuesHolder {
                     "wrong-answer-1.mp3",
                     "wrong-answer-2.mp3")
             .iterator();
+
+    public static final String BLACK_FONT_BORDER = "1px 1px 1px black";
 }

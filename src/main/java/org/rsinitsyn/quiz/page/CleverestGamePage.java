@@ -16,7 +16,6 @@ import com.vaadin.flow.shared.Registration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -94,10 +93,10 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
                     broadcastService.createState(
                             newGameId,
                             QuizUtils.getLoggedUser(),
-                            event.getFirstRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toSet()),
-                            event.getSecondRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toSet()),
-                            event.getThirdRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toSet()),
-                            event.getSpecial().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toSet())
+                            event.getFirstRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList()),
+                            event.getSecondRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList()),
+                            event.getThirdRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList()),
+                            event.getSpecial().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList())
                     );
                     getUI().ifPresent(ui -> ui.navigate(this.getClass(), newGameId));
                 });
@@ -135,11 +134,11 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
                 CleverestBroadcastService.AllUsersReadyEvent.class, event -> {
                     // TODO LINK QUESTIONS AND USERS WITH GAME
                     if (isAdmin) {
-                        Set<QuizQuestionModel> firstAndSecondRoundQuestions =
+                        List<QuizQuestionModel> firstAndSecondRoundQuestions =
                                 Stream.concat(
                                         broadcastService.getState(gameId).getFirstQuestions().stream(),
                                         broadcastService.getState(gameId).getSecondQuestions().stream()
-                                ).collect(Collectors.toSet());
+                                ).collect(Collectors.toList());
                         gameService.update(gameId, null, null, GameStatus.STARTED, null, null);
                         gameService.linkQuestionsAndUsersWithGame(
                                 gameId,

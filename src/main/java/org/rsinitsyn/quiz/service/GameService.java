@@ -43,7 +43,9 @@ public class GameService {
 
     public void submitAnswersBatch(String gameId, QuizQuestionModel question, List<CleverestGameState.UserGameState> userStates) {
         userStates.forEach(userGameState -> {
-            submitAnswers(gameId, userGameState.getUsername(), question, userGameState::isLastWasCorrect);
+            submitAnswers(gameId, userGameState.getUsername(), question, () ->
+                    userGameState.isAnswerGiven() ?
+                            userGameState.isLastWasCorrect() : null);
         });
     }
 
@@ -70,7 +72,7 @@ public class GameService {
             newEntity.setUser(user);
             newEntity.setGame(findById(gameId));
             newEntity.setAnswered(correctAnswerResolver.get());
-            newEntity.setOrderNumber(0);
+            newEntity.setOrderNumber(gameQuestionUserDao.getMaxOrderNumber(primaryKey.getGameId()) + 1);
 
             gameQuestionUserDao.save(newEntity);
         }
@@ -138,7 +140,7 @@ public class GameService {
     @Transactional(propagation = Propagation.REQUIRED)
     public void linkQuestionsAndUsersWithGame(String gameId,
                                               Set<String> usernames,
-                                              Set<QuizQuestionModel> questions) {
+                                              List<QuizQuestionModel> questions) {
         GameEntity gameEntity = findById(gameId);
 
         Collection<GameQuestionUserEntity> entities = new ArrayList<>();
