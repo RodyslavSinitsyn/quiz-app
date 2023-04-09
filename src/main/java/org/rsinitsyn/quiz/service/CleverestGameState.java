@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
@@ -152,17 +153,32 @@ public class CleverestGameState {
         return users.values().stream().allMatch(UserGameState::isAnswerGiven);
     }
 
+    public void updateUserPositions() {
+        Map<String, UserGameState> sortedByScore = getSortedByScoreUsers();
+        AtomicInteger pos = new AtomicInteger(1);
+        AtomicInteger prevScoreHolder = new AtomicInteger(0);
+        sortedByScore.forEach((username, userGameState) -> {
+            if (userGameState.getScore() < prevScoreHolder.get()) {
+                pos.incrementAndGet();
+            }
+            userGameState.setLastPosition(pos.get());
+            prevScoreHolder.set(userGameState.getScore());
+        });
+    }
+
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
     public static class UserGameState implements Comparable<UserGameState> {
         private String username;
         private String color;
+
         private boolean lastWasCorrect;
         @Setter(AccessLevel.NONE)
         private String lastAnswerText;
         @Setter(AccessLevel.NONE)
         private LocalDateTime lastAnswerTime;
+        private int lastPosition;
         private long lastResponseTime;
         @Setter(AccessLevel.NONE)
         private int score = 0;
@@ -207,6 +223,7 @@ public class CleverestGameState {
                     lastWasCorrect,
                     lastAnswerText,
                     lastAnswerTime,
+                    lastPosition,
                     lastResponseTime,
                     score,
                     answerGiven,

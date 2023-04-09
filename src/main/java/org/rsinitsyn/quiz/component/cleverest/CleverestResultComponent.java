@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -99,11 +98,6 @@ public class CleverestResultComponent extends VerticalLayout {
                 .flatMap(dto -> dto.getUserGameStates().stream())
                 .toList();
 
-        Function<String, String> findColor = uName -> anyStates.stream()
-                .filter(userGameState -> userGameState.getUsername().equals(uName))
-                .map(CleverestGameState.UserGameState::getColor)
-                .findFirst().orElse("");
-
         uniqueUsernames.forEach(username -> {
             grid.addColumn(new ComponentRenderer<>(resultDto -> {
                         var state = results.stream()
@@ -112,25 +106,22 @@ public class CleverestResultComponent extends VerticalLayout {
                                 .filter(us -> us.getUsername().equals(username))
                                 .findFirst().orElse(null);
 
-                        if (state == null) {
-                            return new VerticalLayout(new Span("-"));
-                        }
-
                         VerticalLayout layout = new VerticalLayout();
-
+                        if (state == null) {
+                            return layout;
+                        }
+                        layout.getStyle().set("background-color", state.getColor());
                         layout.add(state.isLastWasCorrect()
                                 ? CleverestComponents.doneIcon() : CleverestComponents.cancelIcon());
                         layout.add(new Span("Баллы: " + state.getScore()));
 
-                        String timeInSeconds = String.format("%.2f", state.getLastResponseTime() / 1000.0);
+                        String timeInSeconds = String.format("%.2f сек.", state.getLastResponseTime() / 1000.0);
                         layout.add(new Span("Время: " + timeInSeconds)
                         );
 
                         return layout;
                     }))
-                    .setHeader(username)
-                    .getStyle()
-                    .set("background-color", findColor.apply(username));
+                    .setHeader(username);
         });
         grid.setAllRowsVisible(true);
         grid.addThemeVariants(GridVariant.LUMO_COLUMN_BORDERS);

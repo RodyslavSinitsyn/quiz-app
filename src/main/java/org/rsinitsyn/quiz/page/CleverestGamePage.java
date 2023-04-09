@@ -11,6 +11,7 @@ import com.vaadin.flow.router.BeforeLeaveObserver;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @Route(value = "/cleverest", layout = MainLayout.class)
 @PageTitle("Cleverest")
+@PreserveOnRefresh
 public class CleverestGamePage extends VerticalLayout implements HasUrlParameter<String>, BeforeLeaveObserver {
 
     private String gameId;
@@ -43,7 +45,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
     private List<Registration> subscriptions = new ArrayList<>();
 
     private CleverestGameSettingsComponent gameSettingsComponent;
-    private CleverestGamePlayBoardComponent playBoardComponent;
+    private CleverestGamePlayBoardComponent playBoardComponent = new CleverestGamePlayBoardComponent();
     private CleverestWaitingRoomComponent waitingRoomComponent;
 
     private QuestionService questionService;
@@ -126,7 +128,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
-        // nothing
+        System.out.println(attachEvent);
     }
 
     private void subscribeOnEvens(UI ui) {
@@ -163,7 +165,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
 
 
     private void configurePlayBoardComponent() {
-        playBoardComponent = new CleverestGamePlayBoardComponent(gameId, broadcastService, isAdmin);
+        playBoardComponent.setProperties(gameId, broadcastService, isAdmin);
         subscriptions.add(playBoardComponent.subscribe(CleverestBroadcastService.SaveUserAnswersEvent.class, event -> {
             if (isAdmin) {
                 gameService.submitAnswersBatch(gameId, event.getQuestion(), event.getUserStates());

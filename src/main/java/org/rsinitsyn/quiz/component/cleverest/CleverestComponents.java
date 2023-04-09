@@ -7,20 +7,24 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import java.util.List;
 import lombok.experimental.UtilityClass;
-import org.rsinitsyn.quiz.component.сustom.ColorPicker;
+import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
+import org.rsinitsyn.quiz.utils.AudioUtils;
+import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
 @UtilityClass
@@ -49,21 +53,28 @@ public class CleverestComponents {
         return span;
     }
 
-    public Span userScore(String username, String ustTxtColor, int score, String... classes) {
+    public HorizontalLayout userScore(String username, String ustTxtColor, int score, String... classes) {
+        HorizontalLayout layout = new HorizontalLayout();
+        layout.setAlignItems(FlexComponent.Alignment.CENTER);
+        layout.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.STRETCH);
+        layout.setWidthFull();
+
         Span userScore = new Span(String.valueOf(score));
-        userScore.addClassNames(classes);
-
-        Span result = new Span(userNameSpan(username, ustTxtColor, classes), delimiterSpan(classes), userScore);
-        result.addClassNames(LumoUtility.TextAlignment.CENTER);
-        return result;
-    }
-
-    public Span userAnswer(String username, String usrTxtColor, String answer, boolean correct, String... classes) {
-        Span userScore = new Span(String.valueOf(answer));
         userScore.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
         userScore.addClassNames(classes);
 
-        Span result = new Span(userNameSpan(username, usrTxtColor, classes), delimiterSpan(classes), userScore);
+        layout.add(new Span(userNameSpan(username, ustTxtColor, classes), delimiterSpan(classes)));
+        layout.add(userScore);
+
+        return layout;
+    }
+
+    public Span userAnswer(String username, String usrTxtColor, String answer, boolean correct, String... classes) {
+        Span userTextAnswer = new Span(String.valueOf(answer));
+        userTextAnswer.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
+        userTextAnswer.addClassNames(classes);
+
+        Span result = new Span(userNameSpan(username, usrTxtColor, classes), delimiterSpan(classes), userTextAnswer);
         result.addClassNames(LumoUtility.TextAlignment.CENTER);
         if (correct) {
             result.addClassNames(LumoUtility.Background.SUCCESS_10);
@@ -116,6 +127,7 @@ public class CleverestComponents {
         Button button = new Button();
         button.setIcon(VaadinIcon.CHECK.create());
         button.setDisableOnClick(true);
+        button.addClassNames(LumoUtility.Border.ALL, LumoUtility.BorderColor.SUCCESS);
         button.addClickListener(event -> {
             event.getSource().getParent().ifPresent(p -> p.addClassNames(LumoUtility.Background.SUCCESS_10));
             clickAction.run();
@@ -127,35 +139,12 @@ public class CleverestComponents {
     public Span correctAnswerSpan(QuizQuestionModel questionModel, String... classes) {
         Span span = new Span();
         span.addClassNames(classes);
-        span.addClassNames(LumoUtility.TextAlignment.CENTER);
+        span.addClassNames(LumoUtility.TextAlignment.CENTER,
+                LumoUtility.Border.BOTTOM,
+                LumoUtility.BorderColor.SUCCESS);
         span.setWidthFull();
         span.setText(questionModel.getFirstCorrectAnswer().getText());
         return span;
-    }
-
-    public ConfirmDialog confirmDialog(String username, ComponentEventListener<ConfirmDialog.ConfirmEvent> eventHandler) {
-        ConfirmDialog dialog = new ConfirmDialog();
-        dialog.setCloseOnEsc(true);
-        dialog.setRejectable(false);
-        dialog.setCancelable(true);
-        dialog.setCancelText("Назад");
-        dialog.setConfirmText("Играть");
-        dialog.addConfirmListener(eventHandler);
-
-        VerticalLayout layout = new VerticalLayout();
-        layout.setAlignItems(FlexComponent.Alignment.CENTER);
-        layout.setDefaultHorizontalComponentAlignment(FlexComponent.Alignment.CENTER);
-        layout.setSpacing(true);
-
-        Span playerName = new Span(username);
-        ColorPicker colorPicker = new ColorPicker();
-        colorPicker.addValueChangeListener(event -> {
-
-        });
-
-        layout.add(playerName, colorPicker);
-
-        return dialog;
     }
 
     public Icon doneIcon() {
@@ -170,6 +159,55 @@ public class CleverestComponents {
         return icon;
     }
 
+    public VerticalLayout questionLayout(QuizQuestionModel questionModel,
+                                         List<String> textContentClasses,
+                                         String imageHeight) {
+        VerticalLayout layout = new VerticalLayout();
+        layout.setSpacing(false);
+        layout.setPadding(false);
+        layout.setDefaultHorizontalComponentAlignment(FlexComponent.Alignment.CENTER);
+
+        if (StringUtils.isNotEmpty(questionModel.getPhotoFilename())) {
+            Image image = new Image();
+            image.setSrc(QuizUtils.createStreamResourceForPhoto(questionModel.getPhotoFilename()));
+            image.setMaxHeight(imageHeight);
+            layout.add(image);
+        }
+
+        Span categorySpan = new Span(questionModel.getCategoryName());
+        categorySpan.addClassNames(LumoUtility.FontWeight.SEMIBOLD, LumoUtility.FontSize.SMALL);
+        layout.add(categorySpan);
+
+        Span textContent = CleverestComponents.questionTextSpan(
+                questionModel.getText(),
+                textContentClasses.toArray(new String[]{}));
+        layout.add(textContent);
+
+        if (StringUtils.isNotEmpty(questionModel.getAudioFilename())) {
+            Button playAudioButton = new Button("Слушать");
+            playAudioButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST,
+                    ButtonVariant.LUMO_PRIMARY,
+                    ButtonVariant.LUMO_SMALL);
+            playAudioButton.setIcon(VaadinIcon.PLAY_CIRCLE.create());
+            playAudioButton.addClickListener(event -> {
+                AudioUtils.playSoundAsync(questionModel.getAudioFilename());
+            });
+            layout.add(playAudioButton);
+        }
+        return layout;
+    }
+
+    public Span userWaitSpan(String text, String... classes) {
+        Span span = new Span();
+        span.setText(text);
+        span.addClassNames(LumoUtility.FontSize.XXLARGE,
+                LumoUtility.FontWeight.LIGHT,
+                LumoUtility.TextAlignment.CENTER,
+                LumoUtility.Border.BOTTOM,
+                LumoUtility.BorderColor.PRIMARY);
+        span.addClassNames(classes);
+        return span;
+    }
 
     private Span delimiterSpan(String... classes) {
         Span span = new Span();

@@ -6,18 +6,19 @@ import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.page.CleverestGamePage;
 import org.rsinitsyn.quiz.page.FontsPage;
 import org.rsinitsyn.quiz.page.NewGamePage;
@@ -31,7 +32,7 @@ public class MainLayout extends AppLayout {
 
     private FlexLayout header = new FlexLayout();
 
-    private H1 logo = new H1();
+    private Span logo = new Span();
     private Tabs tabs = new Tabs();
     private HorizontalLayout authLayout = new HorizontalLayout();
 
@@ -65,8 +66,8 @@ public class MainLayout extends AppLayout {
     }
 
     private void configureLogo() {
-        logo.setText("ХЗ!?");
-        logo.addClassNames(LumoUtility.Margin.MEDIUM);
+        logo.addClassNames(LumoUtility.Margin.MEDIUM, LumoUtility.FontSize.LARGE);
+        logo.add(VaadinIcon.DIAMOND.create());
     }
 
     private void configureTabs() {
@@ -111,13 +112,17 @@ public class MainLayout extends AppLayout {
 
         if (QuizUtils.getLoggedUser().equals("Аноним")) {
             renderAfterLogout();
-            dialog.open();
+            if (!dialog.isOpened()) {
+                dialog.open();
+            }
         } else {
             renderAfterLogin(QuizUtils.getLoggedUser());
         }
     }
 
     private void configureDialog() {
+        dialog.setCloseOnOutsideClick(false);
+        dialog.setCloseOnEsc(true);
         dialog.setHeaderTitle("Войдите");
 
         TextField userNameInput = new TextField();
@@ -131,16 +136,13 @@ public class MainLayout extends AppLayout {
         submit.addClickShortcut(Key.ENTER);
         submit.addClickListener(event -> loginUser(userNameInput.getValue()));
 
-        HorizontalLayout availableUsers = new HorizontalLayout();
-        availableUsers.setJustifyContentMode(FlexComponent.JustifyContentMode.EVENLY);
-        userService.findAllOrderByVisitDateDesc().forEach(userEntity -> {
-            Button button = new Button(userEntity.getUsername());
-            button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            button.addClickListener(event -> loginUser(userEntity.getUsername()));
-            availableUsers.add(button);
-        });
+        Select<String> users = new Select<>();
+        users.setLabel("Выбрать из уже созданных");
+        users.setWidthFull();
+        users.setItems(userService.findAllOrderByVisitDateDesc().stream().map(UserEntity::getUsername).toList());
+        users.addValueChangeListener(event -> loginUser(event.getValue()));
 
-        dialog.add(availableUsers, userNameInput, submit);
+        dialog.add(users, userNameInput, submit);
     }
 
     private void loginUser(String username) {
