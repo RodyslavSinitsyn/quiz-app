@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -33,17 +34,20 @@ public class GameEntity {
     private UUID id;
     private String name;
     private String createdBy;
-    private String playerName;
     @Enumerated(value = EnumType.STRING)
     private GameStatus status;
     @Enumerated(value = EnumType.STRING)
     private GameType type;
-    private Integer questionsCount;
-    private Integer result;
     @Column(nullable = false)
     private LocalDateTime creationDate;
     private LocalDateTime finishDate;
     @OneToMany(mappedBy = "game", fetch = FetchType.EAGER)
     @OrderBy(value = "orderNumber")
     private Set<GameQuestionUserEntity> gameQuestions = new HashSet<>();
+
+    public Set<String> getPlayerNames() {
+        return gameQuestions.stream()
+                .map(e -> e.getUser().getUsername())
+                .collect(Collectors.toSet());
+    }
 }

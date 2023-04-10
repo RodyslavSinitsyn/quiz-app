@@ -96,16 +96,16 @@ public class GameService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public void update(String id, String name, String playerName, GameStatus status, Integer questionsCount, Integer percentageResult) {
+    public void update(String id, String name, GameStatus status) {
         GameEntity gameEntity = findById(id);
-        setNewFields(gameEntity, name, playerName, status, questionsCount, percentageResult);
+        setNewFields(gameEntity, name, status);
         log.info("Updating game, id: {}", id);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
     public void linkQuestionsWithGame(String id, QuizGameStateModel stateModel) {
         GameEntity gameEntity = findById(id);
-        setNewFields(gameEntity, stateModel.getGameName(), stateModel.getPlayerName(), GameStatus.STARTED, stateModel.getQuestions().size(), stateModel.calculateAndGetAnswersResult());
+        setNewFields(gameEntity, stateModel.getGameName(), GameStatus.STARTED);
         log.info("Updating game, id: {}", id);
 
         UserEntity user = userService.findByUsername(stateModel.getPlayerName());
@@ -128,13 +128,10 @@ public class GameService {
         log.info("Saved game questions, size: {}", savedGameQuestions.size());
     }
 
-    private void setNewFields(GameEntity gameEntity, String name, String playerName, GameStatus status, Integer questionsCount, Integer percentageResult) {
+    private void setNewFields(GameEntity gameEntity, String name, GameStatus status) {
         gameEntity.setName(name);
         gameEntity.setCreatedBy(QuizUtils.getLoggedUser());
-        gameEntity.setPlayerName(playerName);
         gameEntity.setStatus(status);
-        gameEntity.setQuestionsCount(questionsCount);
-        gameEntity.setResult(percentageResult);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
@@ -169,11 +166,10 @@ public class GameService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public void finishQuizGame(String id, QuizGameStateModel quizGameStateModel) {
+    public void finishQuizGame(String id) {
         gameDao.findById(UUID.fromString(id))
                 .ifPresent(gameEntity -> {
                     gameEntity.setStatus(GameStatus.FINISHED);
-                    gameEntity.setResult(quizGameStateModel.calculateAndGetAnswersResult());
                     gameEntity.setFinishDate(LocalDateTime.now());
                 });
     }

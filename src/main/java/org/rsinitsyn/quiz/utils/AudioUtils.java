@@ -22,7 +22,6 @@ public class AudioUtils {
         return CompletableFuture.runAsync(() -> playSound(STATIC_FILES_FOLDER + audioFileName));
     }
 
-    // todo NEED TO REALOD APP AFTER ADDING CUSTOM AUDIO TODO FIX LATER
     public void playSound(String audioFileName) {
         final String path = AUDIO_FILES_FOLDER + audioFileName;
         try (BufferedInputStream buffer = new BufferedInputStream(

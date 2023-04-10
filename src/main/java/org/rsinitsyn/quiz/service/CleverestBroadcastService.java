@@ -139,7 +139,6 @@ public class CleverestBroadcastService {
     // NextQuestionEvent
     public void sendNextQuestionEvent(String gameId) {
         CleverestGameState gameState = gameStateMap.get(gameId);
-        // TODO WHEN RELOAD PAGE 1ST ROUND SYSTEM DROPS ANSWERGIVEN
         gameState.getUsers().values().forEach(CleverestGameState.UserGameState::prepareForNext);
 
         QuizQuestionModel question = null;

@@ -17,15 +17,13 @@ public class GameListGrid extends Grid<GameEntity> {
     private void configureGrid() {
         addColumn(new LocalDateTimeRenderer<>(GameEntity::getFinishDate, QuizUtils.DATE_FORMAT_VALUE)).setHeader("Дата");
         addColumn(GameEntity::getName).setHeader("Название");
-        addColumn(GameEntity::getPlayerName).setHeader("Игрок");
+        addColumn(GameEntity::getPlayerNames).setHeader("Игрок");
         addColumn(gameEntity -> {
-            long correctCount = gameEntity.getGameQuestions()
-                    .stream()
-                    .filter(GameQuestionUserEntity::getAnswered)
-                    .count();
-            return correctCount + "/" + gameEntity.getGameQuestions().size();
+            int totalSize = gameEntity.getGameQuestions().size();
+            long correctSize = gameEntity.getGameQuestions().stream().filter(GameQuestionUserEntity::getAnswered).count();
+            return correctSize + "/" + totalSize;
         }).setHeader("Вопросов");
-        addColumn(gameEntity -> gameEntity.getResult() + "%").setHeader("Результат");
+        addColumn(gameEntity -> "???%").setHeader("Результат");
         setAllRowsVisible(true);
     }
 }

@@ -111,7 +111,7 @@ public class QuestionService {
                         .filter(gqe -> gqe.getGame().getStatus().equals(GameStatus.FINISHED)
                                 // Todo For cleverest set user or refactor approach
                                 && gqe.getGame().getType().equals(GameType.QUIZ))
-                        .filter(gqe -> !gqe.getGame().getPlayerName().equals(QuizUtils.getLoggedUser()))
+                        .filter(gqe -> !gqe.getGame().getPlayerNames().contains(QuizUtils.getLoggedUser()))
                         .filter(gqe -> gqe.getQuestion().getId().equals(qe.getId()))
                         .toList();
 
@@ -125,7 +125,10 @@ public class QuestionService {
                         answerHistoryMap = questionHistory.stream()
                                 .sorted(Comparator.comparing(GameQuestionUserEntity::getAnswered, Comparator.reverseOrder()))
                                 .collect(Collectors.toMap(
-                                        gqe -> gqe.getGame().getPlayerName(),
+                                        // TODO Refactor
+                                        gqe -> gqe.getGame().getPlayerNames()
+                                                .stream()
+                                                .filter(s -> s.equals(QuizUtils.getLoggedUser())).findFirst().orElseThrow(),
                                         gqe -> AnswerHistory.ofAnswerResult(gqe.getAnswered()),
                                         (gqeRight, gqeWrong) -> gqeRight));
                     }
