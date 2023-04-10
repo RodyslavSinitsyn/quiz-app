@@ -26,9 +26,7 @@ import java.util.function.Consumer;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
 import org.rsinitsyn.quiz.service.CleverestBroadcastService;
 import org.rsinitsyn.quiz.service.CleverestGameState;
-import org.rsinitsyn.quiz.utils.AudioUtils;
 import org.rsinitsyn.quiz.utils.QuizUtils;
-import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
 public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
@@ -218,7 +216,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             } else if (userGameState.getLastPosition() == users.size()) {
                 positionSpan.add(VaadinIcon.GLASS.create());
             } else {
-                positionSpan.setText(String.valueOf(userGameState.getLastPosition() + "."));
+                positionSpan.setText(userGameState.getLastPosition() + ".");
             }
             row.add(positionSpan);
 
@@ -249,7 +247,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                    boolean appendApproveButton,
                                    Consumer<String> leftApproveAction,
                                    Runnable onCloseAction) {
-        AudioUtils.playStaticSoundAsync(StaticValuesHolder.REVEAL_ANSWER_AUDIOS.next());
+//        AudioUtils.playStaticSoundAsync(StaticValuesHolder.REVEAL_ANSWER_AUDIOS.next());
         VerticalLayout answers = new VerticalLayout();
         answers.setSpacing(true);
         answers.setDefaultHorizontalComponentAlignment(Alignment.START);
@@ -300,9 +298,20 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
     private void renderResults() {
         removeAll();
-        add(new CleverestResultComponent(
-                broadcastService.getState(gameId).getUsers(),
-                broadcastService.getState(gameId).getHistory()));
+        if (isAdmin) {
+            add(new CleverestResultComponent(
+                    broadcastService.getState(gameId).getSortedByScoreUsers().values(),
+                    broadcastService.getState(gameId).getHistory()));
+        } else {
+            add(personalScoreContainer);
+            updateUserPersonalScore();
+            add(new Span("Итоговое место: "
+                    + broadcastService.getState(gameId).getUsers().get(QuizUtils.getLoggedUser()).getLastPosition()));
+            add(new CleverestResultComponent(
+                    broadcastService.getState(gameId).getSortedByScoreUsers().values(),
+                    broadcastService.getState(gameId).getHistory(),
+                    QuizUtils.getLoggedUser()));
+        }
     }
 
     @Override

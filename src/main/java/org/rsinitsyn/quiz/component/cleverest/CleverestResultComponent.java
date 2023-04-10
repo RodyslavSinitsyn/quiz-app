@@ -2,11 +2,15 @@ package org.rsinitsyn.quiz.component.cleverest;
 
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
-import com.vaadin.flow.component.html.H4;
+import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.H5;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
-import java.util.Comparator;
+import com.vaadin.flow.theme.lumo.LumoUtility;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,92 +18,84 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
 import org.rsinitsyn.quiz.service.CleverestGameState;
+import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
 public class CleverestResultComponent extends VerticalLayout {
 
-    private VerticalLayout shortResultLayout = new VerticalLayout();
-    private Grid<CleverestResultDto> grid = new Grid(CleverestResultDto.class, false);
+    private Grid<CleverestGameState.UserGameState> grid = new Grid<>(CleverestGameState.UserGameState.class, false);
+    private Grid<CleverestResultDto> historyGrid = new Grid<>(CleverestResultDto.class, false);
 
-    public CleverestResultComponent(Map<String, CleverestGameState.UserGameState> users,
-                                    Map<QuizQuestionModel, List<CleverestGameState.UserGameState>> history) {
-        AtomicInteger counter = new AtomicInteger(0);
+    public CleverestResultComponent(Collection<CleverestGameState.UserGameState> userGameStates,
+                                    Map<QuizQuestionModel, List<CleverestGameState.UserGameState>> history,
+                                    String username) {
+        AtomicInteger qNumber = new AtomicInteger(0);
         List<CleverestResultDto> results = history.entrySet()
                 .stream()
-                .map(e -> new CleverestResultDto(counter.getAndIncrement(), e.getKey(), e.getValue()))
+                .map(e -> new CleverestResultDto(qNumber.getAndIncrement(), e.getKey(), e.getValue()))
                 .toList();
 
-        configureLayout(users, results);
-        configureGrid(users, results);
-        add(shortResultLayout, grid);
+        configureResultGrid(userGameStates);
+        if (StringUtils.isEmpty(username)) {
+            configureHistoryGrid(userGameStates.stream().map(CleverestGameState.UserGameState::getUsername).collect(Collectors.toSet()), results);
+        } else {
+            configureHistoryGrid(Collections.singleton(username), results);
+        }
+        add(new H3("Таблица результатов"),
+                grid,
+                new H5("История ваших ответов"),
+                historyGrid);
     }
 
-    private void configureLayout(Map<String, CleverestGameState.UserGameState> users, List<CleverestResultDto> results) {
-        shortResultLayout.setAlignItems(Alignment.START);
-        shortResultLayout.setDefaultHorizontalComponentAlignment(Alignment.CENTER);
-
-        CleverestGameState.UserGameState winner = users.values()
-                .stream()
-                .sorted(Comparator.comparing(CleverestGameState.UserGameState::getScore).reversed())
-                .limit(1)
-                .findFirst().orElseThrow();
-        shortResultLayout.add(new H4("Победитель"));
-        shortResultLayout.add(new Span(winner.getUsername()));
-
-
-        CleverestGameState.UserGameState loser = users.values()
-                .stream()
-                .sorted(Comparator.comparing(CleverestGameState.UserGameState::getScore))
-                .limit(1)
-                .findFirst().orElseThrow();
-        shortResultLayout.add(new H4("Проигравший"));
-        shortResultLayout.add(new Span(loser.getUsername()));
-
-        Set<String> winnerBetWinners = users.values()
-                .stream()
-                .filter(uState -> uState.getWinnerBet().equals(winner.getUsername()))
-                .map(CleverestGameState.UserGameState::getUsername)
-                .collect(Collectors.toSet());
-        shortResultLayout.add(new H4("Те кто угадал победителя"));
-        winnerBetWinners.forEach(uName -> {
-            shortResultLayout.add(new Span(uName));
-        });
-
-        Set<String> loserBetWinners = users.values()
-                .stream()
-                .filter(uState -> uState.getLoserBet().equals(loser.getUsername()))
-                .map(CleverestGameState.UserGameState::getUsername)
-                .collect(Collectors.toSet());
-        shortResultLayout.add(new H4("Те кто угадал проигравшего"));
-        loserBetWinners.forEach(uName -> {
-            shortResultLayout.add(new Span(uName));
-        });
-
-        Map<String, Double> userToAvgResponseTime = results.stream()
-                .flatMap(dto -> dto.getUserGameStates().stream())
-                .filter(uState -> uState.getLastResponseTime() > 0)
-                .collect(Collectors.groupingBy(CleverestGameState.UserGameState::getUsername,
-                        Collectors.averagingLong(CleverestGameState.UserGameState::getLastResponseTime)));
-        shortResultLayout.add(new H4("Среднее время ответа"));
-        userToAvgResponseTime.forEach((uName, avgTime) -> {
-            shortResultLayout.add(new Span(uName + " - " + String.format("%.2f", avgTime / 1000.0)));
-        });
+    public CleverestResultComponent(Collection<CleverestGameState.UserGameState> userGameStates,
+                                    Map<QuizQuestionModel, List<CleverestGameState.UserGameState>> history) {
+        this(userGameStates, history, "");
     }
 
-    private void configureGrid(Map<String, CleverestGameState.UserGameState> users, List<CleverestResultDto> results) {
-        grid.addColumn(dto -> dto.getQuestion().getText()).setHeader("#Вопрос");
-        Set<String> uniqueUsernames = results.stream().flatMap(dto -> dto.getUserGameStates().stream())
-                .map(CleverestGameState.UserGameState::getUsername)
-                .collect(Collectors.toSet());
+    private void configureResultGrid(Collection<CleverestGameState.UserGameState> users) {
+        grid.setAllRowsVisible(true);
+        grid.setItems(users);
+        grid.setWidthFull();
+        grid.addThemeVariants(GridVariant.LUMO_COMPACT, GridVariant.LUMO_NO_BORDER);
+        grid.addClassNames(LumoUtility.FontWeight.LIGHT,
+                LumoUtility.FontSize.XXLARGE);
 
-        List<CleverestGameState.UserGameState> anyStates = results.stream()
-                .skip(results.size() - 1)
-                .flatMap(dto -> dto.getUserGameStates().stream())
-                .toList();
+        grid.setPartNameGenerator(userGameState -> userGameState.getLastPosition() == 1 ? "high-rating" : "");
+        grid.addColumn(CleverestGameState.UserGameState::getLastPosition)
+                .setHeader("Призовое место")
+                .setFlexGrow(0);
+        grid.addColumn(CleverestGameState.UserGameState::getUsername)
+                .setHeader("Игрок")
+                .setFlexGrow(1);
+        grid.addColumn(uState -> String.format("%.2f", uState.getAvgResponseTime() / 1000.0))
+                .setHeader("Время на ответ");
+        grid.addColumn(CleverestGameState.UserGameState::getScore)
+                .setHeader("Очки");
+        grid.addColumn(CleverestGameState.UserGameState::getBetScore)
+                .setHeader("Очки за ставку");
+        grid.addColumn(new ComponentRenderer<>(u -> new Span(
+                        u.winnerBet().getRight() ? CleverestComponents.doneIcon() : CleverestComponents.cancelIcon(),
+                        u.loserBet().getRight() ? CleverestComponents.doneIcon() : CleverestComponents.cancelIcon())))
+                .setHeader("Ставки");
+        grid.addColumn(CleverestGameState.UserGameState::totalScore)
+                .setHeader("Общее колво очков")
+                .setClassName(LumoUtility.FontWeight.BOLD);
+    }
 
-        uniqueUsernames.forEach(username -> {
-            grid.addColumn(new ComponentRenderer<>(resultDto -> {
+    private void configureHistoryGrid(Set<String> users, List<CleverestResultDto> results) {
+        historyGrid.setAllRowsVisible(true);
+        historyGrid.addThemeVariants(GridVariant.LUMO_COLUMN_BORDERS,
+                GridVariant.LUMO_WRAP_CELL_CONTENT);
+        historyGrid.setItems(results);
+        historyGrid.addClassNames(LumoUtility.FontWeight.LIGHT,
+                LumoUtility.FontSize.LARGE);
+
+        historyGrid.addColumn(dto -> dto.getQuestion().getText()).setHeader("#Вопрос");
+
+        users.forEach(username -> {
+            historyGrid.addColumn(new ComponentRenderer<>(resultDto -> {
                         var state = results.stream()
                                 .filter(dto -> dto.getNumber() == resultDto.getNumber())
                                 .flatMap(dto -> dto.getUserGameStates().stream())
@@ -108,24 +104,22 @@ public class CleverestResultComponent extends VerticalLayout {
 
                         VerticalLayout layout = new VerticalLayout();
                         if (state == null) {
+                            layout.add(VaadinIcon.MINUS_CIRCLE_O.create());
                             return layout;
                         }
-                        layout.getStyle().set("background-color", state.getColor());
                         layout.add(state.isLastWasCorrect()
                                 ? CleverestComponents.doneIcon() : CleverestComponents.cancelIcon());
                         layout.add(new Span("Баллы: " + state.getScore()));
 
                         String timeInSeconds = String.format("%.2f сек.", state.getLastResponseTime() / 1000.0);
-                        layout.add(new Span("Время: " + timeInSeconds)
-                        );
-
+                        layout.add(new Span("Время: " + timeInSeconds));
+                        layout.getStyle().set("color", state.getColor());
+                        layout.getStyle().set("text-shadow", StaticValuesHolder.BLACK_FONT_BORDER);
                         return layout;
                     }))
                     .setHeader(username);
         });
-        grid.setAllRowsVisible(true);
-        grid.addThemeVariants(GridVariant.LUMO_COLUMN_BORDERS);
-        grid.setItems(results);
+        historyGrid.getColumns().forEach(c -> c.setAutoWidth(true));
     }
 
     @Data

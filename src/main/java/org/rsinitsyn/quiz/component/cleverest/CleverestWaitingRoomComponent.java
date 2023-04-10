@@ -100,8 +100,8 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         Optional.ofNullable(userGameState)
                 .ifPresent(uState -> {
                     colorPicker.setValue(uState.getColor());
-                    winnerBet.setValue(uState.getWinnerBet());
-                    loserBet.setValue(uState.getLoserBet());
+                    winnerBet.setValue(uState.winnerBet().getKey());
+                    loserBet.setValue(uState.loserBet().getKey());
                 });
 
         dialogLayout.add(playerName, chooseColor, colorPicker, winnerBet, loserBet);
@@ -142,19 +142,19 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
                 }))
                 .setHeader("Цвет");
         usersGrid.addColumn(new ComponentRenderer<>(userGameState -> {
-                    Icon icon = StringUtils.isEmpty(userGameState.getWinnerBet())
+                    Icon icon = userGameState.winnerBet().getKey().isEmpty()
                             ? CleverestComponents.cancelIcon()
                             : CleverestComponents.doneIcon();
 
-                    return new Span(icon, new Span(userGameState.getWinnerBet()));
+                    return new Span(icon, new Span(userGameState.winnerBet().getKey()));
                 }))
                 .setHeader("Поставил на победителя");
         usersGrid.addColumn(new ComponentRenderer<>(userGameState -> {
-                    Icon icon = StringUtils.isEmpty(userGameState.getLoserBet())
+                    Icon icon = userGameState.loserBet().getKey().isEmpty()
                             ? CleverestComponents.cancelIcon()
                             : CleverestComponents.doneIcon();
 
-                    return new Span(icon, new Span(userGameState.getLoserBet()));
+                    return new Span(icon, new Span(userGameState.loserBet().getKey()));
                 }))
                 .setHeader("Поставил на проигравшего");
         usersGrid.addThemeVariants();

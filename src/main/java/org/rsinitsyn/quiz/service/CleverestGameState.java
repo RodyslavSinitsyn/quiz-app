@@ -4,20 +4,26 @@ import com.google.common.collect.Iterables;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
 
 @Data
@@ -166,9 +172,51 @@ public class CleverestGameState {
         });
     }
 
+    public void calculateUsersStatistic() {
+        Collection<UserGameState> latestStates = users.values();
+        int bottomPos = latestStates.stream()
+                .mapToInt(UserGameState::getLastPosition)
+                .max().orElse(latestStates.size());
+        int topPos = 1;
+
+        Set<String> highestScoreUsers = latestStates.stream()
+                .filter(u -> u.getLastPosition() == topPos)
+                .map(UserGameState::getUsername)
+                .collect(Collectors.toSet());
+
+        Set<String> lowestScoreUsers = latestStates.stream()
+                .filter(u -> u.getLastPosition() == bottomPos)
+                .map(UserGameState::getUsername)
+                .collect(Collectors.toSet());
+
+        latestStates.stream()
+                .filter(u -> highestScoreUsers.contains(u.winnerBet().getKey()))
+                .forEach(u -> {
+                    u.winnerBet().setValue(true);
+                    u.increaseBetScore();
+                });
+
+        latestStates.stream()
+                .filter(u -> lowestScoreUsers.contains(u.loserBet().getKey()))
+                .forEach(u -> {
+                    u.loserBet().setValue(true);
+                    u.increaseBetScore();
+                });
+
+        history.entrySet().stream()
+                .flatMap(e -> e.getValue().stream())
+                .filter(uState -> uState.getLastResponseTime() > 0)
+                .collect(Collectors.groupingBy(Function.identity(),
+                        Collectors.averagingLong(CleverestGameState.UserGameState::getLastResponseTime)))
+                .forEach((userGameState, avgTime) -> {
+                    users.get(userGameState.getUsername()).setAvgResponseTime(avgTime);
+                });
+    }
+
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
+    @EqualsAndHashCode(exclude = {"bets"})
     public static class UserGameState implements Comparable<UserGameState> {
         private String username;
         private String color;
@@ -184,8 +232,9 @@ public class CleverestGameState {
         private int score = 0;
         @Setter(AccessLevel.NONE)
         private boolean answerGiven;
-        private String winnerBet = "";
-        private String loserBet = "";
+        private Map<String, MutablePair<String, Boolean>> bets = new HashMap<>();
+        private int betScore;
+        private Double avgResponseTime;
 
         public void submitLatestAnswer(String answerText, LocalDateTime questionRenderTime) {
             lastAnswerText = answerText;
@@ -204,9 +253,33 @@ public class CleverestGameState {
             lastResponseTime = 0;
         }
 
+        public void increaseBetScore() {
+            betScore++;
+        }
+
         public void increaseScore() {
             score++;
             lastWasCorrect = true;
+        }
+
+        public int totalScore() {
+            return score + betScore;
+        }
+
+        public void updateBet(String bet, boolean isWinnerBet, boolean isBetRight) {
+            if (isWinnerBet) {
+                bets.put("winner", MutablePair.of(bet, isBetRight));
+            } else {
+                bets.put("loser", MutablePair.of(bet, isBetRight));
+            }
+        }
+
+        public MutablePair<String, Boolean> winnerBet() {
+            return bets.get("winner");
+        }
+
+        public MutablePair<String, Boolean> loserBet() {
+            return bets.get("loser");
         }
 
         @Override
@@ -227,8 +300,9 @@ public class CleverestGameState {
                     lastResponseTime,
                     score,
                     answerGiven,
-                    winnerBet,
-                    loserBet);
+                    bets,
+                    betScore,
+                    avgResponseTime);
         }
     }
 }

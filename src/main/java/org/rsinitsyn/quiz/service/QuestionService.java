@@ -21,6 +21,7 @@ import org.rsinitsyn.quiz.dao.QuestionDao;
 import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
 import org.rsinitsyn.quiz.entity.GameStatus;
+import org.rsinitsyn.quiz.entity.GameType;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
@@ -107,7 +108,9 @@ public class QuestionService {
 
         Function<QuestionEntity, List<GameQuestionUserEntity>> getQuestionHistory =
                 qe -> questionsFromAllGames.stream()
-                        .filter(gqe -> gqe.getGame().getStatus().equals(GameStatus.FINISHED))
+                        .filter(gqe -> gqe.getGame().getStatus().equals(GameStatus.FINISHED)
+                                // Todo For cleverest set user or refactor approach
+                                && gqe.getGame().getType().equals(GameType.QUIZ))
                         .filter(gqe -> !gqe.getGame().getPlayerName().equals(QuizUtils.getLoggedUser()))
                         .filter(gqe -> gqe.getQuestion().getId().equals(qe.getId()))
                         .toList();

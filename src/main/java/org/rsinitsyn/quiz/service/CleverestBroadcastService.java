@@ -57,8 +57,8 @@ public class CleverestBroadcastService {
 
         gameState.getUsers().computeIfPresent(username, (key, userGameState) -> {
             userGameState.setColor(userColor);
-            userGameState.setWinnerBet(StringUtils.defaultIfEmpty(winnerBet, ""));
-            userGameState.setLoserBet(StringUtils.defaultIfEmpty(loserBet, ""));
+            userGameState.updateBet(StringUtils.defaultIfEmpty(winnerBet, ""), true, false);
+            userGameState.updateBet(StringUtils.defaultIfEmpty(loserBet, ""), false, false);
             return userGameState;
         });
 
@@ -68,11 +68,7 @@ public class CleverestBroadcastService {
 
     public void addBet(String gameId, String username, String userBet, boolean winner) {
         CleverestGameState.UserGameState userGameState = gameStateMap.get(gameId).getUsers().get(username);
-        if (winner) {
-            userGameState.setWinnerBet(userBet);
-        } else {
-            userGameState.setLoserBet(userBet);
-        }
+        userGameState.updateBet(userBet, winner, false);
         eventBus.fireEvent(new UserBetEvent(username, userBet));
     }
 
@@ -134,7 +130,9 @@ public class CleverestBroadcastService {
     }
 
     // GameFinishedEvent
-    public void finishGame() {
+    public void finishGame(String gameId) {
+        gameStateMap.get(gameId).calculateUsersStatistic();
+        gameStateMap.get(gameId).updateUserPositions();
         eventBus.fireEvent(new CleverestBroadcastService.GameFinishedEvent());
     }
 
@@ -176,7 +174,7 @@ public class CleverestBroadcastService {
                 .collect(Collectors.toSet());
         finishedCategories.forEach(key -> gameState.getThirdQuestions().remove(key));
         if (gameState.getThirdQuestions().isEmpty()) {
-            eventBus.fireEvent(new GameFinishedEvent());
+            finishGame(gameId);
             return;
         }
         eventBus.fireEvent(new RenderCategoriesEvent(
