@@ -66,7 +66,7 @@ public class QuizGamePage extends VerticalLayout implements HasUrlParameter<Stri
     private QuizGamePlayBoardComponent configurePlayGameComponent(QuizGameStateModel quizGameStateModel) {
         quizGamePlayBoardComponent = new QuizGamePlayBoardComponent(quizGameStateModel);
         quizGamePlayBoardComponent.addListener(QuizGamePlayBoardComponent.FinishGameEvent.class, event -> {
-            gameService.finishQuizGame(gameId);
+            gameService.finishGame(gameId);
             remove(quizGamePlayBoardComponent);
             add(configureQuizGameResultComponent(event.getModel()));
         });

@@ -72,7 +72,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 "Раунд " + roundNumber,
                 () -> {
                     if (roundNumber == 3) {
-                        broadcastService.sendRenderCategoriesEvent(gameId, null, null);
+                        broadcastService.sendRenderCategoriesEvent(gameId, null, null, true);
                     } else {
                         broadcastService.sendNextQuestionEvent(gameId);
                     }
@@ -178,7 +178,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                                 broadcastService.getState(gameId).getUsers().get(uName).increaseScore();
                                                 broadcastService.sendUpdatePersonalScoreEvent();
                                             },
-                                            () -> broadcastService.sendRenderCategoriesEvent(gameId, category, question));
+                                            () -> broadcastService.sendRenderCategoriesEvent(gameId, category, question, false));
                                 });
                     });
             openQuestionBtn.setWidthFull();

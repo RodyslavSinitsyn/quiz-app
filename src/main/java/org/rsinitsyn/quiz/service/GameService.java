@@ -166,7 +166,7 @@ public class GameService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public void finishQuizGame(String id) {
+    public void finishGame(String id) {
         gameDao.findById(UUID.fromString(id))
                 .ifPresent(gameEntity -> {
                     gameEntity.setStatus(GameStatus.FINISHED);

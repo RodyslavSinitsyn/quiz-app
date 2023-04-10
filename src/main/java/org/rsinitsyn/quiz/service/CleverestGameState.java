@@ -124,10 +124,12 @@ public class CleverestGameState {
         questionNumber = 0;
         if (roundNumber == 2) {
             currRoundQuestionsSource = () -> secondQuestions;
-        } else if (roundNumber == 3) {
-            usersToAnswer = Iterables.cycle(getSortedByScoreUsers().values()).iterator();
         }
         return roundNumber > 3;
+    }
+
+    public void prepareUsersForThirdRound() {
+        usersToAnswer = Iterables.cycle(getSortedByScoreUsers().values()).iterator();
     }
 
     public boolean prepareNextQuestionAndCheckIsLast() {
@@ -163,11 +165,11 @@ public class CleverestGameState {
         AtomicInteger pos = new AtomicInteger(1);
         AtomicInteger prevScoreHolder = new AtomicInteger(0);
         sortedByScore.forEach((username, userGameState) -> {
-            if (userGameState.getScore() < prevScoreHolder.get()) {
+            if (userGameState.totalScore() < prevScoreHolder.get()) {
                 pos.incrementAndGet();
             }
             userGameState.setLastPosition(pos.get());
-            prevScoreHolder.set(userGameState.getScore());
+            prevScoreHolder.set(userGameState.totalScore());
         });
     }
 
@@ -283,7 +285,7 @@ public class CleverestGameState {
 
         @Override
         public int compareTo(UserGameState other) {
-            return Comparator.comparingInt(UserGameState::getScore)
+            return Comparator.comparingInt(UserGameState::totalScore)
                     .reversed()
                     .compare(this, other);
         }

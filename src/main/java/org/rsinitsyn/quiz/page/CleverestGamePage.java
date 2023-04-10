@@ -157,7 +157,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
 
         if (isAdmin) {
             subscriptions.add(broadcastService.subscribe(CleverestBroadcastService.GameFinishedEvent.class, event -> {
-                gameService.update(gameId, "Cleverest", GameStatus.FINISHED);
+                gameService.finishGame(gameId);
             }));
         }
     }

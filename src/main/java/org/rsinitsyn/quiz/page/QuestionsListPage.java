@@ -92,7 +92,6 @@ public class QuestionsListPage extends VerticalLayout {
                 }))
                 .setHeader("Связь")
                 .setFlexGrow(0);
-        grid.addDefaultColumns();
         grid.setSizeFull();
         grid.setSelectionMode(Grid.SelectionMode.MULTI);
         grid.addSelectionListener(event -> {

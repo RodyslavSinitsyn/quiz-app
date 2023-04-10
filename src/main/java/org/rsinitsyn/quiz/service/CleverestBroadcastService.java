@@ -160,8 +160,11 @@ public class CleverestBroadcastService {
         eventBus.fireEvent(new UpdatePersonalScoreEvent());
     }
 
-    public void sendRenderCategoriesEvent(String gameId, String category, QuizQuestionModel question) {
+    public void sendRenderCategoriesEvent(String gameId, String category, QuizQuestionModel question, boolean initial) {
         CleverestGameState gameState = gameStateMap.get(gameId);
+        if (initial) {
+            gameState.prepareUsersForThirdRound();
+        }
         gameState.getUsers().values().forEach(CleverestGameState.UserGameState::prepareForNext);
         if (category != null && question != null) {
             gameState.getThirdQuestions().get(category).remove(question);

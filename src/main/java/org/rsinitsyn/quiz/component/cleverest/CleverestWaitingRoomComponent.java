@@ -36,6 +36,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
     private Grid<CleverestGameState.UserGameState> usersGrid = new Grid<>(CleverestGameState.UserGameState.class, false);
     private Select<String> winnerBet = new Select<>();
     private Select<String> loserBet = new Select<>();
+    private Button joinButton;
 
     private CleverestBroadcastService broadcastService;
 
@@ -65,12 +66,9 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         dialog.setRejectable(false);
         dialog.setCancelable(true);
         dialog.setCancelText("Назад");
-        dialog.setConfirmText("Играть");
+        dialog.setConfirmText("Сохранить");
 
-        Button joinButton = new Button(
-                !broadcastService.getState(gameId).getUsers().containsKey(QuizUtils.getLoggedUser())
-                        ? "Присоедениться"
-                        : "Поменять настройки");
+        joinButton = new Button("Играть");
         joinButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
         joinButton.addClickListener(event -> {
             dialog.removeAll();
@@ -165,6 +163,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
 
     private Select<String> betSelect(boolean winner) {
         Select<String> select = new Select<>();
+        select.setWidthFull();
         select.setLabel("Сделайте ставку на " + (winner ? "победителя" : "проигравшего"));
         select.setItems(broadcastService.getState(gameId).getUsers().keySet());
         select.addValueChangeListener(event -> {
@@ -188,7 +187,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         link.getElement().setAttribute("target", "_blank");
         add(link);
 
-        Anchor prodLink = new Anchor("http://192.168.0.106:8080/cleverest/" + gameId + "?player", "Prod Invite link");
+        Anchor prodLink = new Anchor("http://192.168.0.107:8080/cleverest/" + gameId + "?player", "Prod Invite link");
         prodLink.getElement().setAttribute("target", "_blank");
         add(prodLink);
 
@@ -207,6 +206,12 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
                 broadcastService.subscribe(CleverestBroadcastService.UserJoinedEvent.class, event -> {
                     QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
                         updatePlayersGrid(event.getUsername());
+                        if (QuizUtils.getLoggedUser().equals(event.getUsername())) {
+                            joinButton.setText(
+                                    !broadcastService.getState(gameId).getUsers().containsKey(event.getUsername())
+                                            ? "Играть"
+                                            : "Поменять настройки");
+                        }
                         winnerBet.setItems(broadcastService.getState(gameId).getUsers().keySet());
                         loserBet.setItems(broadcastService.getState(gameId).getUsers().keySet());
                     });

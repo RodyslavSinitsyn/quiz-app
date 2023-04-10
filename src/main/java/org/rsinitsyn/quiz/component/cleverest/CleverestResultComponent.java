@@ -57,18 +57,16 @@ public class CleverestResultComponent extends VerticalLayout {
     private void configureResultGrid(Collection<CleverestGameState.UserGameState> users) {
         grid.setAllRowsVisible(true);
         grid.setItems(users);
-        grid.setWidthFull();
+        grid.setSizeFull();
         grid.addThemeVariants(GridVariant.LUMO_COMPACT, GridVariant.LUMO_NO_BORDER);
         grid.addClassNames(LumoUtility.FontWeight.LIGHT,
                 LumoUtility.FontSize.XXLARGE);
 
-        grid.setPartNameGenerator(userGameState -> userGameState.getLastPosition() == 1 ? "high-rating" : "");
         grid.addColumn(CleverestGameState.UserGameState::getLastPosition)
-                .setHeader("Призовое место")
-                .setFlexGrow(0);
+                .setHeader("Призовое место");
         grid.addColumn(CleverestGameState.UserGameState::getUsername)
                 .setHeader("Игрок")
-                .setFlexGrow(1);
+                .setAutoWidth(true);
         grid.addColumn(uState -> String.format("%.2f", uState.getAvgResponseTime() / 1000.0))
                 .setHeader("Время на ответ");
         grid.addColumn(CleverestGameState.UserGameState::getScore)
@@ -92,7 +90,8 @@ public class CleverestResultComponent extends VerticalLayout {
         historyGrid.addClassNames(LumoUtility.FontWeight.LIGHT,
                 LumoUtility.FontSize.LARGE);
 
-        historyGrid.addColumn(dto -> dto.getQuestion().getText()).setHeader("#Вопрос");
+        historyGrid.addColumn(dto -> dto.getQuestion().getText()).setHeader("#Вопрос")
+                .setFlexGrow(1);
 
         users.forEach(username -> {
             historyGrid.addColumn(new ComponentRenderer<>(resultDto -> {
@@ -117,9 +116,9 @@ public class CleverestResultComponent extends VerticalLayout {
                         layout.getStyle().set("text-shadow", StaticValuesHolder.BLACK_FONT_BORDER);
                         return layout;
                     }))
-                    .setHeader(username);
+                    .setHeader(username)
+                    .setFlexGrow(1);
         });
-        historyGrid.getColumns().forEach(c -> c.setAutoWidth(true));
     }
 
     @Data
