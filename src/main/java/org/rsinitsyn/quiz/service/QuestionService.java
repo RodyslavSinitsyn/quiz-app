@@ -50,7 +50,7 @@ public class QuestionService {
     private final QuizAppProperties properties;
 
     public List<QuestionCategoryEntity> findAllCategories() {
-        return questionCategoryDao.findAll();
+        return questionCategoryDao.findAllOrderByName();
     }
 
     public QuestionCategoryEntity getOrCreateDefaultCategory() {
@@ -122,15 +122,16 @@ public class QuestionService {
 
                     List<GameQuestionUserEntity> questionHistory = getQuestionHistory.apply(question);
                     if (!questionHistory.isEmpty()) {
-                        answerHistoryMap = questionHistory.stream()
+                        questionHistory.stream()
                                 .sorted(Comparator.comparing(GameQuestionUserEntity::getAnswered, Comparator.reverseOrder()))
+                                .filter(gqe -> gqe.getGame().getPlayerNames().contains(QuizUtils.getLoggedUser()))
                                 .collect(Collectors.toMap(
-                                        // TODO Refactor
-                                        gqe -> gqe.getGame().getPlayerNames()
-                                                .stream()
-                                                .filter(s -> s.equals(QuizUtils.getLoggedUser())).findFirst().orElseThrow(),
+                                        gqe -> gqe.getGame().getPlayerNames(),
                                         gqe -> AnswerHistory.ofAnswerResult(gqe.getAnswered()),
-                                        (gqeRight, gqeWrong) -> gqeRight));
+                                        (gqeRight, gqeWrong) -> gqeRight))
+                                .forEach((users, answerHistory) -> {
+                                    users.forEach(u -> answerHistoryMap.put(u, answerHistory));
+                                });
                     }
 
                     QuizQuestionModel questionModel = toQuizQuestionModel(question);

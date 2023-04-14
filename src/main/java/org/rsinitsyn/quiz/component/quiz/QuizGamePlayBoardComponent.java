@@ -189,7 +189,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     }
 
     private QuizGameAnswersComponent createAnswersComponent() {
-        var answersComponent = new QuizGameAnswersComponent(currQuestion.getShuffledAnswers(), currQuestion.getType());
+        var answersComponent = new QuizGameAnswersComponent(currQuestion);
         answersComponent.addListener(QuizGameAnswersComponent.AnswerChoosenEvent.class, event -> {
             if (!gameState.isIntrigueEnabled()) {
                 submitOptionableAnswer(event.getAnswers());

@@ -5,31 +5,36 @@ import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.listbox.ListBox;
 import com.vaadin.flow.component.listbox.MultiSelectListBox;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.NumberField;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import lombok.Getter;
+import org.checkerframework.checker.units.qual.A;
+import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuizQuestionModel;
 
 public class QuizGameAnswersComponent extends VerticalLayout {
 
     private List<QuizQuestionModel.QuizAnswerModel> copiedAnswerList;
-    private QuestionType questionType;
+    private QuizQuestionModel question;
 
     private ListBox<QuizQuestionModel.QuizAnswerModel> answerListBox = new ListBox<>();
     private MultiSelectListBox<QuizQuestionModel.QuizAnswerModel> multiAnswerListBox = new MultiSelectListBox<>();
 
-    public QuizGameAnswersComponent(List<QuizQuestionModel.QuizAnswerModel> answerList,
-                                    QuestionType questionType) {
-        this.copiedAnswerList = answerList;
-        this.questionType = questionType;
+    public QuizGameAnswersComponent(QuizQuestionModel question) {
+        this.question = question;
+        this.copiedAnswerList = new ArrayList<>(question.getShuffledAnswers());
         renderAnswers();
         setAlignItems(Alignment.STRETCH);
     }
@@ -39,22 +44,33 @@ public class QuizGameAnswersComponent extends VerticalLayout {
         answerListBox = new ListBox<>();
         multiAnswerListBox = new MultiSelectListBox<>();
 
-        if (questionType.equals(QuestionType.TEXT)) {
+        if (question.getType().equals(QuestionType.TEXT)) {
             answerListBox.setItems(copiedAnswerList);
             answerListBox.setRenderer(
                     new ComponentRenderer<Component, QuizQuestionModel.QuizAnswerModel>(this::createAnswerButton));
             answerListBox.addValueChangeListener(event -> fireEvent(new AnswerChoosenEvent(this, Collections.singleton(event.getValue()))));
             add(answerListBox);
-        } else if (questionType.equals(QuestionType.MULTI)) {
+        } else if (question.getType().equals(QuestionType.MULTI)) {
             multiAnswerListBox.setItems(copiedAnswerList);
             multiAnswerListBox.setRenderer(
                     new ComponentRenderer<Component, QuizQuestionModel.QuizAnswerModel>(this::createAnswerButton));
 
-            var submitButton = new Button();
-            submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            submitButton.setText("Подтвердить ответ");
-            submitButton.addClickListener(event -> fireEvent(new AnswerChoosenEvent(this, multiAnswerListBox.getSelectedItems())));
+            var submitButton = CleverestComponents.primaryButton(
+                    "Подтвердить ответ",
+                    event -> fireEvent(new AnswerChoosenEvent(this, multiAnswerListBox.getSelectedItems())));
             add(multiAnswerListBox, submitButton);
+        } else if (question.getType().equals(QuestionType.PRECISION)) {
+            NumberField numberField = new NumberField();
+            numberField.setLabel("Погрешность: +-" + question.getValidRange());
+
+            var submitButton = CleverestComponents.primaryButton(
+                    "Подтвердить ответ",
+                    event -> {
+                        var answerModel = new QuizQuestionModel.QuizAnswerModel();
+                        answerModel.setText(String.valueOf(numberField.getValue().intValue()));
+                        fireEvent(new AnswerChoosenEvent(this, Collections.singleton(answerModel)));
+                    });
+            add(numberField, submitButton);
         }
     }
 

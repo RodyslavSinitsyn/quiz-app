@@ -34,6 +34,9 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     private CleverestBroadcastService broadcastService;
     private boolean isAdmin;
 
+    private Div topContainer = new Div();
+    private Div midContainer = new Div();
+    private Div botContainer = new Div();
     private Div personalScoreContainer = new Div();
     private VerticalLayout categoriesLayout = new VerticalLayout();
     private VerticalLayout usersScoreLayout = new VerticalLayout();
@@ -57,6 +60,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             add(categoriesLayout);
         }
 
+//        add(topContainer, midContainer, botContainer);
         add(questionContainer, answersLayout);
     }
 

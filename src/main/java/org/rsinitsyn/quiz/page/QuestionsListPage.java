@@ -109,6 +109,7 @@ public class QuestionsListPage extends VerticalLayout {
                 editQuestion(ModelConverterUtils.toFourAnswersQuestionBindingModel(event.getItem()));
             }
         });
+        grid.addDefaultColumns();
         updateList();
     }
 
