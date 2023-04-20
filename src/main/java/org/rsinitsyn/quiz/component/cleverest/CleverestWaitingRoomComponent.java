@@ -105,7 +105,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         dialogLayout.add(playerName, chooseColor, colorPicker, winnerBet, loserBet);
 
         dialog.addConfirmListener(event -> {
-            broadcastService.addUserToGame(gameId,
+            broadcastService.sendJoinUserEvent(gameId,
                     QuizUtils.getLoggedUser(),
                     StringUtils.defaultIfEmpty(colorPicker.getValue(), "#000000"),
                     winnerBet.getValue(),
@@ -168,7 +168,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         select.setItems(broadcastService.getState(gameId).getUsers().keySet());
         select.addValueChangeListener(event -> {
             if (event.isFromClient()) {
-                broadcastService.addBet(gameId, QuizUtils.getLoggedUser(), event.getValue(), winner);
+                broadcastService.sendBetEvent(gameId, QuizUtils.getLoggedUser(), event.getValue(), winner);
             }
         });
         return select;
@@ -191,7 +191,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         prodLink.getElement().setAttribute("target", "_blank");
         add(prodLink);
 
-        Button button = CleverestComponents.primaryButton("Начать игру", e -> broadcastService.allPlayersReady(gameId));
+        Button button = CleverestComponents.primaryButton("Начать игру", e -> broadcastService.sendPlayersReadyEvent(gameId));
         add(button);
     }
 
@@ -203,7 +203,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         subscriptions.add(
-                broadcastService.subscribe(CleverestBroadcastService.UserJoinedEvent.class, event -> {
+                broadcastService.subscribe(gameId, CleverestBroadcastService.UserJoinedEvent.class, event -> {
                     QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
                         updatePlayersGrid(event.getUsername());
                         if (QuizUtils.getLoggedUser().equals(event.getUsername())) {
@@ -218,11 +218,13 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
                 }));
 
         subscriptions.add(
-                broadcastService.subscribe(CleverestBroadcastService.UserBetEvent.class, event -> {
-                    QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
-                        updatePlayersGrid(event.getUsername());
-                    });
-                }));
+                broadcastService.subscribe(gameId,
+                        CleverestBroadcastService.UserBetEvent.class,
+                        event -> {
+                            QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
+                                updatePlayersGrid(event.getUsername());
+                            });
+                        }));
     }
 
     @Override

@@ -133,6 +133,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
 
     private void subscribeOnEvens(UI ui) {
         subscriptions.add(broadcastService.subscribe(
+                gameId,
                 CleverestBroadcastService.AllUsersReadyEvent.class, event -> {
                     if (isAdmin) {
                         List<QuizQuestionModel> firstAndSecondRoundQuestions =
@@ -156,7 +157,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
         );
 
         if (isAdmin) {
-            subscriptions.add(broadcastService.subscribe(CleverestBroadcastService.GameFinishedEvent.class, event -> {
+            subscriptions.add(broadcastService.subscribe(gameId, CleverestBroadcastService.GameFinishedEvent.class, event -> {
                 gameService.finishGame(gameId);
             }));
         }
