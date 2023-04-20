@@ -21,7 +21,6 @@ import org.rsinitsyn.quiz.dao.QuestionDao;
 import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
 import org.rsinitsyn.quiz.entity.GameStatus;
-import org.rsinitsyn.quiz.entity.GameType;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
@@ -108,30 +107,24 @@ public class QuestionService {
 
         Function<QuestionEntity, List<GameQuestionUserEntity>> getQuestionHistory =
                 qe -> questionsFromAllGames.stream()
-                        .filter(gqe -> gqe.getGame().getStatus().equals(GameStatus.FINISHED)
-                                // Todo For cleverest set user or refactor approach
-                                && gqe.getGame().getType().equals(GameType.QUIZ))
-                        .filter(gqe -> !gqe.getGame().getPlayerNames().contains(QuizUtils.getLoggedUser()))
+                        .filter(gqe -> gqe.getGame().getStatus().equals(GameStatus.FINISHED))
+                        .filter(gqe -> !gqe.getUser().getUsername().equals(QuizUtils.getLoggedUser()))
                         .filter(gqe -> gqe.getQuestion().getId().equals(qe.getId()))
                         .toList();
 
-        return findAllByCurrentUser()
+        return questionsCreatedByCurrentUser
                 .stream()
                 .map(question -> {
                     Map<String, AnswerHistory> answerHistoryMap = new HashMap<>();
 
                     List<GameQuestionUserEntity> questionHistory = getQuestionHistory.apply(question);
                     if (!questionHistory.isEmpty()) {
-                        questionHistory.stream()
+                        answerHistoryMap.putAll(questionHistory.stream()
                                 .sorted(Comparator.comparing(GameQuestionUserEntity::getAnswered, Comparator.reverseOrder()))
-                                .filter(gqe -> gqe.getGame().getPlayerNames().contains(QuizUtils.getLoggedUser()))
                                 .collect(Collectors.toMap(
-                                        gqe -> gqe.getGame().getPlayerNames(),
+                                        gqe -> gqe.getUser().getUsername(),
                                         gqe -> AnswerHistory.ofAnswerResult(gqe.getAnswered()),
-                                        (gqeRight, gqeWrong) -> gqeRight))
-                                .forEach((users, answerHistory) -> {
-                                    users.forEach(u -> answerHistoryMap.put(u, answerHistory));
-                                });
+                                        (gqeRight, gqeWrong) -> gqeRight)));
                     }
 
                     QuizQuestionModel questionModel = toQuizQuestionModel(question);

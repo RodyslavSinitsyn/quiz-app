@@ -81,8 +81,8 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
             return;
         }
 
-        subscribeOnEvens(event.getUI());
         this.isAdmin = gameEntity.getCreatedBy().equals(QuizUtils.getLoggedUser());
+        subscribeOnEvens(event.getUI());
         renderComponents(gameEntity);
     }
 

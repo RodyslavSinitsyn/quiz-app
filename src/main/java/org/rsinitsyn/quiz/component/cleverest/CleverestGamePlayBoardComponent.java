@@ -10,7 +10,6 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -37,13 +36,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     private Div topContainer = new Div();
     private Div midContainer = new Div();
     private Div botContainer = new Div();
-    private Div personalScoreContainer = new Div();
-    private VerticalLayout categoriesLayout = new VerticalLayout();
-    private VerticalLayout usersScoreLayout = new VerticalLayout();
-    private Div questionContainer = new Div();
-    private VerticalLayout answersLayout = new VerticalLayout();
 
-    private List<Registration> subs = new ArrayList<>();
+    private final List<Registration> subs = new ArrayList<>();
 
     public void setProperties(String gameId, CleverestBroadcastService broadcastService, boolean isAdmin) {
         System.out.println("Init gameId: " + gameId);
@@ -53,15 +47,15 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
         if (!isAdmin) {
             updateUserPersonalScore();
-            add(personalScoreContainer);
         } else {
             int currRound = broadcastService.getState(gameId).getRoundNumber();
             renderRoundRules(currRound, broadcastService.getState(gameId).getRoundRules().get(currRound));
-            add(categoriesLayout);
         }
 
-//        add(topContainer, midContainer, botContainer);
-        add(questionContainer, answersLayout);
+        topContainer.setWidthFull();
+        midContainer.setWidthFull();
+        botContainer.setWidthFull();
+        add(topContainer, midContainer, botContainer);
     }
 
     private void renderRoundRules(int roundNumber, String rulesText) {
@@ -93,8 +87,11 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
     private void renderOptions(QuizQuestionModel questionModel,
                                boolean singleAnswer) {
-        answersLayout.removeAll();
+        var answersLayout = new VerticalLayout();
         answersLayout.setPadding(false);
+
+        botContainer.removeAll();
+        botContainer.add(answersLayout);
 
         if (questionModel.isSpecial()) {
             return;
@@ -130,16 +127,14 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     }
 
     private void renderQuestionLayout(QuizQuestionModel questionModel, int roundNumber) {
-        questionContainer.removeAll();
-        questionContainer.setWidthFull();
-
         List<String> questionClasses = isAdmin
                 ? List.of(LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.SEMIBOLD)
                 : List.of(LumoUtility.FontSize.XXLARGE, LumoUtility.FontWeight.LIGHT);
 
         String imageHeight = isAdmin ? "25em" : "15em";
 
-        questionContainer.add(CleverestComponents.questionLayout(
+        midContainer.removeAll();
+        midContainer.add(CleverestComponents.questionLayout(
                 questionModel,
                 questionClasses,
                 imageHeight
@@ -147,10 +142,13 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     }
 
     private void renderCategoriesTable(CleverestGameState.UserGameState userToAnswer, Map<String, List<QuizQuestionModel>> data) {
-        categoriesLayout.removeAll();
+        var categoriesLayout = new VerticalLayout();
         categoriesLayout.addClassNames(LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.LIGHT);
         categoriesLayout.setAlignItems(Alignment.CENTER);
         categoriesLayout.setDefaultHorizontalComponentAlignment(Alignment.CENTER);
+
+        midContainer.removeAll();
+        midContainer.add(categoriesLayout);
 
         categoriesLayout.add(new Span(new Span("Отвечает: "),
                 CleverestComponents.userNameSpan(
@@ -191,20 +189,21 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         });
     }
 
+
     private void updateUserPersonalScore() {
-        personalScoreContainer.removeAll();
-        personalScoreContainer.setWidthFull();
-        personalScoreContainer.add(CleverestComponents.userScore(
+        CleverestGameState.UserGameState userState = broadcastService.getState(gameId).getUsers().get(QuizUtils.getLoggedUser());
+        topContainer.removeAll();
+        topContainer.add(CleverestComponents.userScore(
                 QuizUtils.getLoggedUser(),
-                broadcastService.getState(gameId).getUsers().get(QuizUtils.getLoggedUser()).getColor(),
-                broadcastService.getState(gameId).getUsers().get(QuizUtils.getLoggedUser()).getScore(),
+                userState.getColor(),
+                userState.getScore(),
                 LumoUtility.FontSize.XXLARGE,
                 LumoUtility.FontWeight.LIGHT
         ));
     }
 
     private void showUsersScore(QuizQuestionModel question, boolean roundOver, Runnable onCloseAction) {
-        usersScoreLayout.removeAll();
+        var usersScoreLayout = new VerticalLayout();
         Map<String, CleverestGameState.UserGameState> users =
                 broadcastService.getState(gameId).getSortedByScoreUsers();
         users.forEach((username, userGameState) -> {
@@ -301,17 +300,18 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     }
 
     private void renderResults() {
-        removeAll();
+        topContainer.removeAll();
+        midContainer.removeAll();
+        botContainer.removeAll();
         if (isAdmin) {
-            add(new CleverestResultComponent(
+            midContainer.add(new CleverestResultComponent(
                     broadcastService.getState(gameId).getSortedByScoreUsers().values(),
                     broadcastService.getState(gameId).getHistory()));
         } else {
-            add(personalScoreContainer);
             updateUserPersonalScore();
-            add(new Span("Итоговое место: "
+            midContainer.add(new Span("Итоговое место: "
                     + broadcastService.getState(gameId).getUsers().get(QuizUtils.getLoggedUser()).getLastPosition()));
-            add(new CleverestResultComponent(
+            botContainer.add(new CleverestResultComponent(
                     broadcastService.getState(gameId).getSortedByScoreUsers().values(),
                     broadcastService.getState(gameId).getHistory(),
                     QuizUtils.getLoggedUser()));
@@ -323,8 +323,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         subs.add(broadcastService.subscribe(CleverestBroadcastService.UserAnsweredEvent.class, event -> {
             QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
                 System.out.println(event.getClass().getName() + " - " + QuizUtils.getLoggedUser());
-                Notification notification = Notification.show(event.getUsername(), 1_000, Notification.Position.TOP_CENTER);
-                notification.addThemeVariants(NotificationVariant.LUMO_CONTRAST);
+                CleverestComponents.notification(event.getUsername() + " ответил",
+                        NotificationVariant.LUMO_CONTRAST);
 
                 if (event.getUsername().equals(QuizUtils.getLoggedUser())) {
                     setEnabled(false);
@@ -365,19 +365,19 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
         subs.add(broadcastService.subscribe(CleverestBroadcastService.RenderCategoriesEvent.class, event -> {
             QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
-                questionContainer.removeAll();
-                answersLayout.removeAll();
+                midContainer.removeAll();
+                botContainer.removeAll();
                 if (isAdmin) {
                     System.out.println(event.getClass().getName() + " - " + QuizUtils.getLoggedUser());
                     renderCategoriesTable(event.getUserToAnswer(), event.getData());
                 } else {
                     if (QuizUtils.getLoggedUser().equals(event.getUserToAnswer().getUsername())) {
-                        questionContainer.add(CleverestComponents.userWaitSpan(
+                        midContainer.add(CleverestComponents.userWaitSpan(
                                 "Время отвечать!",
                                 LumoUtility.TextColor.PRIMARY
                         ));
                     } else {
-                        questionContainer.add(CleverestComponents.userWaitSpan(
+                        midContainer.add(CleverestComponents.userWaitSpan(
                                 "Внимание на экран!",
                                 LumoUtility.TextColor.SECONDARY
                         ));
@@ -426,4 +426,29 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     protected void onDetach(DetachEvent detachEvent) {
         subs.forEach(Registration::remove);
     }
+
+
+    //    private void renderTopContainer() {
+//        topContainer.removeAll();
+//        broadcastService.getState(gameId).getUsers().values()
+//                .forEach(uState -> {
+//                    Div userDiv = new Div();
+//                    userDiv.getStyle().set("color", uState.getColor());
+//                    userDiv.setText(uState.getUsername());
+//                    userDiv.setId(uState.getUsername());
+//                    userDiv.setWidthFull();
+//                    userDiv.addClassNames(LumoUtility.Border.BOTTOM, LumoUtility.BorderColor.CONTRAST);
+//                    topContainer.add(userDiv);
+//                });
+//    }
+
+//    private void appendUserAnswerSubmission(String username) {
+//        if (!isAdmin) {
+//            return;
+//        }
+//        topContainer.getChildren()
+//                .filter(component -> component.getId().orElseThrow().equals(username))
+//                .findFirst().orElseThrow()
+//                .addClassNames(LumoUtility.Background.CONTRAST);
+//    }
 }

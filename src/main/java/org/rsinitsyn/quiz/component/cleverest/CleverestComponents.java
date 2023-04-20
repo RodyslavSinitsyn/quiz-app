@@ -12,6 +12,8 @@ import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -207,6 +209,12 @@ public class CleverestComponents {
                 LumoUtility.BorderColor.PRIMARY);
         span.addClassNames(classes);
         return span;
+    }
+
+    public Notification notification(String text, NotificationVariant variant) {
+        Notification notification = Notification.show(text, 1_500, Notification.Position.TOP_STRETCH);
+        notification.addThemeVariants(variant);
+        return notification;
     }
 
     private Span delimiterSpan(String... classes) {

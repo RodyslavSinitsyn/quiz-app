@@ -19,7 +19,6 @@ import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.rsinitsyn.quiz.entity.UserEntity;
-import org.rsinitsyn.quiz.page.CleverestGamePage;
 import org.rsinitsyn.quiz.page.FontsPage;
 import org.rsinitsyn.quiz.page.NewGamePage;
 import org.rsinitsyn.quiz.page.QuestionsListPage;
@@ -74,13 +73,6 @@ public class MainLayout extends AppLayout {
         tabs.add(createTab("Играть", NewGamePage.class));
         tabs.add(createTab("Вопросы", QuestionsListPage.class));
         tabs.add(createTab("Статистика", StatisticPage.class));
-
-        Tab tab = new Tab();
-        RouterLink link = new RouterLink(CleverestGamePage.class);
-        link.setText("Мультиплеер (new)");
-        tab.add(link);
-        tabs.add(tab);
-
         tabs.add(createTab("Шрифты (dev)", FontsPage.class));
     }
 
