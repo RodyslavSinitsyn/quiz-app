@@ -1,8 +1,7 @@
-package org.rsinitsyn.quiz.service;
+package org.rsinitsyn.quiz.model.cleverest;
 
 import com.google.common.collect.Iterables;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -16,38 +15,32 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.apache.commons.lang3.tuple.MutablePair;
-import org.rsinitsyn.quiz.model.QuizQuestionModel;
+import org.rsinitsyn.quiz.model.QuestionModel;
 
 @Data
 public class CleverestGameState {
     private String createdBy;
     private Map<String, UserGameState> users = new HashMap<>();
-    private List<QuizQuestionModel> firstQuestions = new ArrayList<>();
-    private List<QuizQuestionModel> secondQuestions = new ArrayList<>();
-    private Map<String, List<QuizQuestionModel>> thirdQuestions = new HashMap<>();
-    private List<QuizQuestionModel> specialQuestions = new ArrayList<>();
+    private List<QuestionModel> firstQuestions = new ArrayList<>();
+    private List<QuestionModel> secondQuestions = new ArrayList<>();
+    private Map<String, List<QuestionModel>> thirdQuestions = new HashMap<>();
+    private List<QuestionModel> specialQuestions = new ArrayList<>();
     private Map<Integer, String> roundRules = new HashMap<>();
 
     // mutable
     private Iterator<UserGameState> usersToAnswer = null;
-    private Map<QuizQuestionModel, List<UserGameState>> history = new LinkedHashMap<>();
+    private Map<QuestionModel, List<UserGameState>> history = new LinkedHashMap<>();
     private LocalDateTime questionRenderTime;
     private int specialQuestionsNumber;
     private int roundNumber = 1;
     private int questionNumber = 0;
-    private Supplier<List<QuizQuestionModel>> currRoundQuestionsSource = null;
+    private Supplier<List<QuestionModel>> currRoundQuestionsSource = null;
 
-    public void init(List<QuizQuestionModel> firstRound,
-                     List<QuizQuestionModel> secondRound,
-                     Map<String, List<QuizQuestionModel>> thirdRound,
-                     List<QuizQuestionModel> special) {
+    public void init(List<QuestionModel> firstRound,
+                     List<QuestionModel> secondRound,
+                     Map<String, List<QuestionModel>> thirdRound,
+                     List<QuestionModel> special) {
         this.firstQuestions = firstRound;
         this.secondQuestions = secondRound;
         this.thirdQuestions = thirdRound;
@@ -62,7 +55,7 @@ public class CleverestGameState {
         roundRules.put(3, "В третьем раунде по очереди нужно выбрать тему и ответить на вопрос устно. После этого мы посчитаем баллы.");
     }
 
-    public void updateHistory(QuizQuestionModel key, UserGameState currUserState) {
+    public void updateHistory(QuestionModel key, UserGameState currUserState) {
         List<UserGameState> states = history.get(key);
         if (states == null || states.isEmpty()) {
             List<UserGameState> temp = new ArrayList<>();
@@ -100,14 +93,14 @@ public class CleverestGameState {
         return questionNumber != 0 && questionNumber % 2 == 0;
     }
 
-    public QuizQuestionModel getSpecial() {
+    public QuestionModel getSpecial() {
         if (specialQuestionsNumber == specialQuestions.size()) {
             return null;
         }
         return specialQuestions.get(specialQuestionsNumber++);
     }
 
-    public QuizQuestionModel getCurrent() {
+    public QuestionModel getCurrent() {
         if (questionNumber == currRoundQuestionsSource.get().size()) {
             return null;
         }
@@ -137,7 +130,7 @@ public class CleverestGameState {
         return questionNumber == currRoundQuestionsSource.get().size();
     }
 
-    public void submitAnswerAndIncrease(String username, QuizQuestionModel.QuizAnswerModel answer) {
+    public void submitAnswerAndIncrease(String username, QuestionModel.AnswerModel answer) {
         UserGameState userGameState = users.get(username);
         if (userGameState.isAnswerGiven()) {
             return;
@@ -208,102 +201,9 @@ public class CleverestGameState {
                 .flatMap(e -> e.getValue().stream())
                 .filter(uState -> uState.getLastResponseTime() > 0)
                 .collect(Collectors.groupingBy(Function.identity(),
-                        Collectors.averagingLong(CleverestGameState.UserGameState::getLastResponseTime)))
+                        Collectors.averagingLong(UserGameState::getLastResponseTime)))
                 .forEach((userGameState, avgTime) -> {
                     users.get(userGameState.getUsername()).setAvgResponseTime(avgTime);
                 });
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @EqualsAndHashCode(exclude = {"bets"})
-    public static class UserGameState implements Comparable<UserGameState> {
-        private String username;
-        private String color;
-
-        private boolean lastWasCorrect;
-        @Setter(AccessLevel.NONE)
-        private String lastAnswerText;
-        @Setter(AccessLevel.NONE)
-        private LocalDateTime lastAnswerTime;
-        private int lastPosition;
-        private long lastResponseTime;
-        @Setter(AccessLevel.NONE)
-        private int score = 0;
-        @Setter(AccessLevel.NONE)
-        private boolean answerGiven;
-        private Map<String, MutablePair<String, Boolean>> bets = new HashMap<>();
-        private int betScore;
-        private Double avgResponseTime;
-
-        public void submitLatestAnswer(String answerText, LocalDateTime questionRenderTime) {
-            lastAnswerText = answerText;
-            answerGiven = true;
-            lastAnswerTime = LocalDateTime.now();
-            lastResponseTime = ChronoUnit.MILLIS.between(
-                    questionRenderTime,
-                    lastAnswerTime);
-        }
-
-        public void prepareForNext() {
-            lastWasCorrect = false;
-            lastAnswerText = "";
-            answerGiven = false;
-            lastAnswerTime = null;
-            lastResponseTime = 0;
-        }
-
-        public void increaseBetScore() {
-            betScore++;
-        }
-
-        public void increaseScore() {
-            score++;
-            lastWasCorrect = true;
-        }
-
-        public int totalScore() {
-            return score + betScore;
-        }
-
-        public void updateBet(String bet, boolean isWinnerBet, boolean isBetRight) {
-            if (isWinnerBet) {
-                bets.put("winner", MutablePair.of(bet, isBetRight));
-            } else {
-                bets.put("loser", MutablePair.of(bet, isBetRight));
-            }
-        }
-
-        public MutablePair<String, Boolean> winnerBet() {
-            return bets.get("winner");
-        }
-
-        public MutablePair<String, Boolean> loserBet() {
-            return bets.get("loser");
-        }
-
-        @Override
-        public int compareTo(UserGameState other) {
-            return Comparator.comparingInt(UserGameState::totalScore)
-                    .reversed()
-                    .compare(this, other);
-        }
-
-        public UserGameState copy() {
-            return new UserGameState(
-                    username,
-                    color,
-                    lastWasCorrect,
-                    lastAnswerText,
-                    lastAnswerTime,
-                    lastPosition,
-                    lastResponseTime,
-                    score,
-                    answerGiven,
-                    bets,
-                    betScore,
-                    avgResponseTime);
-        }
     }
 }

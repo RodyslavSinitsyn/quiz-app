@@ -25,29 +25,29 @@ import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.сustom.ColorPicker;
-import org.rsinitsyn.quiz.service.CleverestBroadcastService;
-import org.rsinitsyn.quiz.service.CleverestGameState;
+import org.rsinitsyn.quiz.model.cleverest.UserGameState;
+import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 
 public class CleverestWaitingRoomComponent extends VerticalLayout {
 
     private String gameId;
     private boolean isAdmin;
-    private Grid<CleverestGameState.UserGameState> usersGrid = new Grid<>(CleverestGameState.UserGameState.class, false);
+    private Grid<UserGameState> usersGrid = new Grid<>(UserGameState.class, false);
     private Select<String> winnerBet = new Select<>();
     private Select<String> loserBet = new Select<>();
     private Button joinButton;
 
-    private CleverestBroadcastService broadcastService;
+    private CleverestBroadcaster broadcaster;
 
     private List<Registration> subscriptions = new ArrayList<>();
 
     public CleverestWaitingRoomComponent(String gameId,
-                                         CleverestBroadcastService broadcastService,
+                                         CleverestBroadcaster broadcaster,
                                          boolean isAdmin) {
         this.gameId = gameId;
         this.isAdmin = isAdmin;
-        this.broadcastService = broadcastService;
+        this.broadcaster = broadcaster;
         this.winnerBet = betSelect(true);
         this.loserBet = betSelect(false);
         configurePlayersList();
@@ -73,14 +73,14 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         joinButton.addClickListener(event -> {
             dialog.removeAll();
             dialog.add(userDialogContent(
-                    broadcastService.getState(gameId).getUsers().get(QuizUtils.getLoggedUser()),
+                    broadcaster.getState(gameId).getUsers().get(QuizUtils.getLoggedUser()),
                     dialog));
             dialog.open();
         });
         add(joinButton);
     }
 
-    private VerticalLayout userDialogContent(CleverestGameState.UserGameState userGameState, ConfirmDialog dialog) {
+    private VerticalLayout userDialogContent(UserGameState userGameState, ConfirmDialog dialog) {
         VerticalLayout dialogLayout = new VerticalLayout();
         dialogLayout.setAlignItems(FlexComponent.Alignment.CENTER);
         dialogLayout.setDefaultHorizontalComponentAlignment(Alignment.START);
@@ -105,7 +105,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         dialogLayout.add(playerName, chooseColor, colorPicker, winnerBet, loserBet);
 
         dialog.addConfirmListener(event -> {
-            broadcastService.sendJoinUserEvent(gameId,
+            broadcaster.sendJoinUserEvent(gameId,
                     QuizUtils.getLoggedUser(),
                     StringUtils.defaultIfEmpty(colorPicker.getValue(), "#000000"),
                     winnerBet.getValue(),
@@ -165,10 +165,10 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         Select<String> select = new Select<>();
         select.setWidthFull();
         select.setLabel("Сделайте ставку на " + (winner ? "победителя" : "проигравшего"));
-        select.setItems(broadcastService.getState(gameId).getUsers().keySet());
+        select.setItems(broadcaster.getState(gameId).getUsers().keySet());
         select.addValueChangeListener(event -> {
             if (event.isFromClient()) {
-                broadcastService.sendBetEvent(gameId, QuizUtils.getLoggedUser(), event.getValue(), winner);
+                broadcaster.sendBetEvent(gameId, QuizUtils.getLoggedUser(), event.getValue(), winner);
             }
         });
         return select;
@@ -176,9 +176,9 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
 
 
     private void updatePlayersGrid(String userWhoMadeAction) {
-        if (broadcastService.getState(gameId).getUsers() != null
-                && !broadcastService.getState(gameId).getUsers().isEmpty()) {
-            usersGrid.setItems(broadcastService.getState(gameId).getUsers().values());
+        if (broadcaster.getState(gameId).getUsers() != null
+                && !broadcaster.getState(gameId).getUsers().isEmpty()) {
+            usersGrid.setItems(broadcaster.getState(gameId).getUsers().values());
         }
     }
 
@@ -191,7 +191,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         prodLink.getElement().setAttribute("target", "_blank");
         add(prodLink);
 
-        Button button = CleverestComponents.primaryButton("Начать игру", e -> broadcastService.sendPlayersReadyEvent(gameId));
+        Button button = CleverestComponents.primaryButton("Начать игру", e -> broadcaster.sendPlayersReadyEvent(gameId));
         add(button);
     }
 
@@ -203,23 +203,23 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         subscriptions.add(
-                broadcastService.subscribe(gameId, CleverestBroadcastService.UserJoinedEvent.class, event -> {
+                broadcaster.subscribe(gameId, CleverestBroadcaster.UserJoinedEvent.class, event -> {
                     QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
                         updatePlayersGrid(event.getUsername());
                         if (QuizUtils.getLoggedUser().equals(event.getUsername())) {
                             joinButton.setText(
-                                    !broadcastService.getState(gameId).getUsers().containsKey(event.getUsername())
+                                    !broadcaster.getState(gameId).getUsers().containsKey(event.getUsername())
                                             ? "Играть"
                                             : "Поменять настройки");
                         }
-                        winnerBet.setItems(broadcastService.getState(gameId).getUsers().keySet());
-                        loserBet.setItems(broadcastService.getState(gameId).getUsers().keySet());
+                        winnerBet.setItems(broadcaster.getState(gameId).getUsers().keySet());
+                        loserBet.setItems(broadcaster.getState(gameId).getUsers().keySet());
                     });
                 }));
 
         subscriptions.add(
-                broadcastService.subscribe(gameId,
-                        CleverestBroadcastService.UserBetEvent.class,
+                broadcaster.subscribe(gameId,
+                        CleverestBroadcaster.UserBetEvent.class,
                         event -> {
                             QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
                                 updatePlayersGrid(event.getUsername());

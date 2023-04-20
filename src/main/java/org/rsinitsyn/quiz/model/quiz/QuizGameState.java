@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.model;
+package org.rsinitsyn.quiz.model.quiz;
 
 import jakarta.validation.constraints.NotBlank;
 import java.util.ArrayList;
@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.validator.constraints.Length;
 import org.rsinitsyn.quiz.entity.GameStatus;
+import org.rsinitsyn.quiz.model.QuestionModel;
 
 /**
  * Represents the state of one specific quiz game
@@ -17,7 +18,7 @@ import org.rsinitsyn.quiz.entity.GameStatus;
 // TODO Split to *SettingsBindingModel and *StateModel
 @Getter
 @Setter
-public class QuizGameStateModel {
+public class QuizGameState {
     @NotBlank
     @Length(min = 1, max = 30)
     private String gameName = "Test";
@@ -28,7 +29,7 @@ public class QuizGameStateModel {
     private boolean timerEnabled;
     private boolean hintsEnabled;
     private boolean intrigueEnabled;
-    private Set<QuizQuestionModel> questions = new HashSet<>();
+    private Set<QuestionModel> questions = new HashSet<>();
 
     // state props
     private UUID gameId;
@@ -42,11 +43,11 @@ public class QuizGameStateModel {
     private boolean threeLeftHintUsed = false;
     private boolean revelCountHintUsed = false;
 
-    public QuizQuestionModel getNextQuestion() {
+    public QuestionModel getNextQuestion() {
         return getByIndex(currentQuestionNumber++);
     }
 
-    public QuizQuestionModel getCurrentQuestion() {
+    public QuestionModel getCurrentQuestion() {
         return getByIndex(currentQuestionNumber);
     }
 
@@ -67,7 +68,7 @@ public class QuizGameStateModel {
         correctAnswersCounter++;
     }
 
-    private QuizQuestionModel getByIndex(int index) {
+    private QuestionModel getByIndex(int index) {
         if (getQuestionsCount() == index) {
             return null;
         }

@@ -18,12 +18,12 @@ import lombok.Data;
 import org.rsinitsyn.quiz.component.GameQuestionsComponent;
 import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
-import org.rsinitsyn.quiz.model.QuizGameStateModel;
+import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.page.NewGamePage;
 
 public class QuizGameResultComponent extends VerticalLayout {
 
-    private QuizGameStateModel gameState;
+    private QuizGameState gameState;
     private GameEntity gameEntity;
 
     private H2 title = new H2();
@@ -35,7 +35,7 @@ public class QuizGameResultComponent extends VerticalLayout {
     private GameQuestionsComponent gameQuestionsComponent;
     private Button newGameButton = new Button("Новая игра");
 
-    public QuizGameResultComponent(QuizGameStateModel gameState,
+    public QuizGameResultComponent(QuizGameState gameState,
                                    GameEntity gameEntity) {
         this.gameState = gameState;
         this.gameEntity = gameEntity;

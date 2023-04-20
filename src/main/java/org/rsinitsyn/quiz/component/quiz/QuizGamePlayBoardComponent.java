@@ -28,8 +28,8 @@ import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.QuestionType;
-import org.rsinitsyn.quiz.model.QuizGameStateModel;
-import org.rsinitsyn.quiz.model.QuizQuestionModel;
+import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.utils.AudioUtils;
 import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
@@ -45,10 +45,10 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     private Div progressBarLabel = new Div();
     private ProgressBar progressBar = new ProgressBar();
 
-    private QuizGameStateModel gameState;
-    private QuizQuestionModel currQuestion;
+    private QuizGameState gameState;
+    private QuestionModel currQuestion;
 
-    public QuizGamePlayBoardComponent(QuizGameStateModel gameState) {
+    public QuizGamePlayBoardComponent(QuizGameState gameState) {
         this.gameState = gameState;
         renderQuestion();
     }
@@ -88,8 +88,8 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 
         Paragraph correctAnswersSpan = new Paragraph(currQuestion.getAnswers()
                 .stream()
-                .filter(QuizQuestionModel.QuizAnswerModel::isCorrect)
-                .map(QuizQuestionModel.QuizAnswerModel::getText)
+                .filter(QuestionModel.AnswerModel::isCorrect)
+                .map(QuestionModel.AnswerModel::getText)
                 .collect(Collectors.joining(System.lineSeparator())));
         correctAnswersSpan.setId("bla-bla");
         correctAnswersSpan.getStyle().set("white-space", "pre-line");
@@ -111,7 +111,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
                         new QuizGamePlayBoardComponent.SubmitAnswerEvent(
                                 this,
                                 currQuestion,
-                                currQuestion.getAnswers().stream().filter(QuizQuestionModel.QuizAnswerModel::isCorrect).collect(Collectors.toSet())));
+                                currQuestion.getAnswers().stream().filter(QuestionModel.AnswerModel::isCorrect).collect(Collectors.toSet())));
                 dialog.close();
                 gameState.incrementCorrectAnswersCounter();
                 renderQuestion();
@@ -156,7 +156,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
             revealCountHint.setEnabled(!gameState.isRevelCountHintUsed());
             revealCountHint.addClickListener(event -> {
                 revealCountHint.setText("Верных ответов: "
-                        + currQuestion.getAnswers().stream().filter(QuizQuestionModel.QuizAnswerModel::isCorrect).count());
+                        + currQuestion.getAnswers().stream().filter(QuestionModel.AnswerModel::isCorrect).count());
                 revealCountHint.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
                 gameState.setRevelCountHintUsed(true);
             });
@@ -258,13 +258,13 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         return progressBar;
     }
 
-    private void submitOptionableAnswer(Set<QuizQuestionModel.QuizAnswerModel> answers) {
+    private void submitOptionableAnswer(Set<QuestionModel.AnswerModel> answers) {
         verifyAnswerAndNotify(answers);
         fireEvent(new SubmitAnswerEvent(this, currQuestion, answers));
         renderQuestion();
     }
 
-    private void verifyAnswerAndNotify(Set<QuizQuestionModel.QuizAnswerModel> answerModels) {
+    private void verifyAnswerAndNotify(Set<QuestionModel.AnswerModel> answerModels) {
         boolean correct = currQuestion.areAnswersCorrect(answerModels);
         NotificationVariant variant;
         if (correct) {
@@ -312,18 +312,18 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     }
 
     private void closeOpenResources() {
-        gameState.getQuestions().forEach(QuizQuestionModel::closePhotoStream);
+        gameState.getQuestions().forEach(QuestionModel::closePhotoStream);
     }
 
     @Getter
     public static class FinishGameEvent extends ComponentEvent<QuizGamePlayBoardComponent> {
-        private QuizGameStateModel model;
+        private QuizGameState model;
 
         public FinishGameEvent(QuizGamePlayBoardComponent source, boolean fromClient) {
             super(source, fromClient);
         }
 
-        public FinishGameEvent(QuizGamePlayBoardComponent source, QuizGameStateModel model) {
+        public FinishGameEvent(QuizGamePlayBoardComponent source, QuizGameState model) {
             this(source, false);
             this.model = model;
         }
@@ -331,14 +331,14 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 
     @Getter
     public static class SubmitAnswerEvent extends ComponentEvent<QuizGamePlayBoardComponent> {
-        private QuizQuestionModel question;
-        private Set<QuizQuestionModel.QuizAnswerModel> answer;
+        private QuestionModel question;
+        private Set<QuestionModel.AnswerModel> answer;
 
         public SubmitAnswerEvent(QuizGamePlayBoardComponent source, boolean fromClient) {
             super(source, fromClient);
         }
 
-        public SubmitAnswerEvent(QuizGamePlayBoardComponent source, QuizQuestionModel question, Set<QuizQuestionModel.QuizAnswerModel> answer) {
+        public SubmitAnswerEvent(QuizGamePlayBoardComponent source, QuestionModel question, Set<QuestionModel.AnswerModel> answer) {
             this(source, false);
             this.question = question;
             this.answer = answer;

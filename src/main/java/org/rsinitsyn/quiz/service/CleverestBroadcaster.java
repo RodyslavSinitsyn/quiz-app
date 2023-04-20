@@ -12,11 +12,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
-import org.rsinitsyn.quiz.model.QuizQuestionModel;
+import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
+import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CleverestBroadcastService {
+public class CleverestBroadcaster {
 
     private final Map<String, CleverestGameState> gameStateMap = new ConcurrentHashMap<>();
     private final Map<String, ComponentEventBus> eventBuses = new ConcurrentHashMap<>();
@@ -27,14 +29,14 @@ public class CleverestBroadcastService {
 
     public void createState(String gameId,
                             String createdBy,
-                            List<QuizQuestionModel> firstRound,
-                            List<QuizQuestionModel> secondRound,
-                            List<QuizQuestionModel> thirdRound,
-                            List<QuizQuestionModel> special) {
+                            List<QuestionModel> firstRound,
+                            List<QuestionModel> secondRound,
+                            List<QuestionModel> thirdRound,
+                            List<QuestionModel> special) {
         CleverestGameState state = new CleverestGameState();
         state.init(firstRound,
                 secondRound,
-                thirdRound.stream().collect(Collectors.groupingBy(QuizQuestionModel::getCategoryName)),
+                thirdRound.stream().collect(Collectors.groupingBy(QuestionModel::getCategoryName)),
                 special);
         state.setCreatedBy(createdBy);
         gameStateMap.put(gameId, state);
@@ -49,7 +51,7 @@ public class CleverestBroadcastService {
         CleverestGameState gameState = getState(gameId);
 
         gameState.getUsers().computeIfAbsent(username, s -> {
-            var state = new CleverestGameState.UserGameState();
+            var state = new UserGameState();
             state.setUsername(username);
             state.setColor(userColor);
             return state;
@@ -67,7 +69,7 @@ public class CleverestBroadcastService {
 
 
     public void sendBetEvent(String gameId, String username, String userBet, boolean winner) {
-        CleverestGameState.UserGameState userGameState = getState(gameId).getUsers().get(username);
+        UserGameState userGameState = getState(gameId).getUsers().get(username);
         userGameState.updateBet(userBet, winner, false);
         eventBuses.get(gameId).fireEvent(new UserBetEvent(gameId, username, userBet));
     }
@@ -77,7 +79,7 @@ public class CleverestBroadcastService {
         eventBuses.get(gameId).fireEvent(new AllUsersReadyEvent(gameId, getState(gameId).getUsers().keySet()));
     }
 
-    public void sendUpdateHistoryEvent(String gameId, QuizQuestionModel question) {
+    public void sendUpdateHistoryEvent(String gameId, QuestionModel question) {
         getState(gameId).getUsers().entrySet()
                 .stream()
                 .filter(e -> e.getValue().isAnswerGiven())
@@ -90,7 +92,7 @@ public class CleverestBroadcastService {
 
 
     // SubmitUserAnswerEvent && AllUsersAnsweredEvent
-    public void sendSubmitAnswerEventAndIncreaseScore(String gameId, String username, QuizQuestionModel questionModel, QuizQuestionModel.QuizAnswerModel answer) {
+    public void sendSubmitAnswerEventAndIncreaseScore(String gameId, String username, QuestionModel questionModel, QuestionModel.AnswerModel answer) {
         getState(gameId).submitAnswerAndIncrease(username, answer);
         eventBuses.get(gameId).fireEvent(new UserAnsweredEvent(gameId, username));
 
@@ -100,7 +102,7 @@ public class CleverestBroadcastService {
     }
 
     // SubmitUserAnswerEvent && AllUsersAnsweredEvent
-    public void sendSubmitAnswerEvent(String gameId, String username, QuizQuestionModel questionModel, String textAnswer) {
+    public void sendSubmitAnswerEvent(String gameId, String username, QuestionModel questionModel, String textAnswer) {
         getState(gameId).submitAnswer(username, textAnswer);
         eventBuses.get(gameId).fireEvent(new UserAnsweredEvent(gameId, username));
 
@@ -116,7 +118,7 @@ public class CleverestBroadcastService {
                 getState(gameId).getRoundRules().get(currRound)));
     }
 
-    private void sendEventWhenAllAnswered(String gameId, QuizQuestionModel currQuestion) {
+    private void sendEventWhenAllAnswered(String gameId, QuestionModel currQuestion) {
         boolean noMoreQuestionsInRound = getState(gameId).prepareNextQuestionAndCheckIsLast();
         boolean roundsOver = false;
         int currRound = getState(gameId).getRoundNumber();
@@ -134,15 +136,15 @@ public class CleverestBroadcastService {
     public void sendFinishGameEvent(String gameId) {
         getState(gameId).calculateUsersStatistic();
         getState(gameId).updateUserPositions();
-        eventBuses.get(gameId).fireEvent(new CleverestBroadcastService.GameFinishedEvent(gameId));
+        eventBuses.get(gameId).fireEvent(new CleverestBroadcaster.GameFinishedEvent(gameId));
     }
 
     // NextQuestionEvent
     public void sendNextQuestionEvent(String gameId) {
         CleverestGameState gameState = getState(gameId);
-        gameState.getUsers().values().forEach(CleverestGameState.UserGameState::prepareForNext);
+        gameState.getUsers().values().forEach(UserGameState::prepareForNext);
 
-        QuizQuestionModel question = null;
+        QuestionModel question = null;
 //        if (gameState.specialQuestionShouldAppear()) {
 //            question = gameState.getSpecial();
 //            if (question == null) {
@@ -162,12 +164,12 @@ public class CleverestBroadcastService {
     }
 
     // RenderCategoriesEvent
-    public void sendRenderCategoriesEvent(String gameId, String category, QuizQuestionModel question, boolean initial) {
+    public void sendRenderCategoriesEvent(String gameId, String category, QuestionModel question, boolean initial) {
         CleverestGameState gameState = getState(gameId);
         if (initial) {
             gameState.prepareUsersForThirdRound();
         }
-        gameState.getUsers().values().forEach(CleverestGameState.UserGameState::prepareForNext);
+        gameState.getUsers().values().forEach(UserGameState::prepareForNext);
         if (category != null && question != null) {
             gameState.getThirdQuestions().get(category).remove(question);
         }
@@ -251,12 +253,12 @@ public class CleverestBroadcastService {
 
     @Getter
     public static class AllUsersAnsweredEvent extends CleverestGameEvent {
-        private QuizQuestionModel question;
+        private QuestionModel question;
         private boolean roundOver;
         private boolean roundsOver;
         private int currentRoundNumber;
 
-        public AllUsersAnsweredEvent(String gameId, QuizQuestionModel question, boolean roundOver, boolean roundsOver, int currentRoundNumber) {
+        public AllUsersAnsweredEvent(String gameId, QuestionModel question, boolean roundOver, boolean roundsOver, int currentRoundNumber) {
             super(gameId);
             this.question = question;
             this.roundOver = roundOver;
@@ -279,10 +281,10 @@ public class CleverestBroadcastService {
 
     @Getter
     public static class NextQuestionEvent extends CleverestGameEvent {
-        private QuizQuestionModel question;
+        private QuestionModel question;
         private int roundNumber;
 
-        public NextQuestionEvent(String gameId, QuizQuestionModel question, int roundNumber) {
+        public NextQuestionEvent(String gameId, QuestionModel question, int roundNumber) {
             super(gameId);
             this.question = question;
             this.roundNumber = roundNumber;
@@ -291,12 +293,12 @@ public class CleverestBroadcastService {
 
     @Getter
     public static class RenderCategoriesEvent extends CleverestGameEvent {
-        private CleverestGameState.UserGameState userToAnswer;
-        private Map<String, List<QuizQuestionModel>> data;
+        private UserGameState userToAnswer;
+        private Map<String, List<QuestionModel>> data;
 
         public RenderCategoriesEvent(String gameId,
-                                     CleverestGameState.UserGameState userToAnswer,
-                                     Map<String, List<QuizQuestionModel>> data) {
+                                     UserGameState userToAnswer,
+                                     Map<String, List<QuestionModel>> data) {
             super(gameId);
             this.userToAnswer = userToAnswer;
             this.data = data;
@@ -305,12 +307,12 @@ public class CleverestBroadcastService {
 
     @Getter
     public static class SaveUserAnswersEvent extends CleverestGameEvent {
-        private QuizQuestionModel question;
-        private List<CleverestGameState.UserGameState> userStates;
+        private QuestionModel question;
+        private List<UserGameState> userStates;
 
         public SaveUserAnswersEvent(String gameId,
-                                    QuizQuestionModel question,
-                                    List<CleverestGameState.UserGameState> userStates) {
+                                    QuestionModel question,
+                                    List<UserGameState> userStates) {
             super(gameId);
             this.question = question;
             this.userStates = userStates;

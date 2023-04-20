@@ -24,7 +24,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.List;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
-import org.rsinitsyn.quiz.model.QuizQuestionModel;
+import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.utils.AudioUtils;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.StaticValuesHolder;
@@ -138,7 +138,7 @@ public class CleverestComponents {
         return button;
     }
 
-    public Span correctAnswerSpan(QuizQuestionModel questionModel, String... classes) {
+    public Span correctAnswerSpan(QuestionModel questionModel, String... classes) {
         Span span = new Span();
         span.addClassNames(classes);
         span.addClassNames(LumoUtility.TextAlignment.CENTER,
@@ -161,7 +161,7 @@ public class CleverestComponents {
         return icon;
     }
 
-    public VerticalLayout questionLayout(QuizQuestionModel questionModel,
+    public VerticalLayout questionLayout(QuestionModel questionModel,
                                          List<String> textContentClasses,
                                          String imageHeight) {
         VerticalLayout layout = new VerticalLayout();

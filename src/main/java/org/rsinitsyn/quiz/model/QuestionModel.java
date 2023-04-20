@@ -24,7 +24,7 @@ import org.rsinitsyn.quiz.utils.QuizUtils;
 @Setter
 @EqualsAndHashCode(exclude = {"photoInputStream", "playersAnswersHistory", "answers"})
 @Builder
-public class QuizQuestionModel {
+public class QuestionModel {
     private UUID id;
     private String text;
     private QuestionType type;
@@ -34,7 +34,7 @@ public class QuizQuestionModel {
     private boolean optionsOnly;
     private Integer validRange;
     private Map<String, AnswerHistory> playersAnswersHistory;
-    private Set<QuizAnswerModel> answers;
+    private Set<AnswerModel> answers;
 
     // for cleverest
     private boolean special = false;
@@ -42,29 +42,29 @@ public class QuizQuestionModel {
     @Setter(AccessLevel.NONE)
     private InputStream photoInputStream;
 
-    public QuizAnswerModel getFirstCorrectAnswer() {
+    public AnswerModel getFirstCorrectAnswer() {
         return answers.stream()
-                .filter(QuizAnswerModel::isCorrect)
+                .filter(AnswerModel::isCorrect)
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No correct answer!"));
     }
 
-    public List<QuizAnswerModel> getShuffledAnswers() {
-        List<QuizQuestionModel.QuizAnswerModel> answerList = new ArrayList<>(answers);
+    public List<AnswerModel> getShuffledAnswers() {
+        List<AnswerModel> answerList = new ArrayList<>(answers);
         Collections.shuffle(answerList);
         return answerList;
     }
 
-    public boolean areAnswersCorrect(Set<QuizAnswerModel> userAnswers) {
+    public boolean areAnswersCorrect(Set<AnswerModel> userAnswers) {
         if (type.equals(QuestionType.TEXT)) {
-            return userAnswers.stream().anyMatch(QuizAnswerModel::isCorrect);
+            return userAnswers.stream().anyMatch(AnswerModel::isCorrect);
         } else if (type.equals(QuestionType.MULTI)) {
-            long correctAnswersCount = this.answers.stream().filter(QuizAnswerModel::isCorrect).count();
-            long userCorrectAnswersCount = userAnswers.stream().filter(QuizAnswerModel::isCorrect).count();
+            long correctAnswersCount = this.answers.stream().filter(AnswerModel::isCorrect).count();
+            long userCorrectAnswersCount = userAnswers.stream().filter(AnswerModel::isCorrect).count();
             boolean userHasOnlyCorrectAnswers = userCorrectAnswersCount == userAnswers.size();
             return userHasOnlyCorrectAnswers && correctAnswersCount == userCorrectAnswersCount;
         } else if (type.equals(QuestionType.PRECISION)) {
-            QuizAnswerModel answerModel = userAnswers.stream().findFirst().orElseThrow(() -> new RuntimeException("No answer"));
+            AnswerModel answerModel = userAnswers.stream().findFirst().orElseThrow(() -> new RuntimeException("No answer"));
             int userAnswer = Integer.parseInt(answerModel.getText());
             int validAnswer = Integer.parseInt(answers.stream().findFirst().orElseThrow().getText());
             return Math.abs(validAnswer - userAnswer) <= validRange;
@@ -93,7 +93,7 @@ public class QuizQuestionModel {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class QuizAnswerModel {
+    public static class AnswerModel {
         private String text;
         private boolean correct;
     }

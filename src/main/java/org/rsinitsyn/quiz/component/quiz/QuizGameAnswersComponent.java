@@ -18,17 +18,17 @@ import java.util.Set;
 import lombok.Getter;
 import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.entity.QuestionType;
-import org.rsinitsyn.quiz.model.QuizQuestionModel;
+import org.rsinitsyn.quiz.model.QuestionModel;
 
 public class QuizGameAnswersComponent extends VerticalLayout {
 
-    private List<QuizQuestionModel.QuizAnswerModel> copiedAnswerList;
-    private QuizQuestionModel question;
+    private List<QuestionModel.AnswerModel> copiedAnswerList;
+    private QuestionModel question;
 
-    private ListBox<QuizQuestionModel.QuizAnswerModel> answerListBox = new ListBox<>();
-    private MultiSelectListBox<QuizQuestionModel.QuizAnswerModel> multiAnswerListBox = new MultiSelectListBox<>();
+    private ListBox<QuestionModel.AnswerModel> answerListBox = new ListBox<>();
+    private MultiSelectListBox<QuestionModel.AnswerModel> multiAnswerListBox = new MultiSelectListBox<>();
 
-    public QuizGameAnswersComponent(QuizQuestionModel question) {
+    public QuizGameAnswersComponent(QuestionModel question) {
         this.question = question;
         this.copiedAnswerList = new ArrayList<>(question.getShuffledAnswers());
         renderAnswers();
@@ -43,13 +43,13 @@ public class QuizGameAnswersComponent extends VerticalLayout {
         if (question.getType().equals(QuestionType.TEXT)) {
             answerListBox.setItems(copiedAnswerList);
             answerListBox.setRenderer(
-                    new ComponentRenderer<Component, QuizQuestionModel.QuizAnswerModel>(this::createAnswerButton));
+                    new ComponentRenderer<Component, QuestionModel.AnswerModel>(this::createAnswerButton));
             answerListBox.addValueChangeListener(event -> fireEvent(new AnswerChoosenEvent(this, Collections.singleton(event.getValue()))));
             add(answerListBox);
         } else if (question.getType().equals(QuestionType.MULTI)) {
             multiAnswerListBox.setItems(copiedAnswerList);
             multiAnswerListBox.setRenderer(
-                    new ComponentRenderer<Component, QuizQuestionModel.QuizAnswerModel>(this::createAnswerButton));
+                    new ComponentRenderer<Component, QuestionModel.AnswerModel>(this::createAnswerButton));
 
             var submitButton = CleverestComponents.primaryButton(
                     "Подтвердить ответ",
@@ -62,7 +62,7 @@ public class QuizGameAnswersComponent extends VerticalLayout {
             var submitButton = CleverestComponents.primaryButton(
                     "Подтвердить ответ",
                     event -> {
-                        var answerModel = new QuizQuestionModel.QuizAnswerModel();
+                        var answerModel = new QuestionModel.AnswerModel();
                         answerModel.setText(String.valueOf(numberField.getValue().intValue()));
                         fireEvent(new AnswerChoosenEvent(this, Collections.singleton(answerModel)));
                     });
@@ -70,7 +70,7 @@ public class QuizGameAnswersComponent extends VerticalLayout {
         }
     }
 
-    private Button createAnswerButton(QuizQuestionModel.QuizAnswerModel answer) {
+    private Button createAnswerButton(QuestionModel.AnswerModel answer) {
         var button = new Button(answer.getText());
         button.addClassNames(LumoUtility.FontSize.XLARGE,
                 LumoUtility.FontWeight.BOLD);
@@ -88,13 +88,13 @@ public class QuizGameAnswersComponent extends VerticalLayout {
 
     @Getter
     public static class AnswerChoosenEvent extends ComponentEvent<QuizGameAnswersComponent> {
-        private Set<QuizQuestionModel.QuizAnswerModel> answers;
+        private Set<QuestionModel.AnswerModel> answers;
 
         public AnswerChoosenEvent(QuizGameAnswersComponent source, boolean fromClient) {
             super(source, fromClient);
         }
 
-        public AnswerChoosenEvent(QuizGameAnswersComponent source, Set<QuizQuestionModel.QuizAnswerModel> answers) {
+        public AnswerChoosenEvent(QuizGameAnswersComponent source, Set<QuestionModel.AnswerModel> answers) {
             this(source, false);
             this.answers = answers;
         }

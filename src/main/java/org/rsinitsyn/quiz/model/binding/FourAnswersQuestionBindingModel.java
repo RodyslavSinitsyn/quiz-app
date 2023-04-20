@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.model;
+package org.rsinitsyn.quiz.model.binding;
 
 import jakarta.validation.constraints.NotBlank;
 import java.io.InputStream;

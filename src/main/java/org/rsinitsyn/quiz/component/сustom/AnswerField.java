@@ -4,7 +4,7 @@ import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.textfield.TextField;
 import java.util.Optional;
-import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
 
 public class AnswerField extends CustomField<FourAnswersQuestionBindingModel.AnswerBindingModel> {
 

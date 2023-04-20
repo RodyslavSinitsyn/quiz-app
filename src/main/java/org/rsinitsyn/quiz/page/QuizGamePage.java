@@ -19,7 +19,7 @@ import org.rsinitsyn.quiz.component.quiz.QuizGameSettingsComponent;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.GameType;
 import org.rsinitsyn.quiz.entity.UserEntity;
-import org.rsinitsyn.quiz.model.QuizGameStateModel;
+import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.service.UserService;
@@ -63,8 +63,8 @@ public class QuizGamePage extends VerticalLayout implements HasUrlParameter<Stri
         createGameIfNotExists();
     }
 
-    private QuizGamePlayBoardComponent configurePlayGameComponent(QuizGameStateModel quizGameStateModel) {
-        quizGamePlayBoardComponent = new QuizGamePlayBoardComponent(quizGameStateModel);
+    private QuizGamePlayBoardComponent configurePlayGameComponent(QuizGameState quizGameState) {
+        quizGamePlayBoardComponent = new QuizGamePlayBoardComponent(quizGameState);
         quizGamePlayBoardComponent.addListener(QuizGamePlayBoardComponent.FinishGameEvent.class, event -> {
             gameService.finishGame(gameId);
             remove(quizGamePlayBoardComponent);
@@ -73,14 +73,14 @@ public class QuizGamePage extends VerticalLayout implements HasUrlParameter<Stri
         quizGamePlayBoardComponent.addListener(QuizGamePlayBoardComponent.SubmitAnswerEvent.class, event -> {
             gameService.submitAnswers(
                     gameId,
-                    quizGameStateModel.getPlayerName(),
+                    quizGameState.getPlayerName(),
                     event.getQuestion(),
                     () -> event.getQuestion().areAnswersCorrect(event.getAnswer()));
         });
         return quizGamePlayBoardComponent;
     }
 
-    private QuizGameResultComponent configureQuizGameResultComponent(QuizGameStateModel model) {
+    private QuizGameResultComponent configureQuizGameResultComponent(QuizGameState model) {
         quizGameResultComponent = new QuizGameResultComponent(model, gameService.findById(gameId));
         return quizGameResultComponent;
     }

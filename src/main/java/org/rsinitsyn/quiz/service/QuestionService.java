@@ -25,10 +25,10 @@ import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.AnswerHistory;
-import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
-import org.rsinitsyn.quiz.model.PrecisionQuestionBindingModel;
-import org.rsinitsyn.quiz.model.QuestionCategoryBindingModel;
-import org.rsinitsyn.quiz.model.QuizQuestionModel;
+import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.QuestionCategoryBindingModel;
 import org.rsinitsyn.quiz.properties.QuizAppProperties;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.springframework.stereotype.Service;
@@ -95,7 +95,7 @@ public class QuestionService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
-    public List<QuizQuestionModel> findAllByCurrentUserAsModel() {
+    public List<QuestionModel> findAllByCurrentUserAsModel() {
 
         List<QuestionEntity> questionsCreatedByCurrentUser = findAllByCurrentUser();
         List<GameQuestionUserEntity> questionsFromAllGames =
@@ -127,15 +127,15 @@ public class QuestionService {
                                         (gqeRight, gqeWrong) -> gqeRight)));
                     }
 
-                    QuizQuestionModel questionModel = toQuizQuestionModel(question);
+                    QuestionModel questionModel = toQuizQuestionModel(question);
                     questionModel.setPlayersAnswersHistory(answerHistoryMap);
                     return questionModel;
                 })
                 .toList();
     }
 
-    public QuizQuestionModel toQuizQuestionModel(QuestionEntity question) {
-        return QuizQuestionModel.builder()
+    public QuestionModel toQuizQuestionModel(QuestionEntity question) {
+        return QuestionModel.builder()
                 .id(question.getId())
                 .text(question.getText())
                 .type(question.getType())
@@ -148,9 +148,9 @@ public class QuestionService {
                 .build();
     }
 
-    private Set<QuizQuestionModel.QuizAnswerModel> toQuizAnswerModel(Set<AnswerEntity> answerEntitySet) {
+    private Set<QuestionModel.AnswerModel> toQuizAnswerModel(Set<AnswerEntity> answerEntitySet) {
         return answerEntitySet.stream()
-                .map(answerEntity -> new QuizQuestionModel.QuizAnswerModel(
+                .map(answerEntity -> new QuestionModel.AnswerModel(
                         answerEntity.getText(),
                         answerEntity.isCorrect()))
                 .collect(Collectors.toSet());

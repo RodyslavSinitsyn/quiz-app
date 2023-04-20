@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
-import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
-import org.rsinitsyn.quiz.model.PrecisionQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
 
 @UtilityClass
 public class ModelConverterUtils {

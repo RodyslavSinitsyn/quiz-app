@@ -20,8 +20,9 @@ import org.rsinitsyn.quiz.entity.GameQuestionUserPrimaryKey;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.GameType;
 import org.rsinitsyn.quiz.entity.UserEntity;
-import org.rsinitsyn.quiz.model.QuizGameStateModel;
-import org.rsinitsyn.quiz.model.QuizQuestionModel;
+import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.cleverest.UserGameState;
+import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -41,7 +42,7 @@ public class GameService {
                 .orElse(null);
     }
 
-    public void submitAnswersBatch(String gameId, QuizQuestionModel question, List<CleverestGameState.UserGameState> userStates) {
+    public void submitAnswersBatch(String gameId, QuestionModel question, List<UserGameState> userStates) {
         userStates.forEach(userGameState -> {
             submitAnswers(gameId, userGameState.getUsername(), question, () ->
                     userGameState.isAnswerGiven() ?
@@ -52,7 +53,7 @@ public class GameService {
     @Transactional(propagation = Propagation.REQUIRED)
     public void submitAnswers(String gameId,
                               String playerName,
-                              QuizQuestionModel questionModel,
+                              QuestionModel questionModel,
                               Supplier<Boolean> correctAnswerResolver) {
         UserEntity user = userService.findByUsername(playerName);
         var primaryKey = new GameQuestionUserPrimaryKey(
@@ -103,7 +104,7 @@ public class GameService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public void linkQuestionsWithGame(String id, QuizGameStateModel stateModel) {
+    public void linkQuestionsWithGame(String id, QuizGameState stateModel) {
         GameEntity gameEntity = findById(id);
         setNewFields(gameEntity, stateModel.getGameName(), GameStatus.STARTED);
         log.info("Updating game, id: {}", id);
@@ -137,7 +138,7 @@ public class GameService {
     @Transactional(propagation = Propagation.REQUIRED)
     public void linkQuestionsAndUsersWithGame(String gameId,
                                               Set<String> usernames,
-                                              List<QuizQuestionModel> questions) {
+                                              List<QuestionModel> questions) {
         GameEntity gameEntity = findById(gameId);
 
         Collection<GameQuestionUserEntity> entities = new ArrayList<>();

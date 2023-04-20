@@ -16,7 +16,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
-import org.rsinitsyn.quiz.model.QuestionCategoryBindingModel;
+import org.rsinitsyn.quiz.model.binding.QuestionCategoryBindingModel;
 
 @Slf4j
 public class QuestionCategoryForm extends FormLayout {

@@ -19,17 +19,17 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
-import org.rsinitsyn.quiz.model.QuizQuestionModel;
-import org.rsinitsyn.quiz.service.CleverestGameState;
+import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
 public class CleverestResultComponent extends VerticalLayout {
 
-    private Grid<CleverestGameState.UserGameState> grid = new Grid<>(CleverestGameState.UserGameState.class, false);
+    private Grid<UserGameState> grid = new Grid<>(UserGameState.class, false);
     private Grid<CleverestResultDto> historyGrid = new Grid<>(CleverestResultDto.class, false);
 
-    public CleverestResultComponent(Collection<CleverestGameState.UserGameState> userGameStates,
-                                    Map<QuizQuestionModel, List<CleverestGameState.UserGameState>> history,
+    public CleverestResultComponent(Collection<UserGameState> userGameStates,
+                                    Map<QuestionModel, List<UserGameState>> history,
                                     String username) {
         AtomicInteger qNumber = new AtomicInteger(0);
         List<CleverestResultDto> results = history.entrySet()
@@ -39,7 +39,7 @@ public class CleverestResultComponent extends VerticalLayout {
 
         configureResultGrid(userGameStates);
         if (StringUtils.isEmpty(username)) {
-            configureHistoryGrid(userGameStates.stream().map(CleverestGameState.UserGameState::getUsername).collect(Collectors.toSet()), results);
+            configureHistoryGrid(userGameStates.stream().map(UserGameState::getUsername).collect(Collectors.toSet()), results);
         } else {
             configureHistoryGrid(Collections.singleton(username), results);
         }
@@ -49,12 +49,12 @@ public class CleverestResultComponent extends VerticalLayout {
                 historyGrid);
     }
 
-    public CleverestResultComponent(Collection<CleverestGameState.UserGameState> userGameStates,
-                                    Map<QuizQuestionModel, List<CleverestGameState.UserGameState>> history) {
+    public CleverestResultComponent(Collection<UserGameState> userGameStates,
+                                    Map<QuestionModel, List<UserGameState>> history) {
         this(userGameStates, history, "");
     }
 
-    private void configureResultGrid(Collection<CleverestGameState.UserGameState> users) {
+    private void configureResultGrid(Collection<UserGameState> users) {
         grid.setAllRowsVisible(true);
         grid.setItems(users);
         grid.setSizeFull();
@@ -62,22 +62,22 @@ public class CleverestResultComponent extends VerticalLayout {
         grid.addClassNames(LumoUtility.FontWeight.LIGHT,
                 LumoUtility.FontSize.XXLARGE);
 
-        grid.addColumn(CleverestGameState.UserGameState::getLastPosition)
+        grid.addColumn(UserGameState::getLastPosition)
                 .setHeader("Призовое место");
-        grid.addColumn(CleverestGameState.UserGameState::getUsername)
+        grid.addColumn(UserGameState::getUsername)
                 .setHeader("Игрок")
                 .setAutoWidth(true);
         grid.addColumn(uState -> String.format("%.2f", uState.getAvgResponseTime() / 1000.0))
                 .setHeader("Время на ответ");
-        grid.addColumn(CleverestGameState.UserGameState::getScore)
+        grid.addColumn(UserGameState::getScore)
                 .setHeader("Очки");
-        grid.addColumn(CleverestGameState.UserGameState::getBetScore)
+        grid.addColumn(UserGameState::getBetScore)
                 .setHeader("Очки за ставку");
         grid.addColumn(new ComponentRenderer<>(u -> new Span(
                         u.winnerBet().getRight() ? CleverestComponents.doneIcon() : CleverestComponents.cancelIcon(),
                         u.loserBet().getRight() ? CleverestComponents.doneIcon() : CleverestComponents.cancelIcon())))
                 .setHeader("Ставки");
-        grid.addColumn(CleverestGameState.UserGameState::totalScore)
+        grid.addColumn(UserGameState::totalScore)
                 .setHeader("Общее колво очков")
                 .setClassName(LumoUtility.FontWeight.BOLD);
     }
@@ -125,7 +125,7 @@ public class CleverestResultComponent extends VerticalLayout {
     @AllArgsConstructor
     static class CleverestResultDto {
         private int number;
-        private QuizQuestionModel question;
-        private List<CleverestGameState.UserGameState> userGameStates;
+        private QuestionModel question;
+        private List<UserGameState> userGameStates;
     }
 }

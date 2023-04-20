@@ -11,7 +11,7 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.shared.Registration;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.rsinitsyn.quiz.model.PrecisionQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
 
 public class PrecisionQuestionForm extends FormLayout {
 

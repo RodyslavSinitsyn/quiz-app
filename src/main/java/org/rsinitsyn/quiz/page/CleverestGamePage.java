@@ -28,8 +28,8 @@ import org.rsinitsyn.quiz.component.cleverest.CleverestWaitingRoomComponent;
 import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.GameType;
-import org.rsinitsyn.quiz.model.QuizQuestionModel;
-import org.rsinitsyn.quiz.service.CleverestBroadcastService;
+import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.QuizUtils;
@@ -50,15 +50,15 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
 
     private QuestionService questionService;
     private GameService gameService;
-    private CleverestBroadcastService broadcastService;
+    private CleverestBroadcaster broadcaster;
 
     @Autowired
     public CleverestGamePage(QuestionService questionService,
                              GameService gameService,
-                             CleverestBroadcastService broadcastService) {
+                             CleverestBroadcaster broadcaster) {
         this.questionService = questionService;
         this.gameService = gameService;
-        this.broadcastService = broadcastService;
+        this.broadcaster = broadcaster;
     }
 
     @Override
@@ -75,7 +75,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
             event.getUI().navigate(NewGamePage.class);
             return;
         }
-        if (broadcastService.getState(gameId) == null) {
+        if (broadcaster.getState(gameId) == null) {
             Notification.show("Game state not exists");
             event.getUI().navigate(NewGamePage.class);
             return;
@@ -92,7 +92,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
                 event -> {
                     String newGameId = UUID.randomUUID().toString();
                     gameService.createIfNotExists(newGameId, GameType.CLEVEREST);
-                    broadcastService.createState(
+                    broadcaster.createState(
                             newGameId,
                             QuizUtils.getLoggedUser(),
                             event.getFirstRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList()),
@@ -113,10 +113,9 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
         GameStatus status = gameEntity.getStatus();
 
         if (status.equals(GameStatus.NOT_STARTED)) {
-//            broadcastService.createState(gameId); // TODO Fix when reload page and entity exists in DB
             waitingRoomComponent = new CleverestWaitingRoomComponent(
                     gameId,
-                    broadcastService,
+                    broadcaster,
                     isAdmin);
 
             add(waitingRoomComponent);
@@ -132,14 +131,14 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
     }
 
     private void subscribeOnEvens(UI ui) {
-        subscriptions.add(broadcastService.subscribe(
+        subscriptions.add(broadcaster.subscribe(
                 gameId,
-                CleverestBroadcastService.AllUsersReadyEvent.class, event -> {
+                CleverestBroadcaster.AllUsersReadyEvent.class, event -> {
                     if (isAdmin) {
-                        List<QuizQuestionModel> firstAndSecondRoundQuestions =
+                        List<QuestionModel> firstAndSecondRoundQuestions =
                                 Stream.concat(
-                                        broadcastService.getState(gameId).getFirstQuestions().stream(),
-                                        broadcastService.getState(gameId).getSecondQuestions().stream()
+                                        broadcaster.getState(gameId).getFirstQuestions().stream(),
+                                        broadcaster.getState(gameId).getSecondQuestions().stream()
                                 ).collect(Collectors.toList());
                         gameService.update(gameId, "Cleverest", GameStatus.STARTED);
                         gameService.linkQuestionsAndUsersWithGame(
@@ -157,7 +156,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
         );
 
         if (isAdmin) {
-            subscriptions.add(broadcastService.subscribe(gameId, CleverestBroadcastService.GameFinishedEvent.class, event -> {
+            subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.GameFinishedEvent.class, event -> {
                 gameService.finishGame(gameId);
             }));
         }
@@ -165,8 +164,8 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
 
 
     private void configurePlayBoardComponent() {
-        playBoardComponent.setProperties(gameId, broadcastService, isAdmin);
-        subscriptions.add(playBoardComponent.subscribe(CleverestBroadcastService.SaveUserAnswersEvent.class, event -> {
+        playBoardComponent.setProperties(gameId, broadcaster, isAdmin);
+        subscriptions.add(playBoardComponent.subscribe(CleverestBroadcaster.SaveUserAnswersEvent.class, event -> {
             if (isAdmin) {
                 gameService.submitAnswersBatch(gameId, event.getQuestion(), event.getUserStates());
             }

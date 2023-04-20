@@ -26,7 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.сustom.AnswerField;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.UserEntity;
-import org.rsinitsyn.quiz.model.FourAnswersQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 
 @Slf4j

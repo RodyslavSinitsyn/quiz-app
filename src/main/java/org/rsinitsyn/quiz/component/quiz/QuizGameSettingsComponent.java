@@ -40,8 +40,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.model.AnswerHistory;
-import org.rsinitsyn.quiz.model.QuizGameStateModel;
-import org.rsinitsyn.quiz.model.QuizQuestionModel;
+import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 
 @Slf4j
@@ -49,28 +49,28 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
 
     private static final String GENERAL_CATEGORY = "Общие";
 
-    private QuizGameStateModel gameState = new QuizGameStateModel();
+    private QuizGameState gameState = new QuizGameState();
     private TextField gameName;
     private ComboBox<String> playerName = new ComboBox<>();
     private Checkbox answerOptionsEnabled = new Checkbox();
     private Checkbox timerEnabled = new Checkbox();
     private Checkbox hintsEnabled = new Checkbox();
     private Checkbox intrigueEnabled = new Checkbox();
-    private MultiSelectListBox<QuizQuestionModel> questions = new MultiSelectListBox<>();
-    private Binder<QuizGameStateModel> binder = new BeanValidationBinder<>(QuizGameStateModel.class);
+    private MultiSelectListBox<QuestionModel> questions = new MultiSelectListBox<>();
+    private Binder<QuizGameState> binder = new BeanValidationBinder<>(QuizGameState.class);
 
     private H2 title = new H2("Настройки игры");
     private Checkbox selectAllCheckbox = new Checkbox();
     private Checkbox filterAnsweredCheckbox = new Checkbox();
     private Button playButton = new Button("Играть");
 
-    private List<QuizQuestionModel> quizQuestionModelList;
+    private List<QuestionModel> questionModelList;
     private List<UserEntity> userEntityList;
 
     public QuizGameSettingsComponent(String gameId,
-                                     List<QuizQuestionModel> quizQuestionModelList,
+                                     List<QuestionModel> questionModelList,
                                      List<UserEntity> userEntityList) {
-        this.quizQuestionModelList = quizQuestionModelList;
+        this.questionModelList = questionModelList;
         this.userEntityList = userEntityList;
         this.gameState.setGameId(UUID.fromString(gameId)); // TODO Remove ID Attr from Service classes ?
 
@@ -146,7 +146,7 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
         selectAllCheckbox.setValue(false);
         selectAllCheckbox.addClickListener(event -> {
             if (event.getSource().getValue()) {
-                questions.select(quizQuestionModelList);
+                questions.select(questionModelList);
             } else {
                 questions.deselectAll();
             }
@@ -163,7 +163,7 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
 
         questions.addSelectionListener(event -> {
             selectAllCheckbox.setValue(
-                    event.getValue().size() == quizQuestionModelList.size());
+                    event.getValue().size() == questionModelList.size());
             playButton.setEnabled(!event.getValue().isEmpty());
             label.setText("Выбрано вопросов: " + event.getValue().size());
         });
@@ -175,7 +175,7 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
         questions.addComponentAsFirst(label);
     }
 
-    private ComponentRenderer<HorizontalLayout, QuizQuestionModel> createQuestionRowComponent() {
+    private ComponentRenderer<HorizontalLayout, QuestionModel> createQuestionRowComponent() {
         return new ComponentRenderer<>(question -> {
             HorizontalLayout row = new HorizontalLayout();
             row.getStyle().set("border-bottom", "1px solid blue");
@@ -197,7 +197,7 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
         });
     }
 
-    private void appendIconToQuestionRowComponent(HorizontalLayout row, QuizQuestionModel question) {
+    private void appendIconToQuestionRowComponent(HorizontalLayout row, QuestionModel question) {
         if (playerName.getValue() != null) {
             AnswerHistory answerHistory = question.getPlayersAnswersHistory().get(playerName.getValue());
             if (answerHistory != null) {
@@ -216,11 +216,11 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
 
 
     private void configureContentForQuestions() {
-        if (quizQuestionModelList.isEmpty()) {
+        if (questionModelList.isEmpty()) {
             questions.setEnabled(false);
             return;
         }
-        List<QuizQuestionModel> filteredListCopy = quizQuestionModelList.stream()
+        List<QuestionModel> filteredListCopy = questionModelList.stream()
                 .sorted(getCategoryComparator())
                 .filter(questionModel -> {
                     if (!filterAnsweredCheckbox.getValue()) {
@@ -234,13 +234,13 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
         questions.setItems(filteredListCopy);
 
         var category2QuestionsMap = filteredListCopy.stream()
-                .collect(Collectors.groupingBy(QuizQuestionModel::getCategoryName, LinkedHashMap::new, Collectors.toList()));
+                .collect(Collectors.groupingBy(QuestionModel::getCategoryName, LinkedHashMap::new, Collectors.toList()));
 
-        List<QuizQuestionModel> generalQuestionList = category2QuestionsMap.get(GENERAL_CATEGORY);
+        List<QuestionModel> generalQuestionList = category2QuestionsMap.get(GENERAL_CATEGORY);
         if (generalQuestionList == null) {
             return;
         }
-        AtomicReference<QuizQuestionModel> lastModel =
+        AtomicReference<QuestionModel> lastModel =
                 new AtomicReference<>(generalQuestionList.get(generalQuestionList.size() - 1));
         category2QuestionsMap.entrySet().stream().skip(1).forEach(entry -> {
             questions.addComponents(lastModel.get(), new Span(entry.getKey()), new Hr());
@@ -261,7 +261,7 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
         });
     }
 
-    private Comparator<QuizQuestionModel> getCategoryComparator() {
+    private Comparator<QuestionModel> getCategoryComparator() {
         return (q1, q2) -> {
             if (q1.getCategoryName().equals(GENERAL_CATEGORY)) {
                 return q2.getCategoryName().equals(GENERAL_CATEGORY) ? 0 : -1;
@@ -275,18 +275,18 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
 
     @Override
     public void beforeLeave(BeforeLeaveEvent event) {
-        gameState.getQuestions().forEach(QuizQuestionModel::closePhotoStream);
+        gameState.getQuestions().forEach(QuestionModel::closePhotoStream);
     }
 
     @Getter
     public static class StartGameEvent extends ComponentEvent<QuizGameSettingsComponent> {
-        private QuizGameStateModel model;
+        private QuizGameState model;
 
         public StartGameEvent(QuizGameSettingsComponent source, boolean fromClient) {
             super(source, fromClient);
         }
 
-        public StartGameEvent(QuizGameSettingsComponent source, QuizGameStateModel model) {
+        public StartGameEvent(QuizGameSettingsComponent source, QuizGameState model) {
             this(source, false);
             this.model = model;
         }
@@ -294,13 +294,13 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
 
     @Getter
     public static class UpdateGameEvent extends ComponentEvent<QuizGameSettingsComponent> {
-        private QuizGameStateModel model;
+        private QuizGameState model;
 
         public UpdateGameEvent(QuizGameSettingsComponent source, boolean fromClient) {
             super(source, fromClient);
         }
 
-        public UpdateGameEvent(QuizGameSettingsComponent source, QuizGameStateModel model) {
+        public UpdateGameEvent(QuizGameSettingsComponent source, QuizGameState model) {
             this(source, false);
             this.model = model;
         }
