@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.rsinitsyn.quiz.properties.QuizAppProperties;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,8 +18,6 @@ public class ResourceService {
     private static final String RESOURCES_PATH = "src/main/resources/";
     private static final String AUDIO_PATH = "audio/";
     private static final String IMAGE_PATH = "image/";
-
-    private final QuizAppProperties properties;
 
     @SneakyThrows
     public void saveAudio(String audioFilename, InputStream audioData) {

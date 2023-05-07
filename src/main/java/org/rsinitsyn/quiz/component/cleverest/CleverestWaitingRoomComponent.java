@@ -144,7 +144,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
                             ? CleverestComponents.cancelIcon()
                             : CleverestComponents.doneIcon();
 
-                    return new Span(icon, new Span(userGameState.winnerBet().getKey()));
+                    return new Span(icon);
                 }))
                 .setHeader("Поставил на победителя");
         usersGrid.addColumn(new ComponentRenderer<>(userGameState -> {
@@ -152,7 +152,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
                             ? CleverestComponents.cancelIcon()
                             : CleverestComponents.doneIcon();
 
-                    return new Span(icon, new Span(userGameState.loserBet().getKey()));
+                    return new Span(icon);
                 }))
                 .setHeader("Поставил на проигравшего");
         usersGrid.addThemeVariants();
@@ -187,6 +187,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         link.getElement().setAttribute("target", "_blank");
         add(link);
 
+        // TODO PUBLIC HOST
         Anchor prodLink = new Anchor("http://192.168.0.107:8080/cleverest/" + gameId + "?player", "Prod Invite link");
         prodLink.getElement().setAttribute("target", "_blank");
         add(prodLink);

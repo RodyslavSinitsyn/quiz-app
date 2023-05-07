@@ -25,7 +25,9 @@ import java.util.function.Consumer;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
+import org.rsinitsyn.quiz.utils.AudioUtils;
 import org.rsinitsyn.quiz.utils.QuizUtils;
+import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
 public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
@@ -137,7 +139,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         midContainer.add(CleverestComponents.questionLayout(
                 questionModel,
                 questionClasses,
-                imageHeight
+                imageHeight,
+                isAdmin
         ));
     }
 
@@ -166,7 +169,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
                         VerticalLayout questionLayout = CleverestComponents.questionLayout(question,
                                 List.of(LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.SEMIBOLD),
-                                "20em"
+                                "20em",
+                                isAdmin
                         );
                         CleverestComponents.openDialog(
                                 questionLayout,
@@ -247,10 +251,16 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     private void showCorrectAnswer(QuestionModel question,
                                    Collection<UserGameState> users,
                                    boolean roundOver,
-                                   boolean appendApproveButton,
+                                   boolean approveManually,
                                    Consumer<String> leftApproveAction,
                                    Runnable onCloseAction) {
-//        AudioUtils.playStaticSoundAsync(StaticValuesHolder.REVEAL_ANSWER_AUDIOS.next());
+        if (users.stream().allMatch(UserGameState::isLastWasCorrect)) {
+            AudioUtils.playStaticSoundAsync(StaticValuesHolder.CORRECT_ANSWER_AUDIOS.next());
+        } else if (users.stream().noneMatch(UserGameState::isLastWasCorrect) && !approveManually) {
+            AudioUtils.playStaticSoundAsync(StaticValuesHolder.WRONG_ANSWER_AUDIOS.next());
+        } else {
+            AudioUtils.playStaticSoundAsync(StaticValuesHolder.REVEAL_ANSWER_AUDIOS.next());
+        }
         VerticalLayout answers = new VerticalLayout();
         answers.setSpacing(true);
         answers.setDefaultHorizontalComponentAlignment(Alignment.START);
@@ -266,7 +276,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             HorizontalLayout row = new HorizontalLayout();
             row.setDefaultVerticalComponentAlignment(Alignment.CENTER);
 
-            if (!appendApproveButton) {
+            if (!approveManually) {
                 row.add(userGameState.isLastWasCorrect()
                         ? CleverestComponents.doneIcon()
                         : CleverestComponents.cancelIcon());
@@ -279,7 +289,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                             userGameState.isLastWasCorrect(),
                             LumoUtility.FontSize.XXXLARGE);
             row.add(userAnswer);
-            if (appendApproveButton) {
+            if (approveManually) {
                 Button approveButton = CleverestComponents.approveButton(
                         () -> leftApproveAction.accept(userGameState.getUsername()),
                         ButtonVariant.LUMO_SUCCESS);
@@ -387,23 +397,23 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         subs.add(broadcaster.subscribe(gameId,
                 CleverestBroadcaster.AllUsersAnsweredEvent.class,
                 event -> {
-//            AudioUtils.playStaticSoundAsync(StaticValuesHolder.SUBMIT_ANSWER_AUDIOS.next())
-//                    .thenRun(() -> {
-                    QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
-                        boolean approveManually = event.getCurrentRoundNumber() == 2
-                                || event.getQuestion().isSpecial();
-                        showCorrectAnswer(
-                                event.getQuestion(),
-                                broadcaster.getState(gameId).getSortedByResponseTimeUsers().values(),
-                                event.isRoundOver(),
-                                approveManually,
-                                uName -> {
-                                    broadcaster.getState(gameId).getUsers().get(uName).increaseScore();
-                                    broadcaster.sendUpdatePersonalScoreEvent(gameId);
-                                },
-                                () -> broadcaster.sendNextQuestionEvent(gameId));
-                    });
-//                    });
+                    AudioUtils.playStaticSoundAsync(StaticValuesHolder.SUBMIT_ANSWER_SHORT_AUDIOS.next())
+                            .thenRun(() -> {
+                                QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
+                                    boolean approveManually = event.getCurrentRoundNumber() == 2
+                                            || event.getQuestion().isSpecial();
+                                    showCorrectAnswer(
+                                            event.getQuestion(),
+                                            broadcaster.getState(gameId).getSortedByResponseTimeUsers().values(),
+                                            event.isRoundOver(),
+                                            approveManually,
+                                            uName -> {
+                                                broadcaster.getState(gameId).getUsers().get(uName).increaseScore();
+                                                broadcaster.sendUpdatePersonalScoreEvent(gameId);
+                                            },
+                                            () -> broadcaster.sendNextQuestionEvent(gameId));
+                                });
+                            });
                 }));
 
         subs.add(broadcaster.subscribe(gameId,

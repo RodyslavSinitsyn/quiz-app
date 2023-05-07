@@ -6,8 +6,12 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.shared.Registration;
 import java.util.Collections;
 import java.util.HashSet;
@@ -21,6 +25,7 @@ import org.rsinitsyn.quiz.entity.QuestionEntity;
 public class CleverestGameSettingsComponent extends VerticalLayout {
 
     private QuestionListGrid grid = new QuestionListGrid(Collections.emptyList());
+    private Span helpSettingsText = new Span();
     private HorizontalLayout buttons = new HorizontalLayout();
     private Button submitButton = new Button();
 
@@ -36,6 +41,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
         configureToolbar();
         configureButtons();
         configureGrid();
+        updateHelpText();
 
         add(new H3("Выберите вопросы!"));
         add(buttons);
@@ -49,6 +55,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
         first.addClickListener(event -> {
             firstRoundQuestions.addAll(grid.getSelectedItems());
             grid.asMultiSelect().deselectAll();
+            updateHelpText();
         });
 
         Button second = new Button("Второй раунд");
@@ -56,20 +63,22 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
         second.addClickListener(event -> {
             secondRoundQuestions.addAll(grid.getSelectedItems());
             grid.asMultiSelect().deselectAll();
+            updateHelpText();
         });
 
         Button third = new Button("Третий раунд");
         third.addClickListener(event -> {
             thirdRoundQuestions.addAll(grid.getSelectedItems());
             grid.asMultiSelect().deselectAll();
+            updateHelpText();
         });
 
-        Button special = new Button("Спец");
-        special.addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_PRIMARY);
-        special.addClickListener(event -> {
-            specialQuestions.addAll(grid.getSelectedItems());
-            grid.asMultiSelect().deselectAll();
-        });
+//        Button special = new Button("Спец");
+//        special.addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_PRIMARY);
+//        special.addClickListener(event -> {
+//            specialQuestions.addAll(grid.getSelectedItems());
+//            grid.asMultiSelect().deselectAll();
+//        });
 
         Button remove = new Button("Убрать из раундов");
         remove.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_PRIMARY);
@@ -80,14 +89,30 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
             specialQuestions.removeAll(grid.getSelectedItems());
             grid.asMultiSelect().deselectAll();
         });
-//        Button toBottom = new Button("Вниз");
-//        toBottom.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-//        toBottom.addClickListener(event -> grid.scrollToIndex(40));
 
-        buttons.add(first, second, third, special, remove);
+        buttons.add(first, second, third, remove, helpSettingsText);
+    }
+
+    private void updateHelpText() {
+        helpSettingsText.setText(
+                String.format("первый[%d] второй[%d] третий[%d]",
+                        firstRoundQuestions.size(),
+                        secondRoundQuestions.size(),
+                        thirdRoundQuestions.size())
+        );
     }
 
     private void configureGrid() {
+        grid.addColumn(new ComponentRenderer<>(entity -> {
+                    if (!entity.getGameQuestions().isEmpty()) {
+                        Icon icon = VaadinIcon.LINK.create();
+                        icon.setTooltipText("Вопрос связан с игрой и не может быть удален");
+                        return new Span(icon);
+                    }
+                    return new Span();
+                }))
+                .setHeader("Связь")
+                .setFlexGrow(0);
         grid.addColumn(entity -> {
                     boolean firstRoundQ = firstRoundQuestions.stream().anyMatch(e -> e.getId().equals(entity.getId()));
                     boolean secondRoundQ = secondRoundQuestions.stream().anyMatch(e -> e.getId().equals(entity.getId()));

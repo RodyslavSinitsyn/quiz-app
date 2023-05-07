@@ -3,6 +3,7 @@ package org.rsinitsyn.quiz.page;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEvent;
@@ -179,20 +180,19 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
 
     @Override
     public void beforeLeave(BeforeLeaveEvent event) {
-//        if (StringUtils.isBlank(gameId) || broadcastService.getState(gameId) == null) {
-//            event.postpone().proceed();
-//            return;
-//        }
-//        if (gameService.findById(gameId).getStatus().equals(GameStatus.STARTED)) {
-//            BeforeLeaveEvent.ContinueNavigationAction leaveAction =
-//                    event.postpone();
-//            Dialog confirmDialog = new Dialog();
-//            confirmDialog.setHeaderTitle("К сожалению нельзя покинуть игру!");
-//            confirmDialog.setCloseOnOutsideClick(true);
-//            confirmDialog.addDialogCloseActionListener(e -> {
-//                confirmDialog.close();
-//            });
-//            confirmDialog.open();
-//        }
+        if (StringUtils.isBlank(gameId) || broadcaster.getState(gameId) == null) {
+            event.postpone().proceed();
+            return;
+        }
+        if (gameService.findById(gameId).getStatus().equals(GameStatus.STARTED)) {
+            event.postpone();
+            Dialog confirmDialog = new Dialog();
+            confirmDialog.setHeaderTitle("Нельзя покинуть игру!");
+            confirmDialog.setCloseOnOutsideClick(true);
+            confirmDialog.addDialogCloseActionListener(e -> {
+                confirmDialog.close();
+            });
+            confirmDialog.open();
+        }
     }
 }

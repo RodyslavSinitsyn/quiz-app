@@ -14,7 +14,7 @@ spring:
   jpa:
     hibernate:
       # TODO none
-      ddl-auto: validate
+      ddl-auto: update
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     show-sql: false
@@ -24,5 +24,6 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
 
 quiz:
+  publicHost: 192.168.0.107
   audio-folder: prod/
   profiling: false

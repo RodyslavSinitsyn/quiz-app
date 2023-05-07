@@ -163,7 +163,8 @@ public class CleverestComponents {
 
     public VerticalLayout questionLayout(QuestionModel questionModel,
                                          List<String> textContentClasses,
-                                         String imageHeight) {
+                                         String imageHeight,
+                                         boolean allowedPlaySound) {
         VerticalLayout layout = new VerticalLayout();
         layout.setSpacing(false);
         layout.setPadding(false);
@@ -191,9 +192,11 @@ public class CleverestComponents {
                     ButtonVariant.LUMO_PRIMARY,
                     ButtonVariant.LUMO_SMALL);
             playAudioButton.setIcon(VaadinIcon.PLAY_CIRCLE.create());
-            playAudioButton.addClickListener(event -> {
-                AudioUtils.playSoundAsync(questionModel.getAudioFilename());
-            });
+            if (allowedPlaySound) {
+                playAudioButton.addClickListener(event -> {
+                    AudioUtils.playSoundAsync(questionModel.getAudioFilename());
+                });
+            }
             layout.add(playAudioButton);
         }
         return layout;

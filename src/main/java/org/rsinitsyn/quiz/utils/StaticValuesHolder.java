@@ -5,6 +5,12 @@ import java.util.Iterator;
 
 public class StaticValuesHolder {
 
+    public static final Iterator<String> SUBMIT_ANSWER_SHORT_AUDIOS = Iterables.cycle(
+                    "submit-answer-short-1.mp3",
+                    "submit-answer-short-2.mp3",
+                    "submit-answer-short-3.mp3")
+            .iterator();
+
     public static final Iterator<String> REVEAL_ANSWER_AUDIOS = Iterables.cycle(
             "reveal-answer-1.mp3", "reveal-answer-2.mp3").iterator();
 
