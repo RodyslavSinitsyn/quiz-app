@@ -8,6 +8,7 @@ import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -22,9 +23,11 @@ import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.List;
+import java.util.Map;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.utils.AudioUtils;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.StaticValuesHolder;
@@ -55,7 +58,7 @@ public class CleverestComponents {
         return span;
     }
 
-    public HorizontalLayout userScore(String username, String ustTxtColor, int score, String... classes) {
+    public HorizontalLayout userScoreLayout(String username, String ustTxtColor, int score, String... classes) {
         HorizontalLayout layout = new HorizontalLayout();
         layout.setAlignItems(FlexComponent.Alignment.CENTER);
         layout.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.STRETCH);
@@ -67,11 +70,13 @@ public class CleverestComponents {
 
         layout.add(new Span(userNameSpan(username, ustTxtColor, classes), delimiterSpan(classes)));
         layout.add(userScore);
+        layout.addClassNames(LumoUtility.Border.BOTTOM);
+        layout.getStyle().set("border-color", ustTxtColor);
 
         return layout;
     }
 
-    public Span userAnswer(String username, String usrTxtColor, String answer, boolean correct, String... classes) {
+    public Span userAnswerSpan(String username, String usrTxtColor, String answer, boolean correct, String... classes) {
         Span userTextAnswer = new Span(String.valueOf(answer));
         userTextAnswer.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
         userTextAnswer.addClassNames(classes);
@@ -161,6 +166,10 @@ public class CleverestComponents {
         return icon;
     }
 
+    public Icon userCheckIcon() {
+        return VaadinIcon.USER_CHECK.create();
+    }
+
     public VerticalLayout questionLayout(QuestionModel questionModel,
                                          List<String> textContentClasses,
                                          String imageHeight,
@@ -199,6 +208,36 @@ public class CleverestComponents {
             }
             layout.add(playAudioButton);
         }
+        return layout;
+    }
+
+    public VerticalLayout usersScoreTableLayout(Map<String, UserGameState> users) {
+        var layout = new VerticalLayout();
+        users.forEach((username, userGameState) -> {
+            HorizontalLayout row = new HorizontalLayout();
+
+            Span positionSpan = new Span();
+            positionSpan.addClassNames(LumoUtility.FontSize.XXXLARGE,
+                    LumoUtility.FontWeight.SEMIBOLD,
+                    LumoUtility.Border.RIGHT,
+                    LumoUtility.BorderColor.CONTRAST);
+            if (userGameState.getLastPosition() == 1) {
+                positionSpan.add(VaadinIcon.ACADEMY_CAP.create());
+            } else if (userGameState.getLastPosition() == users.size()) {
+                positionSpan.add(VaadinIcon.GLASS.create());
+            } else {
+                positionSpan.setText(userGameState.getLastPosition() + ".");
+            }
+            row.add(positionSpan);
+
+            row.add(CleverestComponents.userScoreLayout(username,
+                    userGameState.getColor(),
+                    userGameState.getScore(),
+                    LumoUtility.FontSize.XXXLARGE));
+
+            layout.add(row);
+            layout.add(new Hr());
+        });
         return layout;
     }
 

@@ -25,7 +25,6 @@ import org.rsinitsyn.quiz.page.NewGamePage;
 import org.rsinitsyn.quiz.page.QuestionsListPage;
 import org.rsinitsyn.quiz.page.StatisticPage;
 import org.rsinitsyn.quiz.service.UserService;
-import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;

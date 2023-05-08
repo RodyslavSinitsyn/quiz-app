@@ -33,7 +33,6 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
     private Set<QuestionEntity> firstRoundQuestions = new HashSet<>();
     private Set<QuestionEntity> secondRoundQuestions = new HashSet<>();
     private Set<QuestionEntity> thirdRoundQuestions = new HashSet<>();
-    private Set<QuestionEntity> specialQuestions = new HashSet<>();
 
     public CleverestGameSettingsComponent(List<QuestionEntity> questionEntityList) {
         this.questionEntityList = questionEntityList;
@@ -73,20 +72,12 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
             updateHelpText();
         });
 
-//        Button special = new Button("Спец");
-//        special.addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_PRIMARY);
-//        special.addClickListener(event -> {
-//            specialQuestions.addAll(grid.getSelectedItems());
-//            grid.asMultiSelect().deselectAll();
-//        });
-
         Button remove = new Button("Убрать из раундов");
         remove.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_PRIMARY);
         remove.addClickListener(event -> {
             firstRoundQuestions.removeAll(grid.getSelectedItems());
             secondRoundQuestions.removeAll(grid.getSelectedItems());
             thirdRoundQuestions.removeAll(grid.getSelectedItems());
-            specialQuestions.removeAll(grid.getSelectedItems());
             grid.asMultiSelect().deselectAll();
         });
 
@@ -117,9 +108,8 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
                     boolean firstRoundQ = firstRoundQuestions.stream().anyMatch(e -> e.getId().equals(entity.getId()));
                     boolean secondRoundQ = secondRoundQuestions.stream().anyMatch(e -> e.getId().equals(entity.getId()));
                     boolean thirdRoundQ = thirdRoundQuestions.stream().anyMatch(e -> e.getId().equals(entity.getId()));
-                    boolean specialQ = specialQuestions.stream().anyMatch(e -> e.getId().equals(entity.getId()));
 
-                    boolean inManyRounds = Stream.of(firstRoundQ, secondRoundQ, thirdRoundQ, specialQ)
+                    boolean inManyRounds = Stream.of(firstRoundQ, secondRoundQ, thirdRoundQ)
                             .filter(Boolean::booleanValue)
                             .count() > 1;
 
@@ -132,8 +122,6 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
                         msg = "2 раунд";
                     } else if (thirdRoundQ) {
                         msg = "3 раунд";
-                    } else if (specialQ) {
-                        msg = "Спец";
                     }
                     return msg;
                 })
@@ -153,8 +141,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
             fireEvent(new SettingsCompletedEvent(this,
                     firstRoundQuestions,
                     secondRoundQuestions,
-                    thirdRoundQuestions,
-                    specialQuestions));
+                    thirdRoundQuestions));
         });
     }
 
@@ -164,16 +151,14 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
         private Set<QuestionEntity> firstRound;
         private Set<QuestionEntity> secondRound;
         private Set<QuestionEntity> thirdRound;
-        private Set<QuestionEntity> special;
 
         public SettingsCompletedEvent(CleverestGameSettingsComponent source,
                                       Set<QuestionEntity> firstRound,
-                                      Set<QuestionEntity> secondRound, Set<QuestionEntity> thirdRound, Set<QuestionEntity> special) {
+                                      Set<QuestionEntity> secondRound, Set<QuestionEntity> thirdRound) {
             super(source, false);
             this.firstRound = firstRound;
             this.secondRound = secondRound;
             this.thirdRound = thirdRound;
-            this.special = special;
         }
     }
 

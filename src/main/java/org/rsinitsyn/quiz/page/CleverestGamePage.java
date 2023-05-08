@@ -99,8 +99,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
                             SessionWrapper.getLoggedUser(),
                             event.getFirstRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList()),
                             event.getSecondRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList()),
-                            event.getThirdRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList()),
-                            event.getSpecial().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList())
+                            event.getThirdRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList())
                     );
                     getUI().ifPresent(ui -> ui.navigate(this.getClass(), newGameId));
                 });

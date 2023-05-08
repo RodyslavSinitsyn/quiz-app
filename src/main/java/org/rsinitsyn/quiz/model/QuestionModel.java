@@ -36,9 +36,6 @@ public class QuestionModel {
     private Map<String, AnswerHistory> playersAnswersHistory;
     private Set<AnswerModel> answers;
 
-    // for cleverest
-    private boolean special = false;
-
     @Setter(AccessLevel.NONE)
     private InputStream photoInputStream;
 

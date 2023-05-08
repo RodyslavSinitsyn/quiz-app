@@ -164,7 +164,7 @@ public class QuestionService {
     @Transactional(propagation = Propagation.REQUIRED)
     public void saveEntityAndImage(QuestionEntity entity) {
         questionDao.save(entity);
-        resourceService.saveImage(entity.getPhotoFilename(), entity.getOriginalPhotoUrl());
+        resourceService.saveImageFromUrl(entity.getPhotoFilename(), entity.getOriginalPhotoUrl());
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
@@ -202,12 +202,12 @@ public class QuestionService {
     public void saveOrUpdate(FourAnswersQuestionBindingModel model) {
         if (model.getId() == null) {
             QuestionEntity saved = questionDao.save(toQuestionEntity(model, Optional.empty()));
-            resourceService.saveImage(saved.getPhotoFilename(), saved.getOriginalPhotoUrl());
+            resourceService.saveImageFromUrl(saved.getPhotoFilename(), saved.getOriginalPhotoUrl());
             resourceService.saveAudio(saved.getAudioFilename(), model.getAudio());
             log.info("Question saved: {}", saved);
         } else {
             QuestionEntity updated = questionDao.save(toQuestionEntity(model, questionDao.findById(UUID.fromString(model.getId()))));
-            resourceService.saveImage(updated.getPhotoFilename(), updated.getOriginalPhotoUrl());
+            resourceService.saveImageFromUrl(updated.getPhotoFilename(), updated.getOriginalPhotoUrl());
             log.info("Question updated: {}", updated);
         }
     }

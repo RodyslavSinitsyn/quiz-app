@@ -31,13 +31,11 @@ public class CleverestBroadcaster {
                             String createdBy,
                             List<QuestionModel> firstRound,
                             List<QuestionModel> secondRound,
-                            List<QuestionModel> thirdRound,
-                            List<QuestionModel> special) {
+                            List<QuestionModel> thirdRound) {
         CleverestGameState state = new CleverestGameState();
         state.init(firstRound,
                 secondRound,
-                thirdRound.stream().collect(Collectors.groupingBy(QuestionModel::getCategoryName)),
-                special);
+                thirdRound.stream().collect(Collectors.groupingBy(QuestionModel::getCategoryName)));
         state.setCreatedBy(createdBy);
         gameStateMap.put(gameId, state);
     }
@@ -119,17 +117,20 @@ public class CleverestBroadcaster {
     }
 
     private void sendEventWhenAllAnswered(String gameId, QuestionModel currQuestion) {
-        boolean noMoreQuestionsInRound = getState(gameId).prepareNextQuestionAndCheckIsLast();
+        CleverestGameState gameState = getState(gameId);
+        int leftToRevealScore = gameState.getQuestionsLeftToRevealScoreTable();
+        boolean noMoreQuestionsInRound = gameState.prepareNextQuestionAndCheckIsLast();
         boolean roundsOver = false;
-        int currRound = getState(gameId).getRoundNumber();
+        int currRound = gameState.getRoundNumber();
         if (noMoreQuestionsInRound) {
-            roundsOver = getState(gameId).prepareNextRoundAndCheckIsLast();
+            roundsOver = gameState.prepareNextRoundAndCheckIsLast();
         }
         eventBuses.get(gameId).fireEvent(new AllUsersAnsweredEvent(gameId,
                 currQuestion,
                 noMoreQuestionsInRound,
                 roundsOver,
-                currRound));
+                currRound,
+                leftToRevealScore));
     }
 
     // GameFinishedEvent
@@ -144,18 +145,13 @@ public class CleverestBroadcaster {
         CleverestGameState gameState = getState(gameId);
         gameState.getUsers().values().forEach(UserGameState::prepareForNext);
 
-        QuestionModel question = null;
-//        if (gameState.specialQuestionShouldAppear()) {
-//            question = gameState.getSpecial();
-//            if (question == null) {
-//                System.out.println("No more special. Send base question");
-//                question = gameState.getCurrent();
-//            }
-//        } else {
-//            question = gameState.getCurrent();
-//        }
-        question = gameState.getCurrent();
-        eventBuses.get(gameId).fireEvent(new NextQuestionEvent(gameId, question, gameState.getRoundNumber()));
+        QuestionModel question = gameState.getCurrentQuestion();
+        eventBuses.get(gameId).fireEvent(new NextQuestionEvent(
+                gameId,
+                question,
+                gameState.getQuestionNumber() + 1,
+                gameState.getCurrRoundQuestionsSource().get().size(),
+                gameState.getRoundNumber()));
     }
 
     // UpdatePersonalScoreEvent
@@ -256,14 +252,21 @@ public class CleverestBroadcaster {
         private QuestionModel question;
         private boolean roundOver;
         private boolean roundsOver;
-        private int currentRoundNumber;
+        private int currentRound;
+        private int revealScoreAfter;
 
-        public AllUsersAnsweredEvent(String gameId, QuestionModel question, boolean roundOver, boolean roundsOver, int currentRoundNumber) {
+        public AllUsersAnsweredEvent(String gameId,
+                                     QuestionModel question,
+                                     boolean roundOver,
+                                     boolean roundsOver,
+                                     int currentRound,
+                                     int revealScoreAfter) {
             super(gameId);
             this.question = question;
             this.roundOver = roundOver;
             this.roundsOver = roundsOver;
-            this.currentRoundNumber = currentRoundNumber;
+            this.currentRound = currentRound;
+            this.revealScoreAfter = revealScoreAfter;
         }
     }
 
@@ -282,11 +285,19 @@ public class CleverestBroadcaster {
     @Getter
     public static class NextQuestionEvent extends CleverestGameEvent {
         private QuestionModel question;
+        private int questionNumber;
+        private int totalQuestionsInRound;
         private int roundNumber;
 
-        public NextQuestionEvent(String gameId, QuestionModel question, int roundNumber) {
+        public NextQuestionEvent(String gameId,
+                                 QuestionModel question,
+                                 int questionNumber,
+                                 int totalQuestionsInRound,
+                                 int roundNumber) {
             super(gameId);
             this.question = question;
+            this.questionNumber = questionNumber;
+            this.totalQuestionsInRound = totalQuestionsInRound;
             this.roundNumber = roundNumber;
         }
     }

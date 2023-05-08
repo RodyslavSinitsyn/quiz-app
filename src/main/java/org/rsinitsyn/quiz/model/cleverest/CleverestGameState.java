@@ -15,36 +15,36 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.rsinitsyn.quiz.model.QuestionModel;
 
-@Data
+@Getter
 public class CleverestGameState {
+
+    private final Map<String, UserGameState> users = new HashMap<>();
+    private final Map<Integer, String> roundRules = new HashMap<>();
+    private final Map<QuestionModel, List<UserGameState>> history = new LinkedHashMap<>();
+
+    @Setter
     private String createdBy;
-    private Map<String, UserGameState> users = new HashMap<>();
     private List<QuestionModel> firstQuestions = new ArrayList<>();
     private List<QuestionModel> secondQuestions = new ArrayList<>();
     private Map<String, List<QuestionModel>> thirdQuestions = new HashMap<>();
-    private List<QuestionModel> specialQuestions = new ArrayList<>();
-    private Map<Integer, String> roundRules = new HashMap<>();
 
     // mutable
     private Iterator<UserGameState> usersToAnswer = null;
-    private Map<QuestionModel, List<UserGameState>> history = new LinkedHashMap<>();
-    private LocalDateTime questionRenderTime;
-    private int specialQuestionsNumber;
+    private LocalDateTime questionRenderedTime;
     private int roundNumber = 1;
     private int questionNumber = 0;
     private Supplier<List<QuestionModel>> currRoundQuestionsSource = null;
 
     public void init(List<QuestionModel> firstRound,
                      List<QuestionModel> secondRound,
-                     Map<String, List<QuestionModel>> thirdRound,
-                     List<QuestionModel> special) {
+                     Map<String, List<QuestionModel>> thirdRound) {
         this.firstQuestions = firstRound;
         this.secondQuestions = secondRound;
         this.thirdQuestions = thirdRound;
-        this.specialQuestions = special;
         currRoundQuestionsSource = () -> firstQuestions;
         initRoundRules();
     }
@@ -86,30 +86,16 @@ public class CleverestGameState {
                         LinkedHashMap::new));
     }
 
-    public boolean specialQuestionShouldAppear() {
-//        int twoRoundsSize = roundFirstQuestions.size() + roundSecondQuestions.size();
-//        int delta = twoRoundsSize / specialQuestions.size();
-//        return questionNumber % delta == 0;
-        return questionNumber != 0 && questionNumber % 2 == 0;
-    }
-
-    public QuestionModel getSpecial() {
-        if (specialQuestionsNumber == specialQuestions.size()) {
-            return null;
-        }
-        return specialQuestions.get(specialQuestionsNumber++);
-    }
-
-    public QuestionModel getCurrent() {
+    public QuestionModel getCurrentQuestion() {
         if (questionNumber == currRoundQuestionsSource.get().size()) {
             return null;
         }
-        refreshQuestionRenderTime();
+        refreshQuestionRenderedTime();
         return currRoundQuestionsSource.get().get(questionNumber);
     }
 
-    public void refreshQuestionRenderTime() {
-        questionRenderTime = LocalDateTime.now();
+    public void refreshQuestionRenderedTime() {
+        questionRenderedTime = LocalDateTime.now();
     }
 
     public boolean prepareNextRoundAndCheckIsLast() {
@@ -135,7 +121,7 @@ public class CleverestGameState {
         if (userGameState.isAnswerGiven()) {
             return;
         }
-        userGameState.submitLatestAnswer(answer.getText(), questionRenderTime);
+        userGameState.submitLatestAnswer(answer.getText(), questionRenderedTime);
         if (answer.isCorrect()) {
             userGameState.increaseScore();
         }
@@ -146,7 +132,7 @@ public class CleverestGameState {
         if (userGameState.isAnswerGiven()) {
             return;
         }
-        userGameState.submitLatestAnswer(textAnswer, questionRenderTime);
+        userGameState.submitLatestAnswer(textAnswer, questionRenderedTime);
     }
 
     public boolean areAllUsersAnswered() {
@@ -205,5 +191,19 @@ public class CleverestGameState {
                 .forEach((userGameState, avgTime) -> {
                     users.get(userGameState.getUsername()).setAvgResponseTime(avgTime);
                 });
+    }
+
+    public int getQuestionsLeftToRevealScoreTable() {
+        final int CHUNK_SIZE = 3;
+        if (currRoundQuestionsSource.get().size() <= CHUNK_SIZE) {
+            return 0;
+        }
+        if (currRoundQuestionsSource.get().size() == questionNumber + 1) {
+            return 0;
+        }
+        int currChunk = currRoundQuestionsSource.get().size() / CHUNK_SIZE;
+        int questionsAndChunkDiff = (questionNumber / currChunk) + 1;
+        currChunk = currChunk * questionsAndChunkDiff;
+        return currChunk - (questionNumber + 1);
     }
 }

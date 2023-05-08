@@ -30,7 +30,7 @@ public class ResourceService {
         }
     }
 
-    public void saveImage(String filename, String urlPath) {
+    public void saveImageFromUrl(String filename, String urlPath) {
         if (StringUtils.isBlank(filename) || StringUtils.isBlank(urlPath)) {
             return;
         }
@@ -40,6 +40,17 @@ public class ResourceService {
             throw new RuntimeException(e);
         }
     }
+
+//    @SneakyThrows
+//    public void saveImage(String filename, InputStream imageData) {
+//        if (StringUtils.isBlank(filename)) {
+//            return;
+//        }
+//        try (imageData) {
+//            File targetFile = new File(RESOURCES_PATH + IMAGE_PATH + imageData);
+//            FileUtils.copyInputStreamToFile(imageData, targetFile);
+//        }
+//    }
 
     public void deleteImageFile(String imageFilename) {
         if (StringUtils.isBlank(imageFilename)) {

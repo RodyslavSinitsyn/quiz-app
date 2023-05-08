@@ -79,7 +79,7 @@ public class CleverestResultComponent extends VerticalLayout {
                 .setHeader("Ставки");
         grid.addColumn(UserGameState::totalScore)
                 .setHeader("Общее колво очков")
-                .setClassName(LumoUtility.FontWeight.BOLD);
+                .setClassName(LumoUtility.FontWeight.SEMIBOLD);
     }
 
     private void configureHistoryGrid(Set<String> users, List<CleverestResultDto> results) {
