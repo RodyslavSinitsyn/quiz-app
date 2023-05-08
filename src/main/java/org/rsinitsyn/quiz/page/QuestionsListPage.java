@@ -21,6 +21,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -81,9 +82,9 @@ public class QuestionsListPage extends VerticalLayout {
     }
 
     private void configureGrid() {
-        grid = new QuestionListGrid(questionService.findAllByCurrentUser());
+        grid = new QuestionListGrid(Collections.emptyList());
         grid.addColumn(new ComponentRenderer<>(entity -> {
-                    if (!entity.getGameQuestions().isEmpty()) {
+                    if (entity.presentInAnyGame()) {
                         Icon icon = VaadinIcon.LINK.create();
                         icon.setTooltipText("Вопрос связан с игрой и не может быть удален");
                         return new Span(icon);
@@ -114,7 +115,7 @@ public class QuestionsListPage extends VerticalLayout {
     }
 
     private void updateList() {
-        grid.setItems(questionService.findAllByCurrentUser());
+        grid.setItems(questionService.findAllCreatedByCurrentUser());
     }
 
     private void configureForm() {
@@ -321,7 +322,7 @@ public class QuestionsListPage extends VerticalLayout {
     }
 
     private void updateListByFilter(Predicate<? super QuestionEntity> filterCondition) {
-        grid.setItems(questionService.findAllByCurrentUser().stream()
+        grid.setItems(questionService.findAllCreatedByCurrentUser().stream()
                 .filter(filterCondition)
                 .collect(Collectors.toList()));
     }

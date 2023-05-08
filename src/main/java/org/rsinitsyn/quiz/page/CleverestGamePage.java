@@ -89,7 +89,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
     }
 
     private void renderSettings() {
-        gameSettingsComponent = new CleverestGameSettingsComponent(questionService.findAllByCurrentUser());
+        gameSettingsComponent = new CleverestGameSettingsComponent(questionService.findAllCreatedByCurrentUser());
         Registration settCompletedEvent = gameSettingsComponent.addListener(CleverestGameSettingsComponent.SettingsCompletedEvent.class,
                 event -> {
                     String newGameId = UUID.randomUUID().toString();

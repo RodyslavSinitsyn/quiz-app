@@ -7,8 +7,8 @@ spring:
     properties:
       hibernate:
         format_sql: false
-    show-sql: false
+    show-sql: true
 
 quiz:
   audio-folder: dev/
-  profiling: false
+  profiling: true

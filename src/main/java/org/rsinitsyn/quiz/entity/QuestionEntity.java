@@ -16,7 +16,6 @@ import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 import lombok.EqualsAndHashCode;
@@ -24,6 +23,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.Formula;
 
 @Entity
 @Table(name = "questions")
@@ -50,15 +52,17 @@ public class QuestionEntity {
     @Column(columnDefinition = "BOOLEAN DEFAULT TRUE")
     private boolean optionsOnly;
     private Integer validRange;
-    @ManyToOne(fetch = FetchType.EAGER, optional = true)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @Fetch(FetchMode.JOIN)
     @JoinColumn(name = "categoryId", referencedColumnName = "id")
     private QuestionCategoryEntity category;
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("number")
-    private Set<AnswerEntity> answers = new LinkedHashSet<>();
-    @OneToMany(mappedBy = "question", fetch = FetchType.EAGER)
-    @OrderBy(value = "orderNumber")
-    private Set<GameQuestionUserEntity> gameQuestions = new HashSet<>();
+    private Set<AnswerEntity> answers = new HashSet<>();
+
+    @Formula("SELECT count(*) FROM games_questions gq WHERE gq.questionId = id")
+    private long gamesQuestionsCount;
 
     public void addAnswer(AnswerEntity answerEntity) {
         answerEntity.setQuestion(this);
@@ -68,5 +72,9 @@ public class QuestionEntity {
     public void removeAnswer(AnswerEntity answerEntity) {
         answerEntity.setQuestion(null);
         answers.remove(answerEntity);
+    }
+
+    public boolean presentInAnyGame() {
+        return gamesQuestionsCount > 0;
     }
 }

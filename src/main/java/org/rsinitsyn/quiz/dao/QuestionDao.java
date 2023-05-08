@@ -9,8 +9,10 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface QuestionDao extends JpaRepository<QuestionEntity, UUID> {
-    @Query("from QuestionEntity q join fetch q.answers")
-    public List<QuestionEntity> findAllWithAnswers();
+    @Query("select distinct q from QuestionEntity q " +
+            "join fetch q.answers " +
+            "order by q.creationDate desc ")
+    List<QuestionEntity> findAllNewFirst();
 
     List<QuestionEntity> findAllByCreatedBy(String createdBy);
 

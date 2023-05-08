@@ -20,6 +20,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 @Entity
 @Table(name = "games")
@@ -42,6 +44,7 @@ public class GameEntity {
     private LocalDateTime creationDate;
     private LocalDateTime finishDate;
     @OneToMany(mappedBy = "game", fetch = FetchType.EAGER)
+    @Fetch(FetchMode.JOIN)
     @OrderBy(value = "orderNumber")
     private Set<GameQuestionUserEntity> gameQuestions = new HashSet<>();
 

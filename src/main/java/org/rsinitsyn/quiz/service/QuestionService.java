@@ -32,6 +32,8 @@ import org.rsinitsyn.quiz.model.binding.QuestionCategoryBindingModel;
 import org.rsinitsyn.quiz.properties.QuizAppProperties;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,10 +51,12 @@ public class QuestionService {
     private final ResourceService resourceService;
     private final QuizAppProperties properties;
 
+    @Cacheable(value = "allCategories")
     public List<QuestionCategoryEntity> findAllCategories() {
         return questionCategoryDao.findAllOrderByName();
     }
 
+    @Cacheable(value = "defaultCategory")
     public QuestionCategoryEntity getOrCreateDefaultCategory() {
         return questionCategoryDao.findByName(GENERAL_CATEGORY)
                 .orElseGet(() -> {
@@ -60,9 +64,9 @@ public class QuestionService {
                     categoryEntity.setName(GENERAL_CATEGORY);
                     return questionCategoryDao.save(categoryEntity);
                 });
-
     }
 
+    @CacheEvict(value = "allCategories", allEntries = true)
     public void saveQuestionCategory(QuestionCategoryBindingModel model) {
         QuestionCategoryEntity entity = new QuestionCategoryEntity();
         entity.setName(model.getCategoryName());
@@ -74,23 +78,13 @@ public class QuestionService {
         return questionDao.getReferenceById(id);
     }
 
-    public List<QuestionEntity> findAll() {
-        return questionDao.findAll();
-    }
 
-    public List<QuestionEntity> findAllNewFirst() {
-        return questionDao.findAll()
-                .stream()
-                .sorted(Comparator.comparing(QuestionEntity::getCreationDate, Comparator.reverseOrder()))
-                .toList();
-    }
-
-    public List<QuestionEntity> findAllByCurrentUser() {
+    public List<QuestionEntity> findAllCreatedByCurrentUser() {
         String loggedUser = SessionWrapper.getLoggedUser();
         if (loggedUser.equals("admin")) {
-            return findAllNewFirst();
+            return questionDao.findAllNewFirst();
         }
-        return findAllNewFirst()
+        return questionDao.findAllNewFirst()
                 .stream().filter(entity -> entity.getCreatedBy().equals(loggedUser))
                 .toList();
     }
@@ -98,7 +92,7 @@ public class QuestionService {
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
     public List<QuestionModel> findAllByCurrentUserAsModel() {
 
-        List<QuestionEntity> questionsCreatedByCurrentUser = findAllByCurrentUser();
+        List<QuestionEntity> questionsCreatedByCurrentUser = findAllCreatedByCurrentUser();
         List<GameQuestionUserEntity> questionsFromAllGames =
                 gameQuestionUserDao.findAllByQuestionIdIn(
                         questionsCreatedByCurrentUser.stream()
@@ -281,8 +275,8 @@ public class QuestionService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     public void updateCategory(Set<QuestionEntity> questions, QuestionCategoryEntity category) {
-        List<QuestionEntity> persistentQuestions = questionDao.findAllByIdIn(questions.stream().map(QuestionEntity::getId).toList());
-        persistentQuestions.forEach(entity -> entity.setCategory(category));
+        questionDao.findAllByIdIn(questions.stream().map(QuestionEntity::getId).toList())
+                .forEach(entity -> entity.setCategory(category));
     }
 
     @Transactional(propagation = Propagation.REQUIRED)

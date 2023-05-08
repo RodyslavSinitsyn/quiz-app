@@ -95,7 +95,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
 
     private void configureGrid() {
         grid.addColumn(new ComponentRenderer<>(entity -> {
-                    if (!entity.getGameQuestions().isEmpty()) {
+                    if (entity.presentInAnyGame()) {
                         Icon icon = VaadinIcon.LINK.create();
                         icon.setTooltipText("Вопрос связан с игрой и не может быть удален");
                         return new Span(icon);
