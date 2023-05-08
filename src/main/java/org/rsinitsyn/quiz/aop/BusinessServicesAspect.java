@@ -19,7 +19,7 @@ public class BusinessServicesAspect {
     }
 
     @Before("serviceClassMethods()")
-    public void logMethodName2(JoinPoint joinPoint) {
+    public void logServiceMethodCalls(JoinPoint joinPoint) {
         String methodName = joinPoint.getSignature().getName();
         log.info("=".repeat(10) + joinPoint.getSignature().getDeclaringTypeName() + '.' + methodName + "=".repeat(10));
     }

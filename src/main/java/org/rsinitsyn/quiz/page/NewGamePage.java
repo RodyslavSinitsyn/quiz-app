@@ -13,8 +13,8 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.Collections;
 import java.util.UUID;
-import org.rsinitsyn.quiz.component.GameListGrid;
-import org.rsinitsyn.quiz.component.GameQuestionsComponent;
+import org.rsinitsyn.quiz.component.сustom.GameListGrid;
+import org.rsinitsyn.quiz.component.сustom.GameQuestionsAnswersComponent;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.service.GameService;
 
@@ -44,7 +44,7 @@ public class NewGamePage extends VerticalLayout {
         gameListGrid = new GameListGrid(gameService.findAllFinishedNewFirst());
         gameListGrid.setSizeFull();
         gameListGrid.setDetailsVisibleOnClick(true);
-        gameListGrid.setItemDetailsRenderer(new ComponentRenderer<>(GameQuestionsComponent::new));
+        gameListGrid.setItemDetailsRenderer(new ComponentRenderer<>(GameQuestionsAnswersComponent::new));
     }
 
     private Button createNextStepButton() {

@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.component;
+package org.rsinitsyn.quiz.component.сustom;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Span;
@@ -9,13 +9,13 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.Optional;
 import org.rsinitsyn.quiz.entity.GameEntity;
 
-public class GameQuestionsComponent extends VerticalLayout {
+public class GameQuestionsAnswersComponent extends VerticalLayout {
 
-    public GameQuestionsComponent(GameEntity gameEntity, Component rowSeparator) {
+    public GameQuestionsAnswersComponent(GameEntity gameEntity, Component rowSeparator) {
         configure(gameEntity, rowSeparator);
     }
 
-    public GameQuestionsComponent(GameEntity gameEntity) {
+    public GameQuestionsAnswersComponent(GameEntity gameEntity) {
         configure(gameEntity, null);
     }
 

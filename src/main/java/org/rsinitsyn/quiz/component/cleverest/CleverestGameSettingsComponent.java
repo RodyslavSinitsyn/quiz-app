@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 import lombok.Getter;
-import org.rsinitsyn.quiz.component.QuestionListGrid;
+import org.rsinitsyn.quiz.component.сustom.QuestionListGrid;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 
 public class CleverestGameSettingsComponent extends VerticalLayout {

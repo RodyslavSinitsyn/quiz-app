@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.component;
+package org.rsinitsyn.quiz.component.сustom;
 
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.data.renderer.LocalDateTimeRenderer;

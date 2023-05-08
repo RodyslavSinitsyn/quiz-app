@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.rsinitsyn.quiz.component.GameQuestionsComponent;
+import org.rsinitsyn.quiz.component.сustom.GameQuestionsAnswersComponent;
 import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
@@ -33,7 +33,7 @@ public class QuizGameResultComponent extends VerticalLayout {
     private H4 resultCount = new H4();
     private H4 reaction = new H4();
     private Grid<CategoryResultDto> categoryDetailsGrid = new Grid<>(CategoryResultDto.class, false);
-    private GameQuestionsComponent gameQuestionsComponent;
+    private GameQuestionsAnswersComponent gameQuestionsAnswersComponent;
     private Button newGameButton = new Button("Новая игра");
 
     public QuizGameResultComponent(QuizGameState gameState,
@@ -43,7 +43,7 @@ public class QuizGameResultComponent extends VerticalLayout {
         configureComponents();
         configureGrid();
         configureGameListComponent();
-        add(title, resultCount, resultPercent, reaction, categoryDetailsGrid, gameQuestionsComponent, newGameButton);
+        add(title, resultCount, resultPercent, reaction, categoryDetailsGrid, gameQuestionsAnswersComponent, newGameButton);
     }
 
     private void configureGrid() {
@@ -70,7 +70,7 @@ public class QuizGameResultComponent extends VerticalLayout {
     }
 
     private void configureGameListComponent() {
-        gameQuestionsComponent = new GameQuestionsComponent(gameEntity, new Hr());
+        gameQuestionsAnswersComponent = new GameQuestionsAnswersComponent(gameEntity, new Hr());
     }
 
     private void configureComponents() {
