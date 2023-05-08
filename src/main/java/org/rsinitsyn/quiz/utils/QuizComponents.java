@@ -27,7 +27,7 @@ public class QuizComponents {
         } else {
             result.getElement().getThemeList().add("badge");
         }
-        Icon typeIcon = null;
+        Icon typeIcon;
         if (questionType.equals(QuestionType.MULTI)) {
             typeIcon = VaadinIcon.LIST_OL.create();
         } else if (questionType.equals(QuestionType.TEXT)) {

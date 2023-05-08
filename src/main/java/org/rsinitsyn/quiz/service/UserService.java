@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.rsinitsyn.quiz.dao.UserDao;
 import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.utils.QuizUtils;
+import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +40,7 @@ public class UserService {
     public List<UserEntity> findAllExceptCurrent() {
         return findAllOrderByVisitDateDesc()
                 .stream()
-                .filter(userEntity -> !userEntity.getUsername().equals(QuizUtils.getLoggedUser()))
+                .filter(userEntity -> !userEntity.getUsername().equals(SessionWrapper.getLoggedUser()))
                 .toList();
     }
 

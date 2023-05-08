@@ -11,6 +11,7 @@ import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.model.UserStatsModel;
 import org.rsinitsyn.quiz.service.StatisticService;
 import org.rsinitsyn.quiz.utils.QuizUtils;
+import org.rsinitsyn.quiz.utils.SessionWrapper;
 
 @Route(value = "/statistic", layout = MainLayout.class)
 @PageTitle("Statistic")
@@ -38,7 +39,7 @@ public class StatisticPage extends VerticalLayout {
         grid.addColumn(UserStatsModel::getAnswersStats).setHeader("Ответы");
         grid.addColumn(UserStatsModel::getCorrectAnswersRate).setHeader("Процент ответов");
 
-        stats.stream().filter(m -> m.getUsername().equals(QuizUtils.getLoggedUser())).findFirst()
+        stats.stream().filter(m -> m.getUsername().equals(SessionWrapper.getLoggedUser())).findFirst()
                 .ifPresent(userStatsModel -> grid.select(userStatsModel));
     }
 }

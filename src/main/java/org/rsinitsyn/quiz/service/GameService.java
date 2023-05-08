@@ -24,6 +24,7 @@ import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.utils.QuizUtils;
+import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,7 +90,7 @@ public class GameService {
         entity.setId(UUID.fromString(id));
         entity.setStatus(GameStatus.NOT_STARTED);
         entity.setType(gameType);
-        entity.setCreatedBy(QuizUtils.getLoggedUser());
+        entity.setCreatedBy(SessionWrapper.getLoggedUser());
         entity.setCreationDate(LocalDateTime.now());
         GameEntity saved = gameDao.save(entity);
         log.info("Game created, id: {}", saved.getId());
@@ -131,7 +132,7 @@ public class GameService {
 
     private void setNewFields(GameEntity gameEntity, String name, GameStatus status) {
         gameEntity.setName(name);
-        gameEntity.setCreatedBy(QuizUtils.getLoggedUser());
+        gameEntity.setCreatedBy(SessionWrapper.getLoggedUser());
         gameEntity.setStatus(status);
     }
 

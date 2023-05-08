@@ -12,6 +12,7 @@ import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.utils.QuizUtils;
+import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 
@@ -59,7 +60,7 @@ public class ImportService {
             entity.setPhotoFilename(QuizUtils.generateFilename(tokens[5]));
             entity.setOriginalPhotoUrl(tokens[5]);
         }
-        entity.setCreatedBy(QuizUtils.getLoggedUser());
+        entity.setCreatedBy(SessionWrapper.getLoggedUser());
         entity.setCreationDate(LocalDateTime.now());
         entity.setType(correctAnswersCount > 1 ? QuestionType.MULTI : QuestionType.TEXT);
         entity.setCategory(questionService.getOrCreateDefaultCategory());

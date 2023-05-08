@@ -18,6 +18,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import java.util.Arrays;
 import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.page.FontsPage;
 import org.rsinitsyn.quiz.page.NewGamePage;
@@ -25,7 +26,9 @@ import org.rsinitsyn.quiz.page.QuestionsListPage;
 import org.rsinitsyn.quiz.page.StatisticPage;
 import org.rsinitsyn.quiz.service.UserService;
 import org.rsinitsyn.quiz.utils.QuizUtils;
+import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 
 public class MainLayout extends AppLayout {
 
@@ -43,10 +46,13 @@ public class MainLayout extends AppLayout {
     private Dialog dialog = new Dialog();
 
     private UserService userService;
+    private Environment environment;
 
     @Autowired
-    public MainLayout(UserService userService) {
+    public MainLayout(UserService userService,
+                      Environment environment) {
         this.userService = userService;
+        this.environment = environment;
         configureLogo();
         configureTabs();
         configureDialog();
@@ -73,7 +79,9 @@ public class MainLayout extends AppLayout {
         tabs.add(createTab("Играть", NewGamePage.class));
         tabs.add(createTab("Вопросы", QuestionsListPage.class));
         tabs.add(createTab("Статистика", StatisticPage.class));
-        tabs.add(createTab("Шрифты (dev)", FontsPage.class));
+        if (Arrays.asList(environment.getActiveProfiles()).contains("dev")) {
+            tabs.add(createTab("Шрифты", FontsPage.class));
+        }
     }
 
     private Tab createTab(String text, Class<? extends Component> navigateTo) {
@@ -102,13 +110,13 @@ public class MainLayout extends AppLayout {
             VaadinSession.getCurrent().close();
         });
 
-        if (QuizUtils.getLoggedUser().equals("Аноним")) {
+        if (SessionWrapper.getLoggedUser().equals("Аноним")) {
             renderAfterLogout();
             if (!dialog.isOpened()) {
                 dialog.open();
             }
         } else {
-            renderAfterLogin(QuizUtils.getLoggedUser());
+            renderAfterLogin(SessionWrapper.getLoggedUser());
         }
     }
 
@@ -120,6 +128,7 @@ public class MainLayout extends AppLayout {
         TextField userNameInput = new TextField();
         userNameInput.setWidthFull();
         userNameInput.setLabel("Имя нового пользователя");
+        userNameInput.setRequired(true);
         userNameInput.setTooltipText("Ввод нового имени автоматически создаст нового пользователя");
 
         Button submit = new Button();

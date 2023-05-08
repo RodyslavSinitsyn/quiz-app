@@ -7,6 +7,8 @@ import com.vaadin.flow.server.VaadinSession;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -19,6 +21,7 @@ import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 
 @UtilityClass
 public class QuizUtils {
@@ -34,6 +37,12 @@ public class QuizUtils {
         return DATE_FORMAT.format(
                 Date.from(dateTime.atZone(ZoneId.systemDefault()).toInstant())
         );
+    }
+
+    public double divide(double val, double divideOn) {
+        return BigDecimal.valueOf(val)
+                .divide(BigDecimal.valueOf(NumberUtils.max(divideOn, 1)), 2, RoundingMode.HALF_UP)
+                .doubleValue();
     }
 
     public StreamResource createStreamResourceForPhoto(String photoFilename) {
@@ -66,31 +75,11 @@ public class QuizUtils {
         return org.springframework.util.ResourceUtils.getFile(RESOURCES_PATH + pathToFile);
     }
 
-    // Other Utils
-    public String getLoggedUser() {
-        return StringUtils.defaultIfEmpty(
-                (String) VaadinSession.getCurrent().getAttribute("user"),
-                "Аноним"
-        );
-    }
-
-    public void setAnswerGivenValue(boolean attrValue) {
-        VaadinSession.getCurrent().setAttribute("cc-answer-given", attrValue);
-    }
-
-    public boolean getIsAnswerGivenValue() {
-        return (boolean) VaadinSession.getCurrent().getAttribute("cc-answer-given");
-    }
-
     public void runActionInUi(Optional<UI> optUi, Command action) {
         UI ui = optUi.orElseThrow(() -> new RuntimeException("UI not exists!"));
         ui.access(action);
     }
 
-    @SneakyThrows
-    public void sleep(int sec) {
-        TimeUnit.SECONDS.sleep(sec);
-    }
 //
 //    // todo temp
 //    private void exportCode() {

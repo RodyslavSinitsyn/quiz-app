@@ -20,6 +20,7 @@ import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.page.NewGamePage;
+import org.rsinitsyn.quiz.utils.QuizUtils;
 
 public class QuizGameResultComponent extends VerticalLayout {
 
@@ -111,7 +112,7 @@ public class QuizGameResultComponent extends VerticalLayout {
         private int totalAnswersCount;
 
         public int getAnswersRate() {
-            return (correctAnswersCount * 100 / totalAnswersCount);
+            return (int) QuizUtils.divide(correctAnswersCount * 100, totalAnswersCount);
         }
     }
 }

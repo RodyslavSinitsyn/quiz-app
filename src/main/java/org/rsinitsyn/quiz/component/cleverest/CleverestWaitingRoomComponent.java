@@ -28,6 +28,7 @@ import org.rsinitsyn.quiz.component.сustom.ColorPicker;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.utils.QuizUtils;
+import org.rsinitsyn.quiz.utils.SessionWrapper;
 
 public class CleverestWaitingRoomComponent extends VerticalLayout {
 
@@ -73,7 +74,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         joinButton.addClickListener(event -> {
             dialog.removeAll();
             dialog.add(userDialogContent(
-                    broadcaster.getState(gameId).getUsers().get(QuizUtils.getLoggedUser()),
+                    broadcaster.getState(gameId).getUsers().get(SessionWrapper.getLoggedUser()),
                     dialog));
             dialog.open();
         });
@@ -88,7 +89,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         dialogLayout.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.FontWeight.LIGHT);
 
         TextField playerName = new TextField("Имя");
-        playerName.setValue(QuizUtils.getLoggedUser());
+        playerName.setValue(SessionWrapper.getLoggedUser());
         playerName.setReadOnly(true);
         playerName.addClassNames(LumoUtility.FontSize.LARGE);
 
@@ -106,7 +107,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
 
         dialog.addConfirmListener(event -> {
             broadcaster.sendJoinUserEvent(gameId,
-                    QuizUtils.getLoggedUser(),
+                    SessionWrapper.getLoggedUser(),
                     StringUtils.defaultIfEmpty(colorPicker.getValue(), "#000000"),
                     winnerBet.getValue(),
                     loserBet.getValue());
@@ -168,7 +169,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         select.setItems(broadcaster.getState(gameId).getUsers().keySet());
         select.addValueChangeListener(event -> {
             if (event.isFromClient()) {
-                broadcaster.sendBetEvent(gameId, QuizUtils.getLoggedUser(), event.getValue(), winner);
+                broadcaster.sendBetEvent(gameId, SessionWrapper.getLoggedUser(), event.getValue(), winner);
             }
         });
         return select;
@@ -207,7 +208,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
                 broadcaster.subscribe(gameId, CleverestBroadcaster.UserJoinedEvent.class, event -> {
                     QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
                         updatePlayersGrid(event.getUsername());
-                        if (QuizUtils.getLoggedUser().equals(event.getUsername())) {
+                        if (SessionWrapper.getLoggedUser().equals(event.getUsername())) {
                             joinButton.setText(
                                     !broadcaster.getState(gameId).getUsers().containsKey(event.getUsername())
                                             ? "Играть"

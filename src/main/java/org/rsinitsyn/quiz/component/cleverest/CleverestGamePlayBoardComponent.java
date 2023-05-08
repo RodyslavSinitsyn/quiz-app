@@ -27,6 +27,7 @@ import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.utils.AudioUtils;
 import org.rsinitsyn.quiz.utils.QuizUtils;
+import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
 public class CleverestGamePlayBoardComponent extends VerticalLayout {
@@ -105,7 +106,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     if (isAdmin) {
                         return;
                     }
-                    broadcaster.sendSubmitAnswerEventAndIncreaseScore(gameId, QuizUtils.getLoggedUser(), questionModel, answerModel);
+                    broadcaster.sendSubmitAnswerEventAndIncreaseScore(gameId, SessionWrapper.getLoggedUser(), questionModel, answerModel);
                 });
                 answersLayout.add(button);
             });
@@ -122,7 +123,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             });
             submit.setEnabled(false);
             submit.addClickListener(event -> {
-                broadcaster.sendSubmitAnswerEvent(gameId, QuizUtils.getLoggedUser(), questionModel, textField.getValue());
+                broadcaster.sendSubmitAnswerEvent(gameId, SessionWrapper.getLoggedUser(), questionModel, textField.getValue());
             });
             answersLayout.add(textField, submit);
         }
@@ -195,10 +196,10 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
 
     private void updateUserPersonalScore() {
-        UserGameState userState = broadcaster.getState(gameId).getUsers().get(QuizUtils.getLoggedUser());
+        UserGameState userState = broadcaster.getState(gameId).getUsers().get(SessionWrapper.getLoggedUser());
         topContainer.removeAll();
         topContainer.add(CleverestComponents.userScore(
-                QuizUtils.getLoggedUser(),
+                SessionWrapper.getLoggedUser(),
                 userState.getColor(),
                 userState.getScore(),
                 LumoUtility.FontSize.XXLARGE,
@@ -320,11 +321,11 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         } else {
             updateUserPersonalScore();
             midContainer.add(new Span("Итоговое место: "
-                    + broadcaster.getState(gameId).getUsers().get(QuizUtils.getLoggedUser()).getLastPosition()));
+                    + broadcaster.getState(gameId).getUsers().get(SessionWrapper.getLoggedUser()).getLastPosition()));
             botContainer.add(new CleverestResultComponent(
                     broadcaster.getState(gameId).getSortedByScoreUsers().values(),
                     broadcaster.getState(gameId).getHistory(),
-                    QuizUtils.getLoggedUser()));
+                    SessionWrapper.getLoggedUser()));
         }
     }
 
@@ -332,10 +333,10 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     protected void onAttach(AttachEvent attachEvent) {
         subs.add(broadcaster.subscribe(gameId, CleverestBroadcaster.UserAnsweredEvent.class, event -> {
             QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
-                System.out.println(event.getClass().getName() + " - " + QuizUtils.getLoggedUser());
+                System.out.println(event.getClass().getName() + " - " + SessionWrapper.getLoggedUser());
                 CleverestComponents.notification(event.getUsername() + " ответил",
                         NotificationVariant.LUMO_CONTRAST);
-                if (event.getUsername().equals(QuizUtils.getLoggedUser())) {
+                if (event.getUsername().equals(SessionWrapper.getLoggedUser())) {
                     setEnabled(false);
                 }
             });
@@ -343,7 +344,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
         subs.add(broadcaster.subscribe(gameId, CleverestBroadcaster.NextQuestionEvent.class, event -> {
             QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
-                System.out.println(event.getClass().getName() + " - " + QuizUtils.getLoggedUser());
+                System.out.println(event.getClass().getName() + " - " + SessionWrapper.getLoggedUser());
                 renderQuestion(event.getQuestion(), event.getRoundNumber());
             });
         }));
@@ -353,10 +354,10 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 midContainer.removeAll();
                 botContainer.removeAll();
                 if (isAdmin) {
-                    System.out.println(event.getClass().getName() + " - " + QuizUtils.getLoggedUser());
+                    System.out.println(event.getClass().getName() + " - " + SessionWrapper.getLoggedUser());
                     renderCategoriesTable(event.getUserToAnswer(), event.getData());
                 } else {
-                    if (QuizUtils.getLoggedUser().equals(event.getUserToAnswer().getUsername())) {
+                    if (SessionWrapper.getLoggedUser().equals(event.getUserToAnswer().getUsername())) {
                         midContainer.add(CleverestComponents.userWaitSpan(
                                 "Время отвечать!",
                                 LumoUtility.TextColor.PRIMARY
@@ -373,7 +374,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
         subs.add(broadcaster.subscribe(gameId, CleverestBroadcaster.GameFinishedEvent.class, event -> {
             QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
-                System.out.println(event.getClass().getName() + " - " + QuizUtils.getLoggedUser());
+                System.out.println(event.getClass().getName() + " - " + SessionWrapper.getLoggedUser());
                 renderResults();
             });
         }));

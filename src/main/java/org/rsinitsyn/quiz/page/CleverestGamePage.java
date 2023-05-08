@@ -34,6 +34,7 @@ import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.QuizUtils;
+import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Route(value = "/cleverest", layout = MainLayout.class)
@@ -82,7 +83,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
             return;
         }
 
-        this.isAdmin = gameEntity.getCreatedBy().equals(QuizUtils.getLoggedUser());
+        this.isAdmin = gameEntity.getCreatedBy().equals(SessionWrapper.getLoggedUser());
         subscribeOnEvens(event.getUI());
         renderComponents(gameEntity);
     }
@@ -95,7 +96,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
                     gameService.createIfNotExists(newGameId, GameType.CLEVEREST);
                     broadcaster.createState(
                             newGameId,
-                            QuizUtils.getLoggedUser(),
+                            SessionWrapper.getLoggedUser(),
                             event.getFirstRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList()),
                             event.getSecondRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList()),
                             event.getThirdRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList()),

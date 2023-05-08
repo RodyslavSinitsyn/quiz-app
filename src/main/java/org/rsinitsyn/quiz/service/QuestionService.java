@@ -31,6 +31,7 @@ import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.QuestionCategoryBindingModel;
 import org.rsinitsyn.quiz.properties.QuizAppProperties;
 import org.rsinitsyn.quiz.utils.QuizUtils;
+import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,7 +86,7 @@ public class QuestionService {
     }
 
     public List<QuestionEntity> findAllByCurrentUser() {
-        String loggedUser = QuizUtils.getLoggedUser();
+        String loggedUser = SessionWrapper.getLoggedUser();
         if (loggedUser.equals("admin")) {
             return findAllNewFirst();
         }
@@ -108,7 +109,7 @@ public class QuestionService {
         Function<QuestionEntity, List<GameQuestionUserEntity>> getQuestionHistory =
                 qe -> questionsFromAllGames.stream()
                         .filter(gqe -> gqe.getGame().getStatus().equals(GameStatus.FINISHED))
-                        .filter(gqe -> !gqe.getUser().getUsername().equals(QuizUtils.getLoggedUser()))
+                        .filter(gqe -> !gqe.getUser().getUsername().equals(SessionWrapper.getLoggedUser()))
                         .filter(gqe -> gqe.getQuestion().getId().equals(qe.getId()))
                         .toList();
 
@@ -180,7 +181,7 @@ public class QuestionService {
         if (model.getId() == null) {
             QuestionEntity question = new QuestionEntity();
             question.setText(model.getText());
-            question.setCreatedBy(QuizUtils.getLoggedUser());
+            question.setCreatedBy(SessionWrapper.getLoggedUser());
             question.setCreationDate(LocalDateTime.now());
             question.setType(QuestionType.PRECISION);
             question.setOptionsOnly(false);
@@ -226,8 +227,8 @@ public class QuestionService {
         } else {
             entity.setId(UUID.randomUUID());
             entity.setCreationDate(LocalDateTime.now());
-            entity.setCreatedBy(QuizUtils.getLoggedUser());
-            entity.setOptionsOnly(true);
+            entity.setCreatedBy(SessionWrapper.getLoggedUser());
+            entity.setOptionsOnly(false);
 
             if (model.getAudio() != null) {
                 entity.setAudioFilename(properties.getAudioFolder() + QuizUtils.generateFilenameWithExt(".mp3"));

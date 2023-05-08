@@ -11,6 +11,7 @@ import lombok.Setter;
 import org.hibernate.validator.constraints.Length;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.utils.QuizUtils;
 
 /**
  * Represents the state of one specific quiz game
@@ -52,7 +53,7 @@ public class QuizGameState {
     }
 
     public int calculateAndGetAnswersResult() {
-        this.result = (correctAnswersCounter * 100) / getQuestionsCount();
+        this.result = (int) QuizUtils.divide(correctAnswersCounter * 100, getQuestionsCount());
         return this.result;
     }
 
