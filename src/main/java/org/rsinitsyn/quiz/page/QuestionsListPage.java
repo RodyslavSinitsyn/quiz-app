@@ -9,7 +9,6 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -83,14 +82,7 @@ public class QuestionsListPage extends VerticalLayout {
 
     private void configureGrid() {
         grid = new QuestionListGrid(Collections.emptyList());
-        grid.addColumn(new ComponentRenderer<>(entity -> {
-                    if (entity.presentInAnyGame()) {
-                        Icon icon = VaadinIcon.LINK.create();
-                        icon.setTooltipText("Вопрос связан с игрой и не может быть удален");
-                        return new Span(icon);
-                    }
-                    return new Span();
-                }))
+        grid.addColumn(new ComponentRenderer<>(QuizComponents::questionLinkedWithGameIcon))
                 .setHeader("Связь")
                 .setFlexGrow(0);
         grid.setSizeFull();
@@ -138,10 +130,9 @@ public class QuestionsListPage extends VerticalLayout {
             formDialog.close();
             grid.asMultiSelect().clear();
         });
-        form.addListener(QuestionForm.CloseEvent.class, event -> {
+        form.addListener(QuestionForm.CancelEvent.class, event -> {
             form.setQuestion(null);
             formDialog.close();
-            grid.asMultiSelect().clear();
         });
         form.setQuestion(null);
     }

@@ -7,8 +7,6 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -21,6 +19,7 @@ import java.util.stream.Stream;
 import lombok.Getter;
 import org.rsinitsyn.quiz.component.сustom.QuestionListGrid;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
+import org.rsinitsyn.quiz.utils.QuizComponents;
 
 public class CleverestGameSettingsComponent extends VerticalLayout {
 
@@ -94,14 +93,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
     }
 
     private void configureGrid() {
-        grid.addColumn(new ComponentRenderer<>(entity -> {
-                    if (entity.presentInAnyGame()) {
-                        Icon icon = VaadinIcon.LINK.create();
-                        icon.setTooltipText("Вопрос связан с игрой и не может быть удален");
-                        return new Span(icon);
-                    }
-                    return new Span();
-                }))
+        grid.addColumn(new ComponentRenderer<>(QuizComponents::questionLinkedWithGameIcon))
                 .setHeader("Связь")
                 .setFlexGrow(0);
         grid.addColumn(entity -> {

@@ -2,6 +2,7 @@ package org.rsinitsyn.quiz.model;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +25,8 @@ import org.rsinitsyn.quiz.utils.QuizUtils;
 @Setter
 @EqualsAndHashCode(exclude = {"photoInputStream", "playersAnswersHistory", "answers"})
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class QuestionModel {
     private UUID id;
     private String text;
@@ -35,6 +38,10 @@ public class QuestionModel {
     private Integer validRange;
     private Map<String, AnswerHistory> playersAnswersHistory;
     private Set<AnswerModel> answers;
+
+    // for cleverest
+    private boolean alreadyAnswered;
+    private int points;
 
     @Setter(AccessLevel.NONE)
     private InputStream photoInputStream;

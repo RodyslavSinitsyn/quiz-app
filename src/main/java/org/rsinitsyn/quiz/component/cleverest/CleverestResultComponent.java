@@ -21,6 +21,7 @@ import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
+import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
 public class CleverestResultComponent extends VerticalLayout {
@@ -67,7 +68,7 @@ public class CleverestResultComponent extends VerticalLayout {
         grid.addColumn(UserGameState::getUsername)
                 .setHeader("Игрок")
                 .setAutoWidth(true);
-        grid.addColumn(uState -> String.format("%.2f", uState.getAvgResponseTime() / 1000.0))
+        grid.addColumn(uState -> String.format("%f", QuizUtils.divide(uState.getAvgResponseTime(), 1000)))
                 .setHeader("Время на ответ");
         grid.addColumn(UserGameState::getScore)
                 .setHeader("Очки");

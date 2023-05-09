@@ -20,7 +20,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import lombok.SneakyThrows;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
@@ -69,30 +71,30 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         }
     }
 
-    private void renderTopContainerForAdmin() {
+    private void renderTopContainerForAdmin(Collection<UserGameState> userGameStates) {
         if (!isAdmin) {
             return;
         }
         topContainer.removeAll();
-        broadcaster.getState(gameId).getUsers().values()
-                .forEach(uState -> {
-                    Div userDiv = new Div();
-                    userDiv.getStyle().set("color", uState.getColor());
-                    userDiv.add(CleverestComponents.userNameSpan(uState.getUsername(), uState.getColor()));
-                    userDiv.setId("top-container-user-" + uState.getUsername());
-                    userDiv.setWidthFull();
-                    userDiv.addClassNames(LumoUtility.Border.BOTTOM,
-                            LumoUtility.FontSize.XXLARGE);
-                    topContainer.add(userDiv);
-                });
+        userGameStates.forEach(uState -> {
+            Div userDiv = new Div();
+            userDiv.getStyle().set("color", uState.getColor());
+            userDiv.add(CleverestComponents.userNameSpan(uState.getUsername(), uState.getColor()));
+            userDiv.setId("top-container-user-" + uState.getUsername());
+            userDiv.setWidthFull();
+            userDiv.addClassNames(LumoUtility.Border.BOTTOM,
+                    LumoUtility.FontSize.XXLARGE);
+            topContainer.add(userDiv);
+        });
     }
 
-    private void updateUserAnswerGiven(String username) {
+    private void updateUserAnswerGiven(UserGameState userGameState) {
         var component = (Div) topContainer.getChildren()
-                .filter(c -> c.getId().orElseThrow().equals("top-container-user-" + username))
+                .filter(c -> c.getId().orElseThrow().equals("top-container-user-" + userGameState.getUsername()))
                 .findFirst().orElseThrow(() -> new IllegalArgumentException(
-                        "Cant update topContainer. Username not found: " + username));
+                        "Cant update topContainer. Username not found: " + userGameState.getUsername()));
         component.addComponentAsFirst(CleverestComponents.userCheckIcon());
+        component.addComponentAsFirst(new Span(userGameState.lastResponseTimeSec()));
     }
 
     private void renderRoundRules(int roundNumber, String rulesText) {
@@ -107,7 +109,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 "Раунд " + roundNumber,
                 () -> {
                     if (roundNumber == 3) {
-                        broadcaster.sendRenderCategoriesEvent(gameId, null, null, true);
+                        broadcaster.sendRenderCategoriesEvent(gameId, null, true);
                     } else {
                         broadcaster.sendNextQuestionEvent(gameId);
                     }
@@ -120,7 +122,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                 int totalQuestions,
                                 int roundNumber) {
         setEnabled(true);
-        renderTopContainerForAdmin();
+        renderTopContainerForAdmin(broadcaster.getState(gameId).getUsers().values());
         renderQuestionLayout(question, questionNumber, totalQuestions, roundNumber);
         boolean singleAnswer = roundNumber == 2;
         renderOptionsOrInput(question, singleAnswer);
@@ -196,57 +198,79 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         ));
     }
 
-    private void renderCategoriesTable(UserGameState userToAnswer, Map<String, List<QuestionModel>> data) {
+    private void renderCategoriesTable(UserGameState userToAnswer,
+                                       Map<String, List<QuestionModel>> data) {
         var categoriesLayout = new VerticalLayout();
         categoriesLayout.addClassNames(LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.LIGHT);
-        categoriesLayout.setAlignItems(Alignment.CENTER);
-        categoriesLayout.setDefaultHorizontalComponentAlignment(Alignment.CENTER);
+        categoriesLayout.setAlignItems(Alignment.START);
 
-        topContainer.removeAll();
         midContainer.removeAll();
         midContainer.add(categoriesLayout);
 
-        categoriesLayout.add(new Span(new Span("Отвечает: "),
-                CleverestComponents.userNameSpan(
-                        userToAnswer.getUsername(),
-                        userToAnswer.getColor())));
-
         data.forEach((category, questions) -> {
-            Button openQuestionBtn = CleverestComponents.primaryButton(
-                    category + " (" + questions.size() + ")",
-                    event -> {
-                        QuestionModel question = questions.stream().findFirst().orElseThrow();
-                        broadcaster.getState(gameId).refreshQuestionRenderedTime();
+            HorizontalLayout row = new HorizontalLayout();
+            row.setDefaultVerticalComponentAlignment(Alignment.CENTER);
+            row.setAlignItems(Alignment.START);
+            row.setMargin(true);
 
-                        VerticalLayout questionLayout = CleverestComponents.questionLayout(question,
-                                List.of(LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.SEMIBOLD),
-                                "20em",
-                                isAdmin
-                        );
-                        CleverestComponents.openDialog(
-                                questionLayout,
-                                "Вопрос",
-                                () -> {
-                                    broadcaster.getState(gameId).submitAnswer(
-                                            userToAnswer.getUsername(),
-                                            "",
-                                            () -> false);
-                                    showCorrectAnswer(question,
-                                            Collections.singletonList(userToAnswer),
-                                            false,
-                                            0,
-                                            true,
-                                            uName -> {
-                                                broadcaster.getState(gameId).getUsers().get(uName).increaseScore();
-                                                broadcaster.sendUpdatePersonalScoreEvent(gameId);
-                                            },
-                                            () -> broadcaster.sendRenderCategoriesEvent(gameId, category, question, false));
-                                });
+            var categoryName = CleverestComponents.primaryButton(
+                    category,
+                    event -> {
                     });
-            openQuestionBtn.setWidthFull();
-            openQuestionBtn.addClassNames(LumoUtility.FontSize.XXXLARGE);
-            categoriesLayout.add(openQuestionBtn);
+            row.add(categoryName);
+            questions.forEach(questionModel -> {
+                Button openQuestionButton = openCategoryQuestionButton(userToAnswer, questionModel);
+                openQuestionButton.addClassNames(LumoUtility.FontSize.XXXLARGE);
+                row.add(openQuestionButton);
+            });
+            categoriesLayout.add(row);
         });
+    }
+
+    @SneakyThrows
+    private Button openCategoryQuestionButton(UserGameState userToAnswer,
+                                              QuestionModel question) {
+        Button button = CleverestComponents.primaryButton(
+                String.valueOf(question.getPoints()), // todo temp replace with points earn
+                event -> {
+                    broadcaster.getState(gameId).refreshQuestionRenderedTime();
+                    question.setAlreadyAnswered(true);
+                    VerticalLayout questionLayout = CleverestComponents.questionLayout(
+                            question,
+                            List.of(LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.SEMIBOLD),
+                            "20em",
+                            isAdmin
+                    );
+                    CleverestComponents.openDialog(
+                            questionLayout,
+                            "Вопрос",
+                            () -> {
+                                AtomicBoolean approved = new AtomicBoolean(false);
+                                broadcaster.getState(gameId).submitAnswer(
+                                        userToAnswer.getUsername(),
+                                        "",
+                                        () -> false);
+                                updateUserAnswerGiven(userToAnswer);
+                                showCorrectAnswer(question,
+                                        Collections.singletonList(userToAnswer),
+                                        false,
+                                        0,
+                                        true,
+                                        uName -> {
+                                            userToAnswer.increaseScore(question.getPoints());
+                                            approved.set(true);
+                                            broadcaster.sendUpdatePersonalScoreEvent(gameId);
+                                        },
+                                        () -> {
+                                            if (!approved.get()) {
+                                                userToAnswer.decreaseScore(question.getPoints());
+                                            }
+                                        },
+                                        () -> broadcaster.sendRenderCategoriesEvent(gameId, question, false));
+                            });
+                });
+        button.setEnabled(!question.isAlreadyAnswered());
+        return button;
     }
 
 
@@ -289,7 +313,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                    int revealScoreAfter,
                                    boolean approveManually,
                                    Consumer<String> approveAction,
-                                   Runnable onCloseAction) {
+                                   Runnable onCloseAction,
+                                   Runnable usersScoreCloseAction) {
         if (users.stream().allMatch(UserGameState::isLastWasCorrect)) {
             AudioUtils.playStaticSoundAsync(StaticValuesHolder.CORRECT_ANSWER_AUDIOS.next());
         } else if (users.stream().noneMatch(UserGameState::isLastWasCorrect) && !approveManually) {
@@ -318,13 +343,10 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                         : CleverestComponents.cancelIcon());
             }
 
-            Span userAnswer = CleverestComponents
-                    .userAnswerSpan(userGameState.getUsername(),
-                            userGameState.getColor(),
-                            userGameState.getLastAnswerText(),
-                            userGameState.isLastWasCorrect(),
-                            LumoUtility.FontSize.XXXLARGE);
-            row.add(userAnswer);
+            Span userAnswerSpan = CleverestComponents.userAnswerSpan(
+                    userGameState,
+                    LumoUtility.FontSize.XXXLARGE);
+            row.add(userAnswerSpan);
             if (approveManually) {
                 Button approveButton = CleverestComponents.approveButton(
                         () -> approveAction.accept(userGameState.getUsername()),
@@ -332,16 +354,17 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 row.add(approveButton);
             }
             answers.add(row);
-            answers.add(new Hr());
+//            answers.add(new Hr());
         });
 
         CleverestComponents.openDialog(
                 answers,
                 "Ответы",
                 () -> {
+                    onCloseAction.run();
                     broadcaster.getState(gameId).updateUserPositions();
-                    showUsersScore(question, roundOver, revealScoreAfter, onCloseAction);
                     broadcaster.sendUpdatePersonalScoreEvent(gameId);
+                    showUsersScore(question, roundOver, revealScoreAfter, usersScoreCloseAction);
                 });
     }
 
@@ -368,12 +391,12 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     protected void onAttach(AttachEvent attachEvent) {
         subs.add(broadcaster.subscribe(gameId, CleverestBroadcaster.UserAnsweredEvent.class, event -> {
             QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
-                CleverestComponents.notification(event.getUsername() + " ответил",
+                CleverestComponents.notification(event.getUserGameState().getUsername() + " ответил",
                         NotificationVariant.LUMO_CONTRAST);
                 if (isAdmin) {
-                    updateUserAnswerGiven(event.getUsername());
+                    updateUserAnswerGiven(event.getUserGameState());
                 }
-                if (event.getUsername().equals(SessionWrapper.getLoggedUser())) {
+                if (event.getUserGameState().getUsername().equals(SessionWrapper.getLoggedUser())) {
                     setEnabled(false);
                 }
             });
@@ -394,6 +417,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 botContainer.removeAll();
 
                 if (isAdmin) {
+                    renderTopContainerForAdmin(Collections.singletonList(event.getUserToAnswer()));
                     renderCategoriesTable(event.getUserToAnswer(), event.getData());
                 } else {
                     if (SessionWrapper.getLoggedUser().equals(event.getUserToAnswer().getUsername())) {
@@ -444,6 +468,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                             uName -> {
                                                 broadcaster.getState(gameId).getUsers().get(uName).increaseScore();
                                                 broadcaster.sendUpdatePersonalScoreEvent(gameId);
+                                            },
+                                            () -> {
                                             },
                                             () -> broadcaster.sendNextQuestionEvent(gameId));
                                 });

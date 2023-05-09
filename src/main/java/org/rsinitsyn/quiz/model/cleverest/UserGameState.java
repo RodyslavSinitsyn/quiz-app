@@ -12,6 +12,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.rsinitsyn.quiz.utils.QuizUtils;
 
 @Data
 @AllArgsConstructor
@@ -24,8 +25,6 @@ public class UserGameState implements Comparable<UserGameState> {
     private boolean lastWasCorrect;
     @Setter(AccessLevel.NONE)
     private String lastAnswerText;
-    @Setter(AccessLevel.NONE)
-    private LocalDateTime lastAnswerTime;
     private int lastPosition;
     private long lastResponseTime;
     @Setter(AccessLevel.NONE)
@@ -39,17 +38,21 @@ public class UserGameState implements Comparable<UserGameState> {
     public void submitLatestAnswer(String answerText, LocalDateTime questionRenderTime) {
         lastAnswerText = answerText;
         answerGiven = true;
-        lastAnswerTime = LocalDateTime.now();
         lastResponseTime = ChronoUnit.MILLIS.between(
                 questionRenderTime,
-                lastAnswerTime);
+                LocalDateTime.now());
+    }
+
+    public String lastResponseTimeSec() {
+        return QuizUtils.divide(
+                lastResponseTime,
+                1_000) + " сек.";
     }
 
     public void prepareForNext() {
         lastWasCorrect = false;
         lastAnswerText = "";
         answerGiven = false;
-        lastAnswerTime = null;
         lastResponseTime = 0;
     }
 
@@ -60,6 +63,16 @@ public class UserGameState implements Comparable<UserGameState> {
     public void increaseScore() {
         score++;
         lastWasCorrect = true;
+    }
+
+    public void increaseScore(int score) {
+        this.score += score;
+        this.lastWasCorrect = true;
+    }
+
+    public void decreaseScore(int score) {
+        this.score -= score;
+        this.lastWasCorrect = false;
     }
 
     public int totalScore() {
@@ -95,7 +108,6 @@ public class UserGameState implements Comparable<UserGameState> {
                 color,
                 lastWasCorrect,
                 lastAnswerText,
-                lastAnswerTime,
                 lastPosition,
                 lastResponseTime,
                 score,

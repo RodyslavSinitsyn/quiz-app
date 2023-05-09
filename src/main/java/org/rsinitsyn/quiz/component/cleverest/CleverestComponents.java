@@ -35,14 +35,14 @@ import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 @UtilityClass
 public class CleverestComponents {
 
-    public Dialog openDialog(Component component, String headerTitle, Runnable action) {
+    public Dialog openDialog(Component component, String headerTitle, Runnable closeAction) {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle(headerTitle);
         dialog.add(component);
         dialog.setCloseOnOutsideClick(true);
         dialog.addDialogCloseActionListener(event -> {
             event.getSource().close();
-            action.run();
+            closeAction.run();
         });
         dialog.open();
         return dialog;
@@ -58,32 +58,17 @@ public class CleverestComponents {
         return span;
     }
 
-    public HorizontalLayout userScoreLayout(String username, String ustTxtColor, int score, String... classes) {
-        HorizontalLayout layout = new HorizontalLayout();
-        layout.setAlignItems(FlexComponent.Alignment.CENTER);
-        layout.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.STRETCH);
-        layout.setWidthFull();
-
-        Span userScore = new Span(String.valueOf(score));
-        userScore.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
-        userScore.addClassNames(classes);
-
-        layout.add(new Span(userNameSpan(username, ustTxtColor, classes), delimiterSpan(classes)));
-        layout.add(userScore);
-        layout.addClassNames(LumoUtility.Border.BOTTOM);
-        layout.getStyle().set("border-color", ustTxtColor);
-
-        return layout;
-    }
-
-    public Span userAnswerSpan(String username, String usrTxtColor, String answer, boolean correct, String... classes) {
-        Span userTextAnswer = new Span(String.valueOf(answer));
+    public Span userAnswerSpan(UserGameState userGameState, String... classes) {
+        Span userTextAnswer = new Span(String.valueOf(userGameState.getLastAnswerText()));
         userTextAnswer.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
         userTextAnswer.addClassNames(classes);
 
-        Span result = new Span(userNameSpan(username, usrTxtColor, classes), delimiterSpan(classes), userTextAnswer);
+        Span result = new Span(
+                userNameSpan(userGameState.getUsername(), userGameState.getColor(), classes),
+                delimiterSpan(classes),
+                userTextAnswer);
         result.addClassNames(LumoUtility.TextAlignment.CENTER);
-        if (correct) {
+        if (userGameState.isLastWasCorrect()) {
             result.addClassNames(LumoUtility.Background.SUCCESS_10);
         }
         return result;
@@ -96,6 +81,44 @@ public class CleverestComponents {
             getStyle().set("color", textColor);
             addClassNames(classes);
         }};
+    }
+
+    public Span correctAnswerSpan(QuestionModel questionModel, String... classes) {
+        Span span = new Span();
+        span.addClassNames(classes);
+        span.addClassNames(LumoUtility.TextAlignment.CENTER,
+                LumoUtility.Border.BOTTOM,
+                LumoUtility.BorderColor.SUCCESS);
+        span.setWidthFull();
+        span.setText(questionModel.getFirstCorrectAnswer().getText());
+        return span;
+    }
+
+    public Span userWaitSpan(String text, String... classes) {
+        Span span = new Span();
+        span.setText(text);
+        span.addClassNames(LumoUtility.FontSize.XXLARGE,
+                LumoUtility.FontWeight.LIGHT,
+                LumoUtility.TextAlignment.CENTER,
+                LumoUtility.Border.BOTTOM,
+                LumoUtility.BorderColor.PRIMARY);
+        span.addClassNames(classes);
+        return span;
+    }
+
+
+    private Span delimiterSpan(String... classes) {
+        Span span = new Span();
+        span.setText(": ");
+        span.addClassNames(classes);
+        return span;
+    }
+
+    // Form Elements
+    public Notification notification(String text, NotificationVariant variant) {
+        Notification notification = Notification.show(text, 1_500, Notification.Position.TOP_STRETCH);
+        notification.addThemeVariants(variant);
+        return notification;
     }
 
     public Button optionButton(String text, Runnable action) {
@@ -143,17 +166,7 @@ public class CleverestComponents {
         return button;
     }
 
-    public Span correctAnswerSpan(QuestionModel questionModel, String... classes) {
-        Span span = new Span();
-        span.addClassNames(classes);
-        span.addClassNames(LumoUtility.TextAlignment.CENTER,
-                LumoUtility.Border.BOTTOM,
-                LumoUtility.BorderColor.SUCCESS);
-        span.setWidthFull();
-        span.setText(questionModel.getFirstCorrectAnswer().getText());
-        return span;
-    }
-
+    // Icons
     public Icon doneIcon() {
         Icon icon = VaadinIcon.CHECK.create();
         icon.getElement().getThemeList().add("badge success");
@@ -170,6 +183,7 @@ public class CleverestComponents {
         return VaadinIcon.USER_CHECK.create();
     }
 
+    // Big Business Layouts
     public VerticalLayout questionLayout(QuestionModel questionModel,
                                          List<String> textContentClasses,
                                          String imageHeight,
@@ -241,28 +255,21 @@ public class CleverestComponents {
         return layout;
     }
 
-    public Span userWaitSpan(String text, String... classes) {
-        Span span = new Span();
-        span.setText(text);
-        span.addClassNames(LumoUtility.FontSize.XXLARGE,
-                LumoUtility.FontWeight.LIGHT,
-                LumoUtility.TextAlignment.CENTER,
-                LumoUtility.Border.BOTTOM,
-                LumoUtility.BorderColor.PRIMARY);
-        span.addClassNames(classes);
-        return span;
-    }
+    public HorizontalLayout userScoreLayout(String username, String ustTxtColor, int score, String... classes) {
+        HorizontalLayout layout = new HorizontalLayout();
+        layout.setAlignItems(FlexComponent.Alignment.CENTER);
+        layout.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.STRETCH);
+        layout.setWidthFull();
 
-    public Notification notification(String text, NotificationVariant variant) {
-        Notification notification = Notification.show(text, 1_500, Notification.Position.TOP_STRETCH);
-        notification.addThemeVariants(variant);
-        return notification;
-    }
+        Span userScore = new Span(String.valueOf(score));
+        userScore.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
+        userScore.addClassNames(classes);
 
-    private Span delimiterSpan(String... classes) {
-        Span span = new Span();
-        span.setText(": ");
-        span.addClassNames(classes);
-        return span;
+        layout.add(new Span(userNameSpan(username, ustTxtColor, classes), delimiterSpan(classes)));
+        layout.add(userScore);
+        layout.addClassNames(LumoUtility.Border.BOTTOM);
+        layout.getStyle().set("border-color", ustTxtColor);
+
+        return layout;
     }
 }

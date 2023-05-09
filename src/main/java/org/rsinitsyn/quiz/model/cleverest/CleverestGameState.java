@@ -16,32 +16,33 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.Getter;
-import lombok.Setter;
 import org.rsinitsyn.quiz.model.QuestionModel;
 
 @Getter
 public class CleverestGameState {
 
     private final Map<String, UserGameState> users = new HashMap<>();
+    private final String createdBy;
+    private final List<QuestionModel> firstQuestions;
+    private final List<QuestionModel> secondQuestions;
+    private final Map<String, List<QuestionModel>> thirdQuestions;
+
     private final Map<Integer, String> roundRules = new HashMap<>();
     private final Map<QuestionModel, List<UserGameState>> history = new LinkedHashMap<>();
 
-    @Setter
-    private String createdBy;
-    private List<QuestionModel> firstQuestions = new ArrayList<>();
-    private List<QuestionModel> secondQuestions = new ArrayList<>();
-    private Map<String, List<QuestionModel>> thirdQuestions = new HashMap<>();
-
     // mutable
-    private Iterator<UserGameState> usersToAnswer = null;
+    private Iterator<UserGameState> usersToAnswerOrder = null;
     private LocalDateTime questionRenderedTime;
     private int roundNumber = 1;
     private int questionNumber = 0;
-    private Supplier<List<QuestionModel>> currRoundQuestionsSource = null;
+    private Supplier<List<QuestionModel>> currRoundQuestionsSource;
 
-    public void init(List<QuestionModel> firstRound,
-                     List<QuestionModel> secondRound,
-                     Map<String, List<QuestionModel>> thirdRound) {
+    public CleverestGameState(
+            String createdBy,
+            List<QuestionModel> firstRound,
+            List<QuestionModel> secondRound,
+            Map<String, List<QuestionModel>> thirdRound) {
+        this.createdBy = createdBy;
         this.firstQuestions = firstRound;
         this.secondQuestions = secondRound;
         this.thirdQuestions = thirdRound;
@@ -107,8 +108,8 @@ public class CleverestGameState {
         return roundNumber > 3;
     }
 
-    public void prepareUsersForThirdRound() {
-        usersToAnswer = Iterables.cycle(getSortedByScoreUsers().values()).iterator();
+    public void prepareUsersToAnswerOrder() {
+        usersToAnswerOrder = Iterables.cycle(getSortedByScoreUsers().values()).iterator();
     }
 
     public boolean prepareNextQuestionAndCheckIsLast() {

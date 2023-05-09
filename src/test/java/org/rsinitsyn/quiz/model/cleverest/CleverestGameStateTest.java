@@ -32,13 +32,16 @@ class CleverestGameStateTest {
         if (valuesArr.length != Integer.parseInt(listSize)) {
             throw new IllegalStateException("Test setup not correct");
         }
-        var state = new CleverestGameState();
-
         List<QuestionModel> mockList = new ArrayList<>();
         for (int i = 0; i < Integer.parseInt(listSize); i++) {
             mockList.add(mockQuestion());
         }
-        state.init(mockList, null, null);
+        var state = new CleverestGameState(
+                "mock",
+                mockList,
+                null,
+                null
+        );
 
         // when-then
         Arrays.stream(valuesArr)

@@ -5,10 +5,12 @@ import com.vaadin.flow.component.ComponentEventBus;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.shared.Registration;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -33,12 +35,24 @@ public class CleverestBroadcaster {
                             List<QuestionModel> firstRound,
                             List<QuestionModel> secondRound,
                             List<QuestionModel> thirdRound) {
-        CleverestGameState state = new CleverestGameState();
-        state.init(firstRound,
-                secondRound,
-                thirdRound.stream().collect(Collectors.groupingBy(QuestionModel::getCategoryName)));
-        state.setCreatedBy(createdBy);
-        gameStateMap.put(gameId, state);
+        Map<String, List<QuestionModel>> categoriesAndQuestions = thirdRound.stream()
+                .collect(Collectors.groupingBy(QuestionModel::getCategoryName,
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                questionModels -> {
+                                    AtomicInteger questionPoints = new AtomicInteger(1);
+                                    return questionModels.stream()
+                                            .peek(q -> q.setPoints(questionPoints.getAndIncrement()))
+                                            .toList();
+                                }
+                        )));
+        gameStateMap.put(gameId,
+                new CleverestGameState(
+                        createdBy,
+                        firstRound,
+                        secondRound,
+                        categoriesAndQuestions)
+        );
     }
 
     // UserJoinedEvent
@@ -97,7 +111,8 @@ public class CleverestBroadcaster {
                                                    String answerAsText,
                                                    Supplier<Boolean> isCorrect) {
         getState(gameId).submitAnswer(username, answerAsText, isCorrect);
-        eventBuses.get(gameId).fireEvent(new UserAnsweredEvent(gameId, username));
+        eventBuses.get(gameId).fireEvent(
+                new UserAnsweredEvent(gameId, getState(gameId).getUsers().get(username)));
 
         if (getState(gameId).areAllUsersAnswered()) {
             sendEventWhenAllAnswered(gameId, questionModel);
@@ -155,32 +170,29 @@ public class CleverestBroadcaster {
     }
 
     // RenderCategoriesEvent
-    public void sendRenderCategoriesEvent(String gameId, String category, QuestionModel question, boolean initial) {
+    public void sendRenderCategoriesEvent(String gameId, QuestionModel question, boolean initial) {
         CleverestGameState gameState = getState(gameId);
         if (initial) {
-            gameState.prepareUsersForThirdRound();
+            gameState.prepareUsersToAnswerOrder();
         }
         gameState.getUsers().values().forEach(UserGameState::prepareForNext);
-        if (category != null && question != null) {
-            gameState.getThirdQuestions().get(category).remove(question);
+        if (question != null) {
+            question.setAlreadyAnswered(true);
         }
-        Set<String> finishedCategories = gameState.getThirdQuestions().entrySet()
-                .stream()
-                .filter(entry -> entry.getValue().isEmpty())
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toSet());
-        finishedCategories.forEach(key -> gameState.getThirdQuestions().remove(key));
-        if (gameState.getThirdQuestions().isEmpty()) {
+        if (gameState.getThirdQuestions().values().stream()
+                .flatMap(Collection::stream)
+                .allMatch(QuestionModel::isAlreadyAnswered)) {
             sendFinishGameEvent(gameId);
             return;
         }
-        eventBuses.get(gameId).fireEvent(new RenderCategoriesEvent(gameId,
-                gameState.getUsersToAnswer().next(),
+        eventBuses.get(gameId).fireEvent(new RenderCategoriesEvent(
+                gameId,
+                gameState.getUsersToAnswerOrder().next(),
                 gameState.getThirdQuestions()));
     }
 
+    @Getter
     public static class CleverestGameEvent extends ComponentEvent<Div> {
-        @Getter
         private String gameId;
 
         public CleverestGameEvent(String gameId) {
@@ -190,7 +202,6 @@ public class CleverestBroadcaster {
 
     @Getter
     public static class UserJoinedEvent extends CleverestGameEvent {
-        @Getter
         private String username;
 
         public UserJoinedEvent(String gameId,
@@ -202,7 +213,6 @@ public class CleverestBroadcaster {
 
     @Getter
     public static class UserBetEvent extends CleverestGameEvent {
-        @Getter
         private String username;
         private String userToBet;
 
@@ -234,11 +244,11 @@ public class CleverestBroadcaster {
 
     @Getter
     public static class UserAnsweredEvent extends CleverestGameEvent {
-        private String username;
+        private UserGameState userGameState;
 
-        public UserAnsweredEvent(String gameId, String username) {
+        public UserAnsweredEvent(String gameId, UserGameState userGameState) {
             super(gameId);
-            this.username = username;
+            this.userGameState = userGameState;
         }
     }
 

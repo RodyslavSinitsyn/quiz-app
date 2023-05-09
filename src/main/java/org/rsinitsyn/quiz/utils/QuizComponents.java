@@ -16,6 +16,15 @@ import org.rsinitsyn.quiz.entity.QuestionType;
 @UtilityClass
 public class QuizComponents {
 
+    public Span questionLinkedWithGameIcon(QuestionEntity question) {
+        if (question.presentInAnyGame()) {
+            Icon icon = VaadinIcon.LINK.create();
+            icon.setTooltipText("Вопрос связан с игрой и не может быть удален");
+            return new Span(icon);
+        }
+        return new Span();
+    }
+
     public Span questionMechanicSpan(QuestionEntity question) {
         return questionMechanicSpan(question.isOptionsOnly(), question.getType());
     }

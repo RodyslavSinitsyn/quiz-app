@@ -46,7 +46,7 @@ public class QuestionForm extends FormLayout {
 
     Button save = new Button("Сохранить");
     Button delete = new Button("Удалить");
-    Button close = new Button("Отмена");
+    Button cancel = new Button("Отмена");
 
     public QuestionForm(List<QuestionCategoryEntity> categoryEntityList, List<UserEntity> usersList) {
         setUsersList(usersList);
@@ -113,16 +113,16 @@ public class QuestionForm extends FormLayout {
     private HorizontalLayout createButtonsLayout() {
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         delete.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        close.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         save.addClickShortcut(Key.ENTER);
-        close.addClickShortcut(Key.ESCAPE);
+        cancel.addClickShortcut(Key.ESCAPE);
 
         save.addClickListener(event -> validateAndSave());
         delete.addClickListener(event -> fireEvent(new DeleteEvent(this, questionModel)));
-        close.addClickListener(event -> fireEvent(new CloseEvent(this)));
+        cancel.addClickListener(event -> fireEvent(new CancelEvent(this)));
 
-        return new HorizontalLayout(save, delete, close);
+        return new HorizontalLayout(save, delete, cancel);
     }
 
     private void validateAndSave() {
@@ -192,8 +192,8 @@ public class QuestionForm extends FormLayout {
 
     }
 
-    public static class CloseEvent extends QuestionFormEvent {
-        CloseEvent(QuestionForm source) {
+    public static class CancelEvent extends QuestionFormEvent {
+        CancelEvent(QuestionForm source) {
             super(source, null);
         }
     }
