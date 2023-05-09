@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
@@ -90,18 +91,12 @@ public class CleverestBroadcaster {
 
 
     // SubmitUserAnswerEvent && AllUsersAnsweredEvent
-    public void sendSubmitAnswerEventAndIncreaseScore(String gameId, String username, QuestionModel questionModel, QuestionModel.AnswerModel answer) {
-        getState(gameId).submitAnswerAndIncrease(username, answer);
-        eventBuses.get(gameId).fireEvent(new UserAnsweredEvent(gameId, username));
-
-        if (getState(gameId).areAllUsersAnswered()) {
-            sendEventWhenAllAnswered(gameId, questionModel);
-        }
-    }
-
-    // SubmitUserAnswerEvent && AllUsersAnsweredEvent
-    public void sendSubmitAnswerEvent(String gameId, String username, QuestionModel questionModel, String textAnswer) {
-        getState(gameId).submitAnswer(username, textAnswer);
+    public void sendSubmitAnswerEventAndCheckScore(String gameId,
+                                                   String username,
+                                                   QuestionModel questionModel,
+                                                   String answerAsText,
+                                                   Supplier<Boolean> isCorrect) {
+        getState(gameId).submitAnswer(username, answerAsText, isCorrect);
         eventBuses.get(gameId).fireEvent(new UserAnsweredEvent(gameId, username));
 
         if (getState(gameId).areAllUsersAnswered()) {

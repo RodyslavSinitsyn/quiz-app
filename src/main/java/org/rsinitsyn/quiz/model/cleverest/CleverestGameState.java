@@ -116,23 +116,17 @@ public class CleverestGameState {
         return questionNumber == currRoundQuestionsSource.get().size();
     }
 
-    public void submitAnswerAndIncrease(String username, QuestionModel.AnswerModel answer) {
+    public void submitAnswer(String username,
+                             String answerAsText,
+                             Supplier<Boolean> isCorrect) {
         UserGameState userGameState = users.get(username);
         if (userGameState.isAnswerGiven()) {
             return;
         }
-        userGameState.submitLatestAnswer(answer.getText(), questionRenderedTime);
-        if (answer.isCorrect()) {
+        userGameState.submitLatestAnswer(answerAsText, questionRenderedTime);
+        if (isCorrect.get()) {
             userGameState.increaseScore();
         }
-    }
-
-    public void submitAnswer(String username, String textAnswer) {
-        UserGameState userGameState = users.get(username);
-        if (userGameState.isAnswerGiven()) {
-            return;
-        }
-        userGameState.submitLatestAnswer(textAnswer, questionRenderedTime);
     }
 
     public boolean areAllUsersAnswered() {

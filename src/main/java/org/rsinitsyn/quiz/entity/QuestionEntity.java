@@ -23,8 +23,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.Formula;
 
 @Entity
@@ -33,7 +31,7 @@ import org.hibernate.annotations.Formula;
 @Setter
 @NoArgsConstructor
 @EqualsAndHashCode(of = {"id"})
-@ToString(exclude = {"answers", "gameQuestions"})
+@ToString(exclude = {"answers"})
 public class QuestionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -53,7 +51,6 @@ public class QuestionEntity {
     private boolean optionsOnly;
     private Integer validRange;
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @Fetch(FetchMode.JOIN)
     @JoinColumn(name = "categoryId", referencedColumnName = "id")
     private QuestionCategoryEntity category;
 

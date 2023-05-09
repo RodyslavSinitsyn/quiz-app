@@ -69,7 +69,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         }
     }
 
-    private void renderTopContainer() {
+    private void renderTopContainerForAdmin() {
         if (!isAdmin) {
             return;
         }
@@ -120,7 +120,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                 int totalQuestions,
                                 int roundNumber) {
         setEnabled(true);
-        renderTopContainer();
+        renderTopContainerForAdmin();
         renderQuestionLayout(question, questionNumber, totalQuestions, roundNumber);
         boolean singleAnswer = roundNumber == 2;
         renderOptionsOrInput(question, singleAnswer);
@@ -140,7 +140,11 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     if (isAdmin) {
                         return;
                     }
-                    broadcaster.sendSubmitAnswerEventAndIncreaseScore(gameId, SessionWrapper.getLoggedUser(), questionModel, answerModel);
+                    broadcaster.sendSubmitAnswerEventAndCheckScore(gameId,
+                            SessionWrapper.getLoggedUser(),
+                            questionModel,
+                            answerModel.getText(),
+                            answerModel::isCorrect);
                 });
                 answersLayout.add(button);
             });
@@ -157,7 +161,12 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             });
             submit.setEnabled(false);
             submit.addClickListener(event -> {
-                broadcaster.sendSubmitAnswerEvent(gameId, SessionWrapper.getLoggedUser(), questionModel, textField.getValue());
+                broadcaster.sendSubmitAnswerEventAndCheckScore(gameId,
+                        SessionWrapper.getLoggedUser(),
+                        questionModel,
+                        textField.getValue(),
+                        // Is answer correct is not clear here yet
+                        () -> false);
             });
             answersLayout.add(textField, submit);
         }
@@ -193,6 +202,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         categoriesLayout.setAlignItems(Alignment.CENTER);
         categoriesLayout.setDefaultHorizontalComponentAlignment(Alignment.CENTER);
 
+        topContainer.removeAll();
         midContainer.removeAll();
         midContainer.add(categoriesLayout);
 
@@ -206,9 +216,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     category + " (" + questions.size() + ")",
                     event -> {
                         QuestionModel question = questions.stream().findFirst().orElseThrow();
-                        // TODO KASTIL
                         broadcaster.getState(gameId).refreshQuestionRenderedTime();
-                        broadcaster.getState(gameId).submitAnswer(userToAnswer.getUsername(), "");
 
                         VerticalLayout questionLayout = CleverestComponents.questionLayout(question,
                                 List.of(LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.SEMIBOLD),
@@ -219,6 +227,10 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                 questionLayout,
                                 "Вопрос",
                                 () -> {
+                                    broadcaster.getState(gameId).submitAnswer(
+                                            userToAnswer.getUsername(),
+                                            "",
+                                            () -> false);
                                     showCorrectAnswer(question,
                                             Collections.singletonList(userToAnswer),
                                             false,
@@ -380,6 +392,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
                 midContainer.removeAll();
                 botContainer.removeAll();
+
                 if (isAdmin) {
                     renderCategoriesTable(event.getUserToAnswer(), event.getData());
                 } else {
