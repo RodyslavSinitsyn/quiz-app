@@ -5,16 +5,19 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.GridVariant;
+import com.vaadin.flow.component.grid.dnd.GridDropLocation;
+import com.vaadin.flow.component.grid.dnd.GridDropMode;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.shared.Registration;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Stream;
 import lombok.Getter;
 import org.rsinitsyn.quiz.component.сustom.QuestionListGrid;
@@ -23,27 +26,37 @@ import org.rsinitsyn.quiz.utils.QuizComponents;
 
 public class CleverestGameSettingsComponent extends VerticalLayout {
 
-    private QuestionListGrid grid = new QuestionListGrid(Collections.emptyList());
+    private final List<QuestionEntity> questionEntityList;
+
+    private final QuestionListGrid allQuestionsGrid = new QuestionListGrid(Collections.emptyList());
+    private final QuestionListGrid firstRoundGrid = new QuestionListGrid(Collections.emptyList());
+    private final QuestionListGrid secondRoundGrid = new QuestionListGrid(Collections.emptyList());
+    private final QuestionListGrid thirdRoundGrid = new QuestionListGrid(Collections.emptyList());
+
     private Span helpSettingsText = new Span();
-    private HorizontalLayout buttons = new HorizontalLayout();
+    private HorizontalLayout buttonsLayout = new HorizontalLayout();
     private Button submitButton = new Button();
 
-    private List<QuestionEntity> questionEntityList;
-    private Set<QuestionEntity> firstRoundQuestions = new HashSet<>();
-    private Set<QuestionEntity> secondRoundQuestions = new HashSet<>();
-    private Set<QuestionEntity> thirdRoundQuestions = new HashSet<>();
+    // drag props
+    private QuestionEntity draggedQuestion;
+    private QuestionListGrid draggedInitiatedFromGrid;
+    private boolean dragOntoSelf = false;
+
+    // filter
+    private boolean hiddenFilterUsed = false;
 
     public CleverestGameSettingsComponent(List<QuestionEntity> questionEntityList) {
         this.questionEntityList = questionEntityList;
 
         configureToolbar();
         configureButtons();
-        configureGrid();
+        configureGrids();
         updateHelpText();
 
-        add(new H3("Выберите вопросы!"));
-        add(buttons);
-        add(grid);
+        add(new H3("Список вопросов"));
+        add(buttonsLayout);
+        add(allQuestionsGrid);
+        add(createRoundGridsLayout());
         add(submitButton);
     }
 
@@ -51,55 +64,90 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
         Button first = new Button("Первый раунд");
         first.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
         first.addClickListener(event -> {
-            firstRoundQuestions.addAll(grid.getSelectedItems());
-            grid.asMultiSelect().deselectAll();
+            firstRoundGrid.getListDataView().addItems(new ArrayList<>(allQuestionsGrid.getSelectedItems()));
+            allQuestionsGrid.asMultiSelect().deselectAll();
             updateHelpText();
         });
 
         Button second = new Button("Второй раунд");
         second.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         second.addClickListener(event -> {
-            secondRoundQuestions.addAll(grid.getSelectedItems());
-            grid.asMultiSelect().deselectAll();
+            secondRoundGrid.getListDataView().addItems(new ArrayList<>(allQuestionsGrid.getSelectedItems()));
+            allQuestionsGrid.asMultiSelect().deselectAll();
             updateHelpText();
         });
 
         Button third = new Button("Третий раунд");
         third.addClickListener(event -> {
-            thirdRoundQuestions.addAll(grid.getSelectedItems());
-            grid.asMultiSelect().deselectAll();
+            thirdRoundGrid.getListDataView().addItems(new ArrayList<>(allQuestionsGrid.getSelectedItems()));
+            allQuestionsGrid.asMultiSelect().deselectAll();
             updateHelpText();
         });
 
         Button remove = new Button("Убрать из раундов");
         remove.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_PRIMARY);
         remove.addClickListener(event -> {
-            firstRoundQuestions.removeAll(grid.getSelectedItems());
-            secondRoundQuestions.removeAll(grid.getSelectedItems());
-            thirdRoundQuestions.removeAll(grid.getSelectedItems());
-            grid.asMultiSelect().deselectAll();
+            firstRoundGrid.getListDataView().removeItems(allQuestionsGrid.getSelectedItems());
+            secondRoundGrid.getListDataView().removeItems(allQuestionsGrid.getSelectedItems());
+            thirdRoundGrid.getListDataView().removeItems(allQuestionsGrid.getSelectedItems());
+
+            updateHelpText();
+            allQuestionsGrid.asMultiSelect().deselectAll();
         });
 
-        buttons.add(first, second, third, remove, helpSettingsText);
+        Button hideUsed = new Button("Убрать" + " used");
+        hideUsed.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_CONTRAST);
+        hideUsed.addClickListener(event -> {
+            hiddenFilterUsed = !hiddenFilterUsed;
+
+            allQuestionsGrid.setItems(
+                    hiddenFilterUsed
+                            ? questionEntityList.stream()
+                            .filter(question -> !question.presentInAnyGame())
+                            .toList()
+                            : questionEntityList);
+
+            event.getSource().setText((hiddenFilterUsed ? "Вернуть" : "Убрать") + " used");
+        });
+
+        buttonsLayout.add(first, second, third, remove, hideUsed, helpSettingsText);
     }
+
 
     private void updateHelpText() {
         helpSettingsText.setText(
                 String.format("первый[%d] второй[%d] третий[%d]",
-                        firstRoundQuestions.size(),
-                        secondRoundQuestions.size(),
-                        thirdRoundQuestions.size())
+                        firstRoundGrid.getListDataView().getItemCount(),
+                        secondRoundGrid.getListDataView().getItemCount(),
+                        thirdRoundGrid.getListDataView().getItemCount())
         );
     }
 
-    private void configureGrid() {
-        grid.addColumn(new ComponentRenderer<>(QuizComponents::questionLinkedWithGameIcon))
+    private HorizontalLayout createRoundGridsLayout() {
+        var layout = new HorizontalLayout();
+        layout.setWidthFull();
+        layout.setAlignItems(Alignment.STRETCH);
+        layout.setJustifyContentMode(JustifyContentMode.AROUND);
+        layout.add(new VerticalLayout() {{
+            add(new H4("Раунд 1"), firstRoundGrid);
+        }});
+        layout.add(new VerticalLayout() {{
+            add(new H4("Раунд 2"), secondRoundGrid);
+        }});
+        layout.add(new VerticalLayout() {{
+            add(new H4("Раунд 3"), thirdRoundGrid);
+        }});
+        return layout;
+    }
+
+    private void configureGrids() {
+        allQuestionsGrid.addColumn(new ComponentRenderer<>(QuizComponents::questionLinkedWithGameIcon))
                 .setHeader("Связь")
                 .setFlexGrow(0);
-        grid.addColumn(entity -> {
-                    boolean firstRoundQ = firstRoundQuestions.stream().anyMatch(e -> e.getId().equals(entity.getId()));
-                    boolean secondRoundQ = secondRoundQuestions.stream().anyMatch(e -> e.getId().equals(entity.getId()));
-                    boolean thirdRoundQ = thirdRoundQuestions.stream().anyMatch(e -> e.getId().equals(entity.getId()));
+        allQuestionsGrid.addColumn(entity -> {
+                    boolean firstRoundQ = firstRoundGrid.getListDataView().contains(entity);
+                    boolean secondRoundQ = secondRoundGrid.getListDataView().contains(entity);
+                    boolean thirdRoundQ = thirdRoundGrid.getListDataView().contains(entity);
 
                     boolean inManyRounds = Stream.of(firstRoundQ, secondRoundQ, thirdRoundQ)
                             .filter(Boolean::booleanValue)
@@ -120,10 +168,60 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
                 .setHeader("Раунд")
                 .setSortable(true)
                 .setFlexGrow(0);
-        grid.addDefaultColumns();
-        grid.setItems(questionEntityList);
-        grid.setSelectionMode(Grid.SelectionMode.MULTI);
-        grid.addItemClickListener(event -> grid.select(event.getItem()));
+        allQuestionsGrid.addDefaultColumns();
+        allQuestionsGrid.setItems(questionEntityList);
+        allQuestionsGrid.setSelectionMode(Grid.SelectionMode.MULTI);
+        allQuestionsGrid.addItemClickListener(event -> allQuestionsGrid.select(event.getItem()));
+
+        configureRoundGrid(firstRoundGrid);
+        configureRoundGrid(secondRoundGrid);
+        configureRoundGrid(thirdRoundGrid);
+    }
+
+    private void configureRoundGrid(QuestionListGrid grid) {
+        var gridDataView = grid.setItems(new ArrayList<>());
+
+        grid.setWidthFull();
+        grid.addThemeVariants(GridVariant.LUMO_COMPACT, GridVariant.LUMO_WRAP_CELL_CONTENT);
+        grid.addTextColumn(5);
+        grid.addCategoryColumn();
+        grid.addMechanicColumn();
+        grid.setAllRowsVisible(true);
+        grid.addItemDoubleClickListener(event -> {
+            gridDataView.removeItem(event.getItem());
+            allQuestionsGrid.getListDataView().refreshAll();
+        });
+        grid.setDropMode(GridDropMode.BETWEEN);
+        grid.setRowsDraggable(true);
+        grid.addDragStartListener(event -> {
+            dragOntoSelf = false;
+            draggedQuestion = event.getDraggedItems().get(0);
+            draggedInitiatedFromGrid = grid;
+        });
+        grid.addDragEndListener(event -> {
+            if (!dragOntoSelf) {
+                gridDataView.removeItem(draggedQuestion);
+                allQuestionsGrid.getListDataView().refreshAll();
+                updateHelpText();
+            }
+            draggedQuestion = null;
+        });
+        grid.addDropListener(event -> {
+            if (draggedInitiatedFromGrid == grid) {
+                dragOntoSelf = true;
+            }
+            var targetQuestion = event.getDropTargetItem().orElse(null);
+            gridDataView.removeItem(draggedQuestion);
+            if (targetQuestion == null) {
+                gridDataView.addItem(draggedQuestion);
+                return;
+            }
+            if (event.getDropLocation() == GridDropLocation.BELOW) {
+                gridDataView.addItemAfter(draggedQuestion, targetQuestion);
+            } else {
+                gridDataView.addItemBefore(draggedQuestion, targetQuestion);
+            }
+        });
     }
 
     private void configureButtons() {
@@ -131,29 +229,29 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
         submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
         submitButton.addClickListener(event -> {
             fireEvent(new SettingsCompletedEvent(this,
-                    firstRoundQuestions,
-                    secondRoundQuestions,
-                    thirdRoundQuestions));
+                    firstRoundGrid.getListDataView().getItems().toList(),
+                    secondRoundGrid.getListDataView().getItems().toList(),
+                    thirdRoundGrid.getListDataView().getItems().toList()));
         });
     }
 
     @Getter
     public static class SettingsCompletedEvent extends ComponentEvent<CleverestGameSettingsComponent> {
 
-        private Set<QuestionEntity> firstRound;
-        private Set<QuestionEntity> secondRound;
-        private Set<QuestionEntity> thirdRound;
+        private List<QuestionEntity> firstRound;
+        private List<QuestionEntity> secondRound;
+        private List<QuestionEntity> thirdRound;
 
         public SettingsCompletedEvent(CleverestGameSettingsComponent source,
-                                      Set<QuestionEntity> firstRound,
-                                      Set<QuestionEntity> secondRound, Set<QuestionEntity> thirdRound) {
+                                      List<QuestionEntity> firstRound,
+                                      List<QuestionEntity> secondRound,
+                                      List<QuestionEntity> thirdRound) {
             super(source, false);
             this.firstRound = firstRound;
             this.secondRound = secondRound;
             this.thirdRound = thirdRound;
         }
     }
-
 
     public <T extends ComponentEvent<?>> Registration addListener(Class<T> eventType,
                                                                   ComponentEventListener<T> listener) {

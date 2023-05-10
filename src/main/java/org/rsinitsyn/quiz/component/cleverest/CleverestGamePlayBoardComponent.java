@@ -43,13 +43,12 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
     private final List<Registration> subs = new ArrayList<>();
 
-    public void setProperties(String gameId, CleverestBroadcaster broadcaster, boolean isAdmin) {
+    public void setProps(String gameId, CleverestBroadcaster broadcaster, boolean isAdmin) {
         System.out.println("Init gameId: " + gameId);
         this.gameId = gameId;
         this.broadcaster = broadcaster;
         this.isAdmin = isAdmin;
 
-        validateUserOnPageEnter();
         if (isAdmin) {
             int currRound = broadcaster.getState(gameId).getRoundNumber();
             renderRoundRules(currRound, broadcaster.getState(gameId).getRoundRules().get(currRound));
@@ -61,14 +60,6 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         midContainer.setWidthFull();
         botContainer.setWidthFull();
         add(topContainer, midContainer, botContainer);
-    }
-
-    private void validateUserOnPageEnter() {
-        boolean notInGameAndNotAdmin = !broadcaster.getState(gameId).getUsers().containsKey(SessionWrapper.getLoggedUser())
-                && !isAdmin;
-        if (notInGameAndNotAdmin) {
-            throw new IllegalStateException("Игра уже началась, вы там не учавствуете");
-        }
     }
 
     private void renderTopContainerForAdmin(Collection<UserGameState> userGameStates) {

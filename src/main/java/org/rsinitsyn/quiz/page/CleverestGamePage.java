@@ -30,6 +30,7 @@ import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.GameType;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
@@ -73,19 +74,19 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
         this.gameId = parameter;
         GameEntity gameEntity = gameService.findById(gameId);
         if (gameEntity == null) {
-            Notification.show("Game not exists");
+            Notification.show("Игра не существует");
             event.getUI().navigate(NewGamePage.class);
             return;
         }
         if (broadcaster.getState(gameId) == null) {
-            Notification.show("Game state not exists");
+            Notification.show("Состояние игры не создано");
             event.getUI().navigate(NewGamePage.class);
             return;
         }
 
         this.isAdmin = gameEntity.getCreatedBy().equals(SessionWrapper.getLoggedUser());
         subscribeOnEvens(event.getUI());
-        renderComponents(gameEntity);
+        renderComponents(gameEntity, event.getUI());
     }
 
     private void renderSettings() {
@@ -110,7 +111,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
         ));
     }
 
-    private void renderComponents(GameEntity gameEntity) {
+    private void renderComponents(GameEntity gameEntity, UI ui) {
         GameStatus status = gameEntity.getStatus();
 
         if (status.equals(GameStatus.NOT_STARTED)) {
@@ -121,10 +122,22 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
 
             add(waitingRoomComponent);
         } else if (status.equals(GameStatus.STARTED)) {
+            if (!isInGameOrCreator(gameId)) {
+                ui.navigate(NewGamePage.class);
+                Notification.show("Игра уже началась, вы там не учавствуете");
+                return;
+            }
             configurePlayBoardComponent();
             add(playBoardComponent);
         }
     }
+
+    private boolean isInGameOrCreator(String gameId) {
+        CleverestGameState state = broadcaster.getState(gameId);
+        return state.getUsers().containsKey(SessionWrapper.getLoggedUser())
+                || state.getCreatedBy().equals(SessionWrapper.getLoggedUser());
+    }
+
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
@@ -165,7 +178,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
 
 
     private void configurePlayBoardComponent() {
-        playBoardComponent.setProperties(gameId, broadcaster, isAdmin);
+        playBoardComponent.setProps(gameId, broadcaster, isAdmin);
         subscriptions.add(playBoardComponent.subscribe(CleverestBroadcaster.SaveUserAnswersEvent.class, event -> {
             if (isAdmin) {
                 gameService.submitAnswersBatch(gameId, event.getQuestion(), event.getUserStates());
@@ -180,7 +193,9 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
 
     @Override
     public void beforeLeave(BeforeLeaveEvent event) {
-        if (StringUtils.isBlank(gameId) || broadcaster.getState(gameId) == null) {
+        if (StringUtils.isBlank(gameId) ||
+                broadcaster.getState(gameId) == null
+                || !isInGameOrCreator(gameId)) {
             event.postpone().proceed();
             return;
         }

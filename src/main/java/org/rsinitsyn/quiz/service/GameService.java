@@ -45,9 +45,11 @@ public class GameService {
 
     public void submitAnswersBatch(String gameId, QuestionModel question, List<UserGameState> userStates) {
         userStates.forEach(userGameState -> {
-            submitAnswers(gameId, userGameState.getUsername(), question, () ->
-                    userGameState.isAnswerGiven() ?
-                            userGameState.isLastWasCorrect() : null);
+            submitAnswers(
+                    gameId,
+                    userGameState.getUsername(),
+                    question,
+                    () -> userGameState.isAnswerGiven() ? userGameState.isLastWasCorrect() : null);
         });
     }
 

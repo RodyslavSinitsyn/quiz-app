@@ -25,6 +25,21 @@ public class QuestionListGrid extends Grid<QuestionEntity> {
     }
 
     public void addDefaultColumns() {
+        addTextColumn(5);
+        addCategoryColumn();
+        addColumn(QuestionEntity::getCreatedBy)
+                .setHeader("Автор")
+                .setSortable(true);
+        addMechanicColumn();
+        addColumn(new LocalDateTimeRenderer<>(QuestionEntity::getCreationDate, QuizUtils.DATE_FORMAT_VALUE))
+                .setHeader("Дата создания")
+                .setSortable(true)
+                .setComparator(Comparator.comparing(QuestionEntity::getCreationDate));
+        addThemeVariants(GridVariant.LUMO_WRAP_CELL_CONTENT);
+        setAllRowsVisible(true);
+    }
+
+    public void addTextColumn(int flexGrow) {
         addColumn(new ComponentRenderer<>(entity -> {
             HorizontalLayout row = new HorizontalLayout();
             row.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -46,23 +61,20 @@ public class QuestionListGrid extends Grid<QuestionEntity> {
             return row;
         }))
                 .setHeader("Текст")
-                .setFlexGrow(5);
-        addColumn(QuestionEntity::getCreatedBy)
-                .setHeader("Автор")
-                .setSortable(true);
+                .setFlexGrow(flexGrow);
+    }
+
+    public void addCategoryColumn() {
         addColumn(entity -> entity.getCategory().getName())
                 .setHeader("Тема")
                 .setSortable(true);
+    }
+
+    public void addMechanicColumn() {
         addColumn(new ComponentRenderer<>(QuizComponents::questionMechanicSpan))
-                .setHeader("Механика вопроса")
+                .setHeader("Механика")
                 .setTooltipGenerator(entity -> entity.isOptionsOnly()
                         ? "Вопрос задается только с вариантами"
                         : "Вопрос может быть задан без вариантов");
-        addColumn(new LocalDateTimeRenderer<>(QuestionEntity::getCreationDate, QuizUtils.DATE_FORMAT_VALUE))
-                .setHeader("Дата создания")
-                .setSortable(true)
-                .setComparator(Comparator.comparing(QuestionEntity::getCreationDate));
-        addThemeVariants(GridVariant.LUMO_WRAP_CELL_CONTENT);
-        setAllRowsVisible(true);
     }
 }
