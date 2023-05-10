@@ -2,14 +2,13 @@ package org.rsinitsyn.quiz.component.cleverest;
 
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.grid.dnd.GridDropLocation;
 import com.vaadin.flow.component.grid.dnd.GridDropMode;
-import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -53,7 +52,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
         configureGrids();
         updateHelpText();
 
-        add(new H3("Список вопросов"));
+        add(QuizComponents.mainHeader("Список вопросов"));
         add(buttonsLayout);
         add(allQuestionsGrid);
         add(createRoundGridsLayout());
@@ -63,6 +62,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
     private void configureToolbar() {
         Button first = new Button("Первый раунд");
         first.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
+        first.addClickShortcut(Key.DIGIT_1);
         first.addClickListener(event -> {
             firstRoundGrid.getListDataView().addItems(new ArrayList<>(allQuestionsGrid.getSelectedItems()));
             allQuestionsGrid.asMultiSelect().deselectAll();
@@ -71,6 +71,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
 
         Button second = new Button("Второй раунд");
         second.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        second.addClickShortcut(Key.DIGIT_2);
         second.addClickListener(event -> {
             secondRoundGrid.getListDataView().addItems(new ArrayList<>(allQuestionsGrid.getSelectedItems()));
             allQuestionsGrid.asMultiSelect().deselectAll();
@@ -78,6 +79,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
         });
 
         Button third = new Button("Третий раунд");
+        third.addClickShortcut(Key.DIGIT_3);
         third.addClickListener(event -> {
             thirdRoundGrid.getListDataView().addItems(new ArrayList<>(allQuestionsGrid.getSelectedItems()));
             allQuestionsGrid.asMultiSelect().deselectAll();
@@ -86,6 +88,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
 
         Button remove = new Button("Убрать из раундов");
         remove.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_PRIMARY);
+        remove.addClickShortcut(Key.BACKSPACE);
         remove.addClickListener(event -> {
             firstRoundGrid.getListDataView().removeItems(allQuestionsGrid.getSelectedItems());
             secondRoundGrid.getListDataView().removeItems(allQuestionsGrid.getSelectedItems());
@@ -110,6 +113,9 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
             event.getSource().setText((hiddenFilterUsed ? "Вернуть" : "Убрать") + " used");
         });
 
+        buttonsLayout.setWidthFull();
+        buttonsLayout.setAlignItems(Alignment.CENTER);
+        buttonsLayout.setJustifyContentMode(JustifyContentMode.CENTER);
         buttonsLayout.add(first, second, third, remove, hideUsed, helpSettingsText);
     }
 
@@ -129,13 +135,13 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
         layout.setAlignItems(Alignment.STRETCH);
         layout.setJustifyContentMode(JustifyContentMode.AROUND);
         layout.add(new VerticalLayout() {{
-            add(new H4("Раунд 1"), firstRoundGrid);
+            add(QuizComponents.subHeader("Раунд 1"), firstRoundGrid);
         }});
         layout.add(new VerticalLayout() {{
-            add(new H4("Раунд 2"), secondRoundGrid);
+            add(QuizComponents.subHeader("Раунд 2"), secondRoundGrid);
         }});
         layout.add(new VerticalLayout() {{
-            add(new H4("Раунд 3"), thirdRoundGrid);
+            add(QuizComponents.subHeader("Раунд 3"), thirdRoundGrid);
         }});
         return layout;
     }
@@ -190,6 +196,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
         grid.addItemDoubleClickListener(event -> {
             gridDataView.removeItem(event.getItem());
             allQuestionsGrid.getListDataView().refreshAll();
+            updateHelpText();
         });
         grid.setDropMode(GridDropMode.BETWEEN);
         grid.setRowsDraggable(true);

@@ -7,7 +7,6 @@ import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -45,7 +44,6 @@ import org.rsinitsyn.quiz.utils.QuizComponents;
 @Route(value = "/list", layout = MainLayout.class)
 @PageTitle("Questions")
 public class QuestionsListPage extends VerticalLayout {
-    private H2 title = new H2("База вопросов");
 
     private QuestionListGrid grid;
     private TextField filterText = new TextField();
@@ -72,7 +70,7 @@ public class QuestionsListPage extends VerticalLayout {
         configurePrecisionForm();
         configureDialog();
 
-        add(title, createToolbar(), grid);
+        add(QuizComponents.mainHeader("База вопросов"), createToolbar(), grid);
     }
 
     private void configureDialog() {
@@ -223,8 +221,9 @@ public class QuestionsListPage extends VerticalLayout {
                 uploadComponent,
                 addCategoryButton,
                 groupedOperations);
+        toolbar.setWidthFull();
         toolbar.setAlignItems(Alignment.CENTER);
-        toolbar.setDefaultVerticalComponentAlignment(Alignment.CENTER);
+        toolbar.setJustifyContentMode(JustifyContentMode.CENTER);
         return toolbar;
     }
 

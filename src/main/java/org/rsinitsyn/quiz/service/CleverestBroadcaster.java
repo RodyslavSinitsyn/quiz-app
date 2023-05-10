@@ -92,7 +92,7 @@ public class CleverestBroadcaster {
         eventBuses.get(gameId).fireEvent(new AllUsersReadyEvent(gameId, getState(gameId).getUsers().keySet()));
     }
 
-    public void sendUpdateHistoryEvent(String gameId, QuestionModel question) {
+    public void sendSaveUserAnswersEvent(String gameId, QuestionModel question) {
         getState(gameId).getUsers().entrySet()
                 .stream()
                 .filter(e -> e.getValue().isAnswerGiven())

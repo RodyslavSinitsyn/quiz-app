@@ -7,13 +7,14 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
+import com.vaadin.flow.component.tabs.TabsVariant;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.VaadinSession;
@@ -31,11 +32,7 @@ import org.springframework.core.env.Environment;
 
 public class MainLayout extends AppLayout {
 
-    private FlexLayout header = new FlexLayout();
-
-    private Span logo = new Span();
-    private Tabs tabs = new Tabs();
-    private HorizontalLayout authLayout = new HorizontalLayout();
+    private HorizontalLayout header = new HorizontalLayout();
 
     private Button loginButton = new Button();
     private Span warningMessageAboutLogin = new Span();
@@ -52,46 +49,61 @@ public class MainLayout extends AppLayout {
                       Environment environment) {
         this.userService = userService;
         this.environment = environment;
-        configureLogo();
-        configureTabs();
-        configureDialog();
-        configureAuth();
 
-        authLayout.add(loggedUserNameSpan, loginButton, warningMessageAboutLogin, exitButton);
-        authLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        configureDialog();
+        configureAuthComponents();
 
         header.setWidthFull();
-        header.add(logo, tabs, authLayout);
+        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        header.add(
+                createLogo(),
+                createTabs(),
+                createAuthLayout());
         header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.setAlignContent(FlexLayout.ContentAlignment.STRETCH);
-        header.setFlexDirection(FlexLayout.FlexDirection.ROW);
+        header.addClassNames(LumoUtility.Border.BOTTOM, LumoUtility.BorderColor.PRIMARY);
 
-        addToNavbar(header);
+        addToNavbar(true, header);
+        addClassNames(LumoUtility.Background.PRIMARY_10);
     }
 
-    private void configureLogo() {
-        logo.addClassNames(LumoUtility.Margin.MEDIUM, LumoUtility.FontSize.LARGE);
-        logo.add(VaadinIcon.DIAMOND.create());
+    private Span createLogo() {
+        Span logo = new Span();
+        logo.addClassNames(LumoUtility.Margin.MEDIUM, LumoUtility.FontSize.XLARGE);
+        logo.add(VaadinIcon.ACADEMY_CAP.create());
+        return logo;
     }
 
-    private void configureTabs() {
-        tabs.add(createTab("Играть", NewGamePage.class));
-        tabs.add(createTab("Вопросы", QuestionsListPage.class));
-        tabs.add(createTab("Статистика", StatisticPage.class));
+    private Tabs createTabs() {
+        Tabs tabs = new Tabs();
+        tabs.addThemeVariants(TabsVariant.LUMO_CENTERED);
+        tabs.add(createTab("Играть", VaadinIcon.PLAY_CIRCLE_O.create(), NewGamePage.class));
+        tabs.add(createTab("Вопросы", VaadinIcon.QUESTION_CIRCLE_O.create(), QuestionsListPage.class));
+        tabs.add(createTab("Статистика", VaadinIcon.TRENDING_UP.create(), StatisticPage.class));
         if (Arrays.asList(environment.getActiveProfiles()).contains("dev")) {
-            tabs.add(createTab("Шрифты", FontsPage.class));
+            tabs.add(createTab("Шрифты", VaadinIcon.TEXT_LABEL.create(), FontsPage.class));
         }
+        return tabs;
     }
 
-    private Tab createTab(String text, Class<? extends Component> navigateTo) {
+    private Tab createTab(String text,
+                          Icon icon,
+                          Class<? extends Component> navigateTo) {
         Tab tab = new Tab();
         RouterLink link = new RouterLink(navigateTo);
         link.setText(text);
         tab.add(link);
+        tab.addComponentAsFirst(icon);
         return tab;
     }
 
-    private void configureAuth() {
+    private HorizontalLayout createAuthLayout() {
+        HorizontalLayout authLayout = new HorizontalLayout();
+        authLayout.add(loggedUserNameSpan, warningMessageAboutLogin, loginButton, exitButton);
+        authLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        return authLayout;
+    }
+
+    private void configureAuthComponents() {
         warningMessageAboutLogin.setText("НЕ рекомендуется использовать Анонимный мод");
         warningMessageAboutLogin.addClassNames(LumoUtility.TextColor.ERROR);
 

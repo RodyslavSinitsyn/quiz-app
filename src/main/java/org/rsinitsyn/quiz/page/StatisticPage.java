@@ -2,7 +2,6 @@ package org.rsinitsyn.quiz.page;
 
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
-import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -10,7 +9,7 @@ import java.util.List;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.model.UserStatsModel;
 import org.rsinitsyn.quiz.service.StatisticService;
-import org.rsinitsyn.quiz.utils.QuizUtils;
+import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 
 @Route(value = "/statistic", layout = MainLayout.class)
@@ -23,7 +22,7 @@ public class StatisticPage extends VerticalLayout {
     public StatisticPage(StatisticService statisticService) {
         this.statisticService = statisticService;
         configureGrid();
-        add(new H2("Статистика пользователей"), grid);
+        add(QuizComponents.mainHeader("Статистика игроков"), grid);
     }
 
     private void configureGrid() {

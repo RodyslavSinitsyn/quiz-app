@@ -3,6 +3,7 @@ package org.rsinitsyn.quiz.service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +24,6 @@ import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
-import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -43,12 +43,14 @@ public class GameService {
                 .orElse(null);
     }
 
+    @Transactional
     public void submitAnswersBatch(String gameId, QuestionModel question, List<UserGameState> userStates) {
         userStates.forEach(userGameState -> {
             submitAnswers(
                     gameId,
                     userGameState.getUsername(),
                     question,
+                    Collections.singletonList(userGameState.getLastAnswerText()),
                     () -> userGameState.isAnswerGiven() ? userGameState.isLastWasCorrect() : null);
         });
     }
@@ -57,7 +59,8 @@ public class GameService {
     public void submitAnswers(String gameId,
                               String playerName,
                               QuestionModel questionModel,
-                              Supplier<Boolean> correctAnswerResolver) {
+                              List<String> answersList,
+                              Supplier<Boolean> correctAnswerProvider) {
         UserEntity user = userService.findByUsername(playerName);
         var primaryKey = new GameQuestionUserPrimaryKey(
                 UUID.fromString(gameId),
@@ -66,7 +69,8 @@ public class GameService {
         Optional<GameQuestionUserEntity> optEntity = gameQuestionUserDao.findById(primaryKey);
         if (optEntity.isPresent()) {
             GameQuestionUserEntity persistent = optEntity.get();
-            persistent.setAnswered(correctAnswerResolver.get());
+            persistent.setAnswered(correctAnswerProvider.get());
+            persistent.setAnswerText(String.join(",", answersList));
 
             gameQuestionUserDao.save(persistent);
         } else {
@@ -75,7 +79,8 @@ public class GameService {
             newEntity.setQuestion(questionService.findByIdLazy(questionModel.getId()));
             newEntity.setUser(user);
             newEntity.setGame(findById(gameId));
-            newEntity.setAnswered(correctAnswerResolver.get());
+            newEntity.setAnswered(correctAnswerProvider.get());
+            newEntity.setAnswerText(String.join(",", answersList));
             newEntity.setOrderNumber(gameQuestionUserDao.getMaxOrderNumber(primaryKey.getGameId()) + 1);
 
             gameQuestionUserDao.save(newEntity);

@@ -41,5 +41,6 @@ public class GameQuestionUserEntity {
     // True - correct answer
     // False - incorrect answer
     private Boolean answered;
+    private String answerText;
     private int orderNumber;
 }

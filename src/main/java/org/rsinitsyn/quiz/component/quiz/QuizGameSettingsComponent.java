@@ -8,7 +8,6 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Span;
@@ -59,7 +58,6 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
     private MultiSelectListBox<QuestionModel> questions = new MultiSelectListBox<>();
     private Binder<QuizGameState> binder = new BeanValidationBinder<>(QuizGameState.class);
 
-    private H2 title = new H2("Настройки игры");
     private Checkbox selectAllCheckbox = new Checkbox();
     private Checkbox filterAnsweredCheckbox = new Checkbox();
     private Button playButton = new Button("Играть");
@@ -72,7 +70,7 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
                                      List<UserEntity> userEntityList) {
         this.questionModelList = questionModelList;
         this.userEntityList = userEntityList;
-        this.gameState.setGameId(UUID.fromString(gameId)); // TODO Remove ID Attr from Service classes ?
+        this.gameState.setGameId(UUID.fromString(gameId));
 
         this.gameName = createTextInput("Название игры");
         configureUserComboBox();
@@ -83,10 +81,13 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
         binder.bindInstanceFields(this);
 
         setResponsiveSteps(new ResponsiveStep("0", 1));
+        addClassNames(LumoUtility.AlignSelf.CENTER,
+                LumoUtility.Padding.MEDIUM);
+        getStyle().set("background-color", "white");
         setWidth("50em");
-        addClassNames(LumoUtility.AlignSelf.CENTER);
 
-        add(title, gameName,
+        add(QuizComponents.mainHeader("Настройки игры"),
+                gameName,
                 playerName,
                 answerOptionsEnabled,
                 timerEnabled,

@@ -19,6 +19,7 @@ import org.rsinitsyn.quiz.component.quiz.QuizGameSettingsComponent;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.GameType;
 import org.rsinitsyn.quiz.entity.UserEntity;
+import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
@@ -75,6 +76,7 @@ public class QuizGamePage extends VerticalLayout implements HasUrlParameter<Stri
                     gameId,
                     quizGameState.getPlayerName(),
                     event.getQuestion(),
+                    event.getAnswer().stream().map(QuestionModel.AnswerModel::getText).toList(),
                     () -> event.getQuestion().areAnswersCorrect(event.getAnswer()));
         });
         return quizGamePlayBoardComponent;

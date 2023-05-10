@@ -1,6 +1,7 @@
 package org.rsinitsyn.quiz.component.сustom;
 
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.LocalDateTimeRenderer;
 import java.util.List;
 import org.rsinitsyn.quiz.entity.GameEntity;
@@ -21,14 +22,20 @@ public class GameListGrid extends Grid<GameEntity> {
         addColumn(GameEntity::getPlayerNames).setHeader("Игрок");
         addColumn(gameEntity -> {
             int totalSize = gameEntity.getGameQuestions().size();
-            long correctSize = gameEntity.getGameQuestions().stream().filter(GameQuestionUserEntity::getAnswered).count();
+            long correctSize = gameEntity.getGameQuestions().stream()
+                    .filter(e -> e.getAnswered() != null)
+                    .filter(GameQuestionUserEntity::getAnswered).count();
             return correctSize + "/" + totalSize;
         }).setHeader("Вопросов");
         addColumn(gameEntity -> {
             int totalSize = gameEntity.getGameQuestions().size();
-            long correctSize = gameEntity.getGameQuestions().stream().filter(GameQuestionUserEntity::getAnswered).count();
+            long correctSize = gameEntity.getGameQuestions().stream()
+                    .filter(e -> e.getAnswered() != null)
+                    .filter(GameQuestionUserEntity::getAnswered).count();
             return QuizUtils.divide(correctSize * 100, totalSize) + "%";
         }).setHeader("Результат");
         setAllRowsVisible(true);
+        setDetailsVisibleOnClick(true);
+        setItemDetailsRenderer(new ComponentRenderer<>(GameResultsComponent::new));
     }
 }

@@ -11,7 +11,6 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
@@ -127,35 +126,25 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
 
     private void configurePlayersList() {
         usersGrid.addColumn(new ComponentRenderer<>(userGameState ->
-                        CleverestComponents.userNameSpan(
-                                userGameState.getUsername(),
-                                userGameState.getColor(),
-                                LumoUtility.FontWeight.LIGHT)))
-                .setHeader("Имя игрока");
+                CleverestComponents.userNameSpan(
+                        userGameState.getUsername(),
+                        userGameState.getColor(),
+                        LumoUtility.FontWeight.LIGHT))).setHeader("Имя игрока");
         usersGrid.addColumn(new ComponentRenderer<>(userGameState -> {
-                    Div color = new Div();
-                    color.setWidth("2em");
-                    color.setHeight("2em");
-                    color.getStyle().set("background-color", userGameState.getColor());
-                    return color;
-                }))
-                .setHeader("Цвет");
-        usersGrid.addColumn(new ComponentRenderer<>(userGameState -> {
-                    Icon icon = userGameState.winnerBet().getKey().isEmpty()
-                            ? CleverestComponents.cancelIcon()
-                            : CleverestComponents.doneIcon();
-
-                    return new Span(icon);
-                }))
-                .setHeader("Поставил на победителя");
-        usersGrid.addColumn(new ComponentRenderer<>(userGameState -> {
-                    Icon icon = userGameState.loserBet().getKey().isEmpty()
-                            ? CleverestComponents.cancelIcon()
-                            : CleverestComponents.doneIcon();
-
-                    return new Span(icon);
-                }))
-                .setHeader("Поставил на проигравшего");
+            Div color = new Div();
+            color.setWidth("2em");
+            color.setHeight("2em");
+            color.getStyle().set("background-color", userGameState.getColor());
+            return color;
+        })).setHeader("Цвет");
+        usersGrid.addColumn(new ComponentRenderer<>(userGameState -> new Span(
+                userGameState.winnerBet().getKey().isEmpty()
+                        ? CleverestComponents.cancelIcon()
+                        : CleverestComponents.doneIcon(),
+                userGameState.loserBet().getKey().isEmpty()
+                        ? CleverestComponents.cancelIcon()
+                        : CleverestComponents.doneIcon()
+        ))).setHeader("Ставки");
         usersGrid.addThemeVariants();
         usersGrid.setAllRowsVisible(true);
         usersGrid.addClassNames(LumoUtility.FontSize.XLARGE);

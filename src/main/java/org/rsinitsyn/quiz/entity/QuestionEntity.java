@@ -33,6 +33,7 @@ import org.hibernate.annotations.Formula;
 @EqualsAndHashCode(of = {"id"})
 @ToString(exclude = {"answers"})
 public class QuestionEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;

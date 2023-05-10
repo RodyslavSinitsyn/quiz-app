@@ -1,20 +1,44 @@
 package org.rsinitsyn.quiz.utils;
 
+import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.upload.SucceededEvent;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
+import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.function.BiConsumer;
 import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 
 @UtilityClass
 public class QuizComponents {
+
+    public H2 mainHeader(String text) {
+        H2 h2 = new H2(text);
+        h2.addClassNames(
+                LumoUtility.AlignSelf.CENTER,
+                LumoUtility.TextAlignment.CENTER);
+        return h2;
+    }
+
+    public H4 subHeader(String text) {
+        return new H4(text);
+    }
+
+    public Span appendTextBorder(Span span) {
+        span.getStyle().set("text-shadow", StaticValuesHolder.BLACK_FONT_BORDER);
+        return span;
+    }
 
     public Span questionLinkedWithGameIcon(QuestionEntity question) {
         if (question.presentInAnyGame()) {
@@ -58,5 +82,26 @@ public class QuizComponents {
         upload.setAcceptedFileTypes(allowedTypes);
         upload.addSucceededListener(event -> eventHandler.accept(buffer, event));
         return upload;
+    }
+
+    public HorizontalLayout questionDescription(QuestionEntity question) {
+        HorizontalLayout row = new HorizontalLayout();
+        row.setAlignItems(FlexComponent.Alignment.CENTER);
+        if (StringUtils.isNotEmpty(question.getAudioFilename())) {
+            Icon playSound = VaadinIcon.PLAY_CIRCLE.create();
+            playSound.addClickListener(event -> AudioUtils.playSoundAsync(question.getAudioFilename()));
+            row.add(playSound);
+        }
+        if (StringUtils.isNotEmpty(question.getPhotoFilename())) {
+            Avatar smallPhoto = new Avatar();
+            smallPhoto.setImageResource(
+                    QuizUtils.createStreamResourceForPhoto(question.getPhotoFilename()));
+            row.add(smallPhoto);
+        }
+        row.add(new Span(
+                question.getText().length() > 300
+                        ? question.getText().substring(0, 300).concat("...")
+                        : question.getText()));
+        return row;
     }
 }

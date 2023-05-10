@@ -2,8 +2,6 @@ package org.rsinitsyn.quiz.component.cleverest;
 
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
-import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.html.H5;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -21,6 +19,7 @@ import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
+import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
@@ -44,9 +43,9 @@ public class CleverestResultComponent extends VerticalLayout {
         } else {
             configureHistoryGrid(Collections.singleton(username), results);
         }
-        add(new H3("Таблица результатов"),
+        add(QuizComponents.mainHeader("Результаты"),
                 grid,
-                new H5("История ваших ответов"),
+                QuizComponents.subHeader("История ответов"),
                 historyGrid);
     }
 

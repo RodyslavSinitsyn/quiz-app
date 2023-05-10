@@ -27,6 +27,7 @@ import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.utils.AudioUtils;
+import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.rsinitsyn.quiz.utils.StaticValuesHolder;
@@ -85,7 +86,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 .findFirst().orElseThrow(() -> new IllegalArgumentException(
                         "Cant update topContainer. Username not found: " + userGameState.getUsername()));
         component.addComponentAsFirst(CleverestComponents.userCheckIcon());
-        component.addComponentAsFirst(new Span(userGameState.lastResponseTimeSec()));
+        component.addComponentAsFirst(QuizComponents.appendTextBorder(
+                new Span(userGameState.lastResponseTimeSec())));
     }
 
     private void renderRoundRules(int roundNumber, String rulesText) {
@@ -277,8 +279,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         ));
     }
 
-    private void showUsersScore(QuestionModel question,
-                                boolean roundOver,
+    private void showUsersScore(boolean roundOver,
                                 int revealScoreAfter,
                                 Runnable onCloseAction) {
         var usersScoreLayout = revealScoreAfter == 0
@@ -289,7 +290,6 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 usersScoreLayout,
                 "Таблица результатов",
                 () -> {
-                    broadcaster.sendUpdateHistoryEvent(gameId, question);
                     if (roundOver) {
                         broadcaster.sendNewRoundEvent(gameId);
                         return;
@@ -345,7 +345,6 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 row.add(approveButton);
             }
             answers.add(row);
-//            answers.add(new Hr());
         });
 
         CleverestComponents.openDialog(
@@ -355,7 +354,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     onCloseAction.run();
                     broadcaster.getState(gameId).updateUserPositions();
                     broadcaster.sendUpdatePersonalScoreEvent(gameId);
-                    showUsersScore(question, roundOver, revealScoreAfter, usersScoreCloseAction);
+                    broadcaster.sendSaveUserAnswersEvent(gameId, question);
+                    showUsersScore(roundOver, revealScoreAfter, usersScoreCloseAction);
                 });
     }
 
@@ -369,8 +369,9 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     broadcaster.getState(gameId).getHistory()));
         } else {
             updateUserPersonalScore();
-            midContainer.add(new Span("Итоговое место: "
-                    + broadcaster.getState(gameId).getUsers().get(SessionWrapper.getLoggedUser()).getLastPosition()));
+            midContainer.add(CleverestComponents.userInfoSpan(
+                    "Итоговое место: " + broadcaster.getState(gameId).getUsers().get(SessionWrapper.getLoggedUser()).getLastPosition(),
+                    LumoUtility.TextColor.PRIMARY));
             botContainer.add(new CleverestResultComponent(
                     broadcaster.getState(gameId).getSortedByScoreUsers().values(),
                     broadcaster.getState(gameId).getHistory(),
@@ -412,13 +413,13 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     renderCategoriesTable(event.getUserToAnswer(), event.getData());
                 } else {
                     if (SessionWrapper.getLoggedUser().equals(event.getUserToAnswer().getUsername())) {
-                        midContainer.add(CleverestComponents.userWaitSpan(
+                        midContainer.add(CleverestComponents.userInfoSpan(
                                 "Время отвечать!",
                                 LumoUtility.TextColor.PRIMARY
                         ));
                     } else {
-                        midContainer.add(CleverestComponents.userWaitSpan(
-                                "Внимание на экран!",
+                        midContainer.add(CleverestComponents.userInfoSpan(
+                                "В ожидании вопроса",
                                 LumoUtility.TextColor.SECONDARY
                         ));
                     }

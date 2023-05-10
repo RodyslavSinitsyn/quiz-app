@@ -1,6 +1,7 @@
 package org.rsinitsyn.quiz.page;
 
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -15,6 +16,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +43,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Route(value = "/cleverest", layout = MainLayout.class)
 @PageTitle("Cleverest")
 @PreserveOnRefresh
-public class CleverestGamePage extends VerticalLayout implements HasUrlParameter<String>, BeforeLeaveObserver {
+public class CleverestGamePage extends VerticalLayout implements HasUrlParameter<String>, BeforeLeaveObserver, Serializable {
+    static final long serialVersionUID = 6789L;
 
     private String gameId;
     private boolean isAdmin;
@@ -119,11 +122,10 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
                     gameId,
                     broadcaster,
                     isAdmin);
-
             add(waitingRoomComponent);
         } else if (status.equals(GameStatus.STARTED)) {
             if (!isInGameOrCreator(gameId)) {
-                ui.navigate(NewGamePage.class);
+                ui.navigate(NewGamePage.class).flatMap(Component::getUI).ifPresent(uiNested -> uiNested.getPage().reload());
                 Notification.show("Игра уже началась, вы там не учавствуете");
                 return;
             }

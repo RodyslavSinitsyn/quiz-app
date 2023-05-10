@@ -3,7 +3,6 @@ package org.rsinitsyn.quiz.service;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import javax.management.Query;
 import lombok.RequiredArgsConstructor;
 import org.rsinitsyn.quiz.dao.GameDao;
 import org.rsinitsyn.quiz.dao.QuestionDao;

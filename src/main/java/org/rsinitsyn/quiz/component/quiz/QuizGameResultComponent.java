@@ -4,8 +4,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.H4;
+import com.vaadin.flow.component.html.H5;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -15,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.rsinitsyn.quiz.component.сustom.GameQuestionsAnswersComponent;
+import org.rsinitsyn.quiz.component.сustom.GameResultsComponent;
 import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
@@ -27,13 +26,12 @@ public class QuizGameResultComponent extends VerticalLayout {
     private QuizGameState gameState;
     private GameEntity gameEntity;
 
-    private H2 title = new H2();
-
-    private H4 resultPercent = new H4();
-    private H4 resultCount = new H4();
-    private H4 reaction = new H4();
+    private H5 title = new H5();
+    private H5 resultPercent = new H5();
+    private H5 resultCount = new H5();
+    private H5 reaction = new H5();
     private Grid<CategoryResultDto> categoryDetailsGrid = new Grid<>(CategoryResultDto.class, false);
-    private GameQuestionsAnswersComponent gameQuestionsAnswersComponent;
+    private GameResultsComponent gameResultsComponent;
     private Button newGameButton = new Button("Новая игра");
 
     public QuizGameResultComponent(QuizGameState gameState,
@@ -43,7 +41,7 @@ public class QuizGameResultComponent extends VerticalLayout {
         configureComponents();
         configureGrid();
         configureGameListComponent();
-        add(title, resultCount, resultPercent, reaction, categoryDetailsGrid, gameQuestionsAnswersComponent, newGameButton);
+        add(resultCount, resultPercent, reaction, categoryDetailsGrid, gameResultsComponent, newGameButton);
     }
 
     private void configureGrid() {
@@ -70,7 +68,7 @@ public class QuizGameResultComponent extends VerticalLayout {
     }
 
     private void configureGameListComponent() {
-        gameQuestionsAnswersComponent = new GameQuestionsAnswersComponent(gameEntity, new Hr());
+        gameResultsComponent = new GameResultsComponent(gameEntity, new Hr());
     }
 
     private void configureComponents() {

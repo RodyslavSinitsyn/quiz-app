@@ -1,20 +1,12 @@
 package org.rsinitsyn.quiz.component.сustom;
 
-import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.LocalDateTimeRenderer;
 import java.util.Comparator;
 import java.util.List;
-import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
-import org.rsinitsyn.quiz.utils.AudioUtils;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 
@@ -40,26 +32,7 @@ public class QuestionListGrid extends Grid<QuestionEntity> {
     }
 
     public void addTextColumn(int flexGrow) {
-        addColumn(new ComponentRenderer<>(entity -> {
-            HorizontalLayout row = new HorizontalLayout();
-            row.setAlignItems(FlexComponent.Alignment.CENTER);
-            if (StringUtils.isNotEmpty(entity.getAudioFilename())) {
-                Icon playSound = VaadinIcon.PLAY_CIRCLE.create();
-                playSound.addClickListener(event -> AudioUtils.playSoundAsync(entity.getAudioFilename()));
-                row.add(playSound);
-            }
-            if (StringUtils.isNotEmpty(entity.getPhotoFilename())) {
-                Avatar smallPhoto = new Avatar();
-                smallPhoto.setImageResource(
-                        QuizUtils.createStreamResourceForPhoto(entity.getPhotoFilename()));
-                row.add(smallPhoto);
-            }
-            row.add(new Span(
-                    entity.getText().length() > 300
-                            ? entity.getText().substring(0, 300).concat("...")
-                            : entity.getText()));
-            return row;
-        }))
+        addColumn(new ComponentRenderer<>(QuizComponents::questionDescription))
                 .setHeader("Текст")
                 .setFlexGrow(flexGrow);
     }

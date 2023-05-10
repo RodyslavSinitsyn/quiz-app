@@ -8,7 +8,6 @@ import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -29,8 +28,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.utils.AudioUtils;
+import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
-import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
 @UtilityClass
 public class CleverestComponents {
@@ -75,12 +74,11 @@ public class CleverestComponents {
     }
 
     public Span userNameSpan(String username, String textColor, String... classes) {
-        return new Span() {{
+        return QuizComponents.appendTextBorder(new Span() {{
             setText(username);
-            getStyle().set("text-shadow", StaticValuesHolder.BLACK_FONT_BORDER);
             getStyle().set("color", textColor);
             addClassNames(classes);
-        }};
+        }});
     }
 
     public Span correctAnswerSpan(QuestionModel questionModel, String... classes) {
@@ -94,14 +92,12 @@ public class CleverestComponents {
         return span;
     }
 
-    public Span userWaitSpan(String text, String... classes) {
+    public Span userInfoSpan(String text, String... classes) {
         Span span = new Span();
         span.setText(text);
         span.addClassNames(LumoUtility.FontSize.XXLARGE,
                 LumoUtility.FontWeight.LIGHT,
-                LumoUtility.TextAlignment.CENTER,
-                LumoUtility.Border.BOTTOM,
-                LumoUtility.BorderColor.PRIMARY);
+                LumoUtility.TextAlignment.CENTER);
         span.addClassNames(classes);
         return span;
     }
@@ -232,9 +228,7 @@ public class CleverestComponents {
 
             Span positionSpan = new Span();
             positionSpan.addClassNames(LumoUtility.FontSize.XXXLARGE,
-                    LumoUtility.FontWeight.SEMIBOLD,
-                    LumoUtility.Border.RIGHT,
-                    LumoUtility.BorderColor.CONTRAST);
+                    LumoUtility.FontWeight.SEMIBOLD);
             if (userGameState.getLastPosition() == 1) {
                 positionSpan.add(VaadinIcon.ACADEMY_CAP.create());
             } else if (userGameState.getLastPosition() == users.size()) {
@@ -250,7 +244,6 @@ public class CleverestComponents {
                     LumoUtility.FontSize.XXXLARGE));
 
             layout.add(row);
-            layout.add(new Hr());
         });
         return layout;
     }
