@@ -50,9 +50,10 @@ public class CleverestComponents {
     public Span questionTextSpan(String text, String... classes) {
         Span span = new Span();
         span.setText(text);
-        span.addClassNames(LumoUtility.LineHeight.XSMALL, LumoUtility.TextAlignment.CENTER);
+        span.addClassNames(LumoUtility.LineHeight.XSMALL,
+                LumoUtility.TextAlignment.CENTER,
+                LumoUtility.Whitespace.PRE_LINE);
         span.addClassNames(classes);
-        span.getStyle().set("white-space", "pre-line");
         span.setWidthFull();
         return span;
     }
@@ -119,11 +120,13 @@ public class CleverestComponents {
 
     public Button optionButton(String text, Runnable action) {
         Button button = new Button();
-        button.setText(text);
-        button.addThemeVariants(ButtonVariant.LUMO_LARGE);
-        button.addClassNames(LumoUtility.BorderColor.PRIMARY, LumoUtility.Border.ALL);
         button.setWidthFull();
-        button.addClassNames(LumoUtility.FontSize.XXLARGE);
+        button.setText(text); // 22-23 lenght text fits
+        button.addThemeVariants(ButtonVariant.LUMO_LARGE);
+        button.addClassNames(
+                LumoUtility.BorderColor.PRIMARY,
+                LumoUtility.Border.ALL,
+                LumoUtility.FontSize.XXLARGE);
         button.addClickListener(event -> {
             action.run();
         });
@@ -153,7 +156,9 @@ public class CleverestComponents {
         Button button = new Button();
         button.setIcon(VaadinIcon.CHECK.create());
         button.setDisableOnClick(true);
-        button.addClassNames(LumoUtility.Border.ALL, LumoUtility.BorderColor.SUCCESS);
+        button.addClassNames(
+                LumoUtility.Border.ALL,
+                LumoUtility.BorderColor.PRIMARY);
         button.addClickListener(event -> {
             event.getSource().getParent().ifPresent(p -> p.addClassNames(LumoUtility.Background.SUCCESS_10));
             clickAction.run();
@@ -257,9 +262,10 @@ public class CleverestComponents {
         Span userScore = new Span(String.valueOf(score));
         userScore.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
         userScore.addClassNames(classes);
+        userScore.getStyle().set("color", ustTxtColor);
 
-        layout.add(new Span(userNameSpan(username, ustTxtColor, classes), delimiterSpan(classes)));
-        layout.add(userScore);
+        layout.add(userNameSpan(username, ustTxtColor, classes),
+                QuizComponents.appendTextBorder(userScore));
         layout.addClassNames(LumoUtility.Border.BOTTOM);
         layout.getStyle().set("border-color", ustTxtColor);
 

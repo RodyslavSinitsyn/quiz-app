@@ -11,6 +11,7 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
@@ -57,10 +58,13 @@ public class MainLayout extends AppLayout {
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         header.add(
                 createLogo(),
-                createTabs(),
+                new Scroller(createTabs()) {{
+                    setScrollDirection(ScrollDirection.HORIZONTAL);
+                }},
                 createAuthLayout());
         header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.addClassNames(LumoUtility.Border.BOTTOM, LumoUtility.BorderColor.PRIMARY);
+        header.addClassNames(LumoUtility.Border.BOTTOM,
+                LumoUtility.BorderColor.PRIMARY);
 
         addToNavbar(true, header);
         addClassNames(LumoUtility.Background.PRIMARY_10);
@@ -75,7 +79,8 @@ public class MainLayout extends AppLayout {
 
     private Tabs createTabs() {
         Tabs tabs = new Tabs();
-        tabs.addThemeVariants(TabsVariant.LUMO_CENTERED);
+        tabs.addThemeVariants(TabsVariant.LUMO_CENTERED,
+                TabsVariant.LUMO_MINIMAL);
         tabs.add(createTab("Играть", VaadinIcon.PLAY_CIRCLE_O.create(), NewGamePage.class));
         tabs.add(createTab("Вопросы", VaadinIcon.QUESTION_CIRCLE_O.create(), QuestionsListPage.class));
         tabs.add(createTab("Статистика", VaadinIcon.TRENDING_UP.create(), StatisticPage.class));
@@ -104,18 +109,21 @@ public class MainLayout extends AppLayout {
     }
 
     private void configureAuthComponents() {
-        warningMessageAboutLogin.setText("НЕ рекомендуется использовать Анонимный мод");
+        warningMessageAboutLogin.setText("Аноним");
         warningMessageAboutLogin.addClassNames(LumoUtility.TextColor.ERROR);
 
-        loginButton.setText("Войти");
+        loginButton.setText("");
+        loginButton.addClassNames(LumoUtility.Margin.MEDIUM);
         loginButton.setIcon(VaadinIcon.SIGN_IN.create());
         loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         loginButton.addClickListener(event -> {
             dialog.open();
         });
 
-        exitButton.setText("Выйти");
+        exitButton.setText("");
         exitButton.setIcon(VaadinIcon.SIGN_OUT.create());
+        exitButton.addClassNames(LumoUtility.Margin.MEDIUM);
+        exitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         exitButton.addClickListener(event -> {
             renderAfterLogout();
             VaadinSession.getCurrent().close();
@@ -146,6 +154,7 @@ public class MainLayout extends AppLayout {
         submit.setText("Войти");
         submit.setWidthFull();
         submit.addClickShortcut(Key.ENTER);
+        submit.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         submit.addClickListener(event -> loginUser(userNameInput.getValue()));
 
         Select<String> users = new Select<>();

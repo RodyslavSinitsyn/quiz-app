@@ -21,8 +21,10 @@ import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javazoom.jl.player.Player;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
@@ -48,9 +50,12 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     private QuizGameState gameState;
     private QuestionModel currQuestion;
 
+    private Player lastPlayedAudio = null;
+
     public QuizGamePlayBoardComponent(QuizGameState gameState) {
         this.gameState = gameState;
         renderQuestion();
+        setPadding(false);
     }
 
     private void renderQuestion() {
@@ -58,6 +63,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 
         currQuestion = gameState.getNextQuestion();
         if (currQuestion == null) {
+            Optional.ofNullable(lastPlayedAudio).ifPresent(Player::close);
             finishGame();
             return;
         }
@@ -77,8 +83,6 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         progressBar = createProgressBar();
 
         add(progressBarLabel, progressBar);
-
-        setPadding(false);
     }
 
     private Button createRevealButton() {
@@ -133,6 +137,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
             AudioUtils.playStaticSoundAsync(StaticValuesHolder.REVEAL_ANSWER_AUDIOS.next());
         };
         button.addClickListener(event -> {
+            Optional.ofNullable(lastPlayedAudio).ifPresent(Player::close);
             if (!gameState.isIntrigueEnabled()) {
                 revealAction.run();
                 return;
@@ -191,6 +196,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     private QuizGameAnswersComponent createAnswersComponent() {
         var answersComponent = new QuizGameAnswersComponent(currQuestion);
         answersComponent.addListener(QuizGameAnswersComponent.AnswerChoosenEvent.class, event -> {
+            Optional.ofNullable(lastPlayedAudio).ifPresent(Player::close);
             if (!gameState.isIntrigueEnabled()) {
                 submitOptionableAnswer(event.getAnswers());
                 return;
@@ -269,10 +275,14 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         NotificationVariant variant;
         if (correct) {
             gameState.incrementCorrectAnswersCounter();
-            AudioUtils.playStaticSoundAsync(CORRECT_ANSWER_AUDIOS.next());
+            AudioUtils.playStaticSoundAsync(CORRECT_ANSWER_AUDIOS.next())
+                    .thenRun(() ->
+                            lastPlayedAudio = AudioUtils.playStaticAudioAsyncAndGetPlayer(StaticValuesHolder.THINK_AUDIOS.next()));
             variant = NotificationVariant.LUMO_SUCCESS;
         } else {
-            AudioUtils.playStaticSoundAsync(WRONG_ANSWER_AUDIOS.next());
+            AudioUtils.playStaticSoundAsync(WRONG_ANSWER_AUDIOS.next())
+                    .thenRun(() ->
+                            lastPlayedAudio = AudioUtils.playStaticAudioAsyncAndGetPlayer(StaticValuesHolder.THINK_AUDIOS.next()));
             variant = NotificationVariant.LUMO_ERROR;
         }
         String notifyText = correct ? "Правильный ответ!" : "Неверно...";

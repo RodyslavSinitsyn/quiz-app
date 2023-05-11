@@ -14,11 +14,22 @@ public class ApplicationConfiguration implements AppShellConfigurator, VaadinSer
 
     @Override
     public void serviceInit(ServiceInitEvent event) {
+//        event.getSource().setSystemMessagesProvider((SystemMessagesProvider)
+//                systemMessagesInfo -> {
+//                    var messages = new CustomizedSystemMessages();
+//                    messages.setSessionExpiredCaption("Выход из системы");
+//                    messages.setSessionExpiredMessage("Из за бездействия ваша сессия была закрыта.");
+//                    messages.setSessionExpiredNotificationEnabled(true);
+//                    return messages;
+//                });
         event.getSource().addSessionInitListener(
-                initEvent -> {
-                    String host = initEvent.getRequest().getRemoteHost();
-                    log.info("A new Session has been initialized: {}", host);
-                    initEvent.getSession().setErrorHandler(new GlobalErrorHandler());
+                e -> {
+                    log.info("A new Session has been initialized: {}", e.getSession().getSession().getId());
+                    e.getSession().setErrorHandler(new GlobalErrorHandler());
+                    e.getSession().getSession().setMaxInactiveInterval(3_600); // one hour
                 });
+        event.getSource().addSessionDestroyListener(e -> {
+            log.info("Session closed: {}", e.getSession().getSession().getId());
+        });
     }
 }

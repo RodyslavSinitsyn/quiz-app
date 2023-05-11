@@ -25,13 +25,21 @@ public class StaticValuesHolder {
                     "correct-answer-2.mp3",
                     "correct-answer-3.mp3",
                     "correct-answer-4.mp3",
-                    "correct-answer-5.mp3")
+                    "correct-answer-5.mp3",
+                    "correct-answer-6.mp3")
             .iterator();
 
     public static final Iterator<String> WRONG_ANSWER_AUDIOS = Iterables.cycle(
                     "wrong-answer-1.mp3",
-                    "wrong-answer-2.mp3")
+                    "wrong-answer-2.mp3",
+                    "wrong-answer-3.mp3")
             .iterator();
 
-    public static final String BLACK_FONT_BORDER = "1px 1px 1px black";
+    public static final Iterator<String> THINK_AUDIOS = Iterables.cycle(
+                    "think-1.mp3",
+                    "think-2.mp3",
+                    "think-3.mp3")
+            .iterator();
+
+    public static final String BLACK_FONT_BORDER = "2px 2px 2px black";
 }

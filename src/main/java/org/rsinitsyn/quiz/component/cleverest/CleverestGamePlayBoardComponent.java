@@ -269,6 +269,10 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
     private void updateUserPersonalScore() {
         UserGameState userState = broadcaster.getState(gameId).getUsers().get(SessionWrapper.getLoggedUser());
+        if (userState == null) {
+            // TODO Temp solution investigate later
+            return;
+        }
         topContainer.removeAll();
         topContainer.add(CleverestComponents.userScoreLayout(
                 SessionWrapper.getLoggedUser(),
@@ -327,6 +331,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         users.forEach(userGameState -> {
             HorizontalLayout row = new HorizontalLayout();
             row.setDefaultVerticalComponentAlignment(Alignment.CENTER);
+            row.setAlignItems(Alignment.START);
 
             if (!approveManually) {
                 row.add(userGameState.isLastWasCorrect()
@@ -340,8 +345,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             row.add(userAnswerSpan);
             if (approveManually) {
                 Button approveButton = CleverestComponents.approveButton(
-                        () -> approveAction.accept(userGameState.getUsername()),
-                        ButtonVariant.LUMO_SUCCESS);
+                        () -> approveAction.accept(userGameState.getUsername()));
                 row.add(approveButton);
             }
             answers.add(row);
@@ -370,8 +374,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         } else {
             updateUserPersonalScore();
             midContainer.add(CleverestComponents.userInfoSpan(
-                    "Итоговое место: " + broadcaster.getState(gameId).getUsers().get(SessionWrapper.getLoggedUser()).getLastPosition(),
-                    LumoUtility.TextColor.PRIMARY));
+                    "Итоговое место: " + broadcaster.getState(gameId).getUsers().get(SessionWrapper.getLoggedUser()).getLastPosition()));
             botContainer.add(new CleverestResultComponent(
                     broadcaster.getState(gameId).getSortedByScoreUsers().values(),
                     broadcaster.getState(gameId).getHistory(),

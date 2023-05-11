@@ -1,8 +1,9 @@
 package org.rsinitsyn.quiz.utils;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Span;
@@ -23,21 +24,24 @@ import org.rsinitsyn.quiz.entity.QuestionType;
 @UtilityClass
 public class QuizComponents {
 
-    public H2 mainHeader(String text) {
-        H2 h2 = new H2(text);
-        h2.addClassNames(
+    public H1 mainHeader(String text) {
+        var header = new H1(text);
+        header.addClassNames(
                 LumoUtility.AlignSelf.CENTER,
                 LumoUtility.TextAlignment.CENTER);
-        return h2;
+//        header.getStyle().set("color", "white");
+        return header;
     }
 
     public H4 subHeader(String text) {
         return new H4(text);
     }
 
-    public Span appendTextBorder(Span span) {
-        span.getStyle().set("text-shadow", StaticValuesHolder.BLACK_FONT_BORDER);
-        return span;
+    public <T extends Component> T appendTextBorder(T component) {
+        component.getStyle().set("text-shadow", StaticValuesHolder.BLACK_FONT_BORDER);
+//        component.getStyle().set("-webkit-text-stroke-width", "1px");
+//        component.getStyle().set("-webkit-text-stroke-color", "black");
+        return component;
     }
 
     public Span questionLinkedWithGameIcon(QuestionEntity question) {
