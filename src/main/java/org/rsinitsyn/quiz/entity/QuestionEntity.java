@@ -55,12 +55,15 @@ public class QuestionEntity {
     @JoinColumn(name = "categoryId", referencedColumnName = "id")
     private QuestionCategoryEntity category;
 
+    @Formula("SELECT count(*) FROM games_questions gq WHERE gq.questionId = id")
+    private long gamesQuestionsCount;
+
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("number")
     private Set<AnswerEntity> answers = new HashSet<>();
 
-    @Formula("SELECT count(*) FROM games_questions gq WHERE gq.questionId = id")
-    private long gamesQuestionsCount;
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<QuestionGrade> grades = new HashSet<>();
 
     public void addAnswer(AnswerEntity answerEntity) {
         answerEntity.setQuestion(this);

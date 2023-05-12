@@ -12,6 +12,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import de.jfancy.StarsRating;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -185,12 +186,28 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
         midContainer.removeAll();
 
+        VerticalLayout gradeQuestionLayout = new VerticalLayout();
+        gradeQuestionLayout.setWidthFull();
+        gradeQuestionLayout.setAlignItems(Alignment.CENTER);
+        gradeQuestionLayout.add(new Span("Насколько вопрос сложный?"));
+
+        StarsRating rating = new StarsRating(1, 5, true);
+        rating.addValueChangeListener(event -> {
+            broadcaster.sendQuestionGradedEvent(gameId,
+                    questionModel,
+                    SessionWrapper.getLoggedUser(),
+                    event.getValue());
+        });
+        gradeQuestionLayout.add(rating);
+
+
         Span questionNumberTooltip = new Span();
         questionNumberTooltip.setText(String.format("Раунд %d. Вопрос %d/%d", roundNumber, questionNumber, totalQuestions));
         questionNumberTooltip.addClassNames(LumoUtility.FontSize.SMALL,
                 LumoUtility.FontWeight.SEMIBOLD,
                 LumoUtility.AlignSelf.START);
 
+        midContainer.add(gradeQuestionLayout);
         midContainer.add(questionNumberTooltip);
         midContainer.add(CleverestComponents.questionLayout(
                 questionModel,
@@ -489,7 +506,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 }));
 
         subs.add(broadcaster.subscribe(gameId,
-                CleverestBroadcaster.NextRoundEvent.class,
+                CleverestBroadcaster.GetRoundEvent.class,
                 event -> QuizUtils.runActionInUi(attachEvent.getUI(), () -> showRoundRules(event.getRoundNumber(), event.getRules()))));
     }
 

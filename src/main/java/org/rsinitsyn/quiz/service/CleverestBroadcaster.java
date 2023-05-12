@@ -133,7 +133,7 @@ public class CleverestBroadcaster {
 
     public void sendNewRoundEvent(String gameId) {
         int currRound = getState(gameId).getRoundNumber();
-        eventBuses.get(gameId).fireEvent(new NextRoundEvent(gameId,
+        eventBuses.get(gameId).fireEvent(new GetRoundEvent(gameId,
                 currRound,
                 getState(gameId).getRoundRules().get(currRound)));
     }
@@ -184,7 +184,7 @@ public class CleverestBroadcaster {
                 );
             } else {
                 eventBuses.get(gameId).fireEvent(
-                        new NextRoundEvent(
+                        new GetRoundEvent(
                                 gameId,
                                 gameState.getRoundNumber(),
                                 gameState.getRoundRules().get(gameState.getRoundNumber())
@@ -228,6 +228,19 @@ public class CleverestBroadcaster {
                 gameId,
                 gameState.getUsersToAnswerOrder().next(),
                 gameState.getThirdQuestions()));
+    }
+
+    public void sendQuestionGradedEvent(String gameId,
+                                        QuestionModel questionModel,
+                                        String username,
+                                        int grade) {
+        eventBuses.get(gameId)
+                .fireEvent(new QuestionGradedEvent(
+                        gameId,
+                        questionModel,
+                        username,
+                        grade
+                ));
     }
 
     @Getter
@@ -316,11 +329,11 @@ public class CleverestBroadcaster {
     }
 
     @Getter
-    public static class NextRoundEvent extends CleverestGameEvent {
+    public static class GetRoundEvent extends CleverestGameEvent {
         private int roundNumber;
         private String rules;
 
-        public NextRoundEvent(String gameId, int roundNumber, String rules) {
+        public GetRoundEvent(String gameId, int roundNumber, String rules) {
             super(gameId);
             this.roundNumber = roundNumber;
             this.rules = rules;
@@ -372,6 +385,20 @@ public class CleverestBroadcaster {
             super(gameId);
             this.question = question;
             this.userStates = userStates;
+        }
+    }
+
+    @Getter
+    public static class QuestionGradedEvent extends CleverestGameEvent {
+        private QuestionModel question;
+        private String username;
+        private int grade;
+
+        public QuestionGradedEvent(String gameId, QuestionModel question, String username, int grade) {
+            super(gameId);
+            this.question = question;
+            this.username = username;
+            this.grade = grade;
         }
     }
 

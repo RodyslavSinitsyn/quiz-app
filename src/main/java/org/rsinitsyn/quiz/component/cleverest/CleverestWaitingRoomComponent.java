@@ -36,7 +36,9 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
     private Grid<UserGameState> usersGrid = new Grid<>(UserGameState.class, false);
     private Select<String> winnerBet = new Select<>();
     private Select<String> loserBet = new Select<>();
+
     private Button joinButton;
+    private Button startGameButton;
 
     private CleverestBroadcaster broadcaster;
 
@@ -182,8 +184,9 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         prodLink.getElement().setAttribute("target", "_blank");
         add(prodLink);
 
-        Button button = CleverestComponents.primaryButton("Начать игру", e -> broadcaster.sendPlayersReadyEvent(gameId));
-        add(button);
+        startGameButton = CleverestComponents.primaryButton("Начать игру", e -> broadcaster.sendPlayersReadyEvent(gameId));
+        startGameButton.setEnabled(!broadcaster.getState(gameId).getUsers().isEmpty());
+        add(startGameButton);
     }
 
     public <T extends ComponentEvent<?>> Registration addListener(Class<T> eventType,
@@ -205,6 +208,9 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
                         }
                         winnerBet.setItems(broadcaster.getState(gameId).getUsers().keySet());
                         loserBet.setItems(broadcaster.getState(gameId).getUsers().keySet());
+                        if (isAdmin) {
+                            startGameButton.setEnabled(!broadcaster.getState(gameId).getUsers().isEmpty());
+                        }
                     });
                 }));
 

@@ -238,6 +238,16 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
                     });
                 })
         );
+        subs.add(broadcaster.subscribe(
+                gameId,
+                CleverestBroadcaster.QuestionGradedEvent.class,
+                event -> {
+                    questionService.updateQuestionGrade(
+                            event.getQuestion().getId(),
+                            event.getUsername(),
+                            event.getGrade());
+                }
+        ));
 
         if (isAdmin) {
             subs.add(broadcaster.subscribe(gameId,

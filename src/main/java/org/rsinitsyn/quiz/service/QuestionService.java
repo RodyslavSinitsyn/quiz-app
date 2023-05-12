@@ -18,12 +18,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.dao.GameQuestionUserDao;
 import org.rsinitsyn.quiz.dao.QuestionCategoryDao;
 import org.rsinitsyn.quiz.dao.QuestionDao;
+import org.rsinitsyn.quiz.dao.QuestionGradeDao;
 import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
+import org.rsinitsyn.quiz.entity.QuestionGrade;
+import org.rsinitsyn.quiz.entity.QuestionGradePrimaryKey;
 import org.rsinitsyn.quiz.entity.QuestionType;
+import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.model.AnswerHistory;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
@@ -48,7 +52,9 @@ public class QuestionService {
     private final QuestionDao questionDao;
     private final QuestionCategoryDao questionCategoryDao;
     private final GameQuestionUserDao gameQuestionUserDao;
+    private final QuestionGradeDao questionGradeDao;
     private final ResourceService resourceService;
+    private final UserService userService;
     private final QuizAppProperties properties;
 
     @Cacheable(value = "allCategories")
@@ -283,5 +289,30 @@ public class QuestionService {
     public void updateOptionsOnlyProperty(Set<QuestionEntity> questions) {
         questionDao.findAllByIdIn(questions.stream().map(QuestionEntity::getId).toList())
                 .forEach(entity -> entity.setOptionsOnly(!entity.isOptionsOnly()));
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void updateQuestionGrade(UUID questionId, String username, int grade) {
+        UserEntity user = userService.findByUsername(username);
+        Optional<QuestionGrade> optEntity = questionGradeDao.findById(new QuestionGradePrimaryKey(
+                questionId,
+                user.getId()
+        ));
+        if (optEntity.isPresent()) {
+            QuestionGrade updEntity = optEntity.get();
+            updEntity.setGrade(grade);
+            log.info("Updated question grade, id: {}, grade: {}",
+                    questionId + "-" + user.getId(),
+                    grade);
+        } else {
+            var newEntity = new QuestionGrade();
+            newEntity.setQuestionId(questionId);
+            newEntity.setUserId(user.getId());
+            newEntity.setGrade(grade);
+            questionGradeDao.save(newEntity);
+            log.info("Created question grade, id: {}, grade: {}",
+                    questionId + "-" + user.getId(),
+                    grade);
+        }
     }
 }
