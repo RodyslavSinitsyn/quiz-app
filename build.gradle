@@ -49,6 +49,7 @@ dependencyManagement {
 
 vaadin {
     if (isProd) {
+        print('Prod mode in gradle')
         productionMode = true
     }
 }

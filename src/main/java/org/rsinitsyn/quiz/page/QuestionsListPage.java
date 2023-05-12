@@ -234,49 +234,41 @@ public class QuestionsListPage extends VerticalLayout {
         deleteAllButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
         deleteAllButton.setIcon(VaadinIcon.CLOSE_SMALL.create());
         deleteAllButton.addClickListener(event -> {
-            ConfirmDialog dialog = new ConfirmDialog();
-            dialog.setCancelable(true);
-            dialog.setCloseOnEsc(true);
-            dialog.setHeader("Удалить все вопросы ниже?");
             Span text = new Span(grid.getSelectedItems().stream()
                     .map(QuestionEntity::getText)
                     .collect(Collectors.joining(System.lineSeparator())));
             text.getStyle().set("white-space", "pre-line");
-            dialog.setText(text);
-            dialog.addConfirmListener(e -> {
-                questionService.deleteAll(grid.getSelectedItems());
-                dialog.close();
-                grid.asMultiSelect().deselectAll();
-                updateList();
-                groupedOperations.setVisible(false);
-            });
-            dialog.open();
+
+            QuizComponents.openConfirmDialog(
+                    text,
+                    "Удалить все вопросы ниже?",
+                    () -> {
+                        questionService.deleteAll(grid.getSelectedItems());
+                        grid.asMultiSelect().deselectAll();
+                        updateList();
+                        groupedOperations.setVisible(false);
+                    });
         });
 
         Button updateCategoryButton = new Button("Обновить категорию");
         updateCategoryButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
         updateCategoryButton.setIcon(VaadinIcon.EDIT.create());
         updateCategoryButton.addClickListener(event -> {
-            ConfirmDialog dialog = new ConfirmDialog();
-            dialog.setCancelable(true);
-            dialog.setCloseOnEsc(true);
-            dialog.setHeader("Выберите тему");
-
             Select<QuestionCategoryEntity> select = new Select<>();
             select.setPlaceholder("Тема");
             select.setItems(questionService.findAllCategories());
             select.setRenderer(new ComponentRenderer<Component, QuestionCategoryEntity>(
                     category -> new Span(category.getName())));
 
-            dialog.add(select);
-            dialog.addConfirmListener(e -> {
-                questionService.updateCategory(grid.getSelectedItems(), select.getValue());
-                dialog.close();
-                grid.asMultiSelect().deselectAll();
-                updateList();
-                groupedOperations.setVisible(false);
-            });
-            dialog.open();
+            QuizComponents.openConfirmDialog(
+                    select,
+                    "Выберите тему",
+                    () -> {
+                        questionService.updateCategory(grid.getSelectedItems(), select.getValue());
+                        grid.asMultiSelect().deselectAll();
+                        updateList();
+                        groupedOperations.setVisible(false);
+                    });
         });
 
         Button updateOptionsOnly = new Button("Поменять механику");

@@ -12,3 +12,6 @@ spring:
 
 quiz:
   audio-folder: prod/
+
+vaadin:
+  productionMode: true

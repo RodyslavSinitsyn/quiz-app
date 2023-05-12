@@ -1,14 +1,12 @@
 package org.rsinitsyn.quiz.handler;
 
-import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.server.DefaultErrorHandler;
 import com.vaadin.flow.server.ErrorEvent;
-import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.rsinitsyn.quiz.utils.QuizComponents;
 
 @Slf4j
 public class GlobalErrorHandler extends DefaultErrorHandler {
@@ -20,16 +18,12 @@ public class GlobalErrorHandler extends DefaultErrorHandler {
         Optional.ofNullable(UI.getCurrent())
                 .ifPresent(ui -> {
                     ui.access(() -> {
-                        Button cancelButton = new Button();
-                        cancelButton.addClickShortcut(Key.ESCAPE);
-                        cancelButton.setText("Выйти");
-
-                        ConfirmDialog confirmDialog = new ConfirmDialog();
-                        confirmDialog.setConfirmButton(cancelButton);
-                        confirmDialog.setHeader("Произошла ошибка");
-                        confirmDialog.setText(errMessage);
-                        confirmDialog.addClassNames(LumoUtility.TextColor.ERROR_CONTRAST);
-                        confirmDialog.open();
+                        QuizComponents.openConfirmDialog(
+                                new Span(errMessage),
+                                "Произошла ошибка",
+                                () -> {
+                                }
+                        );
                     });
                 });
     }

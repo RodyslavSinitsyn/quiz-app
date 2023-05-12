@@ -4,12 +4,15 @@ import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.server.ServiceInitEvent;
 import com.vaadin.flow.server.VaadinServiceInitListener;
+import com.vaadin.flow.theme.Theme;
+import com.vaadin.flow.theme.lumo.Lumo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
 @Push
+@Theme(value = "quiz-theme", variant = Lumo.LIGHT)
 public class ApplicationConfiguration implements AppShellConfigurator, VaadinServiceInitListener {
 
     @Override

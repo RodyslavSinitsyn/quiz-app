@@ -123,7 +123,6 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                 int questionNumber,
                                 int totalQuestions,
                                 int roundNumber) {
-        setEnabled(true);
         log.debug("Render question. GameId {}, questionText: {}", gameId, question.getText());
         renderTopContainerForAdmin(broadcaster.getState(gameId).getUsers().values());
         renderQuestionLayout(question, questionNumber, totalQuestions, roundNumber);
@@ -137,6 +136,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         answersLayout.setPadding(false);
 
         botContainer.removeAll();
+        botContainer.setEnabled(true);
         botContainer.add(answersLayout);
 
         if (!singleAnswer) {
@@ -186,28 +186,23 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
         midContainer.removeAll();
 
-        VerticalLayout gradeQuestionLayout = new VerticalLayout();
-        gradeQuestionLayout.setWidthFull();
-        gradeQuestionLayout.setAlignItems(Alignment.CENTER);
-        gradeQuestionLayout.add(new Span("Насколько вопрос сложный?"));
-
-        StarsRating rating = new StarsRating(1, 5, true);
-        rating.addValueChangeListener(event -> {
-            broadcaster.sendQuestionGradedEvent(gameId,
-                    questionModel,
-                    SessionWrapper.getLoggedUser(),
-                    event.getValue());
-        });
-        gradeQuestionLayout.add(rating);
-
-
         Span questionNumberTooltip = new Span();
         questionNumberTooltip.setText(String.format("Раунд %d. Вопрос %d/%d", roundNumber, questionNumber, totalQuestions));
         questionNumberTooltip.addClassNames(LumoUtility.FontSize.SMALL,
                 LumoUtility.FontWeight.SEMIBOLD,
                 LumoUtility.AlignSelf.START);
 
-        midContainer.add(gradeQuestionLayout);
+        if (!isAdmin) {
+            midContainer.add(CleverestComponents.questionGradeLayout(event -> {
+                        broadcaster.sendQuestionGradedEvent(gameId,
+                                questionModel,
+                                SessionWrapper.getLoggedUser(),
+                                event.getValue());
+                        CleverestComponents.notification(SessionWrapper.getLoggedUser() + ", спасибо за фидбек!",
+                                NotificationVariant.LUMO_CONTRAST);
+                    }
+            ));
+        }
         midContainer.add(questionNumberTooltip);
         midContainer.add(CleverestComponents.questionLayout(
                 questionModel,
@@ -401,7 +396,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         } else {
             renderUserPersonalScore();
             midContainer.add(CleverestComponents.userInfoSpan(
-                    "Итоговое место: " + gameState.getUsers().get(SessionWrapper.getLoggedUser()).getLastPosition()));
+                    "Итоговое место: " + gameState.getUsers().get(SessionWrapper.getLoggedUser()).getLastPosition(),
+                    LumoUtility.FontSize.XXLARGE));
             resultComponent.setState(
                     gameState.getSortedByScoreUsers().values(),
                     gameState.getHistory(),
@@ -421,7 +417,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     updateUserAnswerGiven(event.getUserGameState());
                 }
                 if (event.getUserGameState().getUsername().equals(SessionWrapper.getLoggedUser())) {
-                    setEnabled(false);
+                    botContainer.setEnabled(false);
                 }
             });
         }));
@@ -447,12 +443,14 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     if (SessionWrapper.getLoggedUser().equals(event.getUserToAnswer().getUsername())) {
                         midContainer.add(CleverestComponents.userInfoSpan(
                                 "Время отвечать!",
-                                LumoUtility.TextColor.PRIMARY
+                                LumoUtility.TextColor.PRIMARY,
+                                LumoUtility.FontSize.XXLARGE
                         ));
                     } else {
                         midContainer.add(CleverestComponents.userInfoSpan(
                                 "В ожидании вопроса",
-                                LumoUtility.TextColor.SECONDARY
+                                LumoUtility.TextColor.SECONDARY,
+                                LumoUtility.FontSize.XXLARGE
                         ));
                     }
                 }

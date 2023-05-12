@@ -3,6 +3,7 @@ package org.rsinitsyn.quiz.utils;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Label;
@@ -30,12 +31,31 @@ public class QuizComponents {
         header.addClassNames(
                 LumoUtility.AlignSelf.CENTER,
                 LumoUtility.TextAlignment.CENTER);
-//        header.getStyle().set("color", "white");
         return header;
     }
 
     public H4 subHeader(String text) {
         return new H4(text);
+    }
+
+    public ConfirmDialog openConfirmDialog(Component content,
+                                           String headerText,
+                                           Runnable confirmAction) {
+        var dialog = new ConfirmDialog();
+        dialog.setRejectable(false);
+        dialog.setCloseOnEsc(true);
+        dialog.setCancelable(true);
+        dialog.setHeader(StringUtils.defaultIfEmpty(headerText, ""));
+        dialog.setText(content);
+        dialog.setCancelText("Отменить");
+        dialog.setConfirmText("Подтвердить");
+        dialog.addCancelListener(event -> dialog.close());
+        dialog.addConfirmListener(event -> {
+            confirmAction.run();
+            dialog.close();
+        });
+        dialog.open();
+        return dialog;
     }
 
     public Notification infoNotification(String text) {

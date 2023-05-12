@@ -21,6 +21,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import de.jfancy.StarsRating;
 import java.util.List;
 import java.util.Map;
 import lombok.experimental.UtilityClass;
@@ -96,8 +97,7 @@ public class CleverestComponents {
     public Span userInfoSpan(String text, String... classes) {
         Span span = new Span();
         span.setText(text);
-        span.addClassNames(LumoUtility.FontSize.XXLARGE,
-                LumoUtility.FontWeight.LIGHT,
+        span.addClassNames(LumoUtility.FontWeight.LIGHT,
                 LumoUtility.TextAlignment.CENTER);
         span.addClassNames(classes);
         return span;
@@ -266,6 +266,21 @@ public class CleverestComponents {
                 QuizComponents.appendTextBorder(userScore));
         layout.addClassNames(LumoUtility.Border.BOTTOM);
         layout.getStyle().set("border-color", ustTxtColor);
+
+        return layout;
+    }
+
+    public VerticalLayout questionGradeLayout(HasValue.ValueChangeListener<? super AbstractField.ComponentValueChangeEvent<StarsRating, Integer>> eventHandler) {
+        VerticalLayout layout = new VerticalLayout();
+        layout.setSpacing(false);
+        layout.setPadding(false);
+        layout.setWidthFull();
+        layout.setAlignItems(FlexComponent.Alignment.CENTER);
+        layout.add(userInfoSpan("Оцените сложность вопроса", LumoUtility.FontSize.SMALL));
+
+        StarsRating rating = new StarsRating(0, 5, true);
+        rating.addValueChangeListener(eventHandler);
+        layout.add(rating);
 
         return layout;
     }

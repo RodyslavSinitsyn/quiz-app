@@ -1,0 +1,38 @@
+* {
+
+}
+
+vaadin-item[selected] {
+    background-color: rgba(173, 215, 255, 0.25);
+}
+
+/*Less than 700*/
+@media (max-width: 700px) {
+
+    .navbar-drawer-toggle {
+        display: block;
+    }
+
+    .navbar-tabs {
+        display: none;
+    }
+
+    .navbar-drawer-tabs {
+        display: block;
+    }
+}
+
+@media (min-width: 700px) {
+
+    .navbar-drawer-toggle {
+        display: none;
+    }
+
+    .navbar-tabs {
+        display: block;
+    }
+
+    .navbar-drawer-tabs {
+        display: none;
+    }
+}

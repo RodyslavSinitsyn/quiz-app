@@ -3,6 +3,7 @@ package org.rsinitsyn.quiz.component;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.applayout.AppLayout;
+import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -11,7 +12,6 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
@@ -34,6 +34,7 @@ import org.rsinitsyn.quiz.page.NewGamePage;
 import org.rsinitsyn.quiz.page.QuestionsListPage;
 import org.rsinitsyn.quiz.page.StatisticPage;
 import org.rsinitsyn.quiz.service.UserService;
+import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -62,19 +63,29 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver, Be
         configureDialog();
         configureAuthComponents();
 
+        Tabs drawerTabs = createTabs(Tabs.Orientation.VERTICAL);
+        drawerTabs.addClassName("navbar-drawer-tabs");
+        Tabs navbarTabs = createTabs(Tabs.Orientation.HORIZONTAL);
+        navbarTabs.addClassNames("navbar-tabs");
+
+        DrawerToggle drawerToggle = new DrawerToggle();
+        drawerToggle.addClassName("navbar-drawer-toggle");
+
         header.setWidthFull();
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         header.add(
+                drawerToggle,
                 createLogo(),
-                new Scroller(createTabs()) {{
-                    setScrollDirection(ScrollDirection.HORIZONTAL);
-                }},
+                navbarTabs,
                 createAuthLayout());
         header.setAlignItems(FlexComponent.Alignment.CENTER);
         header.addClassNames(LumoUtility.Border.BOTTOM,
                 LumoUtility.BorderColor.PRIMARY);
 
         addToNavbar(header);
+        addToDrawer(drawerTabs);
+        setDrawerOpened(false);
+
         addClassNames(LumoUtility.Background.PRIMARY_10);
     }
 
@@ -85,8 +96,9 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver, Be
         return logo;
     }
 
-    private Tabs createTabs() {
+    private Tabs createTabs(Tabs.Orientation orientation) {
         Tabs tabs = new Tabs();
+        tabs.setOrientation(orientation);
         tabs.addThemeVariants(TabsVariant.LUMO_CENTERED,
                 TabsVariant.LUMO_MINIMAL);
         tabs.add(createTab("Играть", VaadinIcon.PLAY_CIRCLE_O.create(), NewGamePage.class));
@@ -131,10 +143,14 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver, Be
         exitButton.setText("");
         exitButton.setIcon(VaadinIcon.SIGN_OUT.create());
         exitButton.addClassNames(LumoUtility.Margin.MEDIUM);
-        exitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         exitButton.addClickListener(event -> {
-            renderAfterLogout();
-            VaadinSession.getCurrent().close();
+            QuizComponents.openConfirmDialog(
+                    new Span("Подтвердите действие"),
+                    "Выйти из системы?",
+                    () -> {
+                        renderAfterLogout();
+                        VaadinSession.getCurrent().close();
+                    });
         });
 
         if (SessionWrapper.getLoggedUser().equals("Аноним")) {
@@ -201,16 +217,16 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver, Be
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
-        log.debug("afterNavigation");
+        log.trace("afterNavigation");
     }
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        log.debug("beforeEnter");
+        log.trace("beforeEnter");
     }
 
     @Override
     public void beforeLeave(BeforeLeaveEvent event) {
-        log.debug("beforeLeave");
+        log.trace("beforeLeave");
     }
 }
