@@ -35,6 +35,10 @@ import org.rsinitsyn.quiz.utils.QuizUtils;
 @UtilityClass
 public class CleverestComponents {
 
+    public static final String MOBILE_SMALL_FONT = LumoUtility.FontSize.MEDIUM;
+    public static final String MOBILE_MEDIUM_FONT = LumoUtility.FontSize.XLARGE;
+    public static final String MOBILE_LARGE_FONT = LumoUtility.FontSize.XXLARGE;
+
     public Dialog openDialog(Component component, String headerTitle, Runnable closeAction) {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle(headerTitle);
@@ -51,7 +55,9 @@ public class CleverestComponents {
     public Span questionTextSpan(String text, String... classes) {
         Span span = new Span();
         span.setText(text);
-        span.addClassNames(LumoUtility.LineHeight.XSMALL,
+        span.addClassNames(
+                LumoUtility.FontWeight.SEMIBOLD,
+                LumoUtility.LineHeight.XSMALL,
                 LumoUtility.TextAlignment.CENTER,
                 LumoUtility.Whitespace.PRE_LINE);
         span.addClassNames(classes);
@@ -64,15 +70,10 @@ public class CleverestComponents {
         userTextAnswer.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
         userTextAnswer.addClassNames(classes);
 
-        Span result = new Span(
+        return new Span(
                 userNameSpan(userGameState.getUsername(), userGameState.getColor(), classes),
                 delimiterSpan(classes),
                 userTextAnswer);
-        result.addClassNames(LumoUtility.TextAlignment.CENTER);
-        if (userGameState.isLastWasCorrect()) {
-            result.addClassNames(LumoUtility.Background.SUCCESS_10);
-        }
-        return result;
     }
 
     public Span userNameSpan(String username, String textColor, String... classes) {
@@ -87,17 +88,19 @@ public class CleverestComponents {
         Span span = new Span();
         span.addClassNames(classes);
         span.addClassNames(LumoUtility.TextAlignment.CENTER,
-                LumoUtility.Border.BOTTOM,
-                LumoUtility.BorderColor.SUCCESS);
+                LumoUtility.Border.ALL,
+                LumoUtility.Background.PRIMARY_10,
+                LumoUtility.BorderColor.PRIMARY);
         span.setWidthFull();
         span.setText(questionModel.getFirstCorrectAnswer().getText());
         return span;
     }
 
-    public Span userInfoSpan(String text, String... classes) {
+    public Span userInfoLightSpan(String text, String... classes) {
         Span span = new Span();
         span.setText(text);
-        span.addClassNames(LumoUtility.FontWeight.LIGHT,
+        span.addClassNames(
+                LumoUtility.FontWeight.LIGHT,
                 LumoUtility.TextAlignment.CENTER);
         span.addClassNames(classes);
         return span;
@@ -126,7 +129,7 @@ public class CleverestComponents {
         button.addClassNames(
                 LumoUtility.BorderColor.PRIMARY,
                 LumoUtility.Border.ALL,
-                LumoUtility.FontSize.XXLARGE);
+                MOBILE_LARGE_FONT);
         button.addClickListener(event -> {
             action.run();
         });
@@ -137,7 +140,7 @@ public class CleverestComponents {
         TextField textField = new TextField("Введите ответ");
         textField.setValueChangeMode(ValueChangeMode.EAGER);
         textField.addThemeVariants(TextFieldVariant.LUMO_ALIGN_CENTER);
-        textField.addClassNames(LumoUtility.FontSize.LARGE);
+        textField.addClassNames(MOBILE_MEDIUM_FONT);
         textField.setWidthFull();
         textField.addValueChangeListener(eventHandler);
         return textField;
@@ -147,7 +150,7 @@ public class CleverestComponents {
         Button button = new Button(text);
         button.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
         button.addClickListener(clickAction);
-        button.addClassNames(LumoUtility.FontSize.LARGE);
+        button.addClassNames(MOBILE_MEDIUM_FONT);
         return button;
     }
 
@@ -158,7 +161,9 @@ public class CleverestComponents {
         button.setDisableOnClick(true);
         button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         button.addClickListener(event -> {
-            event.getSource().getParent().ifPresent(p -> p.addClassNames(LumoUtility.Background.SUCCESS_10));
+            event.getSource().getParent().ifPresent(p ->
+                    p.addClassNames(
+                            LumoUtility.Background.PRIMARY_10, LumoUtility.Border.ALL, LumoUtility.BorderColor.PRIMARY));
             clickAction.run();
         });
         button.addThemeVariants(variants);
@@ -190,17 +195,19 @@ public class CleverestComponents {
         VerticalLayout layout = new VerticalLayout();
         layout.setSpacing(false);
         layout.setPadding(false);
+        layout.addClassNames(LumoUtility.Margin.Top.MEDIUM);
         layout.setDefaultHorizontalComponentAlignment(FlexComponent.Alignment.CENTER);
 
         if (StringUtils.isNotEmpty(questionModel.getPhotoFilename())) {
             Image image = new Image();
             image.setSrc(QuizUtils.createStreamResourceForPhoto(questionModel.getPhotoFilename()));
             image.setMaxHeight(imageHeight);
+            image.addClassNames(LumoUtility.BorderColor.PRIMARY, LumoUtility.Border.ALL);
             layout.add(image);
         }
 
         Span categorySpan = new Span(questionModel.getCategoryName());
-        categorySpan.addClassNames(LumoUtility.FontWeight.SEMIBOLD, LumoUtility.FontSize.SMALL);
+        categorySpan.addClassNames(LumoUtility.FontWeight.LIGHT, MOBILE_SMALL_FONT);
         layout.add(categorySpan);
 
         Span textContent = CleverestComponents.questionTextSpan(
@@ -255,17 +262,17 @@ public class CleverestComponents {
         HorizontalLayout layout = new HorizontalLayout();
         layout.setAlignItems(FlexComponent.Alignment.CENTER);
         layout.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.STRETCH);
+        layout.addClassNames(LumoUtility.Border.BOTTOM,
+                LumoUtility.FontWeight.SEMIBOLD);
+        layout.getStyle().set("border-color", ustTxtColor);
         layout.setWidthFull();
 
         Span userScore = new Span(String.valueOf(score));
-        userScore.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
         userScore.addClassNames(classes);
         userScore.getStyle().set("color", ustTxtColor);
 
         layout.add(userNameSpan(username, ustTxtColor, classes),
                 QuizComponents.appendTextBorder(userScore));
-        layout.addClassNames(LumoUtility.Border.BOTTOM);
-        layout.getStyle().set("border-color", ustTxtColor);
 
         return layout;
     }
@@ -276,7 +283,7 @@ public class CleverestComponents {
         layout.setPadding(false);
         layout.setWidthFull();
         layout.setAlignItems(FlexComponent.Alignment.CENTER);
-        layout.add(userInfoSpan("Оцените сложность вопроса", LumoUtility.FontSize.SMALL));
+        layout.add(userInfoLightSpan("Оцените сложность вопроса", MOBILE_SMALL_FONT));
 
         StarsRating rating = new StarsRating(0, 5, true);
         rating.addValueChangeListener(eventHandler);

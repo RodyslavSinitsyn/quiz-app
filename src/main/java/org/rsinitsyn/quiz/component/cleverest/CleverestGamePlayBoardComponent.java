@@ -12,7 +12,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import de.jfancy.StarsRating;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -83,7 +82,9 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             userDiv.add(CleverestComponents.userNameSpan(uState.getUsername(), uState.getColor()));
             userDiv.setId("top-container-user-" + uState.getUsername());
             userDiv.setWidthFull();
-            userDiv.addClassNames(LumoUtility.Border.BOTTOM,
+            userDiv.addClassNames(
+                    LumoUtility.Border.BOTTOM,
+                    LumoUtility.FontWeight.SEMIBOLD,
                     LumoUtility.FontSize.XXLARGE);
             topContainer.add(userDiv);
         });
@@ -102,7 +103,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     private void showRoundRules(int roundNumber, String rulesText) {
         Div rules = new Div();
         rules.setText(rulesText);
-        rules.addClassNames(LumoUtility.FontSize.XXXLARGE,
+        rules.addClassNames(
+                LumoUtility.FontSize.XXXLARGE,
                 LumoUtility.FontWeight.SEMIBOLD,
                 LumoUtility.TextAlignment.CENTER);
         rules.setWidth("25em");
@@ -179,17 +181,19 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
     private void renderQuestionLayout(QuestionModel questionModel, int questionNumber, int totalQuestions, int roundNumber) {
         List<String> questionClasses = isAdmin
-                ? List.of(LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.SEMIBOLD)
-                : List.of(LumoUtility.FontSize.XXLARGE, LumoUtility.FontWeight.LIGHT);
+                ? List.of(LumoUtility.FontSize.XXXLARGE)
+                : List.of(CleverestComponents.MOBILE_LARGE_FONT);
 
         String imageHeight = isAdmin ? "30em" : "17.5em";
 
         midContainer.removeAll();
 
-        Span questionNumberTooltip = new Span();
-        questionNumberTooltip.setText(String.format("Раунд %d. Вопрос %d/%d", roundNumber, questionNumber, totalQuestions));
-        questionNumberTooltip.addClassNames(LumoUtility.FontSize.SMALL,
+        Span questionNumberSpan = new Span();
+        questionNumberSpan.setText(String.format("Раунд %d. Вопрос %d/%d", roundNumber, questionNumber, totalQuestions));
+        questionNumberSpan.addClassNames(
+                LumoUtility.FontSize.MEDIUM,
                 LumoUtility.FontWeight.SEMIBOLD,
+                LumoUtility.Margin.Bottom.MEDIUM,
                 LumoUtility.AlignSelf.START);
 
         if (!isAdmin) {
@@ -203,7 +207,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     }
             ));
         }
-        midContainer.add(questionNumberTooltip);
+        midContainer.add(questionNumberSpan);
         midContainer.add(CleverestComponents.questionLayout(
                 questionModel,
                 questionClasses,
@@ -215,7 +219,6 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     private void renderCategoriesTable(UserGameState userToAnswer,
                                        Map<String, List<QuestionModel>> data) {
         var categoriesLayout = new VerticalLayout();
-        categoriesLayout.addClassNames(LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.LIGHT);
         categoriesLayout.setAlignItems(Alignment.START);
 
         midContainer.removeAll();
@@ -223,6 +226,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
         data.forEach((category, questions) -> {
             HorizontalLayout row = new HorizontalLayout();
+            row.addClassNames(LumoUtility.FontSize.XXXLARGE,
+                    LumoUtility.FontWeight.SEMIBOLD);
             row.setDefaultVerticalComponentAlignment(Alignment.CENTER);
             row.setAlignItems(Alignment.START);
             row.setMargin(true);
@@ -234,7 +239,6 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             row.add(categoryName);
             questions.forEach(questionModel -> {
                 Button openQuestionButton = openCategoryQuestionButton(userToAnswer, questionModel);
-                openQuestionButton.addClassNames(LumoUtility.FontSize.XXXLARGE);
                 row.add(openQuestionButton);
             });
             categoriesLayout.add(row);
@@ -250,7 +254,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     broadcaster.getState(gameId).refreshQuestionRenderedTime();
                     VerticalLayout questionLayout = CleverestComponents.questionLayout(
                             question,
-                            List.of(LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.SEMIBOLD),
+                            List.of(LumoUtility.FontSize.XXXLARGE),
                             "25em",
                             isAdmin
                     );
@@ -265,7 +269,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                         () -> false);
                                 question.setAlreadyAnswered(true);
                                 updateUserAnswerGiven(userToAnswer);
-                                showCorrectAnswer(question,
+                                showCorrectAnswer(
+                                        question,
                                         Collections.singletonList(userToAnswer),
                                         false,
                                         0,
@@ -299,8 +304,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 SessionWrapper.getLoggedUser(),
                 userState.getColor(),
                 userState.getScore(),
-                LumoUtility.FontSize.XXLARGE,
-                LumoUtility.FontWeight.LIGHT
+                CleverestComponents.MOBILE_LARGE_FONT
         ));
     }
 
@@ -309,7 +313,9 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                 Runnable onCloseAction) {
         var usersScoreLayout = revealScoreAfter == 0
                 ? CleverestComponents.usersScoreTableLayout(broadcaster.getState(gameId).getSortedByScoreUsers())
-                : new VerticalLayout(new Span("Таблица результатов через " + revealScoreAfter + " количество вопросов..."));
+                : new VerticalLayout(CleverestComponents.userInfoLightSpan(
+                "Вопросов до таблицы результатов: " + revealScoreAfter,
+                LumoUtility.FontSize.XXXLARGE));
 
         CleverestComponents.openDialog(
                 usersScoreLayout,
@@ -341,18 +347,27 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         VerticalLayout answers = new VerticalLayout();
         answers.setSpacing(true);
         answers.setDefaultHorizontalComponentAlignment(Alignment.START);
-        answers.setAlignItems(Alignment.CENTER);
+        answers.setAlignItems(Alignment.START);
         answers.addClassNames(LumoUtility.FontSize.XXXLARGE);
 
         answers.add(CleverestComponents.correctAnswerSpan(question,
                 LumoUtility.FontSize.XXXLARGE,
                 LumoUtility.FontWeight.SEMIBOLD));
-        answers.add(new Hr());
 
         users.forEach(userGameState -> {
             HorizontalLayout row = new HorizontalLayout();
-            row.setDefaultVerticalComponentAlignment(Alignment.CENTER);
+            row.setPadding(true);
+            row.setWidthFull();
+            row.setDefaultVerticalComponentAlignment(Alignment.START);
+            row.setJustifyContentMode(JustifyContentMode.START);
             row.setAlignItems(Alignment.CENTER);
+
+            if (userGameState.isLastWasCorrect()) {
+                row.addClassNames(
+                        LumoUtility.Background.PRIMARY_10,
+                        LumoUtility.Border.ALL,
+                        LumoUtility.BorderColor.PRIMARY);
+            }
 
             if (!approveManually) {
                 row.add(userGameState.isLastWasCorrect()
@@ -395,9 +410,9 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     "");
         } else {
             renderUserPersonalScore();
-            midContainer.add(CleverestComponents.userInfoSpan(
+            midContainer.add(CleverestComponents.userInfoLightSpan(
                     "Итоговое место: " + gameState.getUsers().get(SessionWrapper.getLoggedUser()).getLastPosition(),
-                    LumoUtility.FontSize.XXLARGE));
+                    CleverestComponents.MOBILE_LARGE_FONT));
             resultComponent.setState(
                     gameState.getSortedByScoreUsers().values(),
                     gameState.getHistory(),
@@ -441,16 +456,16 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     renderCategoriesTable(event.getUserToAnswer(), event.getData());
                 } else {
                     if (SessionWrapper.getLoggedUser().equals(event.getUserToAnswer().getUsername())) {
-                        midContainer.add(CleverestComponents.userInfoSpan(
+                        midContainer.add(CleverestComponents.userInfoLightSpan(
                                 "Время отвечать!",
                                 LumoUtility.TextColor.PRIMARY,
-                                LumoUtility.FontSize.XXLARGE
+                                CleverestComponents.MOBILE_LARGE_FONT
                         ));
                     } else {
-                        midContainer.add(CleverestComponents.userInfoSpan(
+                        midContainer.add(CleverestComponents.userInfoLightSpan(
                                 "В ожидании вопроса",
                                 LumoUtility.TextColor.SECONDARY,
-                                LumoUtility.FontSize.XXLARGE
+                                CleverestComponents.MOBILE_LARGE_FONT
                         ));
                     }
                 }
