@@ -22,6 +22,7 @@ repositories {
 
 ext {
     set('vaadinVersion', "24.0.0")
+    isProd = System.properties['env'] == 'prod'
 }
 
 dependencies {
@@ -42,6 +43,12 @@ dependencies {
 dependencyManagement {
     imports {
         mavenBom "com.vaadin:vaadin-bom:${vaadinVersion}"
+    }
+}
+
+vaadin {
+    if (isProd) {
+        productionMode = true
     }
 }
 

@@ -18,4 +18,7 @@ public interface GameDao extends JpaRepository<GameEntity, UUID> {
             "JOIN FETCH ge.gameQuestions gq " +
             "WHERE gq.user.username = :playerName")
     List<GameEntity> findAllByPlayerName(@Param("playerName") String playerName);
+
+    @Query("FROM GameEntity ge ORDER BY ge.creationDate DESC")
+    List<GameEntity> findAllNewFirst();
 }

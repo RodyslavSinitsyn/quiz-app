@@ -73,9 +73,12 @@ public class QuizUtils {
         return org.springframework.util.ResourceUtils.getFile(RESOURCES_PATH + pathToFile);
     }
 
-    public void runActionInUi(Optional<UI> optUi, Command action) {
-        UI ui = optUi.orElseThrow(() -> new RuntimeException("UI not exists!"));
+    public void runActionInUi(UI ui, Command action) {
         ui.access(action);
+    }
+
+    public void runActionInUi(Optional<UI> optUi, Command action) {
+        runActionInUi(optUi.orElseThrow(() -> new RuntimeException("UI not exists!")), action);
     }
 
 //

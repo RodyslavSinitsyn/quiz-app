@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -95,6 +94,7 @@ public class GameService {
         }
         GameEntity entity = new GameEntity();
         entity.setId(UUID.fromString(id));
+        entity.setName("Cleverest");
         entity.setStatus(GameStatus.NOT_STARTED);
         entity.setType(gameType);
         entity.setCreatedBy(SessionWrapper.getLoggedUser());
@@ -141,6 +141,7 @@ public class GameService {
         gameEntity.setName(name);
         gameEntity.setCreatedBy(SessionWrapper.getLoggedUser());
         gameEntity.setStatus(status);
+        gameEntity.setCreationDate(gameEntity.getCreationDate());
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
@@ -183,11 +184,7 @@ public class GameService {
                 });
     }
 
-    public List<GameEntity> findAllFinishedNewFirst() {
-        return gameDao.findAll()
-                .stream()
-                .filter(gameEntity -> gameEntity.getStatus().equals(GameStatus.FINISHED))
-                .sorted(Comparator.comparing(GameEntity::getFinishDate, Comparator.reverseOrder()))
-                .toList();
+    public List<GameEntity> findAllNewFirst() {
+        return gameDao.findAllNewFirst();
     }
 }

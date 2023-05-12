@@ -1,0 +1,66 @@
+Click from Menu
+
+CleverestGamePage constructor
+CleverestGamePage  setParameter
+subs size: 0
+CleverestGamePage  beforeEnter
+CleverestGamePage  onAttach
+CleverestGamePage afterNavigation
+GameId is empty
+
+-----------------------------------
+Refresh page settings
+
+CleverestGamePage  onDetach
+CleverestGamePage  setParameter
+subs size: 1
+CleverestGamePage  beforeEnter
+CleverestGamePage  onAttach
+CleverestGamePage afterNavigation
+GameId is empty
+
+---------------------------
+Submit answers (navigate onto self)
+
+CleverestGamePage beforeLeave
+CleverestGamePage  setParameter
+subs size: 2
+CleverestGamePage  beforeEnter
+CleverestGamePage afterNavigation
+
+---------------------------
+Refresh page waitig room
+
+CleverestGamePage  onDetach
+CleverestGamePage  setParameter
+subs size: 2
+CleverestGamePage  beforeEnter
+CleverestGamePage  onAttach
+CleverestGamePage afterNavigation
+
+-------------------------
+Navigate outside
+
+CleverestGamePage beforeLeave
+CleverestGamePage  onDetach
+
+----------------------------
+Navigate again from Menu
+
+CleverestGamePage constructor
+CleverestGamePage  setParameter
+subs size: 0
+CleverestGamePage  beforeEnter
+CleverestGamePage  onAttach
+CleverestGamePage afterNavigation
+
+----------------------------
+Refresh page after game started
+
+CleverestGamePage  onDetach
+CleverestGamePage  setParameter
+subs size: 1
+CleverestGamePage  beforeEnter
+CleverestGamePage  onAttach
+CleverestGamePage afterNavigation
+

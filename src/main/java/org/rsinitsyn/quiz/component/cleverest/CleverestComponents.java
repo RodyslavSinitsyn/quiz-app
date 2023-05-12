@@ -156,9 +156,7 @@ public class CleverestComponents {
         Button button = new Button();
         button.setIcon(VaadinIcon.CHECK.create());
         button.setDisableOnClick(true);
-        button.addClassNames(
-                LumoUtility.Border.ALL,
-                LumoUtility.BorderColor.PRIMARY);
+        button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         button.addClickListener(event -> {
             event.getSource().getParent().ifPresent(p -> p.addClassNames(LumoUtility.Background.SUCCESS_10));
             clickAction.run();

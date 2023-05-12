@@ -1,12 +1,14 @@
 package org.rsinitsyn.quiz.page;
 
 import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.AfterNavigationEvent;
+import com.vaadin.flow.router.AfterNavigationObserver;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.BeforeLeaveEvent;
 import com.vaadin.flow.router.BeforeLeaveObserver;
@@ -27,38 +29,54 @@ import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.cleverest.CleverestGamePlayBoardComponent;
 import org.rsinitsyn.quiz.component.cleverest.CleverestGameSettingsComponent;
+import org.rsinitsyn.quiz.component.cleverest.CleverestResultComponent;
 import org.rsinitsyn.quiz.component.cleverest.CleverestWaitingRoomComponent;
 import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.GameType;
-import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
+import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 
+/*
+    constructor
+    setParameter
+    beforeEnter
+    onAttach
+    afterNavigation
+    beforeLeave
+    onDetach
+ */
 @Route(value = "/cleverest", layout = MainLayout.class)
 @PageTitle("Cleverest")
-@PreserveOnRefresh
-public class CleverestGamePage extends VerticalLayout implements HasUrlParameter<String>, BeforeLeaveObserver, Serializable {
+@PreserveOnRefresh // do not call constructor when refresh page
+public class CleverestGamePage extends VerticalLayout implements HasUrlParameter<String>,
+        BeforeEnterObserver,
+        BeforeLeaveObserver,
+        AfterNavigationObserver,
+        Serializable {
     static final long serialVersionUID = 6789L;
 
     private String gameId;
     private boolean isAdmin;
-    private List<Registration> subscriptions = new ArrayList<>();
+    private List<Registration> subs = new ArrayList<>();
 
-    private CleverestGameSettingsComponent gameSettingsComponent;
+    private CleverestGameSettingsComponent gameSettingsComponent = new CleverestGameSettingsComponent(new ArrayList<>());
     private CleverestGamePlayBoardComponent playBoardComponent = new CleverestGamePlayBoardComponent();
     private CleverestWaitingRoomComponent waitingRoomComponent;
+    private CleverestResultComponent resultComponent = new CleverestResultComponent();
 
     private QuestionService questionService;
     private GameService gameService;
     private CleverestBroadcaster broadcaster;
 
     @Autowired
+    // Each time on navigate from outside
     public CleverestGamePage(QuestionService questionService,
                              GameService gameService,
                              CleverestBroadcaster broadcaster) {
@@ -68,32 +86,13 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
     }
 
     @Override
+    // Each time on refresh and navigate
     public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
-        removeAll();
-        if (StringUtils.isBlank(parameter)) {
-            renderSettings();
-            return;
-        }
         this.gameId = parameter;
-        GameEntity gameEntity = gameService.findById(gameId);
-        if (gameEntity == null) {
-            Notification.show("Игра не существует");
-            event.getUI().navigate(NewGamePage.class);
-            return;
-        }
-        if (broadcaster.getState(gameId) == null) {
-            Notification.show("Состояние игры не создано");
-            event.getUI().navigate(NewGamePage.class);
-            return;
-        }
-
-        this.isAdmin = gameEntity.getCreatedBy().equals(SessionWrapper.getLoggedUser());
-        subscribeOnEvens(event.getUI());
-        renderComponents(gameEntity, event.getUI());
     }
 
     private void renderSettings() {
-        gameSettingsComponent = new CleverestGameSettingsComponent(questionService.findAllCreatedByCurrentUser());
+        gameSettingsComponent.setQuestions(questionService.findAllCreatedByCurrentUser());
         Registration settCompletedEvent = gameSettingsComponent.addListener(CleverestGameSettingsComponent.SettingsCompletedEvent.class,
                 event -> {
                     String newGameId = UUID.randomUUID().toString();
@@ -105,16 +104,19 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
                             event.getSecondRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList()),
                             event.getThirdRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList())
                     );
-                    getUI().ifPresent(ui -> ui.navigate(this.getClass(), newGameId));
+                    getUI().ifPresent(ui -> {
+                        ui.navigate(this.getClass(), newGameId);
+                    });
                 });
         add(gameSettingsComponent);
-
-        subscriptions.addAll(List.of(
-                settCompletedEvent
-        ));
+        subs.addAll(List.of(settCompletedEvent));
     }
 
-    private void renderComponents(GameEntity gameEntity, UI ui) {
+    /*
+        When page refresh happens restore page state
+     */
+    private void renderComponents(GameEntity gameEntity,
+                                  AfterNavigationEvent event) {
         GameStatus status = gameEntity.getStatus();
 
         if (status.equals(GameStatus.NOT_STARTED)) {
@@ -124,80 +126,73 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
                     isAdmin);
             add(waitingRoomComponent);
         } else if (status.equals(GameStatus.STARTED)) {
-            if (!isInGameOrCreator(gameId)) {
-                ui.navigate(NewGamePage.class).flatMap(Component::getUI).ifPresent(uiNested -> uiNested.getPage().reload());
-                Notification.show("Игра уже началась, вы там не учавствуете");
-                return;
-            }
-            configurePlayBoardComponent();
-            add(playBoardComponent);
+            configureAndAddPlayBoardComponent(event.isRefreshEvent());
+        } else if (status.equals(GameStatus.FINISHED)) {
+            CleverestGameState state = broadcaster.getState(gameId);
+            configureAndAddResultComponent(state);
         }
     }
 
-    private boolean isInGameOrCreator(String gameId) {
-        CleverestGameState state = broadcaster.getState(gameId);
-        return state.getUsers().containsKey(SessionWrapper.getLoggedUser())
-                || state.getCreatedBy().equals(SessionWrapper.getLoggedUser());
+    private void configureAndAddPlayBoardComponent(boolean refreshEvent) {
+        if (notInGameOrCreator(gameId)) {
+            navigateToNewGamePage("Игра уже началась, вы там не учавствуете", getUI().orElseThrow());
+            return;
+        }
+        playBoardComponent.setState(gameId, broadcaster, isAdmin, refreshEvent);
+        add(playBoardComponent);
+    }
+
+    private void configureAndAddResultComponent(CleverestGameState gameState) {
+        resultComponent = new CleverestResultComponent();
+        resultComponent.setState(
+                gameState.getUsers().values(),
+                gameState.getHistory(),
+                isAdmin ? "" : SessionWrapper.getLoggedUser()
+        );
+        add(resultComponent);
     }
 
 
+    @Override
+    // Each time on refresh and navigate
+    public void beforeEnter(BeforeEnterEvent event) {
+    }
+
+    // Each time on refresh and navigate from outside
     @Override
     protected void onAttach(AttachEvent attachEvent) {
-        System.out.println(attachEvent);
     }
 
-    private void subscribeOnEvens(UI ui) {
-        subscriptions.add(broadcaster.subscribe(
-                gameId,
-                CleverestBroadcaster.AllUsersReadyEvent.class, event -> {
-                    if (isAdmin) {
-                        List<QuestionModel> firstAndSecondRoundQuestions =
-                                Stream.concat(
-                                        broadcaster.getState(gameId).getFirstQuestions().stream(),
-                                        broadcaster.getState(gameId).getSecondQuestions().stream()
-                                ).collect(Collectors.toList());
-                        gameService.update(gameId, "Cleverest", GameStatus.STARTED);
-                        gameService.linkQuestionsAndUsersWithGame(
-                                gameId,
-                                event.getUsernames(),
-                                firstAndSecondRoundQuestions
-                        );
-                    }
-                    QuizUtils.runActionInUi(Optional.ofNullable(ui), () -> {
-                        removeAll();
-                        configurePlayBoardComponent();
-                        add(playBoardComponent);
-                    });
-                })
-        );
-
-        if (isAdmin) {
-            subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.GameFinishedEvent.class, event -> {
-                gameService.finishGame(gameId);
-            }));
+    @Override
+    // Each time on refresh and navigate
+    public void afterNavigation(AfterNavigationEvent event) {
+        removeAll();
+        UI ui = getUI().orElseThrow(() -> new IllegalStateException("No UI"));
+        if (StringUtils.isBlank(gameId)) {
+            renderSettings();
+            return;
         }
-    }
+        GameEntity gameEntity = gameService.findById(gameId);
+        if (gameEntity == null) {
+            navigateToNewGamePage("Игра не существует", ui);
+            return;
+        }
+        if (broadcaster.getState(gameId) == null) {
+            navigateToNewGamePage("Состояние игры не создано", ui);
+            return;
+        }
+        this.isAdmin = gameEntity.getCreatedBy().equals(SessionWrapper.getLoggedUser());
 
-
-    private void configurePlayBoardComponent() {
-        playBoardComponent.setProps(gameId, broadcaster, isAdmin);
-        subscriptions.add(playBoardComponent.subscribe(CleverestBroadcaster.SaveUserAnswersEvent.class, event -> {
-            if (isAdmin) {
-                gameService.submitAnswersBatch(gameId, event.getQuestion(), event.getUserStates());
-            }
-        }));
+        subOnEvents(ui);
+        renderComponents(gameEntity, event);
     }
 
     @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        subscriptions.forEach(Registration::remove);
-    }
-
-    @Override
+    // Each time on navigate outside
     public void beforeLeave(BeforeLeaveEvent event) {
         if (StringUtils.isBlank(gameId) ||
                 broadcaster.getState(gameId) == null
-                || !isInGameOrCreator(gameId)) {
+                || notInGameOrCreator(gameId)) {
             event.postpone().proceed();
             return;
         }
@@ -211,5 +206,64 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
             });
             confirmDialog.open();
         }
+    }
+
+    // Each time on refresh and navigate outside
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        clearSubs();
+    }
+
+
+    private void subOnEvents(UI ui) {
+        if (StringUtils.isEmpty(gameId)) {
+            return;
+        }
+        subs.add(broadcaster.subscribe(
+                gameId,
+                CleverestBroadcaster.AllUsersReadyEvent.class, event -> {
+                    if (isAdmin) {
+                        gameService.update(gameId, "Cleverest", GameStatus.STARTED);
+                        gameService.linkQuestionsAndUsersWithGame(
+                                gameId,
+                                event.getUsernames(),
+                                Stream.concat(
+                                                broadcaster.getState(gameId).getFirstQuestions().stream(),
+                                                broadcaster.getState(gameId).getSecondQuestions().stream())
+                                        .toList());
+                    }
+                    QuizUtils.runActionInUi(Optional.ofNullable(ui), () -> {
+                        removeAll();
+                        configureAndAddPlayBoardComponent(false);
+                    });
+                })
+        );
+
+        if (isAdmin) {
+            subs.add(broadcaster.subscribe(gameId,
+                    CleverestBroadcaster.SaveUserAnswersEvent.class,
+                    event -> gameService.submitAnswersBatch(gameId, event.getQuestion(), event.getUserStates())));
+            subs.add(broadcaster.subscribe(
+                    gameId,
+                    CleverestBroadcaster.GameFinishedEvent.class,
+                    event -> gameService.finishGame(gameId)
+            ));
+        }
+    }
+
+    private boolean notInGameOrCreator(String gameId) {
+        CleverestGameState state = broadcaster.getState(gameId);
+        return !state.getUsers().containsKey(SessionWrapper.getLoggedUser())
+                && !state.getCreatedBy().equals(SessionWrapper.getLoggedUser());
+    }
+
+    private void navigateToNewGamePage(String notificationText, UI ui) {
+        QuizComponents.infoNotification(notificationText);
+        ui.navigateToClient("/");
+    }
+
+    private void clearSubs() {
+        subs.forEach(Registration::remove);
+        subs.clear();
     }
 }

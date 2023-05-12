@@ -56,7 +56,7 @@ public class CleverestGameState {
         roundRules.put(3, "В третьем раунде по очереди нужно выбрать тему и ответить на вопрос устно. После этого мы посчитаем баллы.");
     }
 
-    public void updateHistory(QuestionModel key, UserGameState currUserState) {
+    public void putUserStateToHistory(QuestionModel key, UserGameState currUserState) {
         List<UserGameState> states = history.get(key);
         if (states == null || states.isEmpty()) {
             List<UserGameState> temp = new ArrayList<>();

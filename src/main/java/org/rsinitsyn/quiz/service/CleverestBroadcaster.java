@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
@@ -21,6 +22,7 @@ import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class CleverestBroadcaster {
 
     private final Map<String, CleverestGameState> gameStateMap = new ConcurrentHashMap<>();
@@ -35,6 +37,7 @@ public class CleverestBroadcaster {
                             List<QuestionModel> firstRound,
                             List<QuestionModel> secondRound,
                             List<QuestionModel> thirdRound) {
+        log.info("Create game state: {}", gameId);
         Map<String, List<QuestionModel>> categoriesAndQuestions = thirdRound.stream()
                 .collect(Collectors.groupingBy(QuestionModel::getCategoryName,
                         Collectors.collectingAndThen(
@@ -89,18 +92,26 @@ public class CleverestBroadcaster {
 
     //    AllPlayersReadyEvent
     public void sendPlayersReadyEvent(String gameId) {
+        log.info("Players ready, start game: {}", gameId);
         eventBuses.get(gameId).fireEvent(new AllUsersReadyEvent(gameId, getState(gameId).getUsers().keySet()));
     }
 
     public void sendSaveUserAnswersEvent(String gameId, QuestionModel question) {
-        getState(gameId).getUsers().entrySet()
+        CleverestGameState state = getState(gameId);
+        var usersWhoAnswered = state.getUsers().entrySet()
                 .stream()
                 .filter(e -> e.getValue().isAnswerGiven())
-                .forEach(entry -> getState(gameId).updateHistory(question, entry.getValue()));
+                .toList();
+
+        usersWhoAnswered.forEach(entry -> state.putUserStateToHistory(question, entry.getValue()));
+        log.info("History updated. Users gave answers count: {}. Save answers to DB: {}", usersWhoAnswered.size(), gameId);
         eventBuses.get(gameId).fireEvent(new SaveUserAnswersEvent(
                 gameId,
                 question,
                 getState(gameId).getHistory().get(question)));
+
+        state.getUsers().values().forEach(UserGameState::prepareForNext);
+        log.info("All users prepared for question.");
     }
 
 
@@ -110,6 +121,7 @@ public class CleverestBroadcaster {
                                                    QuestionModel questionModel,
                                                    String answerAsText,
                                                    Supplier<Boolean> isCorrect) {
+        log.info("User gave answer: {} = {}", username, answerAsText);
         getState(gameId).submitAnswer(username, answerAsText, isCorrect);
         eventBuses.get(gameId).fireEvent(
                 new UserAnsweredEvent(gameId, getState(gameId).getUsers().get(username)));
@@ -135,6 +147,13 @@ public class CleverestBroadcaster {
         if (noMoreQuestionsInRound) {
             roundsOver = gameState.prepareNextRoundAndCheckIsLast();
         }
+        log.info("All users answered. CurrQuestionNumber: {}. NextQuestionNumber: {}. TotalQuestons: {}, CurrRound: {}. RoundIsOver: {}. GameOver: {}",
+                gameState.getQuestionNumber() - 1,
+                gameState.getQuestionNumber(),
+                gameState.getCurrRoundQuestionsSource().get().size(),
+                currRound,
+                noMoreQuestionsInRound,
+                roundsOver);
         eventBuses.get(gameId).fireEvent(new AllUsersAnsweredEvent(gameId,
                 currQuestion,
                 noMoreQuestionsInRound,
@@ -147,16 +166,35 @@ public class CleverestBroadcaster {
     public void sendFinishGameEvent(String gameId) {
         getState(gameId).calculateUsersStatistic();
         getState(gameId).updateUserPositions();
+        log.info("Game finished: {}", gameId);
         eventBuses.get(gameId).fireEvent(new CleverestBroadcaster.GameFinishedEvent(gameId));
     }
 
-    // NextQuestionEvent
-    public void sendNextQuestionEvent(String gameId) {
+    // GetQuestionEvent
+    public void sendGetQuestionEvent(String gameId) {
         CleverestGameState gameState = getState(gameId);
-        gameState.getUsers().values().forEach(UserGameState::prepareForNext);
-
         QuestionModel question = gameState.getCurrentQuestion();
-        eventBuses.get(gameId).fireEvent(new NextQuestionEvent(
+
+        // In case smth went wrong
+        if (question == null) {
+            log.debug("Get question returns null, the cause could be refreshes. Try to finish game or render next round");
+            if (gameState.prepareNextRoundAndCheckIsLast()) {
+                eventBuses.get(gameId).fireEvent(
+                        new GameFinishedEvent(gameId)
+                );
+            } else {
+                eventBuses.get(gameId).fireEvent(
+                        new NextRoundEvent(
+                                gameId,
+                                gameState.getRoundNumber(),
+                                gameState.getRoundRules().get(gameState.getRoundNumber())
+                        ));
+            }
+            return;
+        }
+
+        log.info("Sending question for render: {}", question.getText() + " - " + question.getCategoryName());
+        eventBuses.get(gameId).fireEvent(new GetQuestionEvent(
                 gameId,
                 question,
                 gameState.getQuestionNumber() + 1,
@@ -166,16 +204,17 @@ public class CleverestBroadcaster {
 
     // UpdatePersonalScoreEvent
     public void sendUpdatePersonalScoreEvent(String gameId) {
+        log.info("Updating personal score: {}", gameId);
         eventBuses.get(gameId).fireEvent(new UpdatePersonalScoreEvent(gameId));
     }
 
     // RenderCategoriesEvent
     public void sendRenderCategoriesEvent(String gameId, QuestionModel question, boolean initial) {
+        log.info("Sending  categories for render, {}", gameId);
         CleverestGameState gameState = getState(gameId);
         if (initial) {
             gameState.prepareUsersToAnswerOrder();
         }
-        gameState.getUsers().values().forEach(UserGameState::prepareForNext);
         if (question != null) {
             question.setAlreadyAnswered(true);
         }
@@ -197,6 +236,7 @@ public class CleverestBroadcaster {
 
         public CleverestGameEvent(String gameId) {
             super(new Div(), false);
+            this.gameId = gameId;
         }
     }
 
@@ -288,17 +328,17 @@ public class CleverestBroadcaster {
     }
 
     @Getter
-    public static class NextQuestionEvent extends CleverestGameEvent {
+    public static class GetQuestionEvent extends CleverestGameEvent {
         private QuestionModel question;
         private int questionNumber;
         private int totalQuestionsInRound;
         private int roundNumber;
 
-        public NextQuestionEvent(String gameId,
-                                 QuestionModel question,
-                                 int questionNumber,
-                                 int totalQuestionsInRound,
-                                 int roundNumber) {
+        public GetQuestionEvent(String gameId,
+                                QuestionModel question,
+                                int questionNumber,
+                                int totalQuestionsInRound,
+                                int roundNumber) {
             super(gameId);
             this.question = question;
             this.questionNumber = questionNumber;

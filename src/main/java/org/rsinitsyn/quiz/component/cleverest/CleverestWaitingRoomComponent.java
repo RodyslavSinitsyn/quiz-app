@@ -221,5 +221,6 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
     @Override
     protected void onDetach(DetachEvent detachEvent) {
         subscriptions.forEach(Registration::remove);
+        subscriptions.clear();
     }
 }

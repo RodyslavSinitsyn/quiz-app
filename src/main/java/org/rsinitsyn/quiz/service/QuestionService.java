@@ -115,7 +115,7 @@ public class QuestionService {
                     List<GameQuestionUserEntity> questionHistory = getQuestionHistory.apply(question);
                     if (!questionHistory.isEmpty()) {
                         answerHistoryMap.putAll(questionHistory.stream()
-                                .sorted(Comparator.comparing(GameQuestionUserEntity::getAnswered, Comparator.reverseOrder()))
+                                .sorted(Comparator.comparing(GameQuestionUserEntity::getAnswered, Comparator.nullsLast(Comparator.reverseOrder())))
                                 .collect(Collectors.toMap(
                                         gqe -> gqe.getUser().getUsername(),
                                         gqe -> AnswerHistory.ofAnswerResult(gqe.getAnswered()),

@@ -1,0 +1,14 @@
+spring:
+  devtools:
+    livereload:
+      enabled: false
+    restart:
+      enabled: false
+  datasource:
+    url: jdbc:h2:file:./db/quiz-db;AUTO_SERVER=TRUE
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+quiz:
+  audio-folder: prod/

@@ -25,7 +25,7 @@ import org.rsinitsyn.quiz.utils.QuizComponents;
 
 public class CleverestGameSettingsComponent extends VerticalLayout {
 
-    private final List<QuestionEntity> questionEntityList;
+    private List<QuestionEntity> questionEntityList;
 
     private final QuestionListGrid allQuestionsGrid = new QuestionListGrid(Collections.emptyList());
     private final QuestionListGrid firstRoundGrid = new QuestionListGrid(Collections.emptyList());
@@ -57,6 +57,11 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
         add(allQuestionsGrid);
         add(createRoundGridsLayout());
         add(submitButton);
+    }
+
+    public void setQuestions(List<QuestionEntity> questions) {
+        this.questionEntityList = questions;
+        this.allQuestionsGrid.setItems(questions);
     }
 
     private void configureToolbar() {

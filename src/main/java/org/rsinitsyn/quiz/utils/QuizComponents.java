@@ -9,6 +9,7 @@ import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.upload.SucceededEvent;
@@ -35,6 +36,12 @@ public class QuizComponents {
 
     public H4 subHeader(String text) {
         return new H4(text);
+    }
+
+    public Notification infoNotification(String text) {
+        return Notification.show(text,
+                2_000,
+                Notification.Position.TOP_CENTER);
     }
 
     public <T extends Component> T appendTextBorder(T component) {

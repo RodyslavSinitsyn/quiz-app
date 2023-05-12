@@ -23,14 +23,16 @@ public class GameResultsComponent extends VerticalLayout {
 
     private void configure(GameEntity gameEntity, Component rowSeparator) {
         if (gameEntity == null || gameEntity.getGameQuestions().isEmpty()) {
-            add(new Span("Нет игры или же у игры нет вопросов"));
+            add(new Span("Игра не настроена"));
             return;
         }
         gameEntity.getGameQuestions().forEach(question -> {
             HorizontalLayout column = new HorizontalLayout();
 
             Span answerIcon;
-            if (question.getAnswered()) {
+            if (question.getAnswered() == null) {
+                answerIcon = new Span(VaadinIcon.MINUS_CIRCLE_O.create());
+            } else if (question.getAnswered()) {
                 answerIcon = new Span(VaadinIcon.CHECK.create());
                 answerIcon.getElement().getThemeList().add("badge success");
             } else {

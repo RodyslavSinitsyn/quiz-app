@@ -41,5 +41,5 @@ public class StaticValuesHolder {
                     "think-3.mp3")
             .iterator();
 
-    public static final String BLACK_FONT_BORDER = "2px 2px 2px black";
+    public static final String BLACK_FONT_BORDER = "1px 1px 1px black";
 }

@@ -17,10 +17,17 @@ import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.tabs.TabsVariant;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.router.AfterNavigationEvent;
+import com.vaadin.flow.router.AfterNavigationObserver;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
+import com.vaadin.flow.router.BeforeLeaveEvent;
+import com.vaadin.flow.router.BeforeLeaveObserver;
 import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.Arrays;
+import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.page.FontsPage;
 import org.rsinitsyn.quiz.page.NewGamePage;
@@ -31,7 +38,8 @@ import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
-public class MainLayout extends AppLayout {
+@Slf4j
+public class MainLayout extends AppLayout implements AfterNavigationObserver, BeforeEnterObserver, BeforeLeaveObserver {
 
     private HorizontalLayout header = new HorizontalLayout();
 
@@ -66,7 +74,7 @@ public class MainLayout extends AppLayout {
         header.addClassNames(LumoUtility.Border.BOTTOM,
                 LumoUtility.BorderColor.PRIMARY);
 
-        addToNavbar(true, header);
+        addToNavbar(header);
         addClassNames(LumoUtility.Background.PRIMARY_10);
     }
 
@@ -189,5 +197,20 @@ public class MainLayout extends AppLayout {
         loginButton.setVisible(true);
         warningMessageAboutLogin.setVisible(true);
         exitButton.setVisible(false);
+    }
+
+    @Override
+    public void afterNavigation(AfterNavigationEvent event) {
+        log.debug("afterNavigation");
+    }
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        log.debug("beforeEnter");
+    }
+
+    @Override
+    public void beforeLeave(BeforeLeaveEvent event) {
+        log.debug("beforeLeave");
     }
 }

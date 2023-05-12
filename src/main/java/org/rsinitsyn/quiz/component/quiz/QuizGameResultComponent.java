@@ -6,7 +6,6 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H5;
 import com.vaadin.flow.component.html.Hr;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.Comparator;
@@ -19,6 +18,7 @@ import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.page.NewGamePage;
+import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 
 public class QuizGameResultComponent extends VerticalLayout {
@@ -79,9 +79,8 @@ public class QuizGameResultComponent extends VerticalLayout {
         newGameButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         newGameButton.addClickListener(event -> {
             getUI().ifPresent(ui -> ui.navigate(NewGamePage.class));
-            Notification.show("Результат игрока '" + gameState.getPlayerName() + "' добавлен в таблицу 'Недавние игры'",
-                    3_000,
-                    Notification.Position.TOP_CENTER);
+            QuizComponents.infoNotification(
+                    "Результат игрока '" + gameState.getPlayerName() + "' добавлен в таблицу 'Недавние игры'");
         });
     }
 

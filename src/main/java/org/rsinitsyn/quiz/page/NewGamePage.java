@@ -24,7 +24,6 @@ public class NewGamePage extends VerticalLayout {
     private final GameService gameService;
 
     private GameListGrid gameListGrid = new GameListGrid(Collections.emptyList());
-    private String gameTypeSelected = "";
 
     public NewGamePage(GameService gameService) {
         this.gameService = gameService;
@@ -37,7 +36,7 @@ public class NewGamePage extends VerticalLayout {
     }
 
     private void configureGameList() {
-        gameListGrid = new GameListGrid(gameService.findAllFinishedNewFirst());
+        gameListGrid = new GameListGrid(gameService.findAllNewFirst());
         gameListGrid.setSizeFull();
     }
 

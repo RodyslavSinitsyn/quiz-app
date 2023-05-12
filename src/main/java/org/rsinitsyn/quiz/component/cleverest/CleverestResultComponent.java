@@ -25,12 +25,12 @@ import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
 public class CleverestResultComponent extends VerticalLayout {
 
-    private Grid<UserGameState> grid = new Grid<>(UserGameState.class, false);
-    private Grid<CleverestResultDto> historyGrid = new Grid<>(CleverestResultDto.class, false);
+    private final Grid<UserGameState> grid = new Grid<>(UserGameState.class, false);
+    private final Grid<CleverestResultDto> historyGrid = new Grid<>(CleverestResultDto.class, false);
 
-    public CleverestResultComponent(Collection<UserGameState> userGameStates,
-                                    Map<QuestionModel, List<UserGameState>> history,
-                                    String username) {
+    public void setState(Collection<UserGameState> userGameStates,
+                         Map<QuestionModel, List<UserGameState>> history,
+                         String username) {
         AtomicInteger qNumber = new AtomicInteger(0);
         List<CleverestResultDto> results = history.entrySet()
                 .stream()
@@ -47,11 +47,6 @@ public class CleverestResultComponent extends VerticalLayout {
                 grid,
                 QuizComponents.subHeader("История ответов"),
                 historyGrid);
-    }
-
-    public CleverestResultComponent(Collection<UserGameState> userGameStates,
-                                    Map<QuestionModel, List<UserGameState>> history) {
-        this(userGameStates, history, "");
     }
 
     private void configureResultGrid(Collection<UserGameState> users) {
