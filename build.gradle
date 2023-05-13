@@ -18,6 +18,7 @@ configurations {
 repositories {
     mavenCentral()
     maven { url 'https://jitpack.io' }
+    maven { url 'https://maven.vaadin.com/vaadin-addons' }
 }
 
 ext {

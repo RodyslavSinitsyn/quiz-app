@@ -197,11 +197,11 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 LumoUtility.AlignSelf.START);
 
         if (!isAdmin) {
-            midContainer.add(CleverestComponents.questionGradeLayout(event -> {
+            midContainer.add(CleverestComponents.questionGradeLayout(scoreVal -> {
                         broadcaster.sendQuestionGradedEvent(gameId,
                                 questionModel,
                                 SessionWrapper.getLoggedUser(),
-                                event.getValue());
+                                scoreVal);
                         CleverestComponents.notification(SessionWrapper.getLoggedUser() + ", спасибо за фидбек!",
                                 NotificationVariant.LUMO_CONTRAST);
                     }
@@ -220,6 +220,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                        Map<String, List<QuestionModel>> data) {
         var categoriesLayout = new VerticalLayout();
         categoriesLayout.setAlignItems(Alignment.START);
+        categoriesLayout.setPadding(false);
 
         midContainer.removeAll();
         midContainer.add(categoriesLayout);
@@ -236,6 +237,9 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     category,
                     event -> {
                     });
+            categoryName.addClassNames(LumoUtility.FontSize.XXXLARGE);
+            categoryName.setEnabled(!questions.stream().allMatch(QuestionModel::isAlreadyAnswered));
+
             row.add(categoryName);
             questions.forEach(questionModel -> {
                 Button openQuestionButton = openCategoryQuestionButton(userToAnswer, questionModel);
@@ -289,6 +293,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                             });
                 });
         button.setEnabled(!question.isAlreadyAnswered());
+        button.addClassNames(LumoUtility.FontSize.XXXLARGE);
         return button;
     }
 
@@ -359,7 +364,6 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             row.setPadding(true);
             row.setWidthFull();
             row.setDefaultVerticalComponentAlignment(Alignment.START);
-            row.setJustifyContentMode(JustifyContentMode.START);
             row.setAlignItems(Alignment.CENTER);
 
             if (userGameState.isLastWasCorrect()) {
@@ -377,7 +381,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
             Span userAnswerSpan = CleverestComponents.userAnswerSpan(
                     userGameState,
-                    LumoUtility.FontSize.XXXLARGE);
+                    LumoUtility.FontSize.XXXLARGE,
+                    LumoUtility.FontWeight.SEMIBOLD);
             row.add(userAnswerSpan);
             if (approveManually) {
                 Button approveButton = CleverestComponents.approveButton(

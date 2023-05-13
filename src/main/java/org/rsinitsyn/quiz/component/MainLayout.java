@@ -25,6 +25,7 @@ import com.vaadin.flow.router.BeforeLeaveEvent;
 import com.vaadin.flow.router.BeforeLeaveObserver;
 import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.VaadinSession;
+import com.vaadin.flow.theme.lumo.Lumo;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +50,9 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver, Be
     private Span loggedUserNameSpan = new Span();
     private Button exitButton = new Button();
 
+    private Button themeToggle = new Button();
+    private boolean darkTheme = false;
+
     private Dialog dialog = new Dialog();
 
     private UserService userService;
@@ -60,7 +64,9 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver, Be
         this.userService = userService;
         this.environment = environment;
 
+        updateTheme();
         configureDialog();
+        configureToggleTheme();
         configureAuthComponents();
 
         Tabs drawerTabs = createTabs(Tabs.Orientation.VERTICAL);
@@ -89,10 +95,20 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver, Be
         addClassNames(LumoUtility.Background.PRIMARY_10);
     }
 
+    private void configureToggleTheme() {
+        themeToggle.setIcon(VaadinIcon.MOON.create());
+        themeToggle.addClickListener(event -> {
+            darkTheme = !darkTheme;
+            SessionWrapper.setTheme(darkTheme ? Lumo.DARK : Lumo.LIGHT);
+            updateTheme();
+        });
+    }
+
     private Span createLogo() {
         Span logo = new Span();
         logo.addClassNames(LumoUtility.Margin.MEDIUM, LumoUtility.FontSize.XLARGE);
         logo.add(VaadinIcon.ACADEMY_CAP.create());
+        logo.add(themeToggle);
         return logo;
     }
 
@@ -213,6 +229,11 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver, Be
         loginButton.setVisible(true);
         warningMessageAboutLogin.setVisible(true);
         exitButton.setVisible(false);
+    }
+
+    private void updateTheme() {
+        var js = "document.documentElement.setAttribute('theme', $0)";
+        getElement().executeJs(js, SessionWrapper.getTheme());
     }
 
     @Override

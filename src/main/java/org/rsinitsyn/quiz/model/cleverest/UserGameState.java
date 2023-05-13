@@ -28,6 +28,8 @@ public class UserGameState implements Comparable<UserGameState> {
     private int lastPosition;
     private long lastResponseTime;
     @Setter(AccessLevel.NONE)
+    private int correctAnswersCount;
+    @Setter(AccessLevel.NONE)
     private int score = 0;
     @Setter(AccessLevel.NONE)
     private boolean answerGiven;
@@ -62,11 +64,13 @@ public class UserGameState implements Comparable<UserGameState> {
 
     public void increaseScore() {
         score++;
+        correctAnswersCount++;
         lastWasCorrect = true;
     }
 
     public void increaseScore(int score) {
         this.score += score;
+        this.correctAnswersCount++;
         this.lastWasCorrect = true;
     }
 
@@ -110,6 +114,7 @@ public class UserGameState implements Comparable<UserGameState> {
                 lastAnswerText,
                 lastPosition,
                 lastResponseTime,
+                correctAnswersCount,
                 score,
                 answerGiven,
                 bets,

@@ -24,6 +24,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.jfancy.StarsRating;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.model.QuestionModel;
@@ -124,12 +125,12 @@ public class CleverestComponents {
     public Button optionButton(String text, Runnable action) {
         Button button = new Button();
         button.setWidthFull();
-        button.setText(text); // 22-23 lenght text fits
+        button.setText(text);
         button.addThemeVariants(ButtonVariant.LUMO_LARGE);
         button.addClassNames(
                 LumoUtility.BorderColor.PRIMARY,
                 LumoUtility.Border.ALL,
-                MOBILE_LARGE_FONT);
+                text.length() > 20 ? MOBILE_MEDIUM_FONT : MOBILE_LARGE_FONT);
         button.addClickListener(event -> {
             action.run();
         });
@@ -277,7 +278,7 @@ public class CleverestComponents {
         return layout;
     }
 
-    public VerticalLayout questionGradeLayout(HasValue.ValueChangeListener<? super AbstractField.ComponentValueChangeEvent<StarsRating, Integer>> eventHandler) {
+    public VerticalLayout questionGradeLayout(Consumer<Integer> eventHandler) {
         VerticalLayout layout = new VerticalLayout();
         layout.setSpacing(false);
         layout.setPadding(false);
@@ -286,7 +287,7 @@ public class CleverestComponents {
         layout.add(userInfoLightSpan("Оцените сложность вопроса", MOBILE_SMALL_FONT));
 
         StarsRating rating = new StarsRating(0, 5, true);
-        rating.addValueChangeListener(eventHandler);
+        rating.addValueChangeListener(event -> eventHandler.accept(event.getValue()));
         layout.add(rating);
 
         return layout;

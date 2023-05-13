@@ -58,22 +58,28 @@ public class CleverestResultComponent extends VerticalLayout {
                 LumoUtility.FontSize.XXLARGE);
 
         grid.addColumn(UserGameState::getLastPosition)
-                .setHeader("Призовое место");
+                .setHeader("Место")
+                .setFlexGrow(0);
         grid.addColumn(UserGameState::getUsername)
                 .setHeader("Игрок")
                 .setAutoWidth(true);
         grid.addColumn(uState -> String.format("%f", QuizUtils.divide(uState.getAvgResponseTime(), 1000)))
                 .setHeader("Время на ответ");
+        grid.addColumn(UserGameState::getCorrectAnswersCount)
+                .setHeader("Верных ответов");
         grid.addColumn(UserGameState::getScore)
-                .setHeader("Очки");
+                .setHeader("Очки")
+                .setFlexGrow(0);
         grid.addColumn(UserGameState::getBetScore)
-                .setHeader("Очки за ставку");
+                .setHeader("Ставка");
         grid.addColumn(new ComponentRenderer<>(u -> new Span(
                         u.winnerBet().getRight() ? CleverestComponents.doneIcon() : CleverestComponents.cancelIcon(),
                         u.loserBet().getRight() ? CleverestComponents.doneIcon() : CleverestComponents.cancelIcon())))
-                .setHeader("Ставки");
+                .setHeader("Ставки")
+                .setFlexGrow(0);
         grid.addColumn(UserGameState::totalScore)
                 .setHeader("Общее колво очков")
+                .setFlexGrow(0)
                 .setClassName(LumoUtility.FontWeight.SEMIBOLD);
     }
 

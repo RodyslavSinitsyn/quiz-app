@@ -11,4 +11,12 @@ public class SessionWrapper {
                 "Аноним"
         );
     }
+
+    public static void setTheme(String theme) {
+        VaadinSession.getCurrent().setAttribute("theme", theme);
+    }
+
+    public static String getTheme() {
+        return (String) VaadinSession.getCurrent().getAttribute("theme");
+    }
 }
