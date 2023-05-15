@@ -31,7 +31,7 @@ import org.hibernate.annotations.Formula;
 @Setter
 @NoArgsConstructor
 @EqualsAndHashCode(of = {"id"})
-@ToString(exclude = {"answers"})
+@ToString
 public class QuestionEntity {
 
     @Id
@@ -60,9 +60,11 @@ public class QuestionEntity {
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("number")
+    @ToString.Exclude
     private Set<AnswerEntity> answers = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private Set<QuestionGrade> grades = new HashSet<>();
 
     public void addAnswer(AnswerEntity answerEntity) {

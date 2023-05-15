@@ -45,6 +45,7 @@ public class GameEntity {
     private LocalDateTime finishDate;
     @OneToMany(mappedBy = "game", fetch = FetchType.LAZY)
     @OrderBy(value = "orderNumber")
+    @ToString.Exclude
     private Set<GameQuestionUserEntity> gameQuestions = new HashSet<>();
 
     public Set<String> getPlayerNames() {

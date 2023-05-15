@@ -24,7 +24,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode
-@ToString(exclude = {"question"})
+@ToString
 public class AnswerEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -35,6 +35,7 @@ public class AnswerEntity {
     private int number;
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "questionId", referencedColumnName = "id")
+    @ToString.Exclude
     private QuestionEntity question;
 
     public AnswerEntity(String text, boolean correct, int number) {

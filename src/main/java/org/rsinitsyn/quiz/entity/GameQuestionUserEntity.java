@@ -11,6 +11,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Table(name = "games_questions")
@@ -18,6 +19,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @EqualsAndHashCode(of = {"id", "answered", "orderNumber"})
+@ToString
 public class GameQuestionUserEntity {
     @EmbeddedId
     private GameQuestionUserId id;
@@ -25,16 +27,19 @@ public class GameQuestionUserEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("gameId")
     @JoinColumn(name = "gameId")
+    @ToString.Exclude
     private GameEntity game;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @MapsId("questionId")
     @JoinColumn(name = "questionId")
+    @ToString.Exclude
     private QuestionEntity question;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @MapsId("userId")
     @JoinColumn(name = "userId")
+    @ToString.Exclude
     private UserEntity user;
 
     // Null - not answered yet

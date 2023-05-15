@@ -13,14 +13,17 @@ import jakarta.validation.constraints.Min;
 import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
 @Entity
 @Table(name = "question_grades")
 @IdClass(QuestionGradeId.class)
-@Data
+@Getter
+@Setter
 @EqualsAndHashCode(exclude = "question")
-@ToString(exclude = "question")
+@ToString
 public class QuestionGrade {
     @Id
     private UUID questionId;
@@ -32,5 +35,6 @@ public class QuestionGrade {
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("questionId")
     @JoinColumn(name = "questionId")
+    @ToString.Exclude
     private QuestionEntity question;
 }

@@ -13,6 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.NaturalId;
 
 @Entity
@@ -21,6 +22,7 @@ import org.hibernate.annotations.NaturalId;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -31,6 +33,4 @@ public class UserEntity {
     private String username;
     private LocalDateTime registrationDate;
     private LocalDateTime lastVisitDate;
-
-
 }
