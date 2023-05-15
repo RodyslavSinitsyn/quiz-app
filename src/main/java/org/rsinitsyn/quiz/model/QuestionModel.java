@@ -1,14 +1,11 @@
 package org.rsinitsyn.quiz.model;
 
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,13 +13,11 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.SneakyThrows;
 import org.rsinitsyn.quiz.entity.QuestionType;
-import org.rsinitsyn.quiz.utils.QuizUtils;
 
 @Getter
 @Setter
-@EqualsAndHashCode(exclude = {"photoInputStream", "playersAnswersHistory", "answers"})
+@EqualsAndHashCode(exclude = {"playersAnswersHistory", "answers"})
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -41,9 +36,6 @@ public class QuestionModel {
     // for cleverest
     private boolean alreadyAnswered;
     private int points;
-
-    @Setter(AccessLevel.NONE)
-    private InputStream photoInputStream;
 
     public AnswerModel getFirstCorrectAnswer() {
         return answers.stream()
@@ -75,21 +67,6 @@ public class QuestionModel {
             return false;
         } else {
             throw new IllegalStateException("QuestionType not defined");
-        }
-    }
-
-    @SneakyThrows
-    public InputStream openStream() {
-        closePhotoStream();
-        photoInputStream = new FileInputStream(QuizUtils.readImageFile(photoFilename));
-        return photoInputStream;
-    }
-
-    @SneakyThrows
-    public void closePhotoStream() {
-        if (photoInputStream != null) {
-            System.out.println("Closing stream...");
-            photoInputStream.close();
         }
     }
 

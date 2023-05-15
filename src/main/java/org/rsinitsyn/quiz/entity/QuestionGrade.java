@@ -17,7 +17,7 @@ import lombok.ToString;
 
 @Entity
 @Table(name = "question_grades")
-@IdClass(QuestionGradePrimaryKey.class)
+@IdClass(QuestionGradeId.class)
 @Data
 @EqualsAndHashCode(exclude = "question")
 @ToString(exclude = "question")

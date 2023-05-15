@@ -43,8 +43,7 @@ public class GameEntity {
     @Column(nullable = false)
     private LocalDateTime creationDate;
     private LocalDateTime finishDate;
-    @OneToMany(mappedBy = "game", fetch = FetchType.EAGER)
-    @Fetch(FetchMode.JOIN)
+    @OneToMany(mappedBy = "game", fetch = FetchType.LAZY)
     @OrderBy(value = "orderNumber")
     private Set<GameQuestionUserEntity> gameQuestions = new HashSet<>();
 

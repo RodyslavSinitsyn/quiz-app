@@ -33,6 +33,7 @@ import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.utils.AudioUtils;
+import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
 import static org.rsinitsyn.quiz.utils.StaticValuesHolder.CORRECT_ANSWER_AUDIOS;
@@ -219,9 +220,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 
         if (StringUtils.isNotEmpty(currQuestion.getPhotoFilename())) {
             Image image = new Image();
-            image.setSrc(new StreamResource(
-                    currQuestion.getPhotoFilename(),
-                    () -> currQuestion.openStream()));
+            image.setSrc(QuizUtils.createStreamResourceForPhoto(currQuestion.getPhotoFilename()));
             image.setMaxHeight("25em");
             layout.add(image);
             textParagraph.addClassNames(LumoUtility.FontSize.XXLARGE);
@@ -302,7 +301,6 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 
     private void finishGame() {
         removeAll();
-        closeOpenResources();
         gameState.setStatus(GameStatus.FINISHED);
         fireEvent(new FinishGameEvent(this, gameState));
     }
@@ -318,11 +316,6 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
             confirmDialog.addConfirmListener(e -> leaveAction.proceed());
             confirmDialog.open();
         }
-        closeOpenResources();
-    }
-
-    private void closeOpenResources() {
-        gameState.getQuestions().forEach(QuestionModel::closePhotoStream);
     }
 
     @Getter

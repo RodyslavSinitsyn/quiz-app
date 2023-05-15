@@ -20,7 +20,7 @@ import lombok.Setter;
 @EqualsAndHashCode(of = {"id", "answered", "orderNumber"})
 public class GameQuestionUserEntity {
     @EmbeddedId
-    private GameQuestionUserPrimaryKey id;
+    private GameQuestionUserId id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("gameId")

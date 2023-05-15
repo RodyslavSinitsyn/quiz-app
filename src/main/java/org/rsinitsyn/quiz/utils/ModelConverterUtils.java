@@ -26,6 +26,7 @@ public class ModelConverterUtils {
                 .stream()
                 .map(answerEntity ->
                         new FourAnswersQuestionBindingModel.AnswerBindingModel(
+                                answerEntity.getId(),
                                 answerEntity.isCorrect(),
                                 answerEntity.getText(),
                                 answerEntity.getNumber()))

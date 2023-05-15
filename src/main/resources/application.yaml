@@ -20,15 +20,15 @@ spring:
       ddl-auto: update
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-    show-sql: false
+    show-sql: true
     open-in-view: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
 
 quiz:
-  audio-folder: dev/
-  profiling: false
+  files-folder: dev/
+  profiling: true
 
 logging:
   level:

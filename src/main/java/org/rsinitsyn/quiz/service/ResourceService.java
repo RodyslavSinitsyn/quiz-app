@@ -8,10 +8,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ResourceService {
@@ -41,23 +43,13 @@ public class ResourceService {
         }
     }
 
-//    @SneakyThrows
-//    public void saveImage(String filename, InputStream imageData) {
-//        if (StringUtils.isBlank(filename)) {
-//            return;
-//        }
-//        try (imageData) {
-//            File targetFile = new File(RESOURCES_PATH + IMAGE_PATH + imageData);
-//            FileUtils.copyInputStreamToFile(imageData, targetFile);
-//        }
-//    }
-
     public void deleteImageFile(String imageFilename) {
         if (StringUtils.isBlank(imageFilename)) {
             return;
         }
         try {
             Files.delete(Paths.get(RESOURCES_PATH + IMAGE_PATH + imageFilename));
+            log.info("Image file deleted: {}", imageFilename);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
@@ -33,10 +34,9 @@ public class FourAnswersQuestionBindingModel {
 
     public void initWith4Answers() {
         IntStream.range(0, 4)
-                .mapToObj(index -> new AnswerBindingModel(index == 0, "", index))
+                .mapToObj(index -> new AnswerBindingModel(null, index == 0, "", index))
                 .forEach(answerBindingModel -> answers.add(answerBindingModel));
     }
-
 
     public boolean optionsRepeated() {
         return answers.size()
@@ -69,6 +69,7 @@ public class FourAnswersQuestionBindingModel {
     @Data
     @AllArgsConstructor
     public static class AnswerBindingModel {
+        private UUID id;
         private boolean correct;
         @NotBlank
         @Length(min = 1, max = 255)

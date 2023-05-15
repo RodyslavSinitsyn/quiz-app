@@ -28,7 +28,8 @@ public class QuizUtils {
     public static final DateFormat DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_VALUE);
 
     public static final String RESOURCES_PATH = "src/main/resources/";
-    private static final String IMAGE_PATH = "image/";
+    public static final String IMAGE_FOLDER = "image/";
+    public static final String AUDIO_FOLDER = "audio/";
 
     // Date
     public String formatDate(LocalDateTime dateTime) {
@@ -44,7 +45,7 @@ public class QuizUtils {
     }
 
     public StreamResource createStreamResourceForPhoto(String photoFilename) {
-        return new StreamResource(photoFilename, () -> {
+        return new StreamResource(photoFilename.split("/")[1], () -> {
             try {
                 return new FileInputStream(readImageFile(photoFilename));
             } catch (FileNotFoundException e) {
@@ -64,14 +65,21 @@ public class QuizUtils {
     }
 
     @SneakyThrows
-    public File readImageFile(String pathToFile) {
-        return readFileFromResources(IMAGE_PATH + pathToFile);
-    }
-
-    @SneakyThrows
     public File readFileFromResources(String pathToFile) {
         return org.springframework.util.ResourceUtils.getFile(RESOURCES_PATH + pathToFile);
     }
+
+
+    @SneakyThrows
+    public File readImageFile(String pathToFile) {
+        return readFileFromResources(IMAGE_FOLDER + pathToFile);
+    }
+
+    @SneakyThrows
+    public File readAudioFile(String pathToFile) {
+        return readFileFromResources(AUDIO_FOLDER + pathToFile);
+    }
+
 
     public void runActionInUi(UI ui, Command action) {
         ui.access(action);

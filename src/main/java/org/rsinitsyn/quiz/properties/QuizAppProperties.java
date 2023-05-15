@@ -6,5 +6,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "quiz")
 @Data
 public class QuizAppProperties {
-    private String audioFolder;
+    private String filesFolder;
 }

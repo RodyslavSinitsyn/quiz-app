@@ -14,8 +14,6 @@ import org.springframework.data.util.Pair;
 @UtilityClass
 @Slf4j
 public class AudioUtils {
-
-    public static final String AUDIO_FILES_FOLDER = "audio/";
     public static final String STATIC_FILES_FOLDER = "static/";
 
     public CompletableFuture<Void> playSoundAsync(String audioFileName) {
@@ -34,7 +32,7 @@ public class AudioUtils {
             } catch (JavaLayerException e) {
                 log.error("Error when play audio", e);
             } finally {
-                log.info("Close audio buffer");
+                log.debug("Close audio buffer");
                 closeBuffer(audioData.getSecond());
             }
         });
@@ -51,11 +49,10 @@ public class AudioUtils {
         }
     }
 
-    private Pair<Player, BufferedInputStream> createPlayerAndBuffer(String audioFileName) {
-        final String path = AUDIO_FILES_FOLDER + audioFileName;
+    private Pair<Player, BufferedInputStream> createPlayerAndBuffer(String pathToAudioFile) {
         try {
             BufferedInputStream buffer = new BufferedInputStream(
-                    new FileInputStream(QuizUtils.readFileFromResources(path)));
+                    new FileInputStream(QuizUtils.readAudioFile(pathToAudioFile)));
             Player player = new Player(buffer);
             return Pair.of(player, buffer);
         } catch (IOException | JavaLayerException e) {

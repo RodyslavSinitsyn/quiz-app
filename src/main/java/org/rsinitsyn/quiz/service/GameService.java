@@ -16,7 +16,7 @@ import org.rsinitsyn.quiz.dao.GameDao;
 import org.rsinitsyn.quiz.dao.GameQuestionUserDao;
 import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
-import org.rsinitsyn.quiz.entity.GameQuestionUserPrimaryKey;
+import org.rsinitsyn.quiz.entity.GameQuestionUserId;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.GameType;
 import org.rsinitsyn.quiz.entity.UserEntity;
@@ -61,7 +61,7 @@ public class GameService {
                               List<String> answersList,
                               Supplier<Boolean> correctAnswerProvider) {
         UserEntity user = userService.findByUsername(playerName);
-        var primaryKey = new GameQuestionUserPrimaryKey(
+        var primaryKey = new GameQuestionUserId(
                 UUID.fromString(gameId),
                 questionModel.getId(),
                 user.getId());
@@ -121,7 +121,7 @@ public class GameService {
         AtomicInteger questionOrder = new AtomicInteger(0);
         List<GameQuestionUserEntity> gameQuestionEntitiesToSave = stateModel.getQuestions().stream().map(questionModel -> {
             GameQuestionUserEntity gameQuestionUserEntity = new GameQuestionUserEntity();
-            gameQuestionUserEntity.setId(new GameQuestionUserPrimaryKey(
+            gameQuestionUserEntity.setId(new GameQuestionUserId(
                     UUID.fromString(id),
                     questionModel.getId(),
                     user.getId()));
@@ -157,7 +157,7 @@ public class GameService {
             AtomicInteger qCounter = new AtomicInteger(0);
             questions.forEach(questionModel -> {
                 GameQuestionUserEntity gameQuestionUserEntity = new GameQuestionUserEntity();
-                var pk = new GameQuestionUserPrimaryKey(
+                var pk = new GameQuestionUserId(
                         gameEntity.getId(),
                         questionModel.getId(),
                         user.getId());
@@ -185,6 +185,6 @@ public class GameService {
     }
 
     public List<GameEntity> findAllNewFirst() {
-        return gameDao.findAllNewFirst();
+        return gameDao.findAllJoinGamesQuestionsNewFirst();
     }
 }

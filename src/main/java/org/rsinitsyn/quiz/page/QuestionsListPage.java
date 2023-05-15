@@ -4,7 +4,6 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
-import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
@@ -84,6 +83,7 @@ public class QuestionsListPage extends VerticalLayout {
                 .setHeader("Связь")
                 .setFlexGrow(0);
         grid.setSizeFull();
+        grid.setAllRowsVisible(true);
         grid.setSelectionMode(Grid.SelectionMode.MULTI);
         grid.addSelectionListener(event -> {
             if (!event.isFromClient()) {

@@ -25,7 +25,7 @@ import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionGrade;
-import org.rsinitsyn.quiz.entity.QuestionGradePrimaryKey;
+import org.rsinitsyn.quiz.entity.QuestionGradeId;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.model.AnswerHistory;
@@ -84,13 +84,17 @@ public class QuestionService {
         return questionDao.getReferenceById(id);
     }
 
+    @Transactional
+    public QuestionEntity findByIdJoinAnswers(UUID id) {
+        return questionDao.findByIdJoinAnswers(id).orElseThrow();
+    }
 
     public List<QuestionEntity> findAllCreatedByCurrentUser() {
         String loggedUser = SessionWrapper.getLoggedUser();
         if (loggedUser.equals("admin")) {
-            return questionDao.findAllNewFirst();
+            return questionDao.findAllJoinAnswersAndCategoryNewFirst();
         }
-        return questionDao.findAllNewFirst()
+        return questionDao.findAllJoinAnswersAndCategoryNewFirst()
                 .stream().filter(entity -> entity.getCreatedBy().equals(loggedUser))
                 .toList();
     }
@@ -164,16 +168,7 @@ public class QuestionService {
     @Transactional(propagation = Propagation.REQUIRED)
     public void saveEntityAndImage(QuestionEntity entity) {
         questionDao.save(entity);
-        resourceService.saveImageFromUrl(entity.getPhotoFilename(), entity.getOriginalPhotoUrl());
-    }
-
-    @Transactional(propagation = Propagation.REQUIRED)
-    public void deleteById(String id) {
-        Optional<QuestionEntity> toDelete = questionDao.findById(UUID.fromString(id));
-        toDelete.ifPresent(entity -> {
-            questionDao.delete(entity);
-            resourceService.deleteImageFile(entity.getPhotoFilename());
-        });
+        resourceService.saveImageFromUrl(properties.getFilesFolder() + entity.getPhotoFilename(), entity.getOriginalPhotoUrl());
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
@@ -212,59 +207,82 @@ public class QuestionService {
         }
     }
 
-    public QuestionEntity toQuestionEntity(FourAnswersQuestionBindingModel model, Optional<QuestionEntity> optEntity) {
-        boolean update = optEntity.isPresent();
+    public QuestionEntity toQuestionEntity(FourAnswersQuestionBindingModel model,
+                                           Optional<QuestionEntity> persistEntity) {
+        boolean update = persistEntity.isPresent();
+        QuestionEntity newEntity = new QuestionEntity();
 
-        QuestionEntity entity = new QuestionEntity();
-
+        newEntity.setText(model.getText());
         if (update) {
-            entity.setId(UUID.fromString(model.getId()));
-            entity.setCreationDate(optEntity.get().getCreationDate());
-            entity.setCreatedBy(model.getAuthor());
-            entity.setOptionsOnly(optEntity.get().isOptionsOnly());
-
-            entity.setAudioFilename(optEntity.get().getAudioFilename());
+            newEntity.setId(UUID.fromString(model.getId()));
+            newEntity.setCreationDate(persistEntity.get().getCreationDate());
+            newEntity.setCreatedBy(model.getAuthor());
+            newEntity.setOptionsOnly(persistEntity.get().isOptionsOnly());
+            newEntity.setAudioFilename(persistEntity.get().getAudioFilename());
+            newEntity.setGrades(persistEntity.get().getGrades());
+            newEntity.setAnswers(persistEntity.get().getAnswers());
+            updateAnswerEntities(newEntity, model.getAnswers());
         } else {
-            entity.setId(UUID.randomUUID());
-            entity.setCreationDate(LocalDateTime.now());
-            entity.setCreatedBy(SessionWrapper.getLoggedUser());
-            entity.setOptionsOnly(false);
+            newEntity.setId(UUID.randomUUID());
+            newEntity.setCreationDate(LocalDateTime.now());
+            newEntity.setCreatedBy(SessionWrapper.getLoggedUser());
+            newEntity.setOptionsOnly(false);
 
             if (model.getAudio() != null) {
-                entity.setAudioFilename(properties.getAudioFolder() + QuizUtils.generateFilenameWithExt(".mp3"));
+                newEntity.setAudioFilename(properties.getFilesFolder() + QuizUtils.generateFilenameWithExt(".mp3"));
             }
+            createAnswerEntities(newEntity, model.getAnswers());
         }
-        entity.setText(model.getText());
-
-        AtomicInteger number = new AtomicInteger(0);
-        model.getAnswers().forEach(answerBindingModel -> {
-            entity.addAnswer(createAnswerEntity(answerBindingModel.getText(),
-                    answerBindingModel.isCorrect(),
-                    number.getAndIncrement()));
-        });
 
         if (StringUtils.isNotBlank(model.getPhotoLocation())) {
-            entity.setOriginalPhotoUrl(model.getPhotoLocation());
-            entity.setPhotoFilename(QuizUtils.generateFilename(model.getPhotoLocation()));
+            newEntity.setOriginalPhotoUrl(model.getPhotoLocation());
+            newEntity.setPhotoFilename(properties.getFilesFolder() + QuizUtils.generateFilename(model.getPhotoLocation()));
         } else {
-            entity.setPhotoFilename(null);
-            entity.setOriginalPhotoUrl(null);
+            newEntity.setPhotoFilename(null);
+            newEntity.setOriginalPhotoUrl(null);
         }
 
         if (model.hasMultiCorrectOptions()) {
-            entity.setType(QuestionType.MULTI);
+            newEntity.setType(QuestionType.MULTI);
         } else {
-            entity.setType(QuestionType.TEXT);
+            newEntity.setType(QuestionType.TEXT);
         }
 
         questionCategoryDao.findByName(model.getCategory())
                 .ifPresentOrElse(
-                        entity::setCategory,
+                        newEntity::setCategory,
                         () -> {
                             QuestionCategoryEntity defaultCategory = getOrCreateDefaultCategory();
-                            entity.setCategory(defaultCategory);
+                            newEntity.setCategory(defaultCategory);
                         });
-        return entity;
+        return newEntity;
+    }
+
+    private void updateAnswerEntities(
+            QuestionEntity entity,
+            List<FourAnswersQuestionBindingModel.AnswerBindingModel> answerModels) {
+        Function<UUID, FourAnswersQuestionBindingModel.AnswerBindingModel> getById = id ->
+                answerModels
+                        .stream()
+                        .filter(am -> am.getId().equals(id))
+                        .findFirst().orElseThrow();
+        entity.getAnswers().forEach(answerEntity -> {
+            FourAnswersQuestionBindingModel.AnswerBindingModel answerMOdel = getById.apply(answerEntity.getId());
+            answerEntity.setText(answerMOdel.getText());
+            answerEntity.setNumber(answerMOdel.getIndex());
+            answerEntity.setCorrect(answerMOdel.isCorrect());
+        });
+    }
+
+    private void createAnswerEntities(
+            QuestionEntity entity,
+            List<FourAnswersQuestionBindingModel.AnswerBindingModel> answerModels) {
+        AtomicInteger number = new AtomicInteger(0);
+        answerModels.forEach(answerBindingModel -> {
+            entity.addAnswer(createAnswerEntity(answerBindingModel.getText(),
+                    answerBindingModel.isCorrect(),
+                    number.getAndIncrement()));
+        });
     }
 
     private AnswerEntity createAnswerEntity(String text, boolean correct, int number) {
@@ -273,10 +291,6 @@ public class QuestionService {
         answerEntity.setCorrect(correct);
         answerEntity.setNumber(number);
         return answerEntity;
-    }
-
-    public void deleteAll(Collection<QuestionEntity> questions) {
-        questionDao.deleteAll(questions);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
@@ -294,7 +308,7 @@ public class QuestionService {
     @Transactional(propagation = Propagation.REQUIRED)
     public void updateQuestionGrade(UUID questionId, String username, int grade) {
         UserEntity user = userService.findByUsername(username);
-        Optional<QuestionGrade> optEntity = questionGradeDao.findById(new QuestionGradePrimaryKey(
+        Optional<QuestionGrade> optEntity = questionGradeDao.findById(new QuestionGradeId(
                 questionId,
                 user.getId()
         ));
@@ -313,6 +327,23 @@ public class QuestionService {
             log.info("Created question grade, id: {}, grade: {}",
                     questionId + "-" + user.getId(),
                     grade);
+        }
+    }
+
+    public void deleteById(String id) {
+        questionDao.findById(UUID.fromString(id)).ifPresent(this::delete);
+    }
+
+    /*
+        Non batch operation.
+     */
+    public void deleteAll(Collection<QuestionEntity> questions) {
+        questions.forEach(this::delete);
+    }
+
+    public void delete(QuestionEntity entity) {
+        if (questionDao.deleteQuestionEntityById(entity.getId()) == 1) {
+            resourceService.deleteImageFile(entity.getPhotoFilename());
         }
     }
 }

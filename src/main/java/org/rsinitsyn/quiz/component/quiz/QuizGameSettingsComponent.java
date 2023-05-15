@@ -24,7 +24,6 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.BeforeLeaveEvent;
 import com.vaadin.flow.router.BeforeLeaveObserver;
-import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.Comparator;
@@ -42,6 +41,7 @@ import org.rsinitsyn.quiz.model.AnswerHistory;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.utils.QuizComponents;
+import org.rsinitsyn.quiz.utils.QuizUtils;
 
 @Slf4j
 public class QuizGameSettingsComponent extends FormLayout implements BeforeLeaveObserver {
@@ -185,8 +185,7 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
             appendIconToQuestionRowComponent(row, question);
             if (StringUtils.isNotEmpty(question.getPhotoFilename())) {
                 Avatar smallPhoto = new Avatar();
-                smallPhoto.setImageResource(
-                        new StreamResource(question.getPhotoFilename(), question::openStream));
+                smallPhoto.setImageResource(QuizUtils.createStreamResourceForPhoto(question.getPhotoFilename()));
                 row.add(smallPhoto);
             }
             Span spanText = new Span(question.getText());
@@ -202,15 +201,16 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
         if (playerName.getValue() != null) {
             AnswerHistory answerHistory = question.getPlayersAnswersHistory().get(playerName.getValue());
             if (answerHistory != null) {
-                Icon icon = null;
+                Icon icon;
                 if (answerHistory.equals(AnswerHistory.ANSWERED_CORRECT)) {
                     icon = VaadinIcon.WARNING.create();
                     icon.setTooltipText("Игрок уже давал верный ответ на этот вопрос");
+                    row.add(icon);
                 } else if (answerHistory.equals(AnswerHistory.ANSWERED_WRONG)) {
                     icon = VaadinIcon.QUESTION.create();
                     icon.setTooltipText("Игрок овечал на вопрос, но неправильно");
+                    row.add(icon);
                 }
-                row.add(icon);
             }
         }
     }
@@ -276,7 +276,6 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
 
     @Override
     public void beforeLeave(BeforeLeaveEvent event) {
-        gameState.getQuestions().forEach(QuestionModel::closePhotoStream);
     }
 
     @Getter

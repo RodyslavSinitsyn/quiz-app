@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class QuestionGradePrimaryKey implements Serializable {
+public class QuestionGradeId implements Serializable {
     private UUID questionId;
     private UUID userId;
 }

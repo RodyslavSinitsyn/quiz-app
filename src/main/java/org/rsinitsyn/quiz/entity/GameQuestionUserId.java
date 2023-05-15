@@ -16,7 +16,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @EqualsAndHashCode
-public class GameQuestionUserPrimaryKey implements Serializable {
+public class GameQuestionUserId implements Serializable {
     @Column(nullable = false)
     private UUID gameId;
     @Column(nullable = false)

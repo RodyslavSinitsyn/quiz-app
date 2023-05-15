@@ -4,15 +4,18 @@ import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.textfield.TextField;
 import java.util.Optional;
+import java.util.UUID;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
 
 public class AnswerField extends CustomField<FourAnswersQuestionBindingModel.AnswerBindingModel> {
 
+    private UUID id;
     private Checkbox correctOption = new Checkbox(false);
     private TextField text = new TextField("Вариант");
-    private int index = 0;
+    private int index;
 
     public AnswerField(FourAnswersQuestionBindingModel.AnswerBindingModel answer) {
+        this.id = answer.getId();
         this.index = answer.getIndex();
         configure();
         setPresentationValue(answer);
@@ -33,6 +36,7 @@ public class AnswerField extends CustomField<FourAnswersQuestionBindingModel.Ans
     @Override
     protected FourAnswersQuestionBindingModel.AnswerBindingModel generateModelValue() {
         return new FourAnswersQuestionBindingModel.AnswerBindingModel(
+                id,
                 correctOption.getValue(),
                 text.getValue(),
                 index
