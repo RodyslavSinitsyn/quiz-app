@@ -38,6 +38,7 @@ public class ResourceService {
         }
         try (InputStream inputStream = new URL(urlPath).openStream()) {
             Files.copy(inputStream, Paths.get(RESOURCES_PATH + IMAGE_PATH + filename));
+            log.debug("Image file saved, filename: {}", filename);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -49,7 +50,19 @@ public class ResourceService {
         }
         try {
             Files.delete(Paths.get(RESOURCES_PATH + IMAGE_PATH + imageFilename));
-            log.info("Image file deleted: {}", imageFilename);
+            log.debug("Image file deleted: {}", imageFilename);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void deleteAudioFile(String audioFilename) {
+        if (StringUtils.isBlank(audioFilename)) {
+            return;
+        }
+        try {
+            Files.delete(Paths.get(RESOURCES_PATH + AUDIO_PATH + audioFilename));
+            log.debug("Audio file deleted: {}", audioFilename);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

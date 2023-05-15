@@ -20,7 +20,7 @@ spring:
       ddl-auto: update
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-    show-sql: true
+    show-sql: false
     open-in-view: false
     properties:
       hibernate:
@@ -28,7 +28,7 @@ spring:
 
 quiz:
   files-folder: dev/
-  profiling: true
+  profiling: false
 
 logging:
   level:

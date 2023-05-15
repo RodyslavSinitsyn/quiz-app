@@ -161,10 +161,6 @@ public class QuestionService {
                 .collect(Collectors.toSet());
     }
 
-    public void saveAll(Collection<QuestionEntity> entities) {
-        questionDao.saveAll(entities);
-    }
-
     @Transactional(propagation = Propagation.REQUIRED)
     public void saveEntityAndImage(QuestionEntity entity) {
         questionDao.save(entity);
@@ -196,31 +192,40 @@ public class QuestionService {
     @Transactional(propagation = Propagation.REQUIRED)
     public void saveOrUpdate(FourAnswersQuestionBindingModel model) {
         if (model.getId() == null) {
-            QuestionEntity saved = questionDao.save(toQuestionEntity(model, Optional.empty()));
+            QuestionEntity saved = questionDao.save(toQuestionEntity(model, null));
             resourceService.saveImageFromUrl(saved.getPhotoFilename(), saved.getOriginalPhotoUrl());
             resourceService.saveAudio(saved.getAudioFilename(), model.getAudio());
             log.info("Question saved: {}", saved);
         } else {
-            QuestionEntity updated = questionDao.save(toQuestionEntity(model, questionDao.findById(UUID.fromString(model.getId()))));
-            resourceService.saveImageFromUrl(updated.getPhotoFilename(), updated.getOriginalPhotoUrl());
+            var persistent = questionDao.findById(UUID.fromString(model.getId())).orElseThrow();
+            String oldPhotoFilename = persistent.getPhotoFilename();
+
+            QuestionEntity updated = questionDao.save(toQuestionEntity(model, persistent));
+            if (oldPhotoFilename == null) {
+                resourceService.saveImageFromUrl(updated.getPhotoFilename(), updated.getOriginalPhotoUrl());
+            } else if (!oldPhotoFilename.equals(updated.getPhotoFilename())) {
+                log.debug("Replace image file, questionId: {}", updated.getId());
+                resourceService.saveImageFromUrl(updated.getPhotoFilename(), updated.getOriginalPhotoUrl());
+                resourceService.deleteImageFile(oldPhotoFilename);
+            }
             log.info("Question updated: {}", updated);
         }
     }
 
     public QuestionEntity toQuestionEntity(FourAnswersQuestionBindingModel model,
-                                           Optional<QuestionEntity> persistEntity) {
-        boolean update = persistEntity.isPresent();
+                                           QuestionEntity persistEntity) {
+        boolean update = persistEntity != null;
         QuestionEntity newEntity = new QuestionEntity();
 
         newEntity.setText(model.getText());
         if (update) {
             newEntity.setId(UUID.fromString(model.getId()));
-            newEntity.setCreationDate(persistEntity.get().getCreationDate());
+            newEntity.setCreationDate(persistEntity.getCreationDate());
             newEntity.setCreatedBy(model.getAuthor());
-            newEntity.setOptionsOnly(persistEntity.get().isOptionsOnly());
-            newEntity.setAudioFilename(persistEntity.get().getAudioFilename());
-            newEntity.setGrades(persistEntity.get().getGrades());
-            newEntity.setAnswers(persistEntity.get().getAnswers());
+            newEntity.setOptionsOnly(persistEntity.isOptionsOnly());
+            newEntity.setAudioFilename(persistEntity.getAudioFilename());
+            newEntity.setGrades(persistEntity.getGrades());
+            newEntity.setAnswers(persistEntity.getAnswers());
             updateAnswerEntities(newEntity, model.getAnswers());
         } else {
             newEntity.setId(UUID.randomUUID());
@@ -341,9 +346,11 @@ public class QuestionService {
         questions.forEach(this::delete);
     }
 
+    @Transactional
     public void delete(QuestionEntity entity) {
         if (questionDao.deleteQuestionEntityById(entity.getId()) == 1) {
             resourceService.deleteImageFile(entity.getPhotoFilename());
+            resourceService.deleteAudioFile(entity.getAudioFilename());
         }
     }
 }
