@@ -20,6 +20,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.function.BiConsumer;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
+import org.rsinitsyn.quiz.component.сustom.AudioPlayer;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 
@@ -65,7 +66,7 @@ public class QuizComponents {
     }
 
     public <T extends Component> T appendTextBorder(T component) {
-        component.getStyle().set("text-shadow", StaticValuesHolder.BLACK_FONT_BORDER);
+        component.getStyle().set("text-shadow", StaticValuesHolder.getFontBorder());
 //        component.getStyle().set("-webkit-text-stroke-width", "1px");
 //        component.getStyle().set("-webkit-text-stroke-color", "black");
         return component;

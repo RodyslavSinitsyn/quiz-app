@@ -1,6 +1,7 @@
 package org.rsinitsyn.quiz.utils;
 
 import com.google.common.collect.Iterables;
+import com.vaadin.flow.theme.lumo.Lumo;
 import java.util.Iterator;
 
 public class StaticValuesHolder {
@@ -41,5 +42,8 @@ public class StaticValuesHolder {
                     "think-3.mp3")
             .iterator();
 
-    public static final String BLACK_FONT_BORDER = "1px 1px 1px black";
+    public static String getFontBorder() {
+        return "1px 1px 1px " +
+                (SessionWrapper.getTheme().equals(Lumo.LIGHT) ? "black" : "white");
+    }
 }

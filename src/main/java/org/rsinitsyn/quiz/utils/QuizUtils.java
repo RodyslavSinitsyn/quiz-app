@@ -27,7 +27,7 @@ public class QuizUtils {
     public static final String DATE_FORMAT_VALUE = "dd-MM-yyyy HH:mm:ss";
     public static final DateFormat DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_VALUE);
 
-    private static final String RESOURCES_PATH = "src/main/resources/";
+    public static final String RESOURCES_PATH = "src/main/resources/";
     private static final String IMAGE_PATH = "image/";
 
     // Date

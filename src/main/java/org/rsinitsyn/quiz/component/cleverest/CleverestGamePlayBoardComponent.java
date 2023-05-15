@@ -4,7 +4,6 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -22,6 +21,7 @@ import java.util.function.Consumer;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.cleverest.AnswerType;
 import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
@@ -30,6 +30,7 @@ import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.rsinitsyn.quiz.utils.StaticValuesHolder;
+import org.vaadin.addons.pandalyte.VoiceRecognition;
 
 @Slf4j
 public class CleverestGamePlayBoardComponent extends VerticalLayout {
@@ -128,20 +129,20 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         log.debug("Render question. GameId {}, questionText: {}", gameId, question.getText());
         renderTopContainerForAdmin(broadcaster.getState(gameId).getUsers().values());
         renderQuestionLayout(question, questionNumber, totalQuestions, roundNumber);
-        boolean singleAnswer = roundNumber == 2;
-        renderOptionsOrInput(question, singleAnswer);
+        renderUserAnswerLayout(question, roundNumber == 2 ? AnswerType.INPUT : AnswerType.OPTIONS, null);
     }
 
-    private void renderOptionsOrInput(QuestionModel questionModel,
-                                      boolean singleAnswer) {
-        var answersLayout = new VerticalLayout();
-        answersLayout.setPadding(false);
+    private void renderUserAnswerLayout(QuestionModel questionModel,
+                                        AnswerType answerType,
+                                        UserGameState userToAnswer) {
+        var answerLayout = new VerticalLayout();
+        answerLayout.setPadding(false);
 
         botContainer.removeAll();
         botContainer.setEnabled(true);
-        botContainer.add(answersLayout);
+        botContainer.add(answerLayout);
 
-        if (!singleAnswer) {
+        if (AnswerType.OPTIONS.equals(answerType)) {
             questionModel.getShuffledAnswers().forEach(answerModel -> {
                 Button button = CleverestComponents.optionButton(answerModel.getText(), () -> {
                     if (isAdmin) {
@@ -153,9 +154,9 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                             answerModel.getText(),
                             answerModel::isCorrect);
                 });
-                answersLayout.add(button);
+                answerLayout.add(button);
             });
-        } else {
+        } else if (AnswerType.INPUT.equals(answerType)) {
             if (isAdmin) {
                 return;
             }
@@ -175,7 +176,14 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                         // Is answer correct is not clear here yet
                         () -> false);
             });
-            answersLayout.add(textField, submit);
+            answerLayout.add(textField, submit);
+        } else if (AnswerType.VOICE.equals(answerType)) {
+            VoiceRecognition voiceRecognition = new VoiceRecognition();
+            voiceRecognition.addResultListener(event -> {
+                // todo for now without event
+                userToAnswer.setLastAnswerText(event.getSpeech());
+            });
+            answerLayout.add(voiceRecognition);
         }
     }
 
@@ -242,7 +250,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
             row.add(categoryName);
             questions.forEach(questionModel -> {
-                Button openQuestionButton = openCategoryQuestionButton(userToAnswer, questionModel);
+                Button openQuestionButton = createCategoryQuestionButton(userToAnswer, questionModel);
                 row.add(openQuestionButton);
             });
             categoriesLayout.add(row);
@@ -250,8 +258,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     }
 
     @SneakyThrows
-    private Button openCategoryQuestionButton(UserGameState userToAnswer,
-                                              QuestionModel question) {
+    private Button createCategoryQuestionButton(UserGameState userToAnswer,
+                                                QuestionModel question) {
         Button button = CleverestComponents.primaryButton(
                 String.valueOf(question.getPoints()),
                 event -> {
@@ -269,7 +277,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                 AtomicBoolean approved = new AtomicBoolean(false);
                                 broadcaster.getState(gameId).submitAnswer(
                                         userToAnswer.getUsername(),
-                                        "",
+                                        userToAnswer.getLastAnswerText(),
                                         () -> false);
                                 question.setAlreadyAnswered(true);
                                 updateUserAnswerGiven(userToAnswer);
@@ -466,6 +474,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                 LumoUtility.TextColor.PRIMARY,
                                 CleverestComponents.MOBILE_LARGE_FONT
                         ));
+                        renderUserAnswerLayout(null, AnswerType.VOICE, event.getUserToAnswer());
                     } else {
                         midContainer.add(CleverestComponents.userInfoLightSpan(
                                 "В ожидании вопроса",

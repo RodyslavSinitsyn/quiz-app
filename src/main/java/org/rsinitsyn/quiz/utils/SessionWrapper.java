@@ -1,6 +1,7 @@
 package org.rsinitsyn.quiz.utils;
 
 import com.vaadin.flow.server.VaadinSession;
+import com.vaadin.flow.theme.lumo.Lumo;
 import org.apache.commons.lang3.StringUtils;
 
 public class SessionWrapper {
@@ -17,6 +18,9 @@ public class SessionWrapper {
     }
 
     public static String getTheme() {
-        return (String) VaadinSession.getCurrent().getAttribute("theme");
+        return StringUtils.defaultIfEmpty(
+                (String) VaadinSession.getCurrent().getAttribute("theme"),
+                Lumo.LIGHT
+        );
     }
 }

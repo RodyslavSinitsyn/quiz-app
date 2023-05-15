@@ -15,15 +15,15 @@ import org.springframework.data.util.Pair;
 @Slf4j
 public class AudioUtils {
 
-    private static final String AUDIO_FILES_FOLDER = "audio/";
-    private static final String STATIC_FILES_FOLDER = "static/";
+    public static final String AUDIO_FILES_FOLDER = "audio/";
+    public static final String STATIC_FILES_FOLDER = "static/";
 
     public CompletableFuture<Void> playSoundAsync(String audioFileName) {
-        return CompletableFuture.runAsync(() -> createPlayerAndPlay(audioFileName));
+        return CompletableFuture.runAsync(() -> createAndPlayPlayer(audioFileName));
     }
 
     public CompletableFuture<Void> playStaticSoundAsync(String audioFileName) {
-        return CompletableFuture.runAsync(() -> createPlayerAndPlay(STATIC_FILES_FOLDER + audioFileName));
+        return CompletableFuture.runAsync(() -> createAndPlayPlayer(STATIC_FILES_FOLDER + audioFileName));
     }
 
     public Player playStaticAudioAsyncAndGetPlayer(String audioFileName) {
@@ -42,7 +42,7 @@ public class AudioUtils {
     }
 
     @SneakyThrows
-    private void createPlayerAndPlay(String audioFileName) {
+    private void createAndPlayPlayer(String audioFileName) {
         Pair<Player, BufferedInputStream> data = createPlayerAndBuffer(audioFileName);
         try {
             data.getFirst().play();

@@ -23,7 +23,7 @@ public class UserGameState implements Comparable<UserGameState> {
     private String color;
 
     private boolean lastWasCorrect;
-    @Setter(AccessLevel.NONE)
+//    @Setter(AccessLevel.NONE)
     private String lastAnswerText;
     private int lastPosition;
     private long lastResponseTime;

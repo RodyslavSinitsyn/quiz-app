@@ -80,8 +80,7 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver, Be
         header.setWidthFull();
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         header.add(
-                drawerToggle,
-                createLogo(),
+                createLogoLayout(drawerToggle),
                 navbarTabs,
                 createAuthLayout());
         header.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -104,11 +103,16 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver, Be
         });
     }
 
-    private Span createLogo() {
-        Span logo = new Span();
-        logo.addClassNames(LumoUtility.Margin.MEDIUM, LumoUtility.FontSize.XLARGE);
+    private HorizontalLayout createLogoLayout(DrawerToggle drawerToggle) {
+        var logo = new HorizontalLayout();
+        logo.setPadding(false);
+        logo.setMargin(false);
+        logo.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
+        logo.setAlignItems(FlexComponent.Alignment.CENTER);
+        logo.addClassNames(LumoUtility.FontSize.LARGE,
+                LumoUtility.Margin.Left.MEDIUM);
+        logo.add(drawerToggle);
         logo.add(VaadinIcon.ACADEMY_CAP.create());
-        logo.add(themeToggle);
         return logo;
     }
 
@@ -139,7 +143,7 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver, Be
 
     private HorizontalLayout createAuthLayout() {
         HorizontalLayout authLayout = new HorizontalLayout();
-        authLayout.add(loggedUserNameSpan, warningMessageAboutLogin, loginButton, exitButton);
+        authLayout.add(themeToggle, loggedUserNameSpan, warningMessageAboutLogin, loginButton, exitButton);
         authLayout.setAlignItems(FlexComponent.Alignment.CENTER);
         return authLayout;
     }
@@ -151,13 +155,14 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver, Be
         loginButton.setText("");
         loginButton.addClassNames(LumoUtility.Margin.MEDIUM);
         loginButton.setIcon(VaadinIcon.SIGN_IN.create());
-        loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
         loginButton.addClickListener(event -> {
             dialog.open();
         });
 
         exitButton.setText("");
         exitButton.setIcon(VaadinIcon.SIGN_OUT.create());
+        exitButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         exitButton.addClassNames(LumoUtility.Margin.MEDIUM);
         exitButton.addClickListener(event -> {
             QuizComponents.openConfirmDialog(
