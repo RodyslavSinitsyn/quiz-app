@@ -38,7 +38,7 @@ public class GameService {
     private final UserService userService;
 
     public GameEntity findById(String id) {
-        return gameDao.findById(UUID.fromString(id))
+        return gameDao.findByIdJoinQuestions(UUID.fromString(id))
                 .orElse(null);
     }
 
@@ -106,7 +106,7 @@ public class GameService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     public void update(String id, String name, GameStatus status) {
-        GameEntity gameEntity = findById(id);
+        GameEntity gameEntity = gameDao.findById(UUID.fromString(id)).orElseThrow();
         setNewFields(gameEntity, name, status);
         log.info("Updating game, id: {}", id);
     }
@@ -141,7 +141,6 @@ public class GameService {
         gameEntity.setName(name);
         gameEntity.setCreatedBy(SessionWrapper.getLoggedUser());
         gameEntity.setStatus(status);
-        gameEntity.setCreationDate(gameEntity.getCreationDate());
     }
 
     @Transactional(propagation = Propagation.REQUIRED)

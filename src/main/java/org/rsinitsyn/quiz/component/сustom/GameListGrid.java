@@ -58,7 +58,8 @@ public class GameListGrid extends Grid<GameEntity> {
                     .filter(GameQuestionUserEntity::getAnswered).count();
             return QuizUtils.divide(correctSize * 100, totalSize) + "%";
         }).setHeader("Результаты");
-        addColumn(new LocalDateTimeRenderer<>(GameEntity::getFinishDate, QuizUtils.DATE_FORMAT_VALUE)).setHeader("Дата");
+        addColumn(new LocalDateTimeRenderer<>(GameEntity::getCreationDate, QuizUtils.DATE_FORMAT_VALUE)).setHeader("Создана");
+        addColumn(new LocalDateTimeRenderer<>(GameEntity::getFinishDate, QuizUtils.DATE_FORMAT_VALUE)).setHeader("Окончена");
         setAllRowsVisible(true);
         setDetailsVisibleOnClick(true);
         setItemDetailsRenderer(new ComponentRenderer<>(GameResultsComponent::new));
