@@ -1,5 +1,6 @@
 package org.rsinitsyn.quiz.service;
 
+import io.micrometer.observation.annotation.Observed;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Comparator;
@@ -42,6 +43,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+@Observed(name = "questionService")
 @Service
 @RequiredArgsConstructor
 @Slf4j

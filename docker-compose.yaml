@@ -1,0 +1,32 @@
+version: '3.3'
+
+services:
+  zipkin:
+    container_name: quiz-app-zipkin-dev
+    image: openzipkin/zipkin:2
+    ports:
+      - "9411:9411"
+  prometheus:
+    container_name: quiz-app-prometheus-dev
+    image: prom/prometheus:v2.44.0
+    ports:
+      - "9090:9090"
+    network_mode: host
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yaml'
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+  grafana:
+    image: grafana/grafana:9.5.2
+    user: "$UID:$GID"
+    container_name: quiz-app-grafana-dev
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    network_mode: host
+    volumes:
+      - ./grafana/:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SERVER_DOMAIN=localhost

@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.handler;
+package org.rsinitsyn.quiz.config;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Span;

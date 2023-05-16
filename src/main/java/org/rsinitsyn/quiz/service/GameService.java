@@ -1,5 +1,6 @@
 package org.rsinitsyn.quiz.service;
 
+import io.micrometer.observation.annotation.Observed;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+@Observed(name = "gameService")
 @Service
 @RequiredArgsConstructor
 @Slf4j

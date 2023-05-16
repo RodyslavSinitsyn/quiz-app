@@ -12,7 +12,9 @@ spring:
       ddl-auto: update
 
 quiz:
-  files-folder: prod/
+  files-folder: dev/
+  profiling: false
+  monitoring: false
 
 vaadin:
   productionMode: true
