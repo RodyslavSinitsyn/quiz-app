@@ -137,13 +137,13 @@ public class CleverestComponents {
         return button;
     }
 
-    public TextField answerInput(HasValue.ValueChangeListener<? super AbstractField.ComponentValueChangeEvent<TextField, String>> eventHandler) {
+    public TextField answerInput(HasValue.ValueChangeListener<? super AbstractField.ComponentValueChangeEvent<TextField, String>> valueChangeHandler) {
         TextField textField = new TextField("Введите ответ");
         textField.setValueChangeMode(ValueChangeMode.EAGER);
         textField.addThemeVariants(TextFieldVariant.LUMO_ALIGN_CENTER);
         textField.addClassNames(MOBILE_MEDIUM_FONT);
         textField.setWidthFull();
-        textField.addValueChangeListener(eventHandler);
+        textField.addValueChangeListener(valueChangeHandler);
         return textField;
     }
 
@@ -217,17 +217,18 @@ public class CleverestComponents {
         layout.add(textContent);
 
         if (StringUtils.isNotEmpty(questionModel.getAudioFilename())) {
-            Button playAudioButton = new Button("Слушать");
+            Button playAudioButton = new Button("Слушать", VaadinIcon.PLAY_CIRCLE.create());
             playAudioButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST,
                     ButtonVariant.LUMO_PRIMARY,
                     ButtonVariant.LUMO_SMALL);
-            playAudioButton.setIcon(VaadinIcon.PLAY_CIRCLE.create());
-            if (allowedPlaySound) {
-                playAudioButton.addClickListener(event -> {
-                    AudioUtils.playSoundAsync(questionModel.getAudioFilename());
-                });
-            }
+            playAudioButton.setEnabled(allowedPlaySound);
+            playAudioButton.addClickListener(event -> {
+                AudioUtils.playSoundAsync(questionModel.getAudioFilename());
+            });
             layout.add(playAudioButton);
+            // TODO Play audio on each device
+//            AudioPlayer audioPlayer = new AudioPlayer(QuizUtils.createStreamResourceForAudio(questionModel.getAudioFilename()));
+//            layout.add(audioPlayer);
         }
         return layout;
     }

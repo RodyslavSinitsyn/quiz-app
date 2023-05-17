@@ -32,6 +32,8 @@ quiz:
   files-folder: dev/
   profiling: false
   monitoring: false
+  job:
+    cleanupCleverestGames: true
 
 management:
   tracing:

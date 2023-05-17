@@ -44,10 +44,20 @@ public class QuizUtils {
                 .doubleValue();
     }
 
-    public StreamResource createStreamResourceForPhoto(String photoFilename) {
-        return new StreamResource(photoFilename.split("/")[1], () -> {
+    public StreamResource createStreamResourceForAudio(String audioFilename) {
+        return new StreamResource(audioFilename.split("/")[1], () -> {
             try {
-                return new FileInputStream(readImageFile(photoFilename));
+                return new FileInputStream(readAudioFile(audioFilename));
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    public StreamResource createStreamResourceForPhoto(String audioFilename) {
+        return new StreamResource(audioFilename.split("/")[1], () -> {
+            try {
+                return new FileInputStream(readImageFile(audioFilename));
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }

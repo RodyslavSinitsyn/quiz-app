@@ -1,12 +1,12 @@
 <configuration>
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>[%thread] %d{HH:mm:ss.SSS} %highlight(%-5level) [%X{traceId:-}|%X{spanId:-}]: %message%exception{short}%n</pattern>
+            <pattern>[%thread] %d{HH:mm:ss.SSS} %highlight(%-5level): %message%exception{20}%n</pattern>
         </encoder>
     </appender>
 
     <logger name="org.rsinitsyn.quiz" level="DEBUG"/>
-    <logger name="io.opentelemetry.exporter.zipkin" level="OFF" />
+    <logger name="io.opentelemetry.exporter.zipkin" level="OFF"/>
 
     <root level="INFO">
         <appender-ref ref="Console"/>

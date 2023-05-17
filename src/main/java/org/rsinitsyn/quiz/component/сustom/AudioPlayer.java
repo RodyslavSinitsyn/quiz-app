@@ -16,7 +16,7 @@ public class AudioPlayer extends Component {
 
     public AudioPlayer() {
         getElement().setAttribute("controls", true);
-        getElement().setAttribute("autoplay", true);
+        getElement().setAttribute("autoplay", false);
     }
 
     public void setSource(StreamResource resource) {

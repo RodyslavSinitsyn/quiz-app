@@ -3,6 +3,7 @@ package org.rsinitsyn.quiz.service;
 import io.micrometer.observation.annotation.Observed;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -187,5 +188,11 @@ public class GameService {
 
     public List<GameEntity> findAllNewFirst() {
         return gameDao.findAllJoinGamesQuestionsNewFirst();
+    }
+
+    @Transactional
+    public void deleteAllBatch(Collection<GameEntity>... gameEntities) {
+        Arrays.stream(gameEntities).forEach(gameDao::deleteAll);
+        log.debug("Games deleted, size: {}", Arrays.stream(gameEntities).mapToLong(Collection::size).sum());
     }
 }

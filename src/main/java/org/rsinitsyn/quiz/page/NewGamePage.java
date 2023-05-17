@@ -8,7 +8,6 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.Collections;
-import java.util.UUID;
 import java.util.function.Consumer;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.сustom.GameListGrid;
@@ -45,7 +44,7 @@ public class NewGamePage extends VerticalLayout {
         layout.setWidthFull();
         layout.setDefaultHorizontalComponentAlignment(Alignment.CENTER);
         layout.add(
-                createPlayGameButton("Викторина", ui -> ui.navigate(QuizGamePage.class, UUID.randomUUID().toString())),
+                createPlayGameButton("Викторина", ui -> ui.navigate(QuizGamePage.class)),
                 createPlayGameButton("Самый умный", ui -> ui.navigate(CleverestGamePage.class))
         );
         return layout;

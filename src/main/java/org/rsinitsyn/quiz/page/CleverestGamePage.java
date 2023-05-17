@@ -74,6 +74,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
     private QuestionService questionService;
     private GameService gameService;
     private CleverestBroadcaster broadcaster;
+    private String originalLocation;
 
     @Autowired
     // Each time on navigate from outside
@@ -167,6 +168,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
     // Each time on refresh and navigate
     public void afterNavigation(AfterNavigationEvent event) {
         removeAll();
+        originalLocation = event.getLocation().getPathWithQueryParameters();
         UI ui = getUI().orElseThrow(() -> new IllegalStateException("No UI"));
         if (StringUtils.isBlank(gameId)) {
             renderSettings();
@@ -182,7 +184,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
             return;
         }
         this.isAdmin = gameEntity.getCreatedBy().equals(SessionWrapper.getLoggedUser());
-
+        // sub on events here because self reload does not trigger onAttach again
         subOnEvents(ui);
         renderComponents(gameEntity, event);
     }
@@ -197,7 +199,6 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
             return;
         }
         if (gameService.findById(gameId).getStatus().equals(GameStatus.STARTED)) {
-            event.postpone();
             Dialog confirmDialog = new Dialog();
             confirmDialog.setHeaderTitle("Нельзя покинуть игру!");
             confirmDialog.setCloseOnOutsideClick(true);
@@ -205,6 +206,8 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
                 confirmDialog.close();
             });
             confirmDialog.open();
+            event.postpone();
+            event.getUI().getPage().getHistory().replaceState(null, originalLocation);
         }
     }
 

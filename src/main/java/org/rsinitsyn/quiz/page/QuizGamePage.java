@@ -1,47 +1,45 @@
 package org.rsinitsyn.quiz.page;
 
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
+import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.router.Route;
-import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.quiz.QuizGamePlayBoardComponent;
 import org.rsinitsyn.quiz.component.quiz.QuizGameResultComponent;
 import org.rsinitsyn.quiz.component.quiz.QuizGameSettingsComponent;
-import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.GameType;
-import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 
+@Slf4j
 @Route(value = "/quiz", layout = MainLayout.class)
 @PageTitle("Game")
-@Slf4j
+@PreserveOnRefresh
 public class QuizGamePage extends VerticalLayout implements HasUrlParameter<String>, AfterNavigationObserver {
 
     private String gameId;
+    private QuizGameState gameState;
 
-    private QuizGameSettingsComponent quizGameSettingsComponent;
-    private QuizGamePlayBoardComponent quizGamePlayBoardComponent;
-    private QuizGameResultComponent quizGameResultComponent;
+    private QuizGameSettingsComponent settingsComponent;
+    private QuizGamePlayBoardComponent playBoardComponent;
+    private QuizGameResultComponent resulComponent;
 
     private QuestionService questionService;
     private GameService gameService;
     private UserService userService;
 
-    @Autowired
     public QuizGamePage(QuestionService questionService, GameService gameService, UserService userService) {
         this.questionService = questionService;
         this.gameService = gameService;
@@ -49,29 +47,51 @@ public class QuizGamePage extends VerticalLayout implements HasUrlParameter<Stri
     }
 
     @Override
-    public void setParameter(BeforeEvent event, String parameter) {
-        gameId = parameter;
+    public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
+        this.gameId = parameter;
     }
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
         if (event.isRefreshEvent()) {
-            log.info("Refresh page happened");
             return;
         }
-        configureGameSettingsComponent();
-        add(quizGameSettingsComponent);
-        createGameIfNotExists();
+        removeAll();
+        if (StringUtils.isEmpty(gameId)) {
+            configureGameSettingsComponent();
+            return;
+        }
+        if (gameService.findById(gameId) == null) {
+            getUI().ifPresent(ui -> ui.navigateToClient("/"));
+            return;
+        }
+        configurePlayGameComponent(gameState);
     }
 
-    private QuizGamePlayBoardComponent configurePlayGameComponent(QuizGameState quizGameState) {
-        quizGamePlayBoardComponent = new QuizGamePlayBoardComponent(quizGameState);
-        quizGamePlayBoardComponent.addListener(QuizGamePlayBoardComponent.FinishGameEvent.class, event -> {
-            gameService.finishGame(gameId);
-            remove(quizGamePlayBoardComponent);
-            add(configureQuizGameResultComponent(event.getModel()));
+    private void configureGameSettingsComponent() {
+        settingsComponent = new QuizGameSettingsComponent(
+                questionService.findAllByCurrentUserAsModel(),
+                userService.findAllExceptCurrent());
+
+        settingsComponent.addListener(QuizGameSettingsComponent.StartGameEvent.class, event -> {
+            var newGameId = UUID.randomUUID().toString();
+            this.gameState = event.getGameState();
+            gameService.createIfNotExists(newGameId, GameType.QUIZ);
+            gameService.linkQuestionsWithGame(newGameId, event.getGameState());
+            getUI().ifPresent(ui -> ui.navigate(getClass(), newGameId));
         });
-        quizGamePlayBoardComponent.addListener(QuizGamePlayBoardComponent.SubmitAnswerEvent.class, event -> {
+
+        add(settingsComponent);
+    }
+
+    private void configurePlayGameComponent(QuizGameState quizGameState) {
+        playBoardComponent = new QuizGamePlayBoardComponent(quizGameState);
+        playBoardComponent.addListener(QuizGamePlayBoardComponent.FinishGameEvent.class, event -> {
+            gameService.finishGame(gameId);
+            remove(playBoardComponent);
+            configureQuizGameResultComponent(event.getModel());
+        });
+        playBoardComponent.addListener(QuizGamePlayBoardComponent.SubmitAnswerEvent.class, event -> {
             gameService.submitAnswers(
                     gameId,
                     quizGameState.getPlayerName(),
@@ -79,44 +99,11 @@ public class QuizGamePage extends VerticalLayout implements HasUrlParameter<Stri
                     event.getAnswer().stream().map(QuestionModel.AnswerModel::getText).toList(),
                     () -> event.getQuestion().areAnswersCorrect(event.getAnswer()));
         });
-        return quizGamePlayBoardComponent;
+        add(playBoardComponent);
     }
 
-    private QuizGameResultComponent configureQuizGameResultComponent(QuizGameState model) {
-        quizGameResultComponent = new QuizGameResultComponent(model, gameService.findById(gameId));
-        return quizGameResultComponent;
-    }
-
-    private void configureGameSettingsComponent() {
-        List<UserEntity> playerList = userService.findAllExceptCurrent();
-        quizGameSettingsComponent = new QuizGameSettingsComponent(
-                gameId,
-                questionService.findAllByCurrentUserAsModel(),
-                playerList);
-
-        quizGameSettingsComponent.addListener(QuizGameSettingsComponent.StartGameEvent.class, event -> {
-            gameService.linkQuestionsWithGame(gameId, event.getModel());
-            remove(quizGameSettingsComponent);
-            add(configurePlayGameComponent(event.getModel()));
-        });
-
-        quizGameSettingsComponent.addListener(QuizGameSettingsComponent.UpdateGameEvent.class, event -> {
-            gameService.update(gameId,
-                    event.getModel().getGameName(),
-                    GameStatus.NOT_STARTED);
-        });
-    }
-
-    private void createGameIfNotExists() {
-        boolean gameCreated = gameService.createIfNotExists(gameId, GameType.QUIZ);
-        if (!gameCreated) {
-            Notification notification =
-                    Notification.show("Нет возможности продолжить созданную игру. Создайте новую игру!",
-                            3_000,
-                            Notification.Position.TOP_CENTER);
-            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-            removeAll();
-            getUI().ifPresent(ui -> ui.navigate(QuizGamePage.class, UUID.randomUUID().toString()));
-        }
+    private void configureQuizGameResultComponent(QuizGameState model) {
+        resulComponent = new QuizGameResultComponent(model, gameService.findById(gameId));
+        add(resulComponent);
     }
 }

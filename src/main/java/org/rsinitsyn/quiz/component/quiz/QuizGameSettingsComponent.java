@@ -65,12 +65,10 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
     private List<QuestionModel> questionModelList;
     private List<UserEntity> userEntityList;
 
-    public QuizGameSettingsComponent(String gameId,
-                                     List<QuestionModel> questionModelList,
+    public QuizGameSettingsComponent(List<QuestionModel> questionModelList,
                                      List<UserEntity> userEntityList) {
         this.questionModelList = questionModelList;
         this.userEntityList = userEntityList;
-        this.gameState.setGameId(UUID.fromString(gameId));
 
         this.gameName = createTextInput("Название игры");
         configureUserComboBox();
@@ -104,7 +102,6 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
         field.setValueChangeMode(ValueChangeMode.ON_BLUR);
         field.addValueChangeListener(event -> {
             binder.writeBeanAsDraft(gameState);
-            fireEvent(new UpdateGameEvent(this, gameState));
         });
         return field;
     }
@@ -280,29 +277,15 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
 
     @Getter
     public static class StartGameEvent extends ComponentEvent<QuizGameSettingsComponent> {
-        private QuizGameState model;
+        private QuizGameState gameState;
 
         public StartGameEvent(QuizGameSettingsComponent source, boolean fromClient) {
             super(source, fromClient);
         }
 
-        public StartGameEvent(QuizGameSettingsComponent source, QuizGameState model) {
+        public StartGameEvent(QuizGameSettingsComponent source, QuizGameState gameState) {
             this(source, false);
-            this.model = model;
-        }
-    }
-
-    @Getter
-    public static class UpdateGameEvent extends ComponentEvent<QuizGameSettingsComponent> {
-        private QuizGameState model;
-
-        public UpdateGameEvent(QuizGameSettingsComponent source, boolean fromClient) {
-            super(source, fromClient);
-        }
-
-        public UpdateGameEvent(QuizGameSettingsComponent source, QuizGameState model) {
-            this(source, false);
-            this.model = model;
+            this.gameState = gameState;
         }
     }
 

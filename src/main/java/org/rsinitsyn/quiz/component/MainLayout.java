@@ -41,7 +41,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
 @Slf4j
-public class MainLayout extends AppLayout implements AfterNavigationObserver, BeforeEnterObserver, BeforeLeaveObserver {
+public class MainLayout extends AppLayout implements
+        AfterNavigationObserver,
+        BeforeEnterObserver,
+        BeforeLeaveObserver {
 
     private HorizontalLayout header = new HorizontalLayout();
 

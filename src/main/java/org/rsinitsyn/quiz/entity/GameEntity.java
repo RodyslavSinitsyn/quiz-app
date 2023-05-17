@@ -1,5 +1,6 @@
 package org.rsinitsyn.quiz.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -43,7 +44,7 @@ public class GameEntity {
     @Column(nullable = false)
     private LocalDateTime creationDate;
     private LocalDateTime finishDate;
-    @OneToMany(mappedBy = "game", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "game", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @OrderBy(value = "orderNumber")
     @ToString.Exclude
     private Set<GameQuestionUserEntity> gameQuestions = new HashSet<>();

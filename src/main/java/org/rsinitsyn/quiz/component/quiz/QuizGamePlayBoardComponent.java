@@ -21,6 +21,7 @@ import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -28,11 +29,13 @@ import javazoom.jl.player.Player;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
+import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.utils.AudioUtils;
+import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
@@ -209,42 +212,12 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 
     @SneakyThrows
     private VerticalLayout createQuestionLayout() {
-        VerticalLayout layout = new VerticalLayout();
-        layout.setSpacing(false);
-        layout.setPadding(false);
-        layout.setDefaultHorizontalComponentAlignment(Alignment.CENTER);
-
-        Paragraph textParagraph = new Paragraph();
-        textParagraph.setText(currQuestion.getText());
-        textParagraph.getStyle().set("white-space", "pre-line");
-
-        if (StringUtils.isNotEmpty(currQuestion.getPhotoFilename())) {
-            Image image = new Image();
-            image.setSrc(QuizUtils.createStreamResourceForPhoto(currQuestion.getPhotoFilename()));
-            image.setMaxHeight("25em");
-            layout.add(image);
-            textParagraph.addClassNames(LumoUtility.FontSize.XXLARGE);
-        } else {
-            textParagraph.addClassNames(LumoUtility.FontSize.XXXLARGE);
-        }
-
-        Span categorySpan = new Span(currQuestion.getCategoryName());
-        categorySpan.addClassNames(LumoUtility.FontWeight.SEMIBOLD, LumoUtility.FontSize.MEDIUM);
-        layout.add(categorySpan);
-
-        layout.add(textParagraph);
-
-        if (StringUtils.isNotEmpty(currQuestion.getAudioFilename())) {
-            Button playAudioButton = new Button("Слушать");
-            playAudioButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_PRIMARY);
-            playAudioButton.setIcon(VaadinIcon.PLAY_CIRCLE.create());
-            playAudioButton.addClickListener(event -> {
-                AudioUtils.playSoundAsync(currQuestion.getAudioFilename());
-            });
-            layout.add(playAudioButton);
-        }
-
-        return layout;
+        return CleverestComponents.questionLayout(
+                currQuestion,
+                List.of(LumoUtility.FontSize.XXXLARGE),
+                "25em",
+                true
+        );
     }
 
     private Div createProgressBarLabel() {
@@ -310,11 +283,11 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         if (!GameStatus.FINISHED.equals(gameState.getStatus())) {
             BeforeLeaveEvent.ContinueNavigationAction leaveAction =
                     event.postpone();
-            ConfirmDialog confirmDialog = new ConfirmDialog();
-            confirmDialog.setText("Покинув страницу придется начать с начала!");
-            confirmDialog.setCancelable(true);
-            confirmDialog.addConfirmListener(e -> leaveAction.proceed());
-            confirmDialog.open();
+            QuizComponents.openConfirmDialog(
+                    new Span("Покинув страницу придется начать с начала!"),
+                    "Покинуть игру?",
+                    leaveAction::proceed
+            );
         }
     }
 

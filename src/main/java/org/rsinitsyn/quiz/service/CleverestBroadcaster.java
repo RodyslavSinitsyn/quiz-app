@@ -124,7 +124,7 @@ public class CleverestBroadcaster {
         log.info("User gave answer: {} = {}", username, answerAsText);
         getState(gameId).submitAnswer(username, answerAsText, isCorrect);
         eventBuses.get(gameId).fireEvent(
-                new UserAnsweredEvent(gameId, getState(gameId).getUsers().get(username)));
+                new UserAnsweredEvent(gameId, getState(gameId).getUsers().get(username), getState(gameId).getRoundNumber()));
 
         if (getState(gameId).areAllUsersAnswered()) {
             sendEventWhenAllAnswered(gameId, questionModel);
@@ -243,6 +243,15 @@ public class CleverestBroadcaster {
                 ));
     }
 
+    public void sendQuestionChoosenEvent(String gameId, QuestionModel question, UserGameState userToAnswer) {
+        getState(gameId).refreshQuestionRenderedTime();
+        eventBuses.get(gameId).fireEvent(new QuestionChoosenEvent(
+                gameId,
+                question,
+                userToAnswer
+        ));
+    }
+
     @Getter
     public static class CleverestGameEvent extends ComponentEvent<Div> {
         private String gameId;
@@ -298,10 +307,12 @@ public class CleverestBroadcaster {
     @Getter
     public static class UserAnsweredEvent extends CleverestGameEvent {
         private UserGameState userGameState;
+        private int roundNumber;
 
-        public UserAnsweredEvent(String gameId, UserGameState userGameState) {
+        public UserAnsweredEvent(String gameId, UserGameState userGameState, int roundNumber) {
             super(gameId);
             this.userGameState = userGameState;
+            this.roundNumber = roundNumber;
         }
     }
 
@@ -406,6 +417,20 @@ public class CleverestBroadcaster {
     public static class GameFinishedEvent extends CleverestGameEvent {
         public GameFinishedEvent(String gameId) {
             super(gameId);
+        }
+    }
+
+    @Getter
+    public static class QuestionChoosenEvent extends CleverestGameEvent {
+        private QuestionModel question;
+        private UserGameState userToAnswer;
+
+        public QuestionChoosenEvent(String gameId,
+                                    QuestionModel question,
+                                    UserGameState userToAnswer) {
+            super(gameId);
+            this.question = question;
+            this.userToAnswer = userToAnswer;
         }
     }
 
