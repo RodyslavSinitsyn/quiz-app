@@ -81,7 +81,6 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
         setResponsiveSteps(new ResponsiveStep("0", 1));
         addClassNames(LumoUtility.AlignSelf.CENTER,
                 LumoUtility.Padding.MEDIUM);
-        getStyle().set("background-color", "white");
         setWidth("50em");
 
         add(QuizComponents.mainHeader("Настройки игры"),

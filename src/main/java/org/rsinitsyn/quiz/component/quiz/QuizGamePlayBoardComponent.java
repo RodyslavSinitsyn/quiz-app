@@ -39,6 +39,7 @@ import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
+import static org.rsinitsyn.quiz.model.QuestionModel.AnswerModel.defaultWrong;
 import static org.rsinitsyn.quiz.utils.StaticValuesHolder.CORRECT_ANSWER_AUDIOS;
 import static org.rsinitsyn.quiz.utils.StaticValuesHolder.SUBMIT_ANSWER_AUDIOS;
 import static org.rsinitsyn.quiz.utils.StaticValuesHolder.WRONG_ANSWER_AUDIOS;
@@ -133,7 +134,10 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
                         new QuizGamePlayBoardComponent.SubmitAnswerEvent(
                                 this,
                                 currQuestion,
-                                Collections.singleton(currQuestion.getAnswers().stream().filter(m -> !m.isCorrect()).findFirst().orElseThrow())));
+                                Collections.singleton(currQuestion.getAnswers().stream()
+                                        .filter(m -> !m.isCorrect())
+                                        .findFirst()
+                                        .orElse(defaultWrong()))));
                 dialog.close();
                 renderQuestion();
             });

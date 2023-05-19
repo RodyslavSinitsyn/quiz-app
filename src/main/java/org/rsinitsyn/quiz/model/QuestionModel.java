@@ -13,6 +13,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.entity.QuestionType;
 
 @Getter
@@ -60,6 +61,9 @@ public class QuestionModel {
             return userHasOnlyCorrectAnswers && correctAnswersCount == userCorrectAnswersCount;
         } else if (type.equals(QuestionType.PRECISION)) {
             AnswerModel answerModel = userAnswers.stream().findFirst().orElseThrow(() -> new RuntimeException("No answer"));
+            if (!StringUtils.isNumeric(answerModel.getText())) {
+                return Boolean.FALSE;
+            }
             int userAnswer = Integer.parseInt(answerModel.getText());
             int validAnswer = Integer.parseInt(answers.stream().findFirst().orElseThrow().getText());
             return Math.abs(validAnswer - userAnswer) <= validRange;
@@ -76,5 +80,12 @@ public class QuestionModel {
     public static class AnswerModel {
         private String text;
         private boolean correct;
+
+        public static AnswerModel defaultWrong() {
+            return new AnswerModel(
+                    "Неверный",
+                    false
+            );
+        }
     }
 }

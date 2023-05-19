@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
+import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.utils.AudioUtils;
@@ -214,7 +215,10 @@ public class CleverestComponents {
         Span textContent = CleverestComponents.questionTextSpan(
                 questionModel.getText(),
                 textContentClasses.toArray(new String[]{}));
-        layout.add(textContent);
+
+        layout.add(questionModel.getType().equals(QuestionType.PRECISION)
+                ? new Span(VaadinIcon.STAR.create(), textContent)
+                : textContent);
 
         if (StringUtils.isNotEmpty(questionModel.getAudioFilename())) {
             Button playAudioButton = new Button("Слушать", VaadinIcon.PLAY_CIRCLE.create());
