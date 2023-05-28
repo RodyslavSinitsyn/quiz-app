@@ -126,7 +126,8 @@ public class CleverestBroadcaster {
         eventBuses.get(gameId).fireEvent(
                 new UserAnsweredEvent(gameId, getState(gameId).getUsers().get(username), getState(gameId).getRoundNumber()));
 
-        if (getState(gameId).areAllUsersAnswered()) {
+        if (getState(gameId).areAllUsersAnswered()
+                && getState(gameId).getRoundNumber() != 3) {
             sendEventWhenAllAnswered(gameId, questionModel);
         }
     }

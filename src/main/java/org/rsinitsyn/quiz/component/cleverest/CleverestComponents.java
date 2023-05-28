@@ -204,7 +204,6 @@ public class CleverestComponents {
             Image image = new Image();
             image.setSrc(QuizUtils.createStreamResourceForPhoto(questionModel.getPhotoFilename()));
             image.setMaxHeight(imageHeight);
-            image.addClassNames(LumoUtility.BorderColor.PRIMARY, LumoUtility.Border.ALL);
             layout.add(image);
         }
 
