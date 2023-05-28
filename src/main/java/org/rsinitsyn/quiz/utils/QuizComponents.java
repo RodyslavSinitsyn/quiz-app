@@ -97,10 +97,11 @@ public class QuizComponents {
             typeIcon = VaadinIcon.LIST_OL.create();
         } else if (questionType.equals(QuestionType.TEXT)) {
             typeIcon = VaadinIcon.QUESTION.create();
+        } else if (questionType.equals(QuestionType.OR)) {
+            typeIcon = VaadinIcon.CORNER_UPPER_LEFT.create();
         } else {
             typeIcon = VaadinIcon.DOT_CIRCLE.create();
         }
-
         result.add(typeIcon);
         return result;
     }

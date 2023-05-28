@@ -264,7 +264,10 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     }
 
     private void showUsersScore(boolean roundOver, int revealScoreAfter, Runnable onCloseAction) {
-        var usersScoreLayout = revealScoreAfter == 0 ? CleverestComponents.usersScoreTableLayout(broadcaster.getState(gameId).getSortedByScoreUsers()) : new VerticalLayout(CleverestComponents.userInfoLightSpan("Вопросов до таблицы результатов: " + revealScoreAfter, LumoUtility.FontSize.XXXLARGE));
+        var usersScoreLayout = revealScoreAfter == 0
+                ? CleverestComponents.usersScoreTableLayout(broadcaster.getState(gameId).getSortedByScoreUsers())
+                : new VerticalLayout(CleverestComponents.userInfoLightSpan(
+                        "Вопросов до таблицы результатов: " + revealScoreAfter, LumoUtility.FontSize.XXXLARGE));
 
         CleverestComponents.openDialog(usersScoreLayout, "Таблица результатов", () -> {
             if (roundOver) {
