@@ -32,6 +32,7 @@ import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.model.AnswerHistory;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.OrQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.QuestionCategoryBindingModel;
 import org.rsinitsyn.quiz.properties.QuizAppProperties;
@@ -186,6 +187,33 @@ public class QuestionService {
             answer.setNumber(0);
             answer.setText(String.valueOf(model.getAnswerText().intValue()));
             question.addAnswer(answer);
+
+            questionDao.save(question);
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void saveOrUpdate(OrQuestionBindingModel model) {
+        if (model.getId() == null) {
+            QuestionEntity question = new QuestionEntity();
+            question.setText(model.getText());
+            question.setCreatedBy(SessionWrapper.getLoggedUser());
+            question.setCreationDate(LocalDateTime.now());
+            question.setType(QuestionType.OR);
+            question.setOptionsOnly(false);
+            question.setCategory(getOrCreateDefaultCategory());
+
+            AnswerEntity correct = new AnswerEntity();
+            correct.setCorrect(true);
+            correct.setNumber(0);
+            correct.setText(model.getCorrectAnswerText());
+            question.addAnswer(correct);
+
+            AnswerEntity option = new AnswerEntity();
+            option.setCorrect(false);
+            option.setNumber(1);
+            option.setText(model.getOptionAnswerText());
+            question.addAnswer(option);
 
             questionDao.save(question);
         }

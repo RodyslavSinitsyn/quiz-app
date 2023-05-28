@@ -40,7 +40,7 @@ public class QuizGameAnswersComponent extends VerticalLayout {
         answerListBox = new ListBox<>();
         multiAnswerListBox = new MultiSelectListBox<>();
 
-        if (question.getType().equals(QuestionType.TEXT)) {
+        if (question.getType().equals(QuestionType.TEXT) || question.getType().equals(QuestionType.OR)) {// todo change styles for OR
             answerListBox.setItems(copiedAnswerList);
             answerListBox.setRenderer(
                     new ComponentRenderer<Component, QuestionModel.AnswerModel>(this::createAnswerButton));

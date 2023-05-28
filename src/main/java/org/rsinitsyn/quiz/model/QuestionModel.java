@@ -67,8 +67,8 @@ public class QuestionModel {
             int userAnswer = Integer.parseInt(answerModel.getText());
             int validAnswer = Integer.parseInt(answers.stream().findFirst().orElseThrow().getText());
             return Math.abs(validAnswer - userAnswer) <= validRange;
-        } else if (type.equals(QuestionType.TOP)) {
-            return false;
+        } else if (type.equals(QuestionType.OR)) {
+            return userAnswers.stream().allMatch(AnswerModel::isCorrect);
         } else {
             throw new IllegalStateException("QuestionType not defined");
         }

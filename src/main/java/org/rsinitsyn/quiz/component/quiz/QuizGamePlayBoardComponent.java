@@ -6,10 +6,8 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -17,7 +15,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.router.BeforeLeaveEvent;
 import com.vaadin.flow.router.BeforeLeaveObserver;
-import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.Collections;
@@ -28,7 +25,6 @@ import java.util.stream.Collectors;
 import javazoom.jl.player.Player;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.QuestionType;
@@ -36,7 +32,6 @@ import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.utils.AudioUtils;
 import org.rsinitsyn.quiz.utils.QuizComponents;
-import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
 import static org.rsinitsyn.quiz.model.QuestionModel.AnswerModel.defaultWrong;
@@ -52,9 +47,9 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     private Div progressBarLabel = new Div();
     private ProgressBar progressBar = new ProgressBar();
 
-    private QuizGameState gameState;
-    private QuestionModel currQuestion;
+    private final QuizGameState gameState;
 
+    private QuestionModel currQuestion;
     private Player lastPlayedAudio = null;
 
     public QuizGamePlayBoardComponent(QuizGameState gameState) {
@@ -68,7 +63,6 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 
         currQuestion = gameState.getNextQuestion();
         if (currQuestion == null) {
-            Optional.ofNullable(lastPlayedAudio).ifPresent(Player::close);
             finishGame();
             return;
         }
@@ -278,6 +272,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 
     private void finishGame() {
         removeAll();
+        Optional.ofNullable(lastPlayedAudio).ifPresent(Player::close);
         gameState.setStatus(GameStatus.FINISHED);
         fireEvent(new FinishGameEvent(this, gameState));
     }

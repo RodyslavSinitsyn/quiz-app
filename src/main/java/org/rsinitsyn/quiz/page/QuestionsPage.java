@@ -23,6 +23,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
+import org.rsinitsyn.quiz.component.сustom.AbstractQuestionCreationForm;
+import org.rsinitsyn.quiz.component.сustom.OrQuestionForm;
 import org.rsinitsyn.quiz.component.сustom.PrecisionQuestionForm;
 import org.rsinitsyn.quiz.component.сustom.QuestionCategoryForm;
 import org.rsinitsyn.quiz.component.сustom.QuestionForm;
@@ -31,6 +33,7 @@ import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.OrQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.QuestionCategoryBindingModel;
 import org.rsinitsyn.quiz.service.ImportService;
@@ -42,31 +45,31 @@ import org.rsinitsyn.quiz.utils.QuizComponents;
 @Slf4j
 @Route(value = "/list", layout = MainLayout.class)
 @PageTitle("Questions")
-public class QuestionsListPage extends VerticalLayout {
+public class QuestionsPage extends VerticalLayout {
 
     private QuestionListGrid grid;
     private TextField filterText = new TextField();
     private MultiSelectComboBox<QuestionCategoryEntity> categoryFilter = new MultiSelectComboBox<>();
     private HorizontalLayout groupedOperations = new HorizontalLayout();
+
     private Dialog formDialog;
-    private QuestionForm form;
     private QuestionCategoryForm categoryForm;
-    private PrecisionQuestionForm precisionQuestionForm;
+    private AbstractQuestionCreationForm<FourAnswersQuestionBindingModel> form;
+    private AbstractQuestionCreationForm<PrecisionQuestionBindingModel> precisionForm;
+    private AbstractQuestionCreationForm<OrQuestionBindingModel> orForm;
 
     private QuestionService questionService;
     private ImportService importService;
     private UserService userService;
 
-    public QuestionsListPage(QuestionService questionService, ImportService importService, UserService userService) {
+    public QuestionsPage(QuestionService questionService, ImportService importService, UserService userService) {
         this.questionService = questionService;
         this.importService = importService;
         this.userService = userService;
 
-        setSizeFull();
         configureGrid();
-        configureForm();
+        configureForms();
         configureCategoryForm();
-        configurePrecisionForm();
         configureDialog();
 
         add(QuizComponents.mainHeader("База вопросов"), createToolbar(), grid);
@@ -94,8 +97,11 @@ public class QuestionsListPage extends VerticalLayout {
         grid.addItemClickListener(event -> {
             grid.select(event.getItem());
             if (event.getItem().getType().equals(QuestionType.PRECISION)) {
-                precisionQuestionForm.setModel(ModelConverterUtils.toPrecisionQuestionBindingModel(event.getItem()));
-                addToDialogAndOpen(precisionQuestionForm);
+                precisionForm.setModel(ModelConverterUtils.toPrecisionQuestionBindingModel(event.getItem()));
+                addToDialogAndOpen(precisionForm);
+            } else if (event.getItem().getType().equals(QuestionType.OR)) {
+                orForm.setModel(ModelConverterUtils.toOrQuestionBindingModel(event.getItem()));
+                addToDialogAndOpen(orForm);
             } else {
                 editQuestion(ModelConverterUtils.toFourAnswersQuestionBindingModel(event.getItem()));
             }
@@ -108,46 +114,57 @@ public class QuestionsListPage extends VerticalLayout {
         grid.setItems(questionService.findAllCreatedByCurrentUser());
     }
 
-    private void configureForm() {
+    private void configureForms() {
+        // question form
         form = new QuestionForm(
                 questionService.findAllCategories(),
                 userService.findAllOrderByVisitDateDesc());
         form.setWidth("30em");
         form.setHeightFull();
-        form.addListener(QuestionForm.SaveEvent.class, event -> {
-            questionService.saveOrUpdate(event.getQuestion());
+        form.addSaveEventListener(event -> {
+            questionService.saveOrUpdate((FourAnswersQuestionBindingModel) event.getModel());
             updateList();
-            form.setQuestion(null);
             formDialog.close();
             grid.asMultiSelect().clear();
         });
-        form.addListener(QuestionForm.DeleteEvent.class, event -> {
-            questionService.deleteById(event.getQuestion().getId());
+        form.addDeleteEventListener(event -> {
+            questionService.deleteById(((FourAnswersQuestionBindingModel) event.getModel()).getId());
             updateList();
-            form.setQuestion(null);
             formDialog.close();
             grid.asMultiSelect().clear();
         });
-        form.addListener(QuestionForm.CancelEvent.class, event -> {
-            form.setQuestion(null);
-            formDialog.close();
-        });
-        form.setQuestion(null);
-    }
+        form.addCancelEventListener(event -> formDialog.close());
+        form.setModel(null);
 
-    private void configurePrecisionForm() {
-        precisionQuestionForm = new PrecisionQuestionForm();
-        precisionQuestionForm.addListener(PrecisionQuestionForm.SaveEvent.class, event -> {
-            questionService.saveOrUpdate(event.getSource().getModel());
+        // precision
+        precisionForm = new PrecisionQuestionForm();
+        precisionForm.addSaveEventListener(event -> {
+            questionService.saveOrUpdate((PrecisionQuestionBindingModel) event.getModel());
             updateList();
-            precisionQuestionForm.setModel(null);
             formDialog.close();
         });
-        precisionQuestionForm.addListener(PrecisionQuestionForm.CancelEvent.class, event -> {
-            precisionQuestionForm.setModel(null);
+        precisionForm.addDeleteEventListener(event -> {
+            questionService.deleteById(((PrecisionQuestionBindingModel) event.getModel()).getId());
+            updateList();
             formDialog.close();
         });
-        precisionQuestionForm.setModel(null);
+        precisionForm.addCancelEventListener(event -> formDialog.close());
+        precisionForm.setModel(null);
+
+        // or
+        orForm = new OrQuestionForm();
+        orForm.addSaveEventListener(event -> {
+            questionService.saveOrUpdate((OrQuestionBindingModel) event.getModel());
+            updateList();
+            formDialog.close();
+        });
+        orForm.addDeleteEventListener(event -> {
+            questionService.deleteById(((OrQuestionBindingModel) event.getModel()).getId());
+            updateList();
+            formDialog.close();
+        });
+        orForm.addCancelEventListener(event -> formDialog.close());
+        orForm.setModel(null);
     }
 
     private void configureCategoryForm() {
@@ -185,17 +202,24 @@ public class QuestionsListPage extends VerticalLayout {
             }
         });
 
-        Button addQuestionButton = new Button("Создать вопрос");
+        Button addQuestionButton = new Button("Вопрос");
         addQuestionButton.addClickListener(event -> {
             grid.asMultiSelect().clear();
             editQuestion(new FourAnswersQuestionBindingModel());
         });
 
-        Button addPrecisionQuestionButton = new Button("Создать точный вопрос");
+        Button addPrecisionQuestionButton = new Button("Точный вопрос");
         addPrecisionQuestionButton.addClickListener(event -> {
             grid.asMultiSelect().clear();
-            precisionQuestionForm.setModel(new PrecisionQuestionBindingModel());
-            addToDialogAndOpen(precisionQuestionForm);
+            precisionForm.setModel(new PrecisionQuestionBindingModel());
+            addToDialogAndOpen(precisionForm);
+        });
+
+        Button addOrQuestionButton = new Button("Или вопрос");
+        addOrQuestionButton.addClickListener(event -> {
+            grid.asMultiSelect().clear();
+            orForm.setModel(new OrQuestionBindingModel());
+            addToDialogAndOpen(orForm);
         });
 
         Upload uploadComponent = QuizComponents.uploadComponent(
@@ -218,6 +242,7 @@ public class QuestionsListPage extends VerticalLayout {
                 categoryFilter,
                 addQuestionButton,
                 addPrecisionQuestionButton,
+                addOrQuestionButton,
                 uploadComponent,
                 addCategoryButton,
                 groupedOperations);
@@ -289,11 +314,11 @@ public class QuestionsListPage extends VerticalLayout {
     private void editQuestion(FourAnswersQuestionBindingModel model) {
         if (model == null) {
             formDialog.close();
-            form.setQuestion(null);
+            form.setModel(null);
         } else {
             addToDialogAndOpen(form);
             form.setCategoryList(questionService.findAllCategories());
-            form.setQuestion(model);
+            form.setModel(model);
         }
     }
 

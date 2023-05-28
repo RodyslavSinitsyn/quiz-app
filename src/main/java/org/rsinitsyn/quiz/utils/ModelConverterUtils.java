@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.OrQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
 
 @UtilityClass
@@ -53,5 +54,14 @@ public class ModelConverterUtils {
         model.setAnswerText(Double.valueOf(questionEntity.getAnswers().stream().findFirst().orElseThrow().getText()));
 
         return model;
+    }
+
+    public static OrQuestionBindingModel toOrQuestionBindingModel(QuestionEntity questionEntity) {
+        return new OrQuestionBindingModel(
+                questionEntity.getId().toString(),
+                questionEntity.getText(),
+                new ArrayList<>(questionEntity.getAnswers()).get(0).getText(),
+                new ArrayList<>(questionEntity.getAnswers()).get(1).getText()
+        );
     }
 }

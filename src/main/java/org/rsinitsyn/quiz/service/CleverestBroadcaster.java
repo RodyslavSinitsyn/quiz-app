@@ -253,8 +253,8 @@ public class CleverestBroadcaster {
     }
 
     @Getter
-    public static class CleverestGameEvent extends ComponentEvent<Div> {
-        private String gameId;
+    public abstract static class CleverestGameEvent extends ComponentEvent<Div> {
+        private final String gameId;
 
         public CleverestGameEvent(String gameId) {
             super(new Div(), false);

@@ -1,11 +1,6 @@
 version: '3.3'
 
 services:
-  zipkin:
-    container_name: quiz-app-zipkin-dev
-    image: openzipkin/zipkin:2
-    ports:
-      - "9411:9411"
   prometheus:
     container_name: quiz-app-prometheus-dev
     image: prom/prometheus:v2.44.0

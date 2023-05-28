@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.page.FontsPage;
 import org.rsinitsyn.quiz.page.NewGamePage;
-import org.rsinitsyn.quiz.page.QuestionsListPage;
+import org.rsinitsyn.quiz.page.QuestionsPage;
 import org.rsinitsyn.quiz.page.StatisticPage;
 import org.rsinitsyn.quiz.service.UserService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
@@ -125,7 +125,7 @@ public class MainLayout extends AppLayout implements
         tabs.addThemeVariants(TabsVariant.LUMO_CENTERED,
                 TabsVariant.LUMO_MINIMAL);
         tabs.add(createTab("Играть", VaadinIcon.PLAY_CIRCLE_O.create(), NewGamePage.class));
-        tabs.add(createTab("Вопросы", VaadinIcon.QUESTION_CIRCLE_O.create(), QuestionsListPage.class));
+        tabs.add(createTab("Вопросы", VaadinIcon.QUESTION_CIRCLE_O.create(), QuestionsPage.class));
         tabs.add(createTab("Статистика", VaadinIcon.TRENDING_UP.create(), StatisticPage.class));
         if (Arrays.asList(environment.getActiveProfiles()).contains("dev")) {
             tabs.add(createTab("Шрифты", VaadinIcon.TEXT_LABEL.create(), FontsPage.class));

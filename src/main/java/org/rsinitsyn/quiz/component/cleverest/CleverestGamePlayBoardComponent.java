@@ -255,7 +255,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     private void renderUserPersonalScore() {
         UserGameState userState = broadcaster.getState(gameId).getUsers().get(SessionWrapper.getLoggedUser());
         if (userState == null) {
-            // TODO Temp solution investigate later
+            // This should probably never happen
+            log.warn("Not joined user is accessing started Cleverest game");
             return;
         }
         topContainer.removeAll();
