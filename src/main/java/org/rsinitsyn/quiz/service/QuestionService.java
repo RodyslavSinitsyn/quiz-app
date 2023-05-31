@@ -93,12 +93,15 @@ public class QuestionService {
     }
 
     public List<QuestionEntity> findAllCreatedByCurrentUser() {
-        String loggedUser = SessionWrapper.getLoggedUser();
-        if (loggedUser.equals("admin")) {
+        return findAllCreatedByUser(SessionWrapper.getLoggedUser());
+    }
+
+    public List<QuestionEntity> findAllCreatedByUser(String username) {
+        if (username.equals("admin")) {
             return questionDao.findAllJoinAnswersAndCategoryNewFirst();
         }
         return questionDao.findAllJoinAnswersAndCategoryNewFirst()
-                .stream().filter(entity -> entity.getCreatedBy().equals(loggedUser))
+                .stream().filter(entity -> entity.getCreatedBy().equals(username))
                 .toList();
     }
 

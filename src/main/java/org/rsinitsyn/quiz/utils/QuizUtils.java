@@ -55,6 +55,9 @@ public class QuizUtils {
     }
 
     public StreamResource createStreamResourceForPhoto(String audioFilename) {
+        if (audioFilename.split("/").length != 2) {
+            return null;
+        }
         return new StreamResource(audioFilename.split("/")[1], () -> {
             try {
                 return new FileInputStream(readImageFile(audioFilename));

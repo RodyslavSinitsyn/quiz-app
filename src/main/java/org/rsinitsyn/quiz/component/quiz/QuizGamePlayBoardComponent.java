@@ -68,6 +68,8 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         }
         removeAll();
 
+//        lastPlayedAudio = AudioUtils.playStaticAudioAsyncAndGetPlayer(StaticValuesHolder.THINK_AUDIOS.next());
+
         if (currQuestion.isOptionsOnly() || gameState.isAnswerOptionsEnabled()) {
             questionLayout = createQuestionLayout();
             hintsLayout = createHintsLayout();
@@ -245,14 +247,10 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         NotificationVariant variant;
         if (correct) {
             gameState.incrementCorrectAnswersCounter();
-            AudioUtils.playStaticSoundAsync(CORRECT_ANSWER_AUDIOS.next())
-                    .thenRun(() ->
-                            lastPlayedAudio = AudioUtils.playStaticAudioAsyncAndGetPlayer(StaticValuesHolder.THINK_AUDIOS.next()));
+            AudioUtils.playStaticSoundAsync(CORRECT_ANSWER_AUDIOS.next());
             variant = NotificationVariant.LUMO_SUCCESS;
         } else {
-            AudioUtils.playStaticSoundAsync(WRONG_ANSWER_AUDIOS.next())
-                    .thenRun(() ->
-                            lastPlayedAudio = AudioUtils.playStaticAudioAsyncAndGetPlayer(StaticValuesHolder.THINK_AUDIOS.next()));
+            AudioUtils.playStaticSoundAsync(WRONG_ANSWER_AUDIOS.next());
             variant = NotificationVariant.LUMO_ERROR;
         }
         String notifyText = correct ? "Правильный ответ!" : "Неверно...";

@@ -2,18 +2,27 @@ package org.rsinitsyn.quiz.component.сustom;
 
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
+import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.LocalDateTimeRenderer;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
+import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 
+@Slf4j
 public class QuestionListGrid extends Grid<QuestionEntity> {
 
     public QuestionListGrid(List<QuestionEntity> questionEntityList) {
         setItems(questionEntityList);
+    }
+
+    public void setQuestions(List<QuestionEntity> questions) {
+        setItems(questions);
     }
 
     public void addDefaultColumns() {
@@ -34,7 +43,12 @@ public class QuestionListGrid extends Grid<QuestionEntity> {
     public void addTextColumn(int flexGrow) {
         addColumn(new ComponentRenderer<>(QuizComponents::questionDescription))
                 .setHeader("Текст")
-                .setFlexGrow(flexGrow);
+                .setFlexGrow(flexGrow)
+                .setTooltipGenerator(entity -> entity.getAnswers().stream()
+                        .filter(AnswerEntity::isCorrect)
+                        .map(AnswerEntity::getText)
+                        .collect(Collectors.joining(", "))
+                );
     }
 
     public void addCategoryColumn() {

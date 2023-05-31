@@ -94,7 +94,7 @@ public class CleverestComponents {
                 LumoUtility.Background.PRIMARY_10,
                 LumoUtility.BorderColor.PRIMARY);
         span.setWidthFull();
-        span.setText(questionModel.getFirstCorrectAnswer().getText());
+        span.setText(questionModel.getCorrectAnswersAsText());
         return span;
     }
 

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -38,11 +39,11 @@ public class QuestionModel {
     private boolean alreadyAnswered;
     private int points;
 
-    public AnswerModel getFirstCorrectAnswer() {
+    public String getCorrectAnswersAsText() {
         return answers.stream()
                 .filter(AnswerModel::isCorrect)
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("No correct answer!"));
+                .map(AnswerModel::getText)
+                .collect(Collectors.joining(" & "));
     }
 
     public List<AnswerModel> getShuffledAnswers() {
