@@ -11,6 +11,7 @@ import org.apache.commons.io.IOUtils;
 import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
+import org.rsinitsyn.quiz.properties.QuizAppProperties;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.data.util.Pair;
@@ -23,6 +24,7 @@ public class ImportService {
     private static final String DEFAULT_DELIMITER = "|";
 
     private final QuestionService questionService;
+    private final QuizAppProperties properties;
 
     @SneakyThrows
     public void importQuestions(InputStream fileContent) {
@@ -57,7 +59,7 @@ public class ImportService {
         }
 
         if (tokens.length > 5) {
-            entity.setPhotoFilename(QuizUtils.generateFilename(tokens[5]));
+            entity.setPhotoFilename(properties.getFilesFolder() + QuizUtils.generateFilename(tokens[5]));
             entity.setOriginalPhotoUrl(tokens[5]);
         }
         entity.setCreatedBy(SessionWrapper.getLoggedUser());

@@ -170,7 +170,7 @@ public class QuestionService {
     @Transactional(propagation = Propagation.REQUIRED)
     public void saveEntityAndImage(QuestionEntity entity) {
         questionDao.save(entity);
-        resourceService.saveImageFromUrl(properties.getFilesFolder() + entity.getPhotoFilename(), entity.getOriginalPhotoUrl());
+        resourceService.saveImageFromUrl(entity.getPhotoFilename(), entity.getOriginalPhotoUrl());
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
