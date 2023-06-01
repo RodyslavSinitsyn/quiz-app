@@ -34,6 +34,7 @@ quiz:
   monitoring: false
   job:
     cleanupCleverestGames: true
+    uCarNumberGeneratorJob: false
 
 management:
   tracing:

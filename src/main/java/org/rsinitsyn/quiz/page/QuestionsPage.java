@@ -87,12 +87,11 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
     }
 
     private void configureGrid() {
-        grid = new QuestionListGrid(Collections.emptyList());
+        grid = new QuestionListGrid(Collections.emptyList(), true);
         grid.addColumn(new ComponentRenderer<>(QuizComponents::questionLinkedWithGameIcon))
                 .setHeader("Связь")
                 .setFlexGrow(0);
-        grid.setSizeFull();
-        grid.setAllRowsVisible(true);
+        grid.addDefaultColumns();
         grid.setSelectionMode(Grid.SelectionMode.MULTI);
         grid.addSelectionListener(event -> {
             if (!event.isFromClient()) {
@@ -112,7 +111,6 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
                 editQuestion(ModelConverterUtils.toFourAnswersQuestionBindingModel(event.getItem()));
             }
         });
-        grid.addDefaultColumns();
     }
 
     @SuppressWarnings("all")

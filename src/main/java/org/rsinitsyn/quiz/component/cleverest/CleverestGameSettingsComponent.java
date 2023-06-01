@@ -27,7 +27,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
 
     private List<QuestionEntity> questionEntityList;
 
-    private final QuestionListGrid allQuestionsGrid = new QuestionListGrid(Collections.emptyList());
+    private final QuestionListGrid allQuestionsGrid = new QuestionListGrid(Collections.emptyList(), true);
     private final QuestionListGrid firstRoundGrid = new QuestionListGrid(Collections.emptyList());
     private final QuestionListGrid secondRoundGrid = new QuestionListGrid(Collections.emptyList());
     private final QuestionListGrid thirdRoundGrid = new QuestionListGrid(Collections.emptyList());
@@ -61,7 +61,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
 
     public void setQuestions(List<QuestionEntity> questions) {
         this.questionEntityList = questions;
-        this.allQuestionsGrid.setItems(questions);
+        this.allQuestionsGrid.setQuestions(questions);
     }
 
     private void configureToolbar() {
@@ -193,11 +193,11 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
         var gridDataView = grid.setItems(new ArrayList<>());
 
         grid.setWidthFull();
+        grid.setAllRowsVisible(true);
         grid.addThemeVariants(GridVariant.LUMO_COMPACT, GridVariant.LUMO_WRAP_CELL_CONTENT);
         grid.addTextColumn(5);
         grid.addCategoryColumn();
         grid.addMechanicColumn();
-        grid.setAllRowsVisible(true);
         grid.addItemDoubleClickListener(event -> {
             gridDataView.removeItem(event.getItem());
             allQuestionsGrid.getListDataView().refreshAll();
