@@ -20,7 +20,6 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.function.BiConsumer;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
-import org.rsinitsyn.quiz.component.сustom.AudioPlayer;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 
@@ -89,18 +88,18 @@ public class QuizComponents {
         Span result = new Span();
         if (optionsOnly) {
             result.getElement().getThemeList().add("badge contrast");
+        } else if (questionType.equals(QuestionType.TOP)) {
+            result.getElement().getThemeList().add("badge error");
         } else {
             result.getElement().getThemeList().add("badge");
         }
         Icon typeIcon;
-        if (questionType.equals(QuestionType.MULTI)) {
-            typeIcon = VaadinIcon.LIST_OL.create();
-        } else if (questionType.equals(QuestionType.TEXT)) {
-            typeIcon = VaadinIcon.QUESTION.create();
-        } else if (questionType.equals(QuestionType.OR)) {
-            typeIcon = VaadinIcon.CORNER_UPPER_LEFT.create();
-        } else {
-            typeIcon = VaadinIcon.DOT_CIRCLE.create();
+        switch (questionType) {
+            case TOP -> typeIcon = VaadinIcon.LIST_OL.create();
+            case TEXT -> typeIcon = VaadinIcon.QUESTION.create();
+            case OR -> typeIcon = VaadinIcon.CORNER_UPPER_LEFT.create();
+            case MULTI -> typeIcon = VaadinIcon.LIST_UL.create();
+            default -> typeIcon = VaadinIcon.DOT_CIRCLE.create();
         }
         result.add(typeIcon);
         return result;

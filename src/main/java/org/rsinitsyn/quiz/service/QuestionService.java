@@ -35,6 +35,7 @@ import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.OrQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.QuestionCategoryBindingModel;
+import org.rsinitsyn.quiz.model.binding.TopQuestionBindingModel;
 import org.rsinitsyn.quiz.properties.QuizAppProperties;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
@@ -171,6 +172,30 @@ public class QuestionService {
     public void saveEntityAndImage(QuestionEntity entity) {
         questionDao.save(entity);
         resourceService.saveImageFromUrl(entity.getPhotoFilename(), entity.getOriginalPhotoUrl());
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void saveOrUpdate(TopQuestionBindingModel model) {
+        AtomicInteger count = new AtomicInteger(0);
+        if (model.getId() == null) {
+            QuestionEntity question = new QuestionEntity();
+            question.setText(model.getText());
+            question.setCreatedBy(SessionWrapper.getLoggedUser());
+            question.setCreationDate(LocalDateTime.now());
+            question.setType(QuestionType.TOP);
+            question.setOptionsOnly(false);
+            question.setCategory(getOrCreateDefaultCategory());
+            model.getTopListText().lines().forEach(
+                    answerText -> question.addAnswer(createAnswerEntity(answerText, true, count.getAndIncrement())));
+            questionDao.save(question);
+        } else {
+            QuestionEntity persistent = findByIdLazy(UUID.fromString(model.getId()));
+            persistent.setText(model.getText());
+            persistent.getAnswers().clear();
+            model.getTopListText().lines().forEach(
+                    answerText -> persistent.addAnswer(createAnswerEntity(answerText, true, count.getAndIncrement())));
+            questionDao.save(persistent);
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRED)

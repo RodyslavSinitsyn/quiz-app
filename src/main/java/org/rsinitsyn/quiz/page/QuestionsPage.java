@@ -1,6 +1,8 @@
 package org.rsinitsyn.quiz.page;
 
+import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -33,6 +35,7 @@ import org.rsinitsyn.quiz.component.сustom.PrecisionQuestionForm;
 import org.rsinitsyn.quiz.component.сustom.QuestionCategoryForm;
 import org.rsinitsyn.quiz.component.сustom.QuestionForm;
 import org.rsinitsyn.quiz.component.сustom.QuestionListGrid;
+import org.rsinitsyn.quiz.component.сustom.TopQuestionForm;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
@@ -40,6 +43,7 @@ import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.OrQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.QuestionCategoryBindingModel;
+import org.rsinitsyn.quiz.model.binding.TopQuestionBindingModel;
 import org.rsinitsyn.quiz.service.ImportService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.service.UserService;
@@ -63,6 +67,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
     private AbstractQuestionCreationForm<FourAnswersQuestionBindingModel> form;
     private AbstractQuestionCreationForm<PrecisionQuestionBindingModel> precisionForm;
     private AbstractQuestionCreationForm<OrQuestionBindingModel> orForm;
+    private AbstractQuestionCreationForm<TopQuestionBindingModel> topForm;
 
     private final QuestionService questionService;
     private final ImportService importService;
@@ -107,6 +112,9 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
             } else if (event.getItem().getType().equals(QuestionType.OR)) {
                 orForm.setModel(ModelConverterUtils.toOrQuestionBindingModel(event.getItem()));
                 addToDialogAndOpen(orForm);
+            } else if (event.getItem().getType().equals(QuestionType.TOP)) {
+                topForm.setModel(ModelConverterUtils.toTopQuestionBindingModel(event.getItem()));
+                addToDialogAndOpen(topForm);
             } else {
                 editQuestion(ModelConverterUtils.toFourAnswersQuestionBindingModel(event.getItem()));
             }
@@ -174,6 +182,21 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
         });
         orForm.addCancelEventListener(event -> formDialog.close());
         orForm.setModel(null);
+
+        // top
+        topForm = new TopQuestionForm();
+        topForm.addSaveEventListener(event -> {
+            questionService.saveOrUpdate((TopQuestionBindingModel) event.getModel());
+            updateListAsync();
+            formDialog.close();
+        });
+        topForm.addDeleteEventListener(event -> {
+            questionService.deleteById(((TopQuestionBindingModel) event.getModel()).getId());
+            updateListAsync();
+            formDialog.close();
+        });
+        topForm.addCancelEventListener(event -> formDialog.close());
+        topForm.setModel(null);
     }
 
     private void configureCategoryForm() {
@@ -211,24 +234,27 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
             }
         });
 
-        Button addQuestionButton = new Button("Вопрос");
-        addQuestionButton.addClickListener(event -> {
+        Button addQuestionButton = createButton("Вопрос", event -> {
             grid.asMultiSelect().clear();
             editQuestion(new FourAnswersQuestionBindingModel());
         });
 
-        Button addPrecisionQuestionButton = new Button("Точный вопрос");
-        addPrecisionQuestionButton.addClickListener(event -> {
+        Button addPrecisionQuestionButton = createButton("Точный", event -> {
             grid.asMultiSelect().clear();
             precisionForm.setModel(new PrecisionQuestionBindingModel());
             addToDialogAndOpen(precisionForm);
         });
 
-        Button addOrQuestionButton = new Button("Или вопрос");
-        addOrQuestionButton.addClickListener(event -> {
+        Button addOrQuestionButton = createButton("Или", event -> {
             grid.asMultiSelect().clear();
             orForm.setModel(new OrQuestionBindingModel());
             addToDialogAndOpen(orForm);
+        });
+
+        Button addTopQuestionButton = createButton("Топ", event -> {
+            grid.asMultiSelect().clear();
+            topForm.setModel(new TopQuestionBindingModel());
+            addToDialogAndOpen(topForm);
         });
 
         Upload uploadComponent = QuizComponents.uploadComponent(
@@ -239,8 +265,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
                     updateListAsync();
                 }, ".txt");
 
-        Button addCategoryButton = new Button("Добавить тему");
-        addCategoryButton.addClickListener(event -> {
+        Button addCategoryButton = createButton("Добавить тему", event -> {
             categoryForm.setModel(new QuestionCategoryBindingModel());
             addToDialogAndOpen(categoryForm);
         });
@@ -252,6 +277,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
                 addQuestionButton,
                 addPrecisionQuestionButton,
                 addOrQuestionButton,
+                addTopQuestionButton,
                 uploadComponent,
                 addCategoryButton,
                 groupedOperations);
@@ -259,6 +285,14 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
         toolbar.setAlignItems(Alignment.CENTER);
         toolbar.setJustifyContentMode(JustifyContentMode.CENTER);
         return toolbar;
+    }
+
+    private Button createButton(String text, ComponentEventListener<ClickEvent<Button>> eventHandler) {
+        Button button = new Button(text);
+        button.addThemeVariants(ButtonVariant.LUMO_SMALL,
+                ButtonVariant.LUMO_PRIMARY);
+        button.addClickListener(eventHandler);
+        return button;
     }
 
     private void configureGroupedActions() {

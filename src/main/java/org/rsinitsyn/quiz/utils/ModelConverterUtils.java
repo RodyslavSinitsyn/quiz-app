@@ -5,10 +5,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
+import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.OrQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.TopQuestionBindingModel;
 
 @UtilityClass
 public class ModelConverterUtils {
@@ -62,6 +64,14 @@ public class ModelConverterUtils {
                 questionEntity.getText(),
                 new ArrayList<>(questionEntity.getAnswers()).get(0).getText(),
                 new ArrayList<>(questionEntity.getAnswers()).get(1).getText()
+        );
+    }
+
+    public static TopQuestionBindingModel toTopQuestionBindingModel(QuestionEntity questionEntity) {
+        return new TopQuestionBindingModel(
+                questionEntity.getId().toString(),
+                questionEntity.getText(),
+                questionEntity.getAnswers().stream().map(AnswerEntity::getText).collect(Collectors.joining(System.lineSeparator()))
         );
     }
 }
