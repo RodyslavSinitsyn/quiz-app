@@ -2,6 +2,7 @@ package org.rsinitsyn.quiz.model;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,9 +42,10 @@ public class QuestionModel {
 
     public String getCorrectAnswersAsText() {
         return answers.stream()
+                .sorted(Comparator.comparing(AnswerModel::getNumber))
                 .filter(AnswerModel::isCorrect)
                 .map(AnswerModel::getText)
-                .collect(Collectors.joining(" & "));
+                .collect(Collectors.joining(System.lineSeparator()));
     }
 
     public List<AnswerModel> getShuffledAnswers() {
@@ -81,11 +83,13 @@ public class QuestionModel {
     public static class AnswerModel {
         private String text;
         private boolean correct;
+        private int number;
 
         public static AnswerModel defaultWrong() {
             return new AnswerModel(
                     "Неверный",
-                    false
+                    false,
+                    0
             );
         }
     }

@@ -164,7 +164,8 @@ public class QuestionService {
         return answerEntitySet.stream()
                 .map(answerEntity -> new QuestionModel.AnswerModel(
                         answerEntity.getText(),
-                        answerEntity.isCorrect()))
+                        answerEntity.isCorrect(),
+                        answerEntity.getNumber()))
                 .collect(Collectors.toSet());
     }
 

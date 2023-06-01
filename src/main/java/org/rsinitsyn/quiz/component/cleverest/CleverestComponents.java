@@ -5,6 +5,7 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.HasValue;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -94,6 +95,7 @@ public class CleverestComponents {
                 LumoUtility.Background.PRIMARY_10,
                 LumoUtility.BorderColor.PRIMARY);
         span.setWidthFull();
+        span.getStyle().set("white-space", "pre-line");
         span.setText(questionModel.getCorrectAnswersAsText());
         return span;
     }
@@ -295,5 +297,49 @@ public class CleverestComponents {
         layout.add(rating);
 
         return layout;
+    }
+
+    public List<Component> userTopListInputComponents(QuestionModel questionModel,
+                                                      Consumer<List<String>> answersConsumer) {
+        int topSize = questionModel.getAnswers().size();
+        VerticalLayout topListLayout = new VerticalLayout();
+        topListLayout.setSpacing(false);
+        topListLayout.setPadding(false);
+        Button submit = CleverestComponents.primaryButton("Отправить ответ", e -> {
+        });
+        submit.setEnabled(false);
+        submit.setWidthFull();
+        Button addToListButton = new Button(VaadinIcon.PLUS_CIRCLE.create());
+        addToListButton.addClickShortcut(Key.ENTER);
+        TextField textField = CleverestComponents.answerInput(event -> {
+            addToListButton.setEnabled(!event.getValue().isBlank());
+        });
+        addToListButton.addClickListener(event -> {
+            Button topListItem = new Button(textField.getValue());
+            topListItem.addClassNames(MOBILE_MEDIUM_FONT);
+            topListItem.setWidthFull();
+            topListLayout.add(topListItem);
+            topListItem.addClickListener(e -> {
+                topListLayout.remove(e.getSource());
+                submit.setEnabled(topListLayout.getChildren().count() == topSize);
+            });
+            textField.setValue("");
+            submit.setEnabled(topListLayout.getChildren().count() == topSize);
+        });
+        addToListButton.setEnabled(false);
+        submit.addClickListener(event -> {
+            answersConsumer.accept(topListLayout.getChildren().map(component -> component.getElement().getText()).toList());
+        });
+
+        HorizontalLayout userInput = new HorizontalLayout(textField, addToListButton);
+        userInput.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
+        userInput.setAlignItems(FlexComponent.Alignment.END);
+        userInput.setWidthFull();
+
+        return List.of(
+                userInput,
+                topListLayout,
+                submit
+        );
     }
 }
