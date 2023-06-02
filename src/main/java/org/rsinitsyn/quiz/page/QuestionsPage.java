@@ -318,7 +318,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
                     });
         });
 
-        Button updateCategoryButton = new Button("Обновить категорию");
+        Button updateCategoryButton = new Button("Обновить тему");
         updateCategoryButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
         updateCategoryButton.setIcon(VaadinIcon.EDIT.create());
         updateCategoryButton.addClickListener(event -> {

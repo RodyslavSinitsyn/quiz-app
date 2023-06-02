@@ -115,6 +115,7 @@ public class CleverestResultComponent extends VerticalLayout {
                         layout.add(new Span("Время: " + timeInSeconds));
                         layout.getStyle().set("color", state.getColor());
                         layout.getStyle().set("text-shadow", StaticValuesHolder.getFontBorder());
+                        layout.setPadding(false);
                         return layout;
                     }))
                     .setHeader(username)

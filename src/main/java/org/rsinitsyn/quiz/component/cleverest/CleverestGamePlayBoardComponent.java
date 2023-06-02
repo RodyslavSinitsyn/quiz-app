@@ -90,7 +90,10 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     }
 
     private void updateUserAnswerGiven(UserGameState userGameState) {
-        var component = (Div) topContainer.getChildren().filter(c -> c.getId().orElseThrow().equals("top-container-user-" + userGameState.getUsername())).findFirst().orElseThrow(() -> new IllegalArgumentException("Cant update topContainer. Username not found: " + userGameState.getUsername()));
+        var component = (Div) topContainer.getChildren()
+                .filter(c -> c.getId().orElseThrow().equals("top-container-user-" + userGameState.getUsername()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Cant update topContainer. Username not found: " + userGameState.getUsername()));
         component.addComponentAsFirst(CleverestComponents.userCheckIcon());
         component.addComponentAsFirst(QuizComponents.appendTextBorder(new Span(userGameState.lastResponseTimeSec())));
     }
@@ -113,15 +116,12 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         log.debug("Render question. GameId {}, questionText: {}", gameId, question.getText());
         renderTopContainerForAdmin(broadcaster.getState(gameId).getUsers().values());
         renderQuestionLayout(question, questionNumber, totalQuestions, roundNumber);
-
-        var answerType = roundNumber == 2 ? AnswerType.INPUT : AnswerType.OPTIONS;
-        if (question.getType().equals(QuestionType.TOP)) {
-            answerType = AnswerType.TOP;
-        }
-        renderUserAnswerLayout(question, answerType);
+        renderAnswersLayout(question, question.getType().equals(QuestionType.TOP)
+                ? AnswerType.TOP
+                : roundNumber == 2 ? AnswerType.INPUT : AnswerType.OPTIONS);
     }
 
-    private void renderUserAnswerLayout(QuestionModel questionModel, AnswerType answerType) {
+    private void renderAnswersLayout(QuestionModel questionModel, AnswerType answerType) {
         var answerInput = new VerticalLayout();
         answerInput.setPadding(false);
 
@@ -159,8 +159,10 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 answerInput.add(voiceRecognition);
             }
             submit.addClickListener(event -> {
-                broadcaster.sendSubmitAnswerEventAndCheckScore(gameId, SessionWrapper.getLoggedUser(), questionModel, textField.getValue(),
-                        // Is answer correct is not clear here yet
+                broadcaster.sendSubmitAnswerEventAndCheckScore(gameId,
+                        SessionWrapper.getLoggedUser(),
+                        questionModel,
+                        textField.getValue(),
                         () -> false);
             });
             answerInput.add(textField, submit);
@@ -300,7 +302,14 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         });
     }
 
-    private void showCorrectAnswer(QuestionModel question, Collection<UserGameState> users, boolean roundOver, int revealScoreAfter, boolean approveManually, Consumer<String> approveAction, Runnable onCloseAction, Runnable usersScoreCloseAction) {
+    private void showCorrectAnswer(QuestionModel question,
+                                   Collection<UserGameState> users,
+                                   boolean roundOver,
+                                   int revealScoreAfter,
+                                   boolean approveManually,
+                                   Consumer<String> approveAction,
+                                   Runnable onCloseAction,
+                                   Runnable usersScoreCloseAction) {
         if (users.stream().allMatch(UserGameState::isLastWasCorrect)) {
             AudioUtils.playStaticSoundAsync(StaticValuesHolder.CORRECT_ANSWER_AUDIOS.next());
         } else if (users.stream().noneMatch(UserGameState::isLastWasCorrect) && !approveManually) {
@@ -335,7 +344,10 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             Span userAnswerSpan = CleverestComponents.userAnswerSpan(userGameState, LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.SEMIBOLD);
             row.add(userAnswerSpan);
             if (approveManually) {
-                Button approveButton = CleverestComponents.approveButton(() -> approveAction.accept(userGameState.getUsername()));
+                Button approveButton =
+                        CleverestComponents.approveButton(
+                                () -> approveAction.accept(userGameState.getUsername()),
+                                question.getType().equals(QuestionType.TOP));
                 row.add(approveButton);
             }
             answers.add(row);
@@ -431,7 +443,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                         () -> {
                             if (SessionWrapper.getLoggedUser().equals(event.getUserToAnswer().getUsername())) {
                                 QuizUtils.runActionInUi(attachEvent.getUI().getUI(),
-                                        () -> renderUserAnswerLayout(event.getQuestion(), AnswerType.VOICE_OR_INPUT));
+                                        () -> renderAnswersLayout(event.getQuestion(), AnswerType.VOICE_OR_INPUT));
                             }
                         })));
     }

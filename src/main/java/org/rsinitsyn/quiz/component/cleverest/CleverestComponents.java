@@ -158,19 +158,25 @@ public class CleverestComponents {
         return button;
     }
 
-    public Button approveButton(Runnable clickAction,
-                                ButtonVariant... variants) {
+    public Button approveButton(Runnable clickAction, boolean counterMode) {
         Button button = new Button();
         button.setIcon(VaadinIcon.CHECK.create());
-        button.setDisableOnClick(true);
         button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         button.addClickListener(event -> {
+            if (counterMode) {
+                String currText = event.getSource().getElement().getText();
+                String newText = currText.isBlank()
+                        ? "1"
+                        : String.valueOf(Integer.parseInt(button.getText()) + 1);
+                button.setText(newText);
+            } else {
+                button.setEnabled(false);
+            }
             event.getSource().getParent().ifPresent(p ->
                     p.addClassNames(
                             LumoUtility.Background.PRIMARY_10, LumoUtility.Border.ALL, LumoUtility.BorderColor.PRIMARY));
             clickAction.run();
         });
-        button.addThemeVariants(variants);
         return button;
     }
 
@@ -305,7 +311,7 @@ public class CleverestComponents {
         VerticalLayout topListLayout = new VerticalLayout();
         topListLayout.setSpacing(false);
         topListLayout.setPadding(false);
-        Button submit = CleverestComponents.primaryButton("Отправить ответ", e -> {
+        Button submit = CleverestComponents.primaryButton("Ответить", e -> {
         });
         submit.setEnabled(false);
         submit.setWidthFull();
@@ -318,12 +324,14 @@ public class CleverestComponents {
             Button topListItem = new Button(textField.getValue());
             topListItem.addClassNames(MOBILE_MEDIUM_FONT);
             topListItem.setWidthFull();
-            topListLayout.add(topListItem);
             topListItem.addClickListener(e -> {
                 topListLayout.remove(e.getSource());
+                textField.setEnabled(topListLayout.getChildren().count() != topSize);
                 submit.setEnabled(topListLayout.getChildren().count() == topSize);
             });
+            topListLayout.add(topListItem);
             textField.setValue("");
+            textField.setEnabled(topListLayout.getChildren().count() != topSize);
             submit.setEnabled(topListLayout.getChildren().count() == topSize);
         });
         addToListButton.setEnabled(false);

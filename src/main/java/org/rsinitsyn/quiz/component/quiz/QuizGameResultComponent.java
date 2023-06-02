@@ -62,7 +62,7 @@ public class QuizGameResultComponent extends VerticalLayout {
         categoryDetailsGrid.setWidth("30em");
         categoryDetailsGrid.setAllRowsVisible(true);
         categoryDetailsGrid.setItems(gridItems);
-        categoryDetailsGrid.addColumn(CategoryResultDto::getCategoryName).setHeader("Категория").setFlexGrow(2);
+        categoryDetailsGrid.addColumn(CategoryResultDto::getCategoryName).setHeader("Тема").setFlexGrow(2);
         categoryDetailsGrid.addColumn(dto -> dto.getCorrectAnswersCount() + "/" + dto.getTotalAnswersCount()).setHeader("Ответы");
         categoryDetailsGrid.addColumn(dto -> dto.getAnswersRate() + "%").setHeader("Процент");
     }
