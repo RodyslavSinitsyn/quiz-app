@@ -6,6 +6,7 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.shared.Registration;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +50,8 @@ public class CleverestBroadcaster {
                                             .toList();
                                 }
                         )));
+        Collections.shuffle(firstRound);
+        Collections.shuffle(secondRound);
         gameStateMap.put(gameId,
                 new CleverestGameState(
                         createdBy,

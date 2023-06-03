@@ -133,7 +133,7 @@ public class CleverestComponents {
         button.addClassNames(
                 LumoUtility.BorderColor.PRIMARY,
                 LumoUtility.Border.ALL,
-                text.length() > 20 ? MOBILE_MEDIUM_FONT : MOBILE_LARGE_FONT);
+                text.length() >= 20 ? MOBILE_MEDIUM_FONT : MOBILE_LARGE_FONT);
         button.addClickListener(event -> {
             action.run();
         });
