@@ -41,6 +41,13 @@ public class QuestionModel {
     private boolean alreadyAnswered;
     private int points;
 
+    public AnswerModel getFirstCorrectAnswer() {
+        return answers.stream()
+                .sorted(Comparator.comparing(AnswerModel::getNumber))
+                .filter(AnswerModel::isCorrect)
+                .findFirst().orElseThrow();
+    }
+
     public String getCorrectAnswersAsText() {
         return answers.stream()
                 .sorted(Comparator.comparing(AnswerModel::getNumber))

@@ -38,6 +38,9 @@ import org.rsinitsyn.quiz.utils.QuizUtils;
 @UtilityClass
 public class CleverestComponents {
 
+    public static final String LARGE_IMAGE_HEIGHT = "30em";
+    public static final String MEDIUM_IMAGE_HEIGHT = "17.5em";
+
     public static final String MOBILE_SMALL_FONT = LumoUtility.FontSize.MEDIUM;
     public static final String MOBILE_MEDIUM_FONT = LumoUtility.FontSize.XLARGE;
     public static final String MOBILE_LARGE_FONT = LumoUtility.FontSize.XXLARGE;
@@ -68,15 +71,20 @@ public class CleverestComponents {
         return span;
     }
 
-    public Span userAnswerSpan(UserGameState userGameState, String... classes) {
-        Span userTextAnswer = new Span(String.valueOf(userGameState.getLastAnswerText()));
-        userTextAnswer.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
-        userTextAnswer.addClassNames(classes);
+    public Span userAnswerSpan(UserGameState userGameState, QuestionType questionType, String... classes) {
+        Span userAnswer = new Span();
+        if (questionType.equals(QuestionType.PHOTO)) {
+            userAnswer.add(QuizComponents.largeAvatar(userGameState.getLastAnswerText()));
+        } else {
+            userAnswer.add(String.valueOf(userGameState.getLastAnswerText()));
+        }
+        userAnswer.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
+        userAnswer.addClassNames(classes);
 
         return new Span(
                 userNameSpan(userGameState.getUsername(), userGameState.getColor(), classes),
                 delimiterSpan(classes),
-                userTextAnswer);
+                userAnswer);
     }
 
     public Span userNameSpan(String username, String textColor, String... classes) {
@@ -96,7 +104,14 @@ public class CleverestComponents {
                 LumoUtility.BorderColor.PRIMARY);
         span.setWidthFull();
         span.getStyle().set("white-space", "pre-line");
-        span.setText(questionModel.getCorrectAnswersAsText());
+        if (questionModel.getType().equals(QuestionType.PHOTO)) {
+            span.add(new Image() {{
+                setMaxHeight(MEDIUM_IMAGE_HEIGHT);
+                setSrc(QuizUtils.createStreamResourceForPhoto(questionModel.getFirstCorrectAnswer().getPhotoFilename()));
+            }});
+        } else {
+            span.setText(questionModel.getCorrectAnswersAsText());
+        }
         return span;
     }
 
@@ -317,6 +332,18 @@ public class CleverestComponents {
         return layout;
     }
 
+    public List<Component> userTextOptionsInputComponents(QuestionModel questionModel,
+                                                          boolean enableClickAction,
+                                                          Consumer<QuestionModel.AnswerModel> answerConsumer) {
+        return questionModel.getShuffledAnswers()
+                .stream()
+                .map(answerModel -> optionButton(answerModel.getText(), () -> {
+                    if (enableClickAction) answerConsumer.accept(answerModel);
+                }))
+                .map(button -> (Component) button)
+                .toList();
+    }
+
     public List<Component> userTopListInputComponents(QuestionModel questionModel,
                                                       Consumer<List<String>> answersConsumer) {
         int topSize = questionModel.getAnswers().size();
@@ -361,5 +388,25 @@ public class CleverestComponents {
                 topListLayout,
                 submit
         );
+    }
+
+    public static List<Component> userPhotoOptionsInputComponents(QuestionModel questionModel,
+                                                                  Consumer<QuestionModel.AnswerModel> answerConsumer) {
+        return questionModel.getShuffledAnswers().stream()
+                .map(answerModel -> {
+                    Image image = new Image();
+                    image.setSrc(QuizUtils.createStreamResourceForPhoto(answerModel.getPhotoFilename()));
+                    image.setMaxHeight("10em");
+//                    image.setWidthFull();
+                    image.addClassNames(
+                            LumoUtility.Border.ALL,
+                            LumoUtility.BorderRadius.MEDIUM,
+                            LumoUtility.BorderColor.PRIMARY
+                    );
+                    image.addClickListener(event -> answerConsumer.accept(answerModel));
+                    return image;
+                })
+                .map(image -> (Component) image)
+                .toList();
     }
 }

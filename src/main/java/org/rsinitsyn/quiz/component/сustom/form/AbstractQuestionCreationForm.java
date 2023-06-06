@@ -20,10 +20,11 @@ import java.util.function.Consumer;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
+import org.rsinitsyn.quiz.model.binding.AbstractQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
 
 @Slf4j
-public abstract class AbstractQuestionCreationForm<T> extends FormLayout {
+public abstract class AbstractQuestionCreationForm<T extends AbstractQuestionBindingModel> extends FormLayout {
 
     @Getter
     protected T model;

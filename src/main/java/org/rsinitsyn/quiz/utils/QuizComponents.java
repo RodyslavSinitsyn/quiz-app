@@ -2,6 +2,7 @@ package org.rsinitsyn.quiz.utils;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.avatar.Avatar;
+import com.vaadin.flow.component.avatar.AvatarVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.html.H1;
@@ -126,7 +127,7 @@ public class QuizComponents {
             row.add(playSound);
         }
         if (StringUtils.isNotEmpty(question.getPhotoFilename())) {
-            row.add(avatar(question.getPhotoFilename()));
+            row.add(smallAvatar(question.getPhotoFilename()));
         }
         row.add(new Span(
                 question.getText().length() > 300
@@ -135,8 +136,17 @@ public class QuizComponents {
         return row;
     }
 
-    public Avatar avatar(String photoFilename) {
+    public Avatar largeAvatar(String photoFilename) {
+        return avatar(photoFilename, AvatarVariant.LUMO_XLARGE);
+    }
+
+    public Avatar smallAvatar(String photoFilename) {
+        return avatar(photoFilename);
+    }
+
+    private Avatar avatar(String photoFilename, AvatarVariant... variant) {
         Avatar avatar = new Avatar();
+        avatar.addThemeVariants(variant);
         avatar.setImageResource(
                 QuizUtils.createStreamResourceForPhoto(photoFilename));
         return avatar;

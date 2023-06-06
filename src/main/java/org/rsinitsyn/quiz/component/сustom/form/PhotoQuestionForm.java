@@ -55,10 +55,10 @@ public class PhotoQuestionForm extends AbstractQuestionCreationForm<PhotoQuestio
                 layout.add(correctOption, optionTwo, optionThree, optionFour);
             } else {
                 layout.add(
-                        QuizComponents.avatar(model.getCorrectOption()),
-                        QuizComponents.avatar(model.getOptionTwo()),
-                        QuizComponents.avatar(model.getOptionThree()),
-                        QuizComponents.avatar(model.getOptionFour())
+                        QuizComponents.smallAvatar(model.getCorrectOption()),
+                        QuizComponents.smallAvatar(model.getOptionTwo()),
+                        QuizComponents.smallAvatar(model.getOptionThree()),
+                        QuizComponents.smallAvatar(model.getOptionFour())
                 );
             }
         };

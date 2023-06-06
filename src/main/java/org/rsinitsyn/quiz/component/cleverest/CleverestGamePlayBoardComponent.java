@@ -125,24 +125,23 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     private void renderAnswersLayout(QuestionModel questionModel, AnswerType answerType) {
         var answerInput = new VerticalLayout();
         answerInput.setPadding(false);
+        answerInput.setAlignItems(Alignment.CENTER);
 
         botContainer.removeAll();
         botContainer.setEnabled(true);
 
         if (AnswerType.OPTIONS.equals(answerType)) {
-            questionModel.getShuffledAnswers().forEach(answerModel -> {
-                Button button = CleverestComponents.optionButton(answerModel.getText(), () -> {
-                    if (isAdmin) {
-                        return;
-                    }
-                    broadcaster.sendSubmitAnswerEventAndCheckScore(gameId, SessionWrapper.getLoggedUser(), questionModel, answerModel.getText(), answerModel::isCorrect);
-                });
-                answerInput.add(button);
-            });
-        } else if (AnswerType.INPUT.equals(answerType) || AnswerType.VOICE_OR_INPUT.equals(answerType)) {
-            if (isAdmin) {
-                return;
+            if (questionModel.getType().equals(QuestionType.PHOTO)) {
+                if (isAdmin) return;
+                answerInput.add(CleverestComponents.userPhotoOptionsInputComponents(questionModel,
+                        answerModel -> broadcaster.sendSubmitAnswerEventAndCheckScore(gameId, SessionWrapper.getLoggedUser(), questionModel, answerModel.getPhotoFilename(), answerModel::isCorrect)));
+            } else {
+                answerInput.add(CleverestComponents.userTextOptionsInputComponents(questionModel,
+                        !isAdmin,
+                        answerModel -> broadcaster.sendSubmitAnswerEventAndCheckScore(gameId, SessionWrapper.getLoggedUser(), questionModel, answerModel.getText(), answerModel::isCorrect)));
             }
+        } else if (AnswerType.INPUT.equals(answerType) || AnswerType.VOICE_OR_INPUT.equals(answerType)) {
+            if (isAdmin) return;
             Button submit = CleverestComponents.primaryButton("Ответить", e -> {
             });
             submit.setWidthFull();
@@ -187,7 +186,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
     private void renderQuestionLayout(QuestionModel questionModel, int questionNumber, int totalQuestions, int roundNumber) {
         List<String> questionClasses = isAdmin ? List.of(LumoUtility.FontSize.XXXLARGE) : List.of(CleverestComponents.MOBILE_LARGE_FONT);
-        String imageHeight = isAdmin ? "30em" : "17.5em";
+        String imageHeight = isAdmin ? CleverestComponents.LARGE_IMAGE_HEIGHT : CleverestComponents.MEDIUM_IMAGE_HEIGHT;
 
         midContainer.removeAll();
 
@@ -349,7 +348,9 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 row.add(userGameState.isLastWasCorrect() ? CleverestComponents.doneIcon() : CleverestComponents.cancelIcon());
             }
 
-            Span userAnswerSpan = CleverestComponents.userAnswerSpan(userGameState, LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.SEMIBOLD);
+            Span userAnswerSpan = CleverestComponents.userAnswerSpan(userGameState,
+                    question.getType(),
+                    LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.SEMIBOLD);
             row.add(userAnswerSpan);
             if (approveManually) {
                 Button approveButton =

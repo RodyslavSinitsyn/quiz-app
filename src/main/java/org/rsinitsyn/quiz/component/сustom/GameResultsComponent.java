@@ -9,6 +9,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.entity.GameEntity;
+import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 
 public class GameResultsComponent extends VerticalLayout {
@@ -44,9 +45,14 @@ public class GameResultsComponent extends VerticalLayout {
 
             Span userName = new Span(" / " + question.getUser().getUsername());
 
-            Span userAnswer = new Span(
-                    StringUtils.defaultIfEmpty(question.getAnswerText(), ""));
-            userAnswer.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
+            Span userAnswer = new Span();
+
+            if (question.getQuestion().getType().equals(QuestionType.PHOTO)) {
+                userAnswer.add(QuizComponents.smallAvatar(question.getAnswerText()));
+            } else {
+                userAnswer.add(StringUtils.defaultIfEmpty(question.getAnswerText(), ""));
+                userAnswer.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
+            }
 
             column.add(answerIcon,
                     categoryName,
