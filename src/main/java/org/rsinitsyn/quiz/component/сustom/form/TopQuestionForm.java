@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.component.сustom;
+package org.rsinitsyn.quiz.component.сustom.form;
 
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
@@ -22,6 +22,8 @@ public class TopQuestionForm extends AbstractQuestionCreationForm<org.rsinitsyn.
         topListText.setRequired(true);
 
         add(text, topListText);
+
+        addCommonComponents();
         add(createButtonsLayout());
     }
 

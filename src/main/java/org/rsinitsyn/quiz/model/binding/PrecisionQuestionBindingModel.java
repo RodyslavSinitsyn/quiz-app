@@ -11,7 +11,7 @@ import org.hibernate.validator.constraints.Length;
  */
 @Data
 @NoArgsConstructor
-public class PrecisionQuestionBindingModel {
+public class PrecisionQuestionBindingModel extends AbstractQuestionBindingModel {
     public static final int TEXT_LENGTH_LIMIT = 1000;
     private String id;
     @NotBlank

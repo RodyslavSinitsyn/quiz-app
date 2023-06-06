@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.component.сustom;
+package org.rsinitsyn.quiz.component.сustom.form;
 
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.rsinitsyn.quiz.component.сustom.AnswerField;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
@@ -28,12 +29,13 @@ public class QuestionForm extends AbstractQuestionCreationForm<FourAnswersQuesti
     private ComboBox<String> author = new ComboBox<>();
     private VerticalLayout inputsLayout = new VerticalLayout();
     private List<AnswerField> answers = new ArrayList<>();
-    private TextField photoLocation = new TextField("Ссылка на фото");
 
     private final Binder<FourAnswersQuestionBindingModel> binder =
             new BeanValidationBinder<>(FourAnswersQuestionBindingModel.class);
 
     public QuestionForm(List<QuestionCategoryEntity> categoryEntityList, List<UserEntity> usersList) {
+        binder.bindInstanceFields(this);
+
         setUsersList(usersList);
         setCategoryList(categoryEntityList);
         configureTextInput();
@@ -48,14 +50,14 @@ public class QuestionForm extends AbstractQuestionCreationForm<FourAnswersQuesti
         add(inputsLayout);
         add(category,
                 author,
-                photoLocation,
                 QuizComponents.uploadComponent("Импортировать аудио",
                         (buffer, event) -> {
                             InputStream inputStream = buffer.getInputStream();
                             model.setAudio(inputStream);
                         }, ".mp3"));
+
+        addCommonComponents();
         add(createButtonsLayout());
-        binder.bindInstanceFields(this);
     }
 
     private void configureAnswerInputs() {

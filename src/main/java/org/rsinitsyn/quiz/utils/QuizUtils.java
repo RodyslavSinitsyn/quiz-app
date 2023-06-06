@@ -38,10 +38,14 @@ public class QuizUtils {
         );
     }
 
-    public double divide(double val, double divideOn) {
+    public double divide(double val, double divideOn, int afterDigit) {
         return BigDecimal.valueOf(val)
-                .divide(BigDecimal.valueOf(NumberUtils.max(divideOn, 1)), 2, RoundingMode.HALF_UP)
+                .divide(BigDecimal.valueOf(NumberUtils.max(divideOn, 1)), afterDigit, RoundingMode.HALF_UP)
                 .doubleValue();
+    }
+
+    public double divide(double val, double divideOn) {
+        return divide(val, divideOn, 2);
     }
 
     public StreamResource createStreamResourceForAudio(String audioFilename) {

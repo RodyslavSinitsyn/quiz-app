@@ -41,7 +41,8 @@ public class ModelConverterUtils {
                 answerBindingModels,
                 questionEntity.getCategory().getName(),
                 questionEntity.getCreatedBy(),
-                questionEntity.getOriginalPhotoUrl());
+                questionEntity.getOriginalPhotoUrl(),
+                questionEntity.getAnswerDescriptionText());
     }
 
     public PrecisionQuestionBindingModel toPrecisionQuestionBindingModel(QuestionEntity questionEntity) {
@@ -54,6 +55,8 @@ public class ModelConverterUtils {
         model.setText(questionEntity.getText());
         model.setRange(Double.valueOf(questionEntity.getValidRange()));
         model.setAnswerText(Double.valueOf(questionEntity.getAnswers().stream().findFirst().orElseThrow().getText()));
+        model.setPhotoLocation(questionEntity.getOriginalPhotoUrl());
+        model.setAnswerDescriptionText(questionEntity.getAnswerDescriptionText());
 
         return model;
     }
@@ -63,7 +66,9 @@ public class ModelConverterUtils {
                 questionEntity.getId().toString(),
                 questionEntity.getText(),
                 new ArrayList<>(questionEntity.getAnswers()).get(0).getText(),
-                new ArrayList<>(questionEntity.getAnswers()).get(1).getText()
+                new ArrayList<>(questionEntity.getAnswers()).get(1).getText(),
+                questionEntity.getOriginalPhotoUrl(),
+                questionEntity.getAnswerDescriptionText()
         );
     }
 
@@ -71,7 +76,9 @@ public class ModelConverterUtils {
         return new TopQuestionBindingModel(
                 questionEntity.getId().toString(),
                 questionEntity.getText(),
-                questionEntity.getAnswers().stream().map(AnswerEntity::getText).collect(Collectors.joining(System.lineSeparator()))
+                questionEntity.getAnswers().stream().map(AnswerEntity::getText).collect(Collectors.joining(System.lineSeparator())),
+                questionEntity.getOriginalPhotoUrl(),
+                questionEntity.getAnswerDescriptionText()
         );
     }
 }

@@ -18,7 +18,7 @@ import org.rsinitsyn.quiz.validator.PhotoUrlValid;
  */
 @Data
 @NoArgsConstructor
-public class FourAnswersQuestionBindingModel {
+public class FourAnswersQuestionBindingModel extends AbstractQuestionBindingModel {
     public static final int TEXT_LENGTH_LIMIT = 1000;
     private String id;
     @NotBlank
@@ -26,11 +26,23 @@ public class FourAnswersQuestionBindingModel {
     private String text;
     private String category;
     private String author;
-    @Length(max = 1000)
-    @PhotoUrlValid
-    private String photoLocation;
     private InputStream audio;
     private List<AnswerBindingModel> answers = new ArrayList<>();
+
+    public FourAnswersQuestionBindingModel(String id,
+                                           String text,
+                                           List<AnswerBindingModel> answers,
+                                           String category,
+                                           String author,
+                                           String photoLocation,
+                                           String answerDescriptionText) {
+        super(answerDescriptionText, photoLocation);
+        this.id = id;
+        this.text = text;
+        this.answers = answers;
+        this.category = category;
+        this.author = author;
+    }
 
     public void initWith4Answers() {
         IntStream.range(0, 4)
@@ -50,20 +62,6 @@ public class FourAnswersQuestionBindingModel {
     public boolean hasMultiCorrectOptions() {
         return answers.stream().filter(AnswerBindingModel::isCorrect)
                 .count() > 1;
-    }
-
-    public FourAnswersQuestionBindingModel(String id,
-                                           String text,
-                                           List<AnswerBindingModel> answers,
-                                           String category,
-                                           String author,
-                                           String photoLocation) {
-        this.id = id;
-        this.text = text;
-        this.answers = answers;
-        this.category = category;
-        this.author = author;
-        this.photoLocation = photoLocation;
     }
 
     @Data

@@ -200,7 +200,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
         grid.addMechanicColumn();
         grid.addItemDoubleClickListener(event -> {
             gridDataView.removeItem(event.getItem());
-            allQuestionsGrid.getListDataView().refreshAll();
+            allQuestionsGrid.getDataProvider().refreshAll();
             updateHelpText();
         });
         grid.setDropMode(GridDropMode.BETWEEN);
@@ -213,7 +213,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
         grid.addDragEndListener(event -> {
             if (!dragOntoSelf) {
                 gridDataView.removeItem(draggedQuestion);
-                allQuestionsGrid.getListDataView().refreshAll();
+                allQuestionsGrid.getDataProvider().refreshAll();
                 updateHelpText();
             }
             draggedQuestion = null;

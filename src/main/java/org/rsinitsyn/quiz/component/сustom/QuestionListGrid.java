@@ -2,6 +2,8 @@ package org.rsinitsyn.quiz.component.сustom;
 
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.LocalDateTimeRenderer;
@@ -12,6 +14,7 @@ import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
+import org.rsinitsyn.quiz.entity.QuestionGrade;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 
@@ -54,6 +57,24 @@ public class QuestionListGrid extends Grid<QuestionEntity> {
                 .setHeader("Автор")
                 .setSortable(true);
         addMechanicColumn();
+        addColumn(new ComponentRenderer<>(entity -> {
+            int size = entity.getGrades().size();
+            if (size == 0) {
+                return VaadinIcon.MINUS_CIRCLE_O.create();
+            }
+            double gradeVal = entity.getGradeValue();
+            return new Span(
+                    new Span(gradeVal + " "),
+                    VaadinIcon.STAR_O.create(),
+                    new Span(" (" + size + ")")
+            );
+        }))
+                .setHeader("Сложность")
+                .setTooltipGenerator(entity -> entity.getGrades().stream()
+                        .map(qg -> qg.getUser().getUsername() + " - " + qg.getGrade())
+                        .collect(Collectors.joining(System.lineSeparator())))
+                .setSortable(true)
+                .setComparator(Comparator.comparingDouble(QuestionEntity::getGradeValue).thenComparingInt(q -> q.getGrades().size()));
         addColumn(new LocalDateTimeRenderer<>(QuestionEntity::getCreationDate, QuizUtils.DATE_FORMAT_VALUE))
                 .setHeader("Дата создания")
                 .setSortable(true)

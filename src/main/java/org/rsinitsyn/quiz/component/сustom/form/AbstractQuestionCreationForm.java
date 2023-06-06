@@ -1,13 +1,16 @@
-package org.rsinitsyn.quiz.component.сustom;
+package org.rsinitsyn.quiz.component.сustom.form;
 
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.data.binder.BeanValidationBinder;
+import com.vaadin.flow.component.textfield.TextArea;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.shared.Registration;
@@ -23,12 +26,29 @@ public abstract class AbstractQuestionCreationForm<T> extends FormLayout {
     @Getter
     protected T model;
 
+    protected final TextField photoLocation = new TextField("Ссылка на фото");
+    protected final Checkbox enableDescription = new Checkbox("Описане ответа", false);
+    protected final TextArea answerDescriptionText = new TextArea("Детальный ответ");
+
     private final Button save = new Button("Сохранить");
     private final Button delete = new Button("Удалить");
     private final Button cancel = new Button("Отмена");
 
     public AbstractQuestionCreationForm() {
         setWidth("30em");
+        setVisibility(false);
+        enableDescription.addValueChangeListener(event -> setVisibility(event.getValue()));
+    }
+
+    protected void addCommonComponents() {
+        add(photoLocation);
+        add(enableDescription);
+        add(new Hr());
+        add(answerDescriptionText);
+    }
+
+    private void setVisibility(boolean val) {
+        answerDescriptionText.setVisible(val);
     }
 
     protected abstract Binder<T> getBinder();

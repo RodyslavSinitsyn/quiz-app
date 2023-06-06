@@ -24,6 +24,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.Formula;
+import org.rsinitsyn.quiz.utils.QuizUtils;
 
 @Entity
 @Table(name = "questions")
@@ -51,6 +52,8 @@ public class QuestionEntity {
     @Column(columnDefinition = "BOOLEAN DEFAULT TRUE")
     private boolean optionsOnly;
     private Integer validRange;
+    private String answerDescriptionText;
+    private String answerDescriptionPhotoFilename;
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "categoryId", referencedColumnName = "id")
     private QuestionCategoryEntity category;
@@ -75,6 +78,13 @@ public class QuestionEntity {
     public void removeAnswer(AnswerEntity answerEntity) {
         answerEntity.setQuestion(null);
         answers.remove(answerEntity);
+    }
+
+    public double getGradeValue() {
+        return QuizUtils.divide(
+                getGrades().stream().mapToInt(QuestionGrade::getGrade).sum(),
+                getGrades().size(),
+                1);
     }
 
     public boolean presentInAnyGame() {

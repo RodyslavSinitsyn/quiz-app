@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.component.сustom;
+package org.rsinitsyn.quiz.component.сustom.form;
 
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextArea;
@@ -6,8 +6,6 @@ import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import java.util.function.Consumer;
-import lombok.Getter;
-import lombok.SneakyThrows;
 import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
 
 public class PrecisionQuestionForm extends AbstractQuestionCreationForm<PrecisionQuestionBindingModel> {
@@ -21,7 +19,9 @@ public class PrecisionQuestionForm extends AbstractQuestionCreationForm<Precisio
 
     public PrecisionQuestionForm() {
         binder.bindInstanceFields(this);
+
         add(text, answerText, range);
+        addCommonComponents();
         add(createButtonsLayout());
     }
 

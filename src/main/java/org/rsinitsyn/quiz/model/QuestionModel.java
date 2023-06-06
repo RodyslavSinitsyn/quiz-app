@@ -72,6 +72,9 @@ public class QuestionModel {
             return Math.abs(validAnswer - userAnswer) <= validRange;
         } else if (type.equals(QuestionType.OR)) {
             return userAnswers.stream().allMatch(AnswerModel::isCorrect);
+        } else if (type.equals(QuestionType.TOP)) {
+            // TODO Here need to logic
+            return userAnswers.stream().allMatch(AnswerModel::isCorrect);
         } else {
             throw new IllegalStateException("QuestionType not defined");
         }

@@ -22,7 +22,7 @@ import lombok.ToString;
 @IdClass(QuestionGradeId.class)
 @Getter
 @Setter
-@EqualsAndHashCode(exclude = "question")
+@EqualsAndHashCode(exclude = "user")
 @ToString
 public class QuestionGrade {
     @Id
@@ -37,4 +37,9 @@ public class QuestionGrade {
     @JoinColumn(name = "questionId")
     @ToString.Exclude
     private QuestionEntity question;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @MapsId("userId")
+    @JoinColumn(name = "userId")
+    @ToString.Exclude
+    private UserEntity user;
 }

@@ -15,6 +15,7 @@ public interface QuestionDao extends JpaRepository<QuestionEntity, UUID> {
     @Query("select distinct q from QuestionEntity q " +
             "join fetch q.category " +
             "join fetch q.answers " +
+            "left join fetch q.grades " +
             "order by q.creationDate desc ")
     List<QuestionEntity> findAllJoinAnswersAndCategoryNewFirst();
 

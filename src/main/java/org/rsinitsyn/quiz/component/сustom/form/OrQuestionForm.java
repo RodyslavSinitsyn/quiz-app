@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.component.сustom;
+package org.rsinitsyn.quiz.component.сustom.form;
 
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
@@ -25,6 +25,7 @@ public class OrQuestionForm extends AbstractQuestionCreationForm<OrQuestionBindi
         optionAnswerText.setRequired(true);
 
         add(text, correctAnswerText, optionAnswerText);
+        addCommonComponents();
         add(createButtonsLayout());
     }
 

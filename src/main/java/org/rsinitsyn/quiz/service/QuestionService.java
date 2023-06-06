@@ -186,21 +186,26 @@ public class QuestionService {
             question.setType(QuestionType.TOP);
             question.setOptionsOnly(false);
             question.setCategory(getOrCreateDefaultCategory());
+            question.setAnswerDescriptionText(model.getAnswerDescriptionText());
+            setPhotoFields(question, model.getPhotoLocation());
             model.getTopListText().lines().forEach(
                     answerText -> question.addAnswer(createAnswerEntity(answerText, true, count.getAndIncrement())));
-            questionDao.save(question);
+            saveEntityAndImage(question);
         } else {
             QuestionEntity persistent = findByIdLazy(UUID.fromString(model.getId()));
             persistent.setText(model.getText());
+            persistent.setAnswerDescriptionText(model.getAnswerDescriptionText());
+            setPhotoFields(persistent, model.getPhotoLocation());
             persistent.getAnswers().clear();
             model.getTopListText().lines().forEach(
                     answerText -> persistent.addAnswer(createAnswerEntity(answerText, true, count.getAndIncrement())));
-            questionDao.save(persistent);
+            saveEntityAndImage(persistent);
         }
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
     public void saveOrUpdate(PrecisionQuestionBindingModel model) {
+        // NOT UPDATABLE
         if (model.getId() == null) {
             QuestionEntity question = new QuestionEntity();
             question.setText(model.getText());
@@ -210,6 +215,8 @@ public class QuestionService {
             question.setOptionsOnly(false);
             question.setCategory(getOrCreateDefaultCategory());
             question.setValidRange(model.getRange().intValue());
+            question.setAnswerDescriptionText(model.getAnswerDescriptionText());
+            setPhotoFields(question, model.getPhotoLocation());
 
             AnswerEntity answer = new AnswerEntity();
             answer.setCorrect(true);
@@ -217,12 +224,13 @@ public class QuestionService {
             answer.setText(String.valueOf(model.getAnswerText().intValue()));
             question.addAnswer(answer);
 
-            questionDao.save(question);
+            saveEntityAndImage(question);
         }
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
     public void saveOrUpdate(OrQuestionBindingModel model) {
+        // NOT UPDATABLE
         if (model.getId() == null) {
             QuestionEntity question = new QuestionEntity();
             question.setText(model.getText());
@@ -231,6 +239,8 @@ public class QuestionService {
             question.setType(QuestionType.OR);
             question.setOptionsOnly(false);
             question.setCategory(getOrCreateDefaultCategory());
+            question.setAnswerDescriptionText(model.getAnswerDescriptionText());
+            setPhotoFields(question, model.getPhotoLocation());
 
             AnswerEntity correct = new AnswerEntity();
             correct.setCorrect(true);
@@ -244,7 +254,7 @@ public class QuestionService {
             option.setText(model.getOptionAnswerText());
             question.addAnswer(option);
 
-            questionDao.save(question);
+            saveEntityAndImage(question);
         }
     }
 
@@ -277,6 +287,7 @@ public class QuestionService {
         QuestionEntity newEntity = new QuestionEntity();
 
         newEntity.setText(model.getText());
+        newEntity.setAnswerDescriptionText(model.getAnswerDescriptionText());
         if (update) {
             newEntity.setId(UUID.fromString(model.getId()));
             newEntity.setCreationDate(persistEntity.getCreationDate());
@@ -298,13 +309,7 @@ public class QuestionService {
             createAnswerEntities(newEntity, model.getAnswers());
         }
 
-        if (StringUtils.isNotBlank(model.getPhotoLocation())) {
-            newEntity.setOriginalPhotoUrl(model.getPhotoLocation());
-            newEntity.setPhotoFilename(properties.getFilesFolder() + QuizUtils.generateFilename(model.getPhotoLocation()));
-        } else {
-            newEntity.setPhotoFilename(null);
-            newEntity.setOriginalPhotoUrl(null);
-        }
+        setPhotoFields(newEntity, model.getPhotoLocation());
 
         if (model.hasMultiCorrectOptions()) {
             newEntity.setType(QuestionType.MULTI);
@@ -320,6 +325,17 @@ public class QuestionService {
                             newEntity.setCategory(defaultCategory);
                         });
         return newEntity;
+    }
+
+    private void setPhotoFields(QuestionEntity question, String photoUrl) {
+        if (StringUtils.isNotBlank(photoUrl)) {
+            question.setOriginalPhotoUrl(photoUrl);
+            question.setPhotoFilename(
+                    properties.getFilesFolder() + QuizUtils.generateFilename(photoUrl));
+        } else {
+            question.setPhotoFilename(null);
+            question.setOriginalPhotoUrl(null);
+        }
     }
 
     private void updateAnswerEntities(

@@ -5,7 +5,7 @@ import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
 @Data
-public class QuestionCategoryBindingModel {
+public class QuestionCategoryBindingModel  extends AbstractQuestionBindingModel {
     @NotBlank
     @Length(min = 1, max = 30)
     private String categoryName;
