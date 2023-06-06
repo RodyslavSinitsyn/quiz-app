@@ -11,7 +11,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Length;
-import org.rsinitsyn.quiz.validator.PhotoUrlValid;
 
 /**
  * Data model for Create/Edit/Delete quiz question.
@@ -19,11 +18,7 @@ import org.rsinitsyn.quiz.validator.PhotoUrlValid;
 @Data
 @NoArgsConstructor
 public class FourAnswersQuestionBindingModel extends AbstractQuestionBindingModel {
-    public static final int TEXT_LENGTH_LIMIT = 1000;
     private String id;
-    @NotBlank
-    @Length(min = 1, max = TEXT_LENGTH_LIMIT)
-    private String text;
     private String category;
     private String author;
     private InputStream audio;
@@ -36,9 +31,7 @@ public class FourAnswersQuestionBindingModel extends AbstractQuestionBindingMode
                                            String author,
                                            String photoLocation,
                                            String answerDescriptionText) {
-        super(answerDescriptionText, photoLocation);
-        this.id = id;
-        this.text = text;
+        super(id, text, answerDescriptionText, photoLocation);
         this.answers = answers;
         this.category = category;
         this.author = author;

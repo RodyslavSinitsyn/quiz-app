@@ -31,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.сustom.form.AbstractQuestionCreationForm;
 import org.rsinitsyn.quiz.component.сustom.form.OrQuestionForm;
+import org.rsinitsyn.quiz.component.сustom.form.PhotoQuestionForm;
 import org.rsinitsyn.quiz.component.сustom.form.PrecisionQuestionForm;
 import org.rsinitsyn.quiz.component.сustom.form.QuestionCategoryForm;
 import org.rsinitsyn.quiz.component.сustom.form.QuestionForm;
@@ -41,6 +42,7 @@ import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.OrQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.PhotoQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.QuestionCategoryBindingModel;
 import org.rsinitsyn.quiz.model.binding.TopQuestionBindingModel;
@@ -65,6 +67,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
     private Dialog formDialog;
     private QuestionCategoryForm categoryForm;
     private AbstractQuestionCreationForm<FourAnswersQuestionBindingModel> form;
+    private AbstractQuestionCreationForm<PhotoQuestionBindingModel> photoForm;
     private AbstractQuestionCreationForm<PrecisionQuestionBindingModel> precisionForm;
     private AbstractQuestionCreationForm<OrQuestionBindingModel> orForm;
     private AbstractQuestionCreationForm<TopQuestionBindingModel> topForm;
@@ -107,14 +110,17 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
         grid.addItemClickListener(event -> {
             grid.select(event.getItem());
             if (event.getItem().getType().equals(QuestionType.PRECISION)) {
-                precisionForm.setModel(ModelConverterUtils.toPrecisionQuestionBindingModel(event.getItem()));
+                precisionForm.setModel(ModelConverterUtils.toPrecisionQuestionBindingModel(event.getItem()), false);
                 addToDialogAndOpen(precisionForm);
             } else if (event.getItem().getType().equals(QuestionType.OR)) {
-                orForm.setModel(ModelConverterUtils.toOrQuestionBindingModel(event.getItem()));
+                orForm.setModel(ModelConverterUtils.toOrQuestionBindingModel(event.getItem()), false);
                 addToDialogAndOpen(orForm);
             } else if (event.getItem().getType().equals(QuestionType.TOP)) {
                 topForm.setModel(ModelConverterUtils.toTopQuestionBindingModel(event.getItem()));
                 addToDialogAndOpen(topForm);
+            } else if (event.getItem().getType().equals(QuestionType.PHOTO)) {
+                photoForm.setModel(ModelConverterUtils.toPhotoQuestionBindingModel(event.getItem()), false);
+                addToDialogAndOpen(photoForm);
             } else {
                 editQuestion(ModelConverterUtils.toFourAnswersQuestionBindingModel(event.getItem()));
             }
@@ -152,6 +158,24 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
         });
         form.addCancelEventListener(event -> formDialog.close());
         form.setModel(null);
+
+        // photo
+        photoForm = new PhotoQuestionForm();
+        photoForm.setHeightFull();
+        photoForm.addSaveEventListener(event -> {
+            questionService.saveOrUpdate((PhotoQuestionBindingModel) event.getModel());
+            updateListAsync();
+            formDialog.close();
+            grid.asMultiSelect().clear();
+        });
+        photoForm.addDeleteEventListener(event -> {
+            questionService.deleteById(((PhotoQuestionBindingModel) event.getModel()).getId());
+            updateListAsync();
+            formDialog.close();
+            grid.asMultiSelect().clear();
+        });
+        photoForm.addCancelEventListener(event -> formDialog.close());
+        photoForm.setModel(null);
 
         // precision
         precisionForm = new PrecisionQuestionForm();
@@ -239,6 +263,12 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
             editQuestion(new FourAnswersQuestionBindingModel());
         });
 
+        Button addPhotoQuestionButton = createButton("Фото", event -> {
+            grid.asMultiSelect().clear();
+            photoForm.setModel(new PhotoQuestionBindingModel());
+            addToDialogAndOpen(photoForm);
+        });
+
         Button addPrecisionQuestionButton = createButton("Точный", event -> {
             grid.asMultiSelect().clear();
             precisionForm.setModel(new PrecisionQuestionBindingModel());
@@ -275,6 +305,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
         HorizontalLayout toolbar = new HorizontalLayout(
                 categoryFilter,
                 addQuestionButton,
+                addPhotoQuestionButton,
                 addPrecisionQuestionButton,
                 addOrQuestionButton,
                 addTopQuestionButton,

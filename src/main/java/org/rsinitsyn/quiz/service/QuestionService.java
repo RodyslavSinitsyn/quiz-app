@@ -33,6 +33,7 @@ import org.rsinitsyn.quiz.model.AnswerHistory;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.OrQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.PhotoQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.QuestionCategoryBindingModel;
 import org.rsinitsyn.quiz.model.binding.TopQuestionBindingModel;
@@ -166,7 +167,8 @@ public class QuestionService {
                 .map(answerEntity -> new QuestionModel.AnswerModel(
                         answerEntity.getText(),
                         answerEntity.isCorrect(),
-                        answerEntity.getNumber()))
+                        answerEntity.getNumber(),
+                        answerEntity.getPhotoFilename()))
                 .collect(Collectors.toSet());
     }
 
@@ -174,6 +176,9 @@ public class QuestionService {
     public void saveEntityAndImage(QuestionEntity entity) {
         questionDao.save(entity);
         resourceService.saveImageFromUrl(entity.getPhotoFilename(), entity.getOriginalPhotoUrl());
+        entity.getAnswers().forEach(answerEntity -> resourceService.saveImageFromUrl(
+                answerEntity.getPhotoFilename(),
+                answerEntity.getPhotoUrl()));
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
@@ -190,7 +195,7 @@ public class QuestionService {
             question.setAnswerDescriptionText(model.getAnswerDescriptionText());
             setPhotoFields(question, model.getPhotoLocation());
             model.getTopListText().lines().forEach(
-                    answerText -> question.addAnswer(createAnswerEntity(answerText, true, count.getAndIncrement())));
+                    answerText -> question.addAnswer(createAnswerEntity(answerText, true, count.getAndIncrement(), null)));
             saveEntityAndImage(question);
         } else {
             QuestionEntity persistent = findByIdLazy(UUID.fromString(model.getId()));
@@ -199,7 +204,7 @@ public class QuestionService {
             setPhotoFields(persistent, model.getPhotoLocation());
             persistent.getAnswers().clear();
             model.getTopListText().lines().forEach(
-                    answerText -> persistent.addAnswer(createAnswerEntity(answerText, true, count.getAndIncrement())));
+                    answerText -> persistent.addAnswer(createAnswerEntity(answerText, true, count.getAndIncrement(), null)));
             saveEntityAndImage(persistent);
         }
     }
@@ -254,6 +259,28 @@ public class QuestionService {
             option.setNumber(1);
             option.setText(model.getOptionAnswerText());
             question.addAnswer(option);
+
+            saveEntityAndImage(question);
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void saveOrUpdate(PhotoQuestionBindingModel model) {
+        if (model.getId() == null) {
+            QuestionEntity question = new QuestionEntity();
+            question.setText(model.getText());
+            question.setCreatedBy(SessionWrapper.getLoggedUser());
+            question.setCreationDate(LocalDateTime.now());
+            question.setType(QuestionType.PHOTO);
+            question.setOptionsOnly(true);
+            question.setCategory(getOrCreateDefaultCategory());
+            question.setAnswerDescriptionText(model.getAnswerDescriptionText());
+            setPhotoFields(question, model.getPhotoLocation());
+
+            question.addAnswer(createAnswerEntity("A", true, 0, model.getCorrectOption()));
+            question.addAnswer(createAnswerEntity("B", false, 1, model.getOptionTwo()));
+            question.addAnswer(createAnswerEntity("C", false, 2, model.getOptionThree()));
+            question.addAnswer(createAnswerEntity("D", false, 3, model.getOptionFour()));
 
             saveEntityAndImage(question);
         }
@@ -362,15 +389,26 @@ public class QuestionService {
         answerModels.forEach(answerBindingModel -> {
             entity.addAnswer(createAnswerEntity(answerBindingModel.getText(),
                     answerBindingModel.isCorrect(),
-                    number.getAndIncrement()));
+                    number.getAndIncrement(),
+                    null));
         });
     }
 
-    private AnswerEntity createAnswerEntity(String text, boolean correct, int number) {
+    private AnswerEntity createAnswerEntity(String text,
+                                            boolean correct,
+                                            int number,
+                                            String photoUrl) {
         AnswerEntity answerEntity = new AnswerEntity();
         answerEntity.setText(text);
         answerEntity.setCorrect(correct);
         answerEntity.setNumber(number);
+        if (photoUrl != null) {
+            answerEntity.setPhotoFilename(properties.getFilesFolder() + QuizUtils.generateFilename(photoUrl));
+            answerEntity.setPhotoUrl(photoUrl);
+        } else {
+            answerEntity.setPhotoFilename(null);
+            answerEntity.setPhotoUrl(null);
+        }
         return answerEntity;
     }
 
@@ -427,6 +465,7 @@ public class QuestionService {
         if (questionDao.deleteQuestionEntityById(entity.getId()) == 1) {
             resourceService.deleteImageFile(entity.getPhotoFilename());
             resourceService.deleteAudioFile(entity.getAudioFilename());
+            entity.getAnswers().forEach(answerEntity -> resourceService.deleteImageFile(answerEntity.getPhotoFilename()));
         }
     }
 }

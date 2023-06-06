@@ -9,7 +9,6 @@ import org.rsinitsyn.quiz.model.binding.TopQuestionBindingModel;
 
 public class TopQuestionForm extends AbstractQuestionCreationForm<org.rsinitsyn.quiz.model.binding.TopQuestionBindingModel> {
 
-    private TextArea text = new TextArea("Текст вопроса");
     private TextArea topListText = new TextArea("Топ список");
 
     private final Binder<TopQuestionBindingModel> binder =
@@ -18,7 +17,6 @@ public class TopQuestionForm extends AbstractQuestionCreationForm<org.rsinitsyn.
     public TopQuestionForm() {
         binder.bindInstanceFields(this);
 
-        text.setRequired(true);
         topListText.setRequired(true);
 
         add(text, topListText);

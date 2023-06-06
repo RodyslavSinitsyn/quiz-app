@@ -2,6 +2,7 @@ package org.rsinitsyn.quiz.utils;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
@@ -9,6 +10,7 @@ import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.OrQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.PhotoQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.TopQuestionBindingModel;
 
@@ -79,6 +81,20 @@ public class ModelConverterUtils {
                 questionEntity.getAnswers().stream().map(AnswerEntity::getText).collect(Collectors.joining(System.lineSeparator())),
                 questionEntity.getOriginalPhotoUrl(),
                 questionEntity.getAnswerDescriptionText()
+        );
+    }
+
+    public static PhotoQuestionBindingModel toPhotoQuestionBindingModel(QuestionEntity questionEntity) {
+        List<AnswerEntity> answerEntities = questionEntity.getAnswers().stream().sorted(Comparator.comparing(AnswerEntity::getNumber)).toList();
+        return new PhotoQuestionBindingModel(
+                questionEntity.getId().toString(),
+                questionEntity.getText(),
+                questionEntity.getAnswerDescriptionText(),
+                questionEntity.getOriginalPhotoUrl(),
+                answerEntities.get(0).getPhotoFilename(),
+                answerEntities.get(1).getPhotoFilename(),
+                answerEntities.get(2).getPhotoFilename(),
+                answerEntities.get(3).getPhotoFilename()
         );
     }
 }

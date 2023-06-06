@@ -9,7 +9,6 @@ import org.rsinitsyn.quiz.model.binding.OrQuestionBindingModel;
 
 public class OrQuestionForm extends AbstractQuestionCreationForm<OrQuestionBindingModel> {
 
-    private TextField text = new TextField("Текст");
     private TextField correctAnswerText = new TextField("Верный ответ");
     private TextField optionAnswerText = new TextField("Вариант ответа");
 
@@ -20,7 +19,6 @@ public class OrQuestionForm extends AbstractQuestionCreationForm<OrQuestionBindi
     public OrQuestionForm() {
         binder.bindInstanceFields(this);
 
-        text.setRequired(true);
         correctAnswerText.setRequired(true);
         optionAnswerText.setRequired(true);
 

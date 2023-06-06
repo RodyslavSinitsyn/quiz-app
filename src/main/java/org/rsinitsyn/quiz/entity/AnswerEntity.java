@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -33,6 +34,9 @@ public class AnswerEntity {
     private String text;
     private boolean correct;
     private int number;
+    private String photoFilename;
+    @Transient
+    private String photoUrl;
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "questionId", referencedColumnName = "id")
     @ToString.Exclude

@@ -13,12 +13,14 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.shared.Registration;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
+import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
 
 @Slf4j
 public abstract class AbstractQuestionCreationForm<T> extends FormLayout {
@@ -26,6 +28,7 @@ public abstract class AbstractQuestionCreationForm<T> extends FormLayout {
     @Getter
     protected T model;
 
+    protected final TextArea text = new TextArea("Текст вопроса");
     protected final TextField photoLocation = new TextField("Ссылка на фото");
     protected final Checkbox enableDescription = new Checkbox("Описане ответа", false);
     protected final TextArea answerDescriptionText = new TextArea("Детальный ответ");
@@ -37,7 +40,20 @@ public abstract class AbstractQuestionCreationForm<T> extends FormLayout {
     public AbstractQuestionCreationForm() {
         setWidth("30em");
         setVisibility(false);
+        configureTextInput();
         enableDescription.addValueChangeListener(event -> setVisibility(event.getValue()));
+    }
+
+    private void configureTextInput() {
+        text.setRequired(true);
+        text.setTooltipText("Shift + Enter для переноса");
+        text.setSizeFull();
+        text.setMaxLength(FourAnswersQuestionBindingModel.TEXT_LENGTH_LIMIT);
+        text.setValueChangeMode(ValueChangeMode.EAGER);
+        text.addValueChangeListener(e -> {
+            e.getSource().setHelperText(e.getValue().length() + "/" + text.getMaxLength());
+        });
+        text.setRequired(true);
     }
 
     protected void addCommonComponents() {
@@ -58,12 +74,17 @@ public abstract class AbstractQuestionCreationForm<T> extends FormLayout {
     protected abstract Consumer<T> afterModelSetAction();
 
     public void setModel(T model) {
+        setModel(model, true);
+    }
+
+    public void setModel(T model, boolean editable) {
         this.model = model;
         Consumer<T> afterAction = afterModelSetAction();
         if (afterAction != null) {
             afterAction.accept(this.model);
         }
         getBinder().readBean(model);
+        save.setEnabled(editable);
     }
 
     protected HorizontalLayout createButtonsLayout() {

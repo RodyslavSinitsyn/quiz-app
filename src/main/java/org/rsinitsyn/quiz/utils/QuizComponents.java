@@ -99,6 +99,7 @@ public class QuizComponents {
             case TEXT -> typeIcon = VaadinIcon.QUESTION.create();
             case OR -> typeIcon = VaadinIcon.CORNER_UPPER_LEFT.create();
             case MULTI -> typeIcon = VaadinIcon.LIST_UL.create();
+            case PHOTO -> typeIcon = VaadinIcon.PICTURE.create();
             default -> typeIcon = VaadinIcon.DOT_CIRCLE.create();
         }
         result.add(typeIcon);
@@ -125,15 +126,19 @@ public class QuizComponents {
             row.add(playSound);
         }
         if (StringUtils.isNotEmpty(question.getPhotoFilename())) {
-            Avatar smallPhoto = new Avatar();
-            smallPhoto.setImageResource(
-                    QuizUtils.createStreamResourceForPhoto(question.getPhotoFilename()));
-            row.add(smallPhoto);
+            row.add(avatar(question.getPhotoFilename()));
         }
         row.add(new Span(
                 question.getText().length() > 300
                         ? question.getText().substring(0, 300).concat("...")
                         : question.getText()));
         return row;
+    }
+
+    public Avatar avatar(String photoFilename) {
+        Avatar avatar = new Avatar();
+        avatar.setImageResource(
+                QuizUtils.createStreamResourceForPhoto(photoFilename));
+        return avatar;
     }
 }

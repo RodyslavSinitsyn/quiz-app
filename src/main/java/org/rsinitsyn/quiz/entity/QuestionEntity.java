@@ -53,7 +53,7 @@ public class QuestionEntity {
     private boolean optionsOnly;
     private Integer validRange;
     private String answerDescriptionText;
-    private String answerDescriptionPhotoFilename;
+    private String answerDescriptionPhotoFilename;  // TODO For now not used
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "categoryId", referencedColumnName = "id")
     private QuestionCategoryEntity category;

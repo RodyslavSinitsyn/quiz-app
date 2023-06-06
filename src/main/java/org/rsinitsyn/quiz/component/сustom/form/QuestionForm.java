@@ -24,7 +24,6 @@ import org.rsinitsyn.quiz.utils.QuizComponents;
 @Slf4j
 public class QuestionForm extends AbstractQuestionCreationForm<FourAnswersQuestionBindingModel> {
 
-    private TextArea text = new TextArea("Текст вопроса");
     private ComboBox<String> category = new ComboBox<>();
     private ComboBox<String> author = new ComboBox<>();
     private VerticalLayout inputsLayout = new VerticalLayout();
@@ -38,7 +37,6 @@ public class QuestionForm extends AbstractQuestionCreationForm<FourAnswersQuesti
 
         setUsersList(usersList);
         setCategoryList(categoryEntityList);
-        configureTextInput();
 
         inputsLayout.setAlignItems(FlexComponent.Alignment.START);
         inputsLayout.setDefaultHorizontalComponentAlignment(FlexComponent.Alignment.STRETCH);
@@ -82,17 +80,6 @@ public class QuestionForm extends AbstractQuestionCreationForm<FourAnswersQuesti
         inputsLayout.removeAll();
         answers.forEach(binder::removeBinding);
         answers.clear();
-    }
-
-    private void configureTextInput() {
-        text.setTooltipText("Shift + Enter для переноса");
-        text.setSizeFull();
-        text.setMaxLength(FourAnswersQuestionBindingModel.TEXT_LENGTH_LIMIT);
-        text.setValueChangeMode(ValueChangeMode.EAGER);
-        text.addValueChangeListener(e -> {
-            e.getSource().setHelperText(e.getValue().length() + "/" + text.getMaxLength());
-        });
-        text.setRequired(true);
     }
 
     @Override

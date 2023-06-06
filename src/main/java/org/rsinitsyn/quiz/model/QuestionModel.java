@@ -88,12 +88,14 @@ public class QuestionModel {
         private String text;
         private boolean correct;
         private int number;
+        private String photoFilename;
 
         public static AnswerModel defaultWrong() {
             return new AnswerModel(
                     "Неверный",
                     false,
-                    0
+                    0,
+                    null
             );
         }
     }

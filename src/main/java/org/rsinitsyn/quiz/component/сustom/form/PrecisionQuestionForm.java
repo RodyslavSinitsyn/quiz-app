@@ -10,7 +10,6 @@ import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
 
 public class PrecisionQuestionForm extends AbstractQuestionCreationForm<PrecisionQuestionBindingModel> {
 
-    private final TextArea text = new TextArea("Вопрос");
     private final NumberField answerText = new NumberField("Ответ");
     private final NumberField range = new NumberField("Допустимая погрешность");
 
