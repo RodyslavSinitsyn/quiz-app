@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.AnswerType;
@@ -324,7 +325,14 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         answers.addClassNames(LumoUtility.FontSize.XXXLARGE);
 
         // answer span text
-        answers.add(CleverestComponents.correctAnswerSpan(question, LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.SEMIBOLD));
+        answers.add(CleverestComponents.correctAnswerSpan(question,
+                LumoUtility.FontSize.XXXLARGE,
+                LumoUtility.FontWeight.SEMIBOLD));
+        if (StringUtils.isNotBlank(question.getAnswerDescription())) {
+            answers.add(CleverestComponents.correctAnswerDescriptionSpan(question,
+                    LumoUtility.FontSize.XXLARGE,
+                    LumoUtility.FontWeight.LIGHT));
+        }
 
         users.forEach(userGameState -> {
             HorizontalLayout row = new HorizontalLayout();

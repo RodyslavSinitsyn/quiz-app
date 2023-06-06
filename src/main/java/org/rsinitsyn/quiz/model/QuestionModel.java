@@ -33,6 +33,7 @@ public class QuestionModel {
     private String categoryName;
     private boolean optionsOnly;
     private Integer validRange;
+    private String answerDescription;
     private Map<String, AnswerHistory> playersAnswersHistory;
     private Set<AnswerModel> answers;
 

@@ -157,6 +157,7 @@ public class QuestionService {
                 .audioFilename(question.getAudioFilename())
                 .optionsOnly(question.isOptionsOnly())
                 .validRange(question.getValidRange())
+                .answerDescription(question.getAnswerDescriptionText())
                 .build();
     }
 

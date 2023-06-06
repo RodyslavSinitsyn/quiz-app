@@ -100,6 +100,18 @@ public class CleverestComponents {
         return span;
     }
 
+    public Span correctAnswerDescriptionSpan(QuestionModel questionModel, String... classes) {
+        Span span = new Span();
+        span.addClassNames(classes);
+        span.addClassNames(LumoUtility.TextAlignment.CENTER,
+                LumoUtility.Border.ALL,
+                LumoUtility.BorderColor.PRIMARY);
+        span.setWidthFull();
+        span.getStyle().set("white-space", "pre-line");
+        span.setText(questionModel.getAnswerDescription());
+        return span;
+    }
+
     public Span userInfoLightSpan(String text, String... classes) {
         Span span = new Span();
         span.setText(text);
