@@ -1,19 +1,14 @@
 package org.rsinitsyn.quiz.component.cleverest;
 
-import com.flowingcode.vaadin.addons.carousel.Carousel;
-import com.flowingcode.vaadin.addons.carousel.Slide;
 import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
@@ -137,9 +132,12 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
         if (AnswerType.OPTIONS.equals(answerType)) {
             if (questionModel.getType().equals(QuestionType.PHOTO)) {
-                answerInput.add(CleverestComponents.userPhotoOptionsInputComponentsOld(questionModel,
-                        !isAdmin,
-                        answerModel -> broadcaster.sendSubmitAnswerEventAndCheckScore(gameId, SessionWrapper.getLoggedUser(), questionModel, answerModel.getPhotoFilename(), answerModel::isCorrect)));
+                if (isAdmin) {
+                    answerInput.add(CleverestComponents.userPhotoOptionsInputComponentsCarousel(questionModel));
+                } else {
+                    answerInput.add(CleverestComponents.userPhotoOptionsInputComponents(questionModel,
+                            answerModel -> broadcaster.sendSubmitAnswerEventAndCheckScore(gameId, SessionWrapper.getLoggedUser(), questionModel, answerModel.getPhotoFilename(), answerModel::isCorrect)));
+                }
             } else {
                 answerInput.add(CleverestComponents.userTextOptionsInputComponents(questionModel,
                         !isAdmin,

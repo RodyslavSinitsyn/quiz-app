@@ -45,6 +45,7 @@ public class CleverestComponents {
 
     public static final String LARGE_IMAGE_HEIGHT = "30em";
     public static final String MEDIUM_IMAGE_HEIGHT = "17.5em";
+    public static final String SMALL_IMAGE_HEIGHT = "12.5em";
 
     public static final String MOBILE_SMALL_FONT = LumoUtility.FontSize.MEDIUM;
     public static final String MOBILE_MEDIUM_FONT = LumoUtility.FontSize.XLARGE;
@@ -233,7 +234,7 @@ public class CleverestComponents {
     public VerticalLayout questionLayout(QuestionModel questionModel,
                                          List<String> textContentClasses,
                                          String imageHeight,
-                                         boolean allowedPlaySound) {
+                                         boolean isAdmin) {
         VerticalLayout layout = new VerticalLayout();
         layout.setSpacing(false);
         layout.setPadding(false);
@@ -244,6 +245,9 @@ public class CleverestComponents {
             Image image = new Image();
             image.setSrc(QuizUtils.createStreamResourceForPhoto(questionModel.getPhotoFilename()));
             image.setMaxHeight(imageHeight);
+            if (!isAdmin) image.setWidthFull();
+            image.getStyle().set("object-fit", "cover");
+            image.getStyle().set("object-position", "center center");
             layout.add(image);
         }
 
@@ -264,7 +268,7 @@ public class CleverestComponents {
             playAudioButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST,
                     ButtonVariant.LUMO_PRIMARY,
                     ButtonVariant.LUMO_SMALL);
-            playAudioButton.setEnabled(allowedPlaySound);
+            playAudioButton.setEnabled(isAdmin);
             playAudioButton.addClickListener(event -> {
                 AudioUtils.playSoundAsync(questionModel.getAudioFilename());
             });
@@ -392,14 +396,16 @@ public class CleverestComponents {
                         })));
     }
 
-    public static List<Component> userPhotoOptionsInputComponentsOld(QuestionModel questionModel,
-                                                                     boolean isPlayer,
-                                                                     Consumer<QuestionModel.AnswerModel> answerConsumer) {
-        return simpleOptionsComponents(questionModel, answerConsumer, isPlayer, new ComponentRenderer<Component, QuestionModel.AnswerModel>(
+    public static List<Component> userPhotoOptionsInputComponents(QuestionModel questionModel,
+                                                                  Consumer<QuestionModel.AnswerModel> answerConsumer) {
+        return simpleOptionsComponents(questionModel, answerConsumer, true, new ComponentRenderer<Component, QuestionModel.AnswerModel>(
                 answerModel -> {
                     Image image = new Image();
                     image.setSrc(QuizUtils.createStreamResourceForPhoto(answerModel.getPhotoFilename()));
-                    image.setMaxHeight(isPlayer ? "10em" : MEDIUM_IMAGE_HEIGHT);
+                    image.setMaxHeight(SMALL_IMAGE_HEIGHT);
+                    image.setWidthFull();
+                    image.getStyle().set("object-fit", "cover");
+                    image.getStyle().set("object-position", "center center");
                     image.addClassNames(
                             LumoUtility.AlignSelf.CENTER,
                             LumoUtility.Border.ALL,
@@ -422,7 +428,7 @@ public class CleverestComponents {
         submit.setEnabled(false);
 
         options.setWidthFull();
-        options.setEnabled(clickActionEnabled);
+        options.setReadOnly(!clickActionEnabled);
         options.setItems(questionModel.getShuffledAnswers());
         options.setRenderer(componentRenderer);
         options.addValueChangeListener(event -> submit.setEnabled(true));
@@ -430,43 +436,34 @@ public class CleverestComponents {
         return List.of(options, submit);
     }
 
-    // TODO For now use simple variant
-    public static List<Component> userPhotoOptionsInputComponents(QuestionModel questionModel,
-                                                                  Consumer<QuestionModel.AnswerModel> answerConsumer) {
-        AtomicInteger pos = new AtomicInteger(0);
+    public static List<Component> userPhotoOptionsInputComponentsCarousel(QuestionModel questionModel) {
         List<QuestionModel.AnswerModel> shuffledAnswers = questionModel.getShuffledAnswers();
         var slides = shuffledAnswers.stream()
                 .map(answerModel -> {
                     Image image = new Image();
                     image.setSrc(QuizUtils.createStreamResourceForPhoto(answerModel.getPhotoFilename()));
-                    image.setMaxHeight("15em");
-                    image.addClassNames(LumoUtility.AlignContent.CENTER, LumoUtility.AlignSelf.CENTER);
+                    image.setMaxHeight(LARGE_IMAGE_HEIGHT);
+                    image.setWidthFull();
+                    image.getStyle().set("object-fit", "contain");
+                    image.getStyle().set("object-position", "center center");
                     return image;
                 })
                 .map(Slide::new)
                 .toArray(Slide[]::new);
 
-        Carousel carousel = new Carousel(slides).withoutNavigation();
-        carousel.setAutoProgress(false);
+        Carousel carousel = new Carousel(slides).withAutoProgress();
         carousel.setWidthFull();
-        carousel.setHeight("15em");
-        carousel.addChangeListener(event -> pos.set(Integer.parseInt(event.getPosition())));
+        carousel.setSlideDuration(3);
+        carousel.setHeight(LARGE_IMAGE_HEIGHT);
 
-        Button prev = new Button("<<", event -> carousel.movePrev());
-        Button next = new Button(">>", event -> carousel.moveNext());
-        var nav = new HorizontalLayout(prev, next);
-        nav.setWidthFull();
-        nav.addClassNames(LumoUtility.Margin.Bottom.XLARGE);
-        nav.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-        nav.setAlignItems(FlexComponent.Alignment.CENTER);
+//        Button prev = new Button("<<", event -> carousel.movePrev());
+//        Button next = new Button(">>", event -> carousel.moveNext());
+//        var nav = new HorizontalLayout(prev, next);
+//        nav.setWidthFull();
+//        nav.addClassNames(LumoUtility.Margin.Bottom.XLARGE);
+//        nav.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+//        nav.setAlignItems(FlexComponent.Alignment.CENTER);
 
-        Button submit = CleverestComponents.primaryButton("Ответить", e -> {
-            carousel.setAutoProgress(true);
-            carousel.setSlideDuration(1);
-            answerConsumer.accept(shuffledAnswers.get(pos.get()));
-        });
-        submit.setWidthFull();
-
-        return List.of(carousel, nav, submit);
+        return List.of(carousel); // TODO For admin only carousel
     }
 }
