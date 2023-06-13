@@ -22,7 +22,6 @@ public class TopQuestionForm extends AbstractQuestionCreationForm<org.rsinitsyn.
         add(text, topListText);
 
         addCommonComponents();
-        add(createButtonsLayout());
     }
 
     @Override

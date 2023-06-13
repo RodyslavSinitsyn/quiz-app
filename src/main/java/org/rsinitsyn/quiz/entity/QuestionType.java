@@ -7,5 +7,6 @@ public enum QuestionType {
     MULTI_PHOTO,
     PRECISION,
     OR,
-    TOP
+    TOP,
+    LINK;
 }

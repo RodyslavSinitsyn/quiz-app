@@ -55,7 +55,6 @@ public class QuestionForm extends AbstractQuestionCreationForm<FourAnswersQuesti
                         }, ".mp3"));
 
         addCommonComponents();
-        add(createButtonsLayout());
     }
 
     private void configureAnswerInputs() {

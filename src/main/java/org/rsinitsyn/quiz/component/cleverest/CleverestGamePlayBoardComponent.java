@@ -136,7 +136,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     answerInput.add(CleverestComponents.userPhotoOptionsInputComponentsCarousel(questionModel));
                 } else {
                     answerInput.add(CleverestComponents.userPhotoOptionsInputComponents(questionModel,
-                            answerModel -> broadcaster.sendSubmitAnswerEventAndCheckScore(gameId, SessionWrapper.getLoggedUser(), questionModel, answerModel.getPhotoFilename(), answerModel::isCorrect)));
+                            answerModel -> broadcaster.sendSubmitAnswerEventAndCheckScore(
+                                            gameId, SessionWrapper.getLoggedUser(), questionModel, answerModel.getPhotoFilename(), answerModel::isCorrect)));
                 }
             } else {
                 answerInput.add(CleverestComponents.userTextOptionsInputComponents(questionModel,

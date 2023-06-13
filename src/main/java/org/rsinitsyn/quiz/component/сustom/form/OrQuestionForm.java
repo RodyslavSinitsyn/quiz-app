@@ -24,7 +24,6 @@ public class OrQuestionForm extends AbstractQuestionCreationForm<OrQuestionBindi
 
         add(text, correctAnswerText, optionAnswerText);
         addCommonComponents();
-        add(createButtonsLayout());
     }
 
     @Override

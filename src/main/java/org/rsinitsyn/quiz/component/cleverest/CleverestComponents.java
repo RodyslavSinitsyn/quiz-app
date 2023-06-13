@@ -464,6 +464,6 @@ public class CleverestComponents {
 //        nav.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
 //        nav.setAlignItems(FlexComponent.Alignment.CENTER);
 
-        return List.of(carousel); // TODO For admin only carousel
+        return List.of(carousel);
     }
 }

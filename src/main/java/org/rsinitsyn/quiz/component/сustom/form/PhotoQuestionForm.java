@@ -34,7 +34,6 @@ public class PhotoQuestionForm extends AbstractQuestionCreationForm<PhotoQuestio
         add(text);
         add(layout);
         addCommonComponents();
-        add(createButtonsLayout());
     }
 
     @Override

@@ -101,6 +101,7 @@ public class QuizComponents {
             case OR -> typeIcon = VaadinIcon.CORNER_UPPER_LEFT.create();
             case MULTI -> typeIcon = VaadinIcon.LIST_UL.create();
             case PHOTO -> typeIcon = VaadinIcon.PICTURE.create();
+            case LINK -> typeIcon = VaadinIcon.LINK.create();
             default -> typeIcon = VaadinIcon.DOT_CIRCLE.create();
         }
         result.add(typeIcon);

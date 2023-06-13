@@ -21,7 +21,6 @@ public class PrecisionQuestionForm extends AbstractQuestionCreationForm<Precisio
 
         add(text, answerText, range);
         addCommonComponents();
-        add(createButtonsLayout());
     }
 
     @Override

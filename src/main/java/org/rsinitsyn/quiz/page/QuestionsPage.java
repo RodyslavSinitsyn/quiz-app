@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.сustom.form.AbstractQuestionCreationForm;
+import org.rsinitsyn.quiz.component.сustom.form.LinkQuestionForm;
 import org.rsinitsyn.quiz.component.сustom.form.OrQuestionForm;
 import org.rsinitsyn.quiz.component.сustom.form.PhotoQuestionForm;
 import org.rsinitsyn.quiz.component.сustom.form.PrecisionQuestionForm;
@@ -40,7 +41,9 @@ import org.rsinitsyn.quiz.component.сustom.form.TopQuestionForm;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
+import org.rsinitsyn.quiz.model.binding.AbstractQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.LinkQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.OrQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.PhotoQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
@@ -71,6 +74,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
     private AbstractQuestionCreationForm<PrecisionQuestionBindingModel> precisionForm;
     private AbstractQuestionCreationForm<OrQuestionBindingModel> orForm;
     private AbstractQuestionCreationForm<TopQuestionBindingModel> topForm;
+    private AbstractQuestionCreationForm<LinkQuestionBindingModel> linkForm;
 
     private final QuestionService questionService;
     private final ImportService importService;
@@ -121,6 +125,9 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
             } else if (event.getItem().getType().equals(QuestionType.PHOTO)) {
                 photoForm.setModel(ModelConverterUtils.toPhotoQuestionBindingModel(event.getItem()), false);
                 addToDialogAndOpen(photoForm);
+            } else if (event.getItem().getType().equals(QuestionType.LINK)) {
+                linkForm.setModel(ModelConverterUtils.toLinkQuestionBindingModel(event.getItem()), false);
+                addToDialogAndOpen(linkForm);
             } else {
                 editQuestion(ModelConverterUtils.toFourAnswersQuestionBindingModel(event.getItem()));
             }
@@ -150,14 +157,6 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
             formDialog.close();
             grid.asMultiSelect().clear();
         });
-        form.addDeleteEventListener(event -> {
-            questionService.deleteById(((FourAnswersQuestionBindingModel) event.getModel()).getId());
-            updateListAsync();
-            formDialog.close();
-            grid.asMultiSelect().clear();
-        });
-        form.addCancelEventListener(event -> formDialog.close());
-        form.setModel(null);
 
         // photo
         photoForm = new PhotoQuestionForm();
@@ -168,14 +167,6 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
             formDialog.close();
             grid.asMultiSelect().clear();
         });
-        photoForm.addDeleteEventListener(event -> {
-            questionService.deleteById(((PhotoQuestionBindingModel) event.getModel()).getId());
-            updateListAsync();
-            formDialog.close();
-            grid.asMultiSelect().clear();
-        });
-        photoForm.addCancelEventListener(event -> formDialog.close());
-        photoForm.setModel(null);
 
         // precision
         precisionForm = new PrecisionQuestionForm();
@@ -184,14 +175,6 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
             updateListAsync();
             formDialog.close();
         });
-        precisionForm.addDeleteEventListener(event -> {
-            questionService.deleteById(((PrecisionQuestionBindingModel) event.getModel()).getId());
-            updateListAsync();
-            formDialog.close();
-        });
-        precisionForm.addCancelEventListener(event -> formDialog.close());
-        precisionForm.setModel(null);
-
         // or
         orForm = new OrQuestionForm();
         orForm.addSaveEventListener(event -> {
@@ -199,13 +182,6 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
             updateListAsync();
             formDialog.close();
         });
-        orForm.addDeleteEventListener(event -> {
-            questionService.deleteById(((OrQuestionBindingModel) event.getModel()).getId());
-            updateListAsync();
-            formDialog.close();
-        });
-        orForm.addCancelEventListener(event -> formDialog.close());
-        orForm.setModel(null);
 
         // top
         topForm = new TopQuestionForm();
@@ -214,13 +190,30 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
             updateListAsync();
             formDialog.close();
         });
-        topForm.addDeleteEventListener(event -> {
-            questionService.deleteById(((TopQuestionBindingModel) event.getModel()).getId());
+
+        // link
+        linkForm = new LinkQuestionForm();
+        linkForm.addSaveEventListener(event -> {
+            questionService.saveOrUpdate((LinkQuestionBindingModel) event.getModel());
             updateListAsync();
             formDialog.close();
         });
-        topForm.addCancelEventListener(event -> formDialog.close());
-        topForm.setModel(null);
+
+        configureAbstractQuestionFormsDefault(form, photoForm, precisionForm, orForm, topForm, linkForm);
+    }
+
+    @SafeVarargs
+    private void configureAbstractQuestionFormsDefault(AbstractQuestionCreationForm<? extends AbstractQuestionBindingModel>... forms) {
+        for (AbstractQuestionCreationForm<? extends AbstractQuestionBindingModel> form : forms) {
+            form.addDeleteEventListener(event -> {
+                questionService.deleteById(((AbstractQuestionBindingModel) event.getModel()).getId());
+                updateListAsync();
+                formDialog.close();
+                grid.asMultiSelect().clear();
+            });
+            form.addCancelEventListener(event -> formDialog.close());
+            form.setModel(null);
+        }
     }
 
     private void configureCategoryForm() {
@@ -287,6 +280,12 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
             addToDialogAndOpen(topForm);
         });
 
+        Button addLinkQuestionButton = createButton("Матч", event -> {
+            grid.asMultiSelect().clear();
+            linkForm.setModel(new LinkQuestionBindingModel());
+            addToDialogAndOpen(linkForm);
+        });
+
         Upload uploadComponent = QuizComponents.uploadComponent(
                 "Импортировать",
                 (buffer, event) -> {
@@ -309,6 +308,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
                 addPrecisionQuestionButton,
                 addOrQuestionButton,
                 addTopQuestionButton,
+                addLinkQuestionButton,
                 uploadComponent,
                 addCategoryButton,
                 groupedOperations);

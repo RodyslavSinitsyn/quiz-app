@@ -31,7 +31,9 @@ import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.model.AnswerHistory;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.binding.AbstractQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.LinkQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.OrQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.PhotoQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
@@ -186,14 +188,8 @@ public class QuestionService {
         AtomicInteger count = new AtomicInteger(0);
         if (model.getId() == null) {
             QuestionEntity question = new QuestionEntity();
-            question.setText(model.getText());
-            question.setCreatedBy(SessionWrapper.getLoggedUser());
-            question.setCreationDate(LocalDateTime.now());
-            question.setType(QuestionType.TOP);
-            question.setOptionsOnly(false);
-            question.setCategory(getOrCreateDefaultCategory());
-            question.setAnswerDescriptionText(model.getAnswerDescriptionText());
-            setPhotoFields(question, model.getPhotoLocation());
+            setFieldsForQuestionEntity(question, model, QuestionType.TOP, false);
+            setPhotoFieldsForQuestionEntity(question, model.getPhotoLocation());
             model.getTopListText().lines().forEach(
                     answerText -> question.addAnswer(createAnswerEntity(answerText, true, count.getAndIncrement(), null)));
             saveEntityAndImage(question);
@@ -201,7 +197,7 @@ public class QuestionService {
             QuestionEntity persistent = findByIdLazy(UUID.fromString(model.getId()));
             persistent.setText(model.getText());
             persistent.setAnswerDescriptionText(model.getAnswerDescriptionText());
-            setPhotoFields(persistent, model.getPhotoLocation());
+            setPhotoFieldsForQuestionEntity(persistent, model.getPhotoLocation());
             persistent.getAnswers().clear();
             model.getTopListText().lines().forEach(
                     answerText -> persistent.addAnswer(createAnswerEntity(answerText, true, count.getAndIncrement(), null)));
@@ -214,15 +210,8 @@ public class QuestionService {
         // NOT UPDATABLE
         if (model.getId() == null) {
             QuestionEntity question = new QuestionEntity();
-            question.setText(model.getText());
-            question.setCreatedBy(SessionWrapper.getLoggedUser());
-            question.setCreationDate(LocalDateTime.now());
-            question.setType(QuestionType.PRECISION);
-            question.setOptionsOnly(false);
-            question.setCategory(getOrCreateDefaultCategory());
-            question.setValidRange(model.getRange().intValue());
-            question.setAnswerDescriptionText(model.getAnswerDescriptionText());
-            setPhotoFields(question, model.getPhotoLocation());
+            setFieldsForQuestionEntity(question, model, QuestionType.PRECISION, false);
+            setPhotoFieldsForQuestionEntity(question, model.getPhotoLocation());
 
             AnswerEntity answer = new AnswerEntity();
             answer.setCorrect(true);
@@ -239,14 +228,8 @@ public class QuestionService {
         // NOT UPDATABLE
         if (model.getId() == null) {
             QuestionEntity question = new QuestionEntity();
-            question.setText(model.getText());
-            question.setCreatedBy(SessionWrapper.getLoggedUser());
-            question.setCreationDate(LocalDateTime.now());
-            question.setType(QuestionType.OR);
-            question.setOptionsOnly(false);
-            question.setCategory(getOrCreateDefaultCategory());
-            question.setAnswerDescriptionText(model.getAnswerDescriptionText());
-            setPhotoFields(question, model.getPhotoLocation());
+            setFieldsForQuestionEntity(question, model, QuestionType.OR, true);
+            setPhotoFieldsForQuestionEntity(question, model.getPhotoLocation());
 
             AnswerEntity correct = new AnswerEntity();
             correct.setCorrect(true);
@@ -268,14 +251,8 @@ public class QuestionService {
     public void saveOrUpdate(PhotoQuestionBindingModel model) {
         if (model.getId() == null) {
             QuestionEntity question = new QuestionEntity();
-            question.setText(model.getText());
-            question.setCreatedBy(SessionWrapper.getLoggedUser());
-            question.setCreationDate(LocalDateTime.now());
-            question.setType(QuestionType.PHOTO);
-            question.setOptionsOnly(true);
-            question.setCategory(getOrCreateDefaultCategory());
-            question.setAnswerDescriptionText(model.getAnswerDescriptionText());
-            setPhotoFields(question, model.getPhotoLocation());
+            setFieldsForQuestionEntity(question, model, QuestionType.PHOTO, true);
+            setPhotoFieldsForQuestionEntity(question, model.getPhotoLocation());
 
             question.addAnswer(createAnswerEntity("A", true, 0, model.getCorrectOption()));
             question.addAnswer(createAnswerEntity("B", false, 1, model.getOptionTwo()));
@@ -284,6 +261,38 @@ public class QuestionService {
 
             saveEntityAndImage(question);
         }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void saveOrUpdate(LinkQuestionBindingModel model) {
+        if (model.getId() == null) {
+            QuestionEntity question = new QuestionEntity();
+            setFieldsForQuestionEntity(question, model, QuestionType.LINK, true);
+            setPhotoFieldsForQuestionEntity(question, model.getPhotoLocation());
+
+            AtomicInteger counter = new AtomicInteger(0);
+            model.getLeftAnswers().lines().forEach(
+                    line -> question.addAnswer(createAnswerEntity(line, true, counter.getAndIncrement(), null)));
+
+            counter.set(0);
+            model.getRightAnswers().lines().forEach(
+                    line -> question.addAnswer(createAnswerEntity(line, false, counter.getAndIncrement(), null)));
+
+            saveEntityAndImage(question);
+        }
+    }
+
+    private void setFieldsForQuestionEntity(QuestionEntity question,
+                                            AbstractQuestionBindingModel model,
+                                            QuestionType type,
+                                            boolean optionsOnly) {
+        question.setText(model.getText());
+        question.setCreatedBy(SessionWrapper.getLoggedUser());
+        question.setCreationDate(LocalDateTime.now());
+        question.setAnswerDescriptionText(model.getAnswerDescriptionText());
+        question.setCategory(getOrCreateDefaultCategory());
+        question.setType(type);
+        question.setOptionsOnly(optionsOnly);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
@@ -337,7 +346,7 @@ public class QuestionService {
             createAnswerEntities(newEntity, model.getAnswers());
         }
 
-        setPhotoFields(newEntity, model.getPhotoLocation());
+        setPhotoFieldsForQuestionEntity(newEntity, model.getPhotoLocation());
 
         if (model.hasMultiCorrectOptions()) {
             newEntity.setType(QuestionType.MULTI);
@@ -355,7 +364,7 @@ public class QuestionService {
         return newEntity;
     }
 
-    private void setPhotoFields(QuestionEntity question, String photoUrl) {
+    private void setPhotoFieldsForQuestionEntity(QuestionEntity question, String photoUrl) {
         if (StringUtils.isNotBlank(photoUrl)) {
             question.setOriginalPhotoUrl(photoUrl);
             question.setPhotoFilename(
@@ -450,7 +459,7 @@ public class QuestionService {
     }
 
     public void deleteById(String id) {
-        questionDao.findById(UUID.fromString(id)).ifPresent(this::delete);
+        questionDao.findByIdJoinAnswers(UUID.fromString(id)).ifPresent(this::delete);
     }
 
     /*

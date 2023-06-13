@@ -62,6 +62,7 @@ public abstract class AbstractQuestionCreationForm<T extends AbstractQuestionBin
         add(enableDescription);
         add(new Hr());
         add(answerDescriptionText);
+        add(createButtonsLayout());
     }
 
     private void setVisibility(boolean val) {

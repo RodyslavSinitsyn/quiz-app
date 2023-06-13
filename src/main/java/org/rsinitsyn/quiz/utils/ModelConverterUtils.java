@@ -9,6 +9,7 @@ import lombok.experimental.UtilityClass;
 import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.LinkQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.OrQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.PhotoQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
@@ -95,6 +96,23 @@ public class ModelConverterUtils {
                 answerEntities.get(1).getPhotoFilename(),
                 answerEntities.get(2).getPhotoFilename(),
                 answerEntities.get(3).getPhotoFilename()
+        );
+    }
+
+    public static LinkQuestionBindingModel toLinkQuestionBindingModel(QuestionEntity questionEntity) {
+        return new LinkQuestionBindingModel(
+                questionEntity.getId().toString(),
+                questionEntity.getText(),
+                questionEntity.getAnswerDescriptionText(),
+                questionEntity.getOriginalPhotoUrl(),
+                questionEntity.getAnswers().stream()
+                        .filter(AnswerEntity::isCorrect)
+                        .map(AnswerEntity::getText)
+                        .collect(Collectors.joining(System.lineSeparator())),
+                questionEntity.getAnswers().stream()
+                        .filter(answerEntity -> !answerEntity.isCorrect())
+                        .map(AnswerEntity::getText)
+                        .collect(Collectors.joining(System.lineSeparator()))
         );
     }
 }
