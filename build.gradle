@@ -42,6 +42,7 @@ dependencies {
     implementation 'com.github.umjammer:jlayer:1.0.2'
     implementation 'com.google.guava:guava:30.1.1-jre'
     implementation 'de.jfancy:star-rating:1.0.3'
+    implementation 'com.flowingcode.addons.carousel:carousel-addon:2.1.1'
     // Voice recognizer
     implementation 'org.vaadin.addons.pandalyte:voice-recognition:1.0.2'
     // Video player

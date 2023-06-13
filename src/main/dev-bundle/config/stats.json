@@ -69,6 +69,7 @@
   "@vaadin/vaadin-usage-statistics": "2.1.2",
   "@vaadin/vertical-layout": "24.0.0",
   "@vaadin/virtual-list": "24.0.0",
+  "@xpertsea/paper-slider": "3.0.0",
   "construct-style-sheets-polyfill": "3.1.0",
   "date-fns": "2.29.3",
   "lit": "2.6.1",
@@ -76,6 +77,7 @@
  },
  "npmModules": {
   "@lit/reactive-element": "1.6.1",
+  "@polymer/iron-a11y-keys-behavior": "3.0.1",
   "@polymer/polymer": "3.5.1",
   "@vaadin/accordion": "24.0.0",
   "@vaadin/app-layout": "24.0.0",
@@ -142,6 +144,8 @@
   "@vaadin/vaadin-usage-statistics": "2.1.2",
   "@vaadin/vertical-layout": "24.0.0",
   "@vaadin/virtual-list": "24.0.0",
+  "@webcomponents/shadycss": "1.11.2",
+  "@xpertsea/paper-slider": "3.0.0",
   "construct-style-sheets-polyfill": "3.1.0",
   "cookieconsent": "3.1.1",
   "date-fns": "2.29.3",
@@ -232,6 +236,7 @@
   "@vaadin/vaadin-lumo-styles/vaadin-iconset.js",
   "@vaadin/vertical-layout/theme/lumo/vaadin-vertical-layout.js",
   "@vaadin/virtual-list/vaadin-virtual-list.js",
+  "@xpertsea/paper-slider/l2t-paper-slider.js",
   "Frontend/generated/jar-resources/comboBoxConnector.js",
   "Frontend/generated/jar-resources/contextMenuConnector.js",
   "Frontend/generated/jar-resources/contextMenuTargetConnector.js",
@@ -283,8 +288,8 @@
   "quiz-theme": "{\n  \"lumoImports\" : [ \"typography\", \"color\", \"spacing\", \"badge\", \"utility\", \"sizing\" ]\n}"
  },
  "entryScripts": [
-  "VAADIN/build/indexhtml-1cf9b995.js"
+  "VAADIN/build/indexhtml-e3d855fc.js"
  ],
  "webComponents": [],
- "packageJsonHash": "6d22a7a18ac45a8f027a9d08e22dea880b735a66b4e97f1d4a2f5657119f4833"
+ "packageJsonHash": "0e68e129d944299c8bcb370063a98f17d818d7c3a23aa31b1b9cf3fdd8811f27"
 }

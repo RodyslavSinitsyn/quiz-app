@@ -71,6 +71,7 @@
     "@vaadin/vaadin-usage-statistics": "2.1.2",
     "@vaadin/vertical-layout": "24.0.0",
     "@vaadin/virtual-list": "24.0.0",
+    "@xpertsea/paper-slider": "3.0.0",
     "construct-style-sheets-polyfill": "3.1.0",
     "date-fns": "2.29.3",
     "lit": "2.6.1",
@@ -163,6 +164,7 @@
       "@vaadin/vaadin-usage-statistics": "2.1.2",
       "@vaadin/vertical-layout": "24.0.0",
       "@vaadin/virtual-list": "24.0.0",
+      "@xpertsea/paper-slider": "3.0.0",
       "construct-style-sheets-polyfill": "3.1.0",
       "date-fns": "2.29.3",
       "lit": "2.6.1",
@@ -184,7 +186,7 @@
       "workbox-core": "6.5.4",
       "workbox-precaching": "6.5.4"
     },
-    "hash": "6d22a7a18ac45a8f027a9d08e22dea880b735a66b4e97f1d4a2f5657119f4833"
+    "hash": "0e68e129d944299c8bcb370063a98f17d818d7c3a23aa31b1b9cf3fdd8811f27"
   },
   "overrides": {
     "@vaadin/bundles": "$@vaadin/bundles",
@@ -259,6 +261,7 @@
     "@vaadin/grid-pro": "$@vaadin/grid-pro",
     "@vaadin/map": "$@vaadin/map",
     "@vaadin/rich-text-editor": "$@vaadin/rich-text-editor",
-    "proj4": "$proj4"
+    "proj4": "$proj4",
+    "@xpertsea/paper-slider": "$@xpertsea/paper-slider"
   }
 }

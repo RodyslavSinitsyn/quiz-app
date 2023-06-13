@@ -1,5 +1,7 @@
 package org.rsinitsyn.quiz.component.cleverest;
 
+import com.flowingcode.vaadin.addons.carousel.Carousel;
+import com.flowingcode.vaadin.addons.carousel.Slide;
 import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
@@ -13,6 +15,7 @@ import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.listbox.ListBox;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -20,11 +23,13 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.jfancy.StarsRating;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
@@ -332,18 +337,6 @@ public class CleverestComponents {
         return layout;
     }
 
-    public List<Component> userTextOptionsInputComponents(QuestionModel questionModel,
-                                                          boolean enableClickAction,
-                                                          Consumer<QuestionModel.AnswerModel> answerConsumer) {
-        return questionModel.getShuffledAnswers()
-                .stream()
-                .map(answerModel -> optionButton(answerModel.getText(), () -> {
-                    if (enableClickAction) answerConsumer.accept(answerModel);
-                }))
-                .map(button -> (Component) button)
-                .toList();
-    }
-
     public List<Component> userTopListInputComponents(QuestionModel questionModel,
                                                       Consumer<List<String>> answersConsumer) {
         int topSize = questionModel.getAnswers().size();
@@ -390,23 +383,90 @@ public class CleverestComponents {
         );
     }
 
-    public static List<Component> userPhotoOptionsInputComponents(QuestionModel questionModel,
-                                                                  Consumer<QuestionModel.AnswerModel> answerConsumer) {
-        return questionModel.getShuffledAnswers().stream()
-                .map(answerModel -> {
+    public List<Component> userTextOptionsInputComponents(QuestionModel questionModel,
+                                                          boolean clickEnabled,
+                                                          Consumer<QuestionModel.AnswerModel> answerConsumer) {
+        return simpleOptionsComponents(questionModel, answerConsumer, clickEnabled,
+                new ComponentRenderer<Component, QuestionModel.AnswerModel>(
+                        answerModel -> optionButton(answerModel.getText(), () -> {
+                        })));
+    }
+
+    public static List<Component> userPhotoOptionsInputComponentsOld(QuestionModel questionModel,
+                                                                     boolean isPlayer,
+                                                                     Consumer<QuestionModel.AnswerModel> answerConsumer) {
+        return simpleOptionsComponents(questionModel, answerConsumer, isPlayer, new ComponentRenderer<Component, QuestionModel.AnswerModel>(
+                answerModel -> {
                     Image image = new Image();
                     image.setSrc(QuizUtils.createStreamResourceForPhoto(answerModel.getPhotoFilename()));
-                    image.setMaxHeight("10em");
-//                    image.setWidthFull();
+                    image.setMaxHeight(isPlayer ? "10em" : MEDIUM_IMAGE_HEIGHT);
                     image.addClassNames(
+                            LumoUtility.AlignSelf.CENTER,
                             LumoUtility.Border.ALL,
                             LumoUtility.BorderRadius.MEDIUM,
                             LumoUtility.BorderColor.PRIMARY
                     );
-                    image.addClickListener(event -> answerConsumer.accept(answerModel));
+                    return image;
+                }));
+    }
+
+    private List<Component> simpleOptionsComponents(QuestionModel questionModel,
+                                                    Consumer<QuestionModel.AnswerModel> answerConsumer,
+                                                    boolean clickActionEnabled,
+                                                    ComponentRenderer<? extends Component, QuestionModel.AnswerModel> componentRenderer) {
+        ListBox<QuestionModel.AnswerModel> options = new ListBox<>();
+
+        Button submit = primaryButton("Ответить", event -> answerConsumer.accept(options.getValue()));
+        submit.setVisible(clickActionEnabled);
+        submit.setWidthFull();
+        submit.setEnabled(false);
+
+        options.setWidthFull();
+        options.setEnabled(clickActionEnabled);
+        options.setItems(questionModel.getShuffledAnswers());
+        options.setRenderer(componentRenderer);
+        options.addValueChangeListener(event -> submit.setEnabled(true));
+
+        return List.of(options, submit);
+    }
+
+    // TODO For now use simple variant
+    public static List<Component> userPhotoOptionsInputComponents(QuestionModel questionModel,
+                                                                  Consumer<QuestionModel.AnswerModel> answerConsumer) {
+        AtomicInteger pos = new AtomicInteger(0);
+        List<QuestionModel.AnswerModel> shuffledAnswers = questionModel.getShuffledAnswers();
+        var slides = shuffledAnswers.stream()
+                .map(answerModel -> {
+                    Image image = new Image();
+                    image.setSrc(QuizUtils.createStreamResourceForPhoto(answerModel.getPhotoFilename()));
+                    image.setMaxHeight("15em");
+                    image.addClassNames(LumoUtility.AlignContent.CENTER, LumoUtility.AlignSelf.CENTER);
                     return image;
                 })
-                .map(image -> (Component) image)
-                .toList();
+                .map(Slide::new)
+                .toArray(Slide[]::new);
+
+        Carousel carousel = new Carousel(slides).withoutNavigation();
+        carousel.setAutoProgress(false);
+        carousel.setWidthFull();
+        carousel.setHeight("15em");
+        carousel.addChangeListener(event -> pos.set(Integer.parseInt(event.getPosition())));
+
+        Button prev = new Button("<<", event -> carousel.movePrev());
+        Button next = new Button(">>", event -> carousel.moveNext());
+        var nav = new HorizontalLayout(prev, next);
+        nav.setWidthFull();
+        nav.addClassNames(LumoUtility.Margin.Bottom.XLARGE);
+        nav.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        nav.setAlignItems(FlexComponent.Alignment.CENTER);
+
+        Button submit = CleverestComponents.primaryButton("Ответить", e -> {
+            carousel.setAutoProgress(true);
+            carousel.setSlideDuration(1);
+            answerConsumer.accept(shuffledAnswers.get(pos.get()));
+        });
+        submit.setWidthFull();
+
+        return List.of(carousel, nav, submit);
     }
 }
