@@ -29,12 +29,14 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.jfancy.StarsRating;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.MutablePair;
+import org.rsinitsyn.quiz.component.сustom.LinkQuestionsComponent;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.utils.AudioUtils;
 import org.rsinitsyn.quiz.utils.QuizComponents;
@@ -389,16 +391,16 @@ public class CleverestComponents {
 
     public List<Component> userTextOptionsInputComponents(QuestionModel questionModel,
                                                           boolean clickEnabled,
-                                                          Consumer<QuestionModel.AnswerModel> answerConsumer) {
+                                                          Consumer<AnswerModel> answerConsumer) {
         return simpleOptionsComponents(questionModel, answerConsumer, clickEnabled,
-                new ComponentRenderer<Component, QuestionModel.AnswerModel>(
+                new ComponentRenderer<Component, AnswerModel>(
                         answerModel -> optionButton(answerModel.getText(), () -> {
                         })));
     }
 
     public static List<Component> userPhotoOptionsInputComponents(QuestionModel questionModel,
-                                                                  Consumer<QuestionModel.AnswerModel> answerConsumer) {
-        return simpleOptionsComponents(questionModel, answerConsumer, true, new ComponentRenderer<Component, QuestionModel.AnswerModel>(
+                                                                  Consumer<AnswerModel> answerConsumer) {
+        return simpleOptionsComponents(questionModel, answerConsumer, true, new ComponentRenderer<Component, AnswerModel>(
                 answerModel -> {
                     Image image = new Image();
                     image.setSrc(QuizUtils.createStreamResourceForPhoto(answerModel.getPhotoFilename()));
@@ -417,10 +419,10 @@ public class CleverestComponents {
     }
 
     private List<Component> simpleOptionsComponents(QuestionModel questionModel,
-                                                    Consumer<QuestionModel.AnswerModel> answerConsumer,
+                                                    Consumer<AnswerModel> answerConsumer,
                                                     boolean clickActionEnabled,
-                                                    ComponentRenderer<? extends Component, QuestionModel.AnswerModel> componentRenderer) {
-        ListBox<QuestionModel.AnswerModel> options = new ListBox<>();
+                                                    ComponentRenderer<? extends Component, AnswerModel> componentRenderer) {
+        ListBox<AnswerModel> options = new ListBox<>();
 
         Button submit = primaryButton("Ответить", event -> answerConsumer.accept(options.getValue()));
         submit.setVisible(clickActionEnabled);
@@ -437,7 +439,7 @@ public class CleverestComponents {
     }
 
     public static List<Component> userPhotoOptionsInputComponentsCarousel(QuestionModel questionModel) {
-        List<QuestionModel.AnswerModel> shuffledAnswers = questionModel.getShuffledAnswers();
+        List<AnswerModel> shuffledAnswers = questionModel.getShuffledAnswers();
         var slides = shuffledAnswers.stream()
                 .map(answerModel -> {
                     Image image = new Image();
@@ -465,5 +467,20 @@ public class CleverestComponents {
 //        nav.setAlignItems(FlexComponent.Alignment.CENTER);
 
         return List.of(carousel);
+    }
+
+    public static List<Component> userMatchAnswersComponents(QuestionModel questionModel,
+                                                             Consumer<List<MutablePair<AnswerModel, AnswerModel>>> listOfAnswerLinksConsumer) {
+        Button submit = primaryButton("Ответить", event -> {
+        });
+        submit.setWidthFull();
+        submit.setEnabled(false);
+
+        LinkQuestionsComponent component = new LinkQuestionsComponent(questionModel);
+        component.addPairLinkedEventListener(event -> submit.setEnabled(event.isDone()));
+
+        submit.addClickListener(event -> listOfAnswerLinksConsumer.accept(component.getPairs()));
+
+        return List.of(component, submit);
     }
 }

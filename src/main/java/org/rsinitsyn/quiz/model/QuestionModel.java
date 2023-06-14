@@ -3,10 +3,12 @@ package org.rsinitsyn.quiz.model;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,6 +18,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.rsinitsyn.quiz.entity.QuestionType;
 
 @Getter
@@ -49,11 +52,28 @@ public class QuestionModel {
     }
 
     public String getCorrectAnswersAsText() {
-        return answers.stream()
-                .sorted(Comparator.comparing(AnswerModel::getNumber))
-                .filter(AnswerModel::isCorrect)
-                .map(AnswerModel::getText)
-                .collect(Collectors.joining(System.lineSeparator()));
+        if (!type.equals(QuestionType.LINK)) {
+            return answers.stream()
+                    .sorted(Comparator.comparing(AnswerModel::getNumber))
+                    .filter(AnswerModel::isCorrect)
+                    .map(AnswerModel::getText)
+                    .collect(Collectors.joining(System.lineSeparator()));
+        } else {
+            return answers.stream()
+                    .collect(Collectors.groupingBy(AnswerModel::getNumber,
+                            LinkedHashMap::new,
+                            Collectors.collectingAndThen(
+                                    Collectors.toList(),
+                                    answerModels -> MutablePair.of(
+                                            answerModels.stream().filter(AnswerModel::isCorrect).findFirst().orElseThrow(),
+                                            answerModels.stream().filter(am -> !am.isCorrect()).findFirst().orElseThrow()
+                                    )
+                            )))
+                    .values()
+                    .stream()
+                    .map(pair -> pair.getLeft().getText() + " = " + pair.getRight().getText())
+                    .collect(Collectors.joining(System.lineSeparator()));
+        }
     }
 
     public List<AnswerModel> getShuffledAnswers() {
@@ -81,11 +101,32 @@ public class QuestionModel {
         } else if (type.equals(QuestionType.OR)) {
             return userAnswers.stream().allMatch(AnswerModel::isCorrect);
         } else if (type.equals(QuestionType.TOP)) {
-            // TODO Here need to logic
             return userAnswers.stream().allMatch(AnswerModel::isCorrect);
         } else {
             throw new IllegalStateException("QuestionType not defined");
         }
+    }
+
+    public boolean areAnswersCorrect(List<MutablePair<AnswerModel, AnswerModel>> pairs) {
+        var correct = answers.stream()
+                .collect(Collectors.groupingBy(AnswerModel::getNumber,
+                        LinkedHashMap::new,
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                answerModels -> MutablePair.of(
+                                        answerModels.stream().filter(AnswerModel::isCorrect).findFirst().orElseThrow(),
+                                        answerModels.stream().filter(am -> !am.isCorrect()).findFirst().orElseThrow()
+                                )
+                        )));
+        AtomicBoolean isCorrect = new AtomicBoolean(true);
+        for (MutablePair<AnswerModel, AnswerModel> userPair : pairs) {
+            boolean anyPairMatched = correct.values().stream().anyMatch(correctPair -> correctPair.equals(userPair));
+            if (!anyPairMatched) {
+                isCorrect.set(false);
+                break;
+            }
+        }
+        return isCorrect.get();
     }
 
     @Data

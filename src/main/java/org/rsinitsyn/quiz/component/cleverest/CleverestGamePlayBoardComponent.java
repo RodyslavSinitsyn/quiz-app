@@ -19,7 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -117,9 +119,13 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         log.debug("Render question. GameId {}, questionText: {}", gameId, question.getText());
         renderTopContainerForAdmin(broadcaster.getState(gameId).getUsers().values());
         renderQuestionLayout(question, questionNumber, totalQuestions, roundNumber);
-        renderAnswersLayout(question, question.getType().equals(QuestionType.TOP)
+        var type = question.getType().equals(QuestionType.TOP)
                 ? AnswerType.TOP
-                : roundNumber == 2 ? AnswerType.INPUT : AnswerType.OPTIONS);
+                : roundNumber == 2 ? AnswerType.INPUT : AnswerType.OPTIONS;
+        if (question.getType().equals(QuestionType.LINK)) {
+            type = AnswerType.MATCH;
+        }
+        renderAnswersLayout(question, type);
     }
 
     private void renderAnswersLayout(QuestionModel questionModel, AnswerType answerType) {
@@ -137,7 +143,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 } else {
                     answerInput.add(CleverestComponents.userPhotoOptionsInputComponents(questionModel,
                             answerModel -> broadcaster.sendSubmitAnswerEventAndCheckScore(
-                                            gameId, SessionWrapper.getLoggedUser(), questionModel, answerModel.getPhotoFilename(), answerModel::isCorrect)));
+                                    gameId, SessionWrapper.getLoggedUser(), questionModel, answerModel.getPhotoFilename(), answerModel::isCorrect)));
                 }
             } else {
                 answerInput.add(CleverestComponents.userTextOptionsInputComponents(questionModel,
@@ -172,9 +178,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             });
             answerInput.add(textField, submit);
         } else if (AnswerType.TOP.equals(answerType)) {
-            if (isAdmin) {
-                return;
-            }
+            if (isAdmin) return;
             answerInput.add(CleverestComponents.userTopListInputComponents(
                     questionModel,
                     answers -> {
@@ -185,6 +189,17 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                 () -> false);
                     }
             ));
+        } else if (AnswerType.MATCH.equals(answerType)) {
+            if (isAdmin) return;
+            answerInput.add(CleverestComponents.userMatchAnswersComponents(questionModel, pairs -> {
+                broadcaster.sendSubmitAnswerEventAndCheckScore(
+                        gameId,
+                        SessionWrapper.getLoggedUser(),
+                        questionModel,
+                        pairs.stream().map(pair -> pair.getLeft().getText() + " = " + pair.getRight().getText()).collect(Collectors.joining(", ")),
+                        () -> questionModel.areAnswersCorrect(pairs)
+                );
+            }));
         }
         botContainer.add(answerInput);
     }

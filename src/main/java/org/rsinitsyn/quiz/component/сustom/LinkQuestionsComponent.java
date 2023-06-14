@@ -4,7 +4,6 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.shared.Registration;
@@ -25,20 +24,23 @@ import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
 public class LinkQuestionsComponent extends HorizontalLayout {
 
     private final List<MutablePair<LinkItemDto, LinkItemDto>> resultPairs = new ArrayList<>();
-    private LinkItemDto currLeft = null;
-    private LinkItemDto currRight = null;
-    private String currColor;
-
     private final Map<String, Boolean> colors = new HashMap<>();
-
     {
         colors.put(LumoUtility.Background.PRIMARY_10, false);
         colors.put(LumoUtility.Background.SUCCESS_10, false);
         colors.put(LumoUtility.Background.ERROR_10, false);
         colors.put(LumoUtility.Background.CONTRAST_10, false);
     }
+    private final int desiredPairsSize;
+
+    private LinkItemDto currLeft = null;
+    private LinkItemDto currRight = null;
+    private Boolean leftSelectedFirst = null;
+    private String currColor;
 
     public LinkQuestionsComponent(QuestionModel questionModel) {
+        this.desiredPairsSize = (int) questionModel.getAnswers().stream().filter(AnswerModel::isCorrect).count();
+
         setPadding(false);
         setWidthFull();
 
@@ -65,59 +67,95 @@ public class LinkQuestionsComponent extends HorizontalLayout {
         side.setSpacing(true);
         answers.forEach(answerModel -> {
             Span span = matchAnswerSpan(answerModel, isLeft, event -> {
-                if (currLeft != null && currRight != null) {
-                    if (currLeftLinked() && currRightLinked()) {
-                        var linkedByLeft = getPairByLeftSpan();
-                        var linkedByRight = getPairByRightSpan();
-                        if (linkedByLeft == linkedByRight) {
-                            Notification.show("Click on same");
+                if (currLeft == null || currRight == null) return;
+
+                if (currLeftLinked() && currRightLinked()) {
+                    var linkedByLeft = getPairByLeftSpan();
+                    var linkedByRight = getPairByRightSpan();
+                    if (linkedByLeft != linkedByRight) {
+                        var leftSideColor = linkedByLeft.getLeft().getColor();
+                        var rightSideColor = linkedByRight.getRight().getColor();
+                        linkedByLeft.getRight().getSpan().removeClassName(leftSideColor);
+                        linkedByRight.getLeft().getSpan().removeClassName(rightSideColor);
+                        String dominantColor = null;
+                        if (leftSelectedFirst) {
+                            dominantColor = leftSideColor;
+                            linkedByRight.getRight().getSpan().removeClassName(rightSideColor);
+                            colors.put(rightSideColor, false);
                         } else {
-                            linkedByLeft.getRight().getSpan().removeClassName(linkedByLeft.getRight().getColor());
-                            colors.put(linkedByLeft.getRight().getColor(), false);
-                            linkedByRight.getLeft().getSpan().removeClassName(linkedByRight.getLeft().getColor());
-                            colors.put(linkedByLeft.getRight().getColor(), false);
-
-                            resultPairs.remove(linkedByLeft);
-                            resultPairs.remove(linkedByRight);
-
-                            var newPair = MutablePair.of(currLeft, currRight);
-                            resultPairs.add(newPair);
+                            dominantColor = rightSideColor;
+                            linkedByLeft.getLeft().getSpan().removeClassName(leftSideColor);
+                            colors.put(leftSideColor, false);
                         }
-                    } else if (currLeftLinked() && !currRightLinked()) {
-                        var linkedByLeft = getPairByLeftSpan();
-                        linkedByLeft.getRight().getSpan().removeClassName(linkedByLeft.getRight().getColor());
-                        colors.put(linkedByLeft.getRight().getColor(), false);
-                        linkedByLeft.setRight(currRight);
-                    } else if (!currLeftLinked() && currRightLinked()) {
-                        var linkedByRight = getPairByRightSpan();
-                        linkedByRight.getLeft().getSpan().removeClassName(linkedByRight.getLeft().getColor());
-                        colors.put(linkedByRight.getLeft().getColor(), false);
-                        linkedByRight.setLeft(currLeft);
-                    } else {
-                        var newPair = MutablePair.of(currLeft, currRight);
-                        resultPairs.add(newPair);
+                        resultPairs.remove(linkedByLeft);
+                        resultPairs.remove(linkedByRight);
+
+                        createAndAddNewPair(dominantColor);
                     }
-                    cleanupState();
+                } else if (currLeftLinked() && !currRightLinked()) {
+                    var linkedByLeft = getPairByLeftSpan();
+                    var leftSideColor = linkedByLeft.getLeft().getColor();
+                    linkedByLeft.getRight().getSpan().removeClassName(leftSideColor);
+                    markRightSpanWithColor(leftSideColor);
+                    linkedByLeft.setRight(currRight);
+                } else if (!currLeftLinked() && currRightLinked()) {
+                    var linkedByRight = getPairByRightSpan();
+                    var rightSideColor = linkedByRight.getRight().getColor();
+                    linkedByRight.getLeft().getSpan().removeClassName(rightSideColor);
+                    markLeftSpanWithColor(rightSideColor);
+                    linkedByRight.setLeft(currLeft);
+                } else {
+                    createAndAddNewPair(getFreeColor());
                 }
+                cleanupState();
+                getEventBus().fireEvent(new PairLinkedEvent(this, desiredPairsSize == resultPairs.size()));
             });
             side.add(span);
         });
         return side;
     }
 
-    private MutablePair<Span, AnswerModel> makeCopy(MutablePair<Span, AnswerModel> pair) {
-        return MutablePair.of(pair.getKey(), pair.getValue());
+    private void createAndAddNewPair(String color) {
+        markLeftSpanWithColor(color);
+        markRightSpanWithColor(color);
+        colors.put(color, true);
+
+        var newPair = MutablePair.of(currLeft, currRight);
+        resultPairs.add(newPair);
+    }
+
+    private void markLeftSpanWithColor(String colorClass) {
+        currLeft.setColor(colorClass);
+        if (!currLeft.getSpan().hasClassName(colorClass)) {
+            currLeft.getSpan().addClassNames(colorClass);
+        }
+    }
+
+    private void markRightSpanWithColor(String colorClass) {
+        currRight.setColor(colorClass);
+        if (!currRight.getSpan().hasClassName(colorClass)) {
+            currRight.getSpan().addClassNames(colorClass);
+        }
+    }
+
+    private void markSpanWithTextColor(Span span, boolean bolded) {
+        if (bolded) {
+            span.removeClassName(LumoUtility.TextColor.PRIMARY);
+            span.addClassNames(LumoUtility.TextColor.BODY);
+        } else {
+            span.removeClassName(LumoUtility.TextColor.BODY);
+            span.addClassNames(LumoUtility.TextColor.PRIMARY);
+        }
     }
 
     private void cleanupState() {
-        colors.put(currColor, true);
-        currColor = null;
+        markSpanWithTextColor(currLeft.getSpan(), false);
+        markSpanWithTextColor(currRight.getSpan(), false);
+
         currLeft = null;
         currRight = null;
 
-        System.out.println("-------");
-        System.out.println(colors);
-        System.out.println("pairs size: " + resultPairs.size());
+        leftSelectedFirst = null;
     }
 
     private MutablePair<LinkItemDto, LinkItemDto> getPairByLeftSpan() {
@@ -146,7 +184,9 @@ public class LinkQuestionsComponent extends HorizontalLayout {
         Span span = new Span(answerModel.getText());
         span.setWidthFull();
         span.addClassNames(
-                CleverestComponents.MOBILE_MEDIUM_FONT,
+                answerModel.getText().length() <= 10
+                        ? CleverestComponents.MOBILE_MEDIUM_FONT
+                        : CleverestComponents.MOBILE_SMALL_FONT,
                 LumoUtility.TextAlignment.CENTER,
                 LumoUtility.TextColor.PRIMARY,
                 LumoUtility.FontWeight.BOLD,
@@ -154,15 +194,32 @@ public class LinkQuestionsComponent extends HorizontalLayout {
                 LumoUtility.BorderColor.PRIMARY,
                 LumoUtility.BorderRadius.MEDIUM);
         span.addClickListener(event -> {
+            if (leftSelectedFirst == null) {
+                leftSelectedFirst = isLeft;
+            }
             if (currLeft == null && isLeft) {
                 currLeft = new LinkItemDto(event.getSource(), answerModel, null, isLeft);
             } else if (currRight == null && !isLeft) {
                 currRight = new LinkItemDto(event.getSource(), answerModel, null, isLeft);
             }
-            assignValuesAndColorToCurr(isLeft ? currLeft : currRight, isLeft, event.getSource(), answerModel);
+            setSomeFields(isLeft ? currLeft : currRight, isLeft, event.getSource(), answerModel);
             eventHandler.onComponentEvent(event);
         });
         return span;
+    }
+
+    private void setSomeFields(LinkItemDto currDto,
+                               boolean isLeft,
+                               Span clickedSpan,
+                               AnswerModel answerModel) {
+        // unselect old span and select new one
+        markSpanWithTextColor(currDto.getSpan(), false);
+        currDto.setSpan(clickedSpan);
+        markSpanWithTextColor(currDto.getSpan(), true);
+
+        // set props
+        currDto.setLeft(isLeft);
+        currDto.setAnswer(answerModel);
     }
 
     private void assignValuesAndColorToCurr(LinkItemDto currDto,
@@ -202,19 +259,19 @@ public class LinkQuestionsComponent extends HorizontalLayout {
                 .findFirst().orElse(null);
     }
 
-    public static class LinkingCompletedEvent extends ComponentEvent<LinkQuestionsComponent> {
+    public static class PairLinkedEvent extends ComponentEvent<LinkQuestionsComponent> {
         @Getter
-        private List<MutablePair<AnswerModel, AnswerModel>> result;
+        private boolean done;
 
-        public LinkingCompletedEvent(LinkQuestionsComponent source,
-                                     List<MutablePair<AnswerModel, AnswerModel>> result) {
+        public PairLinkedEvent(LinkQuestionsComponent source,
+                               boolean done) {
             super(source, true);
-            this.result = result;
+            this.done = done;
         }
     }
 
-    public Registration addLinkingCompletedEventListener(ComponentEventListener<LinkingCompletedEvent> listener) {
-        return getEventBus().addListener(LinkingCompletedEvent.class, listener);
+    public Registration addPairLinkedEventListener(ComponentEventListener<PairLinkedEvent> listener) {
+        return getEventBus().addListener(PairLinkedEvent.class, listener);
     }
 
     @Data

@@ -11,8 +11,8 @@ import org.rsinitsyn.quiz.model.binding.LinkQuestionBindingModel;
 
 public class LinkQuestionForm extends AbstractQuestionCreationForm<LinkQuestionBindingModel> {
 
-    private TextArea leftAnswers = new TextArea("Левый столбец");
-    private TextArea rightAnswers = new TextArea("Правый столбец");
+    private final TextArea leftAnswers = new TextArea("Левый столбец");
+    private final TextArea rightAnswers = new TextArea("Правый столбец");
 
     private final Binder<LinkQuestionBindingModel> binder =
             new BeanValidationBinder<>(LinkQuestionBindingModel.class);

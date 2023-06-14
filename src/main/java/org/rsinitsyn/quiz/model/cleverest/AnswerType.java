@@ -4,5 +4,6 @@ public enum AnswerType {
     TOP,
     OPTIONS,
     INPUT,
+    MATCH,
     VOICE_OR_INPUT;
 }
