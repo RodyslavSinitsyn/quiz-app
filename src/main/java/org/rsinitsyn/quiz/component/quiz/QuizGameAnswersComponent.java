@@ -3,14 +3,12 @@ package org.rsinitsyn.quiz.component.quiz;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.listbox.ListBox;
 import com.vaadin.flow.component.listbox.MultiSelectListBox;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.shared.Registration;
-import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -43,13 +41,15 @@ public class QuizGameAnswersComponent extends VerticalLayout {
         if (question.getType().equals(QuestionType.TEXT) || question.getType().equals(QuestionType.OR)) {// todo change styles for OR
             answerListBox.setItems(copiedAnswerList);
             answerListBox.setRenderer(
-                    new ComponentRenderer<Component, QuestionModel.AnswerModel>(this::createAnswerButton));
+                    new ComponentRenderer<Component, QuestionModel.AnswerModel>(
+                            am -> CleverestComponents.optionComponent(am.getText(), 50, event -> {})));
             answerListBox.addValueChangeListener(event -> fireEvent(new AnswerChoosenEvent(this, Collections.singleton(event.getValue()))));
             add(answerListBox);
         } else if (question.getType().equals(QuestionType.MULTI)) {
             multiAnswerListBox.setItems(copiedAnswerList);
             multiAnswerListBox.setRenderer(
-                    new ComponentRenderer<Component, QuestionModel.AnswerModel>(this::createAnswerButton));
+                    new ComponentRenderer<Component, QuestionModel.AnswerModel>(
+                            am -> CleverestComponents.optionComponent(am.getText(), 50, event -> {})));
 
             var submitButton = CleverestComponents.primaryButton(
                     "Подтвердить ответ",
@@ -68,14 +68,6 @@ public class QuizGameAnswersComponent extends VerticalLayout {
                     });
             add(numberField, submitButton);
         }
-    }
-
-    private Button createAnswerButton(QuestionModel.AnswerModel answer) {
-        var button = new Button(answer.getText());
-        button.addClassNames(LumoUtility.FontSize.XLARGE,
-                LumoUtility.FontWeight.BOLD);
-        button.setSizeFull();
-        return button;
     }
 
     public void removeWrongAnswersAndRerender(int answersToRemove) {

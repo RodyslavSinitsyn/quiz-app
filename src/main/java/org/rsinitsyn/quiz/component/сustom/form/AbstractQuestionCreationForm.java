@@ -94,7 +94,6 @@ public abstract class AbstractQuestionCreationForm<T extends AbstractQuestionBin
         delete.addThemeVariants(ButtonVariant.LUMO_ERROR);
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        save.addClickShortcut(Key.ENTER);
         cancel.addClickShortcut(Key.ESCAPE);
 
         save.addClickListener(event -> validateAndFireEvent());

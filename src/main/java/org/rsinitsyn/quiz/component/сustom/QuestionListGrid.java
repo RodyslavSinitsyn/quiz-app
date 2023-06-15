@@ -14,7 +14,6 @@ import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
-import org.rsinitsyn.quiz.entity.QuestionGrade;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 

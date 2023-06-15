@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -118,15 +117,13 @@ public class QuestionModel {
                                         answerModels.stream().filter(am -> !am.isCorrect()).findFirst().orElseThrow()
                                 )
                         )));
-        AtomicBoolean isCorrect = new AtomicBoolean(true);
         for (MutablePair<AnswerModel, AnswerModel> userPair : pairs) {
             boolean anyPairMatched = correct.values().stream().anyMatch(correctPair -> correctPair.equals(userPair));
             if (!anyPairMatched) {
-                isCorrect.set(false);
-                break;
+                return false;
             }
         }
-        return isCorrect.get();
+        return true;
     }
 
     @Data

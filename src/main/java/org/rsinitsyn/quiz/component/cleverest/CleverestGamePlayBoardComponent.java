@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
@@ -152,10 +151,9 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             }
         } else if (AnswerType.INPUT.equals(answerType) || AnswerType.VOICE_OR_INPUT.equals(answerType)) {
             if (isAdmin) return;
-            Button submit = CleverestComponents.primaryButton("Ответить", e -> {
+            Button submit = CleverestComponents.submitButton(e -> {
             });
-            submit.setWidthFull();
-            submit.setEnabled(false);
+
             TextField textField = CleverestComponents.answerInput(event -> {
                 submit.setEnabled(!event.getValue().isBlank());
             });
@@ -373,10 +371,13 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.SEMIBOLD);
             row.add(userAnswerSpan);
             if (approveManually) {
+                int countLimit = QuestionType.TOP.equals(question.getType())
+                        ? question.getAnswers().size()
+                        : 0;
                 Button approveButton =
                         CleverestComponents.approveButton(
                                 () -> approveAction.accept(userGameState.getUsername()),
-                                question.getType().equals(QuestionType.TOP));
+                                countLimit);
                 row.add(approveButton);
             }
             answers.add(row);

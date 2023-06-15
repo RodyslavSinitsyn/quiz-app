@@ -11,6 +11,7 @@ import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -160,19 +161,24 @@ public class CleverestComponents {
         return notification;
     }
 
-    public Button optionButton(String text, Runnable action) {
-        Button button = new Button();
-        button.setWidthFull();
-        button.setText(text);
-        button.addThemeVariants(ButtonVariant.LUMO_LARGE);
-        button.addClassNames(
-                LumoUtility.BorderColor.PRIMARY,
+    public Div optionComponent(String text,
+                               int maxLength,
+                               ComponentEventListener<ClickEvent<Div>> eventHandler) {
+        var option = new Div();
+        option.setWidthFull();
+        option.setText(text);
+        option.addClassNames(
+                text.length() > maxLength
+                        ? CleverestComponents.MOBILE_MEDIUM_FONT
+                        : CleverestComponents.MOBILE_LARGE_FONT,
+                LumoUtility.TextAlignment.CENTER,
+                LumoUtility.TextColor.PRIMARY,
+                LumoUtility.FontWeight.BOLD,
                 LumoUtility.Border.ALL,
-                text.length() >= 20 ? MOBILE_MEDIUM_FONT : MOBILE_LARGE_FONT);
-        button.addClickListener(event -> {
-            action.run();
-        });
-        return button;
+                LumoUtility.BorderColor.PRIMARY,
+                LumoUtility.BorderRadius.MEDIUM);
+        option.addClickListener(eventHandler);
+        return option;
     }
 
     public TextField answerInput(HasValue.ValueChangeListener<? super AbstractField.ComponentValueChangeEvent<TextField, String>> valueChangeHandler) {
@@ -185,6 +191,14 @@ public class CleverestComponents {
         return textField;
     }
 
+
+    public static Button submitButton(ComponentEventListener<ClickEvent<Button>> clickAction) {
+        var submit = primaryButton("Ответить", clickAction);
+        submit.setWidthFull();
+        submit.setEnabled(false);
+        return submit;
+    }
+
     public Button primaryButton(String text, ComponentEventListener<ClickEvent<Button>> clickAction) {
         Button button = new Button(text);
         button.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
@@ -193,24 +207,28 @@ public class CleverestComponents {
         return button;
     }
 
-    public Button approveButton(Runnable clickAction, boolean counterMode) {
+    public Button approveButton(Runnable clickAction,
+                                int countLimit) {
         Button button = new Button();
         button.setIcon(VaadinIcon.CHECK.create());
         button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         button.addClickListener(event -> {
-            if (counterMode) {
+            if (countLimit > 0) {
                 String currText = event.getSource().getElement().getText();
-                String newText = currText.isBlank()
-                        ? "1"
-                        : String.valueOf(Integer.parseInt(button.getText()) + 1);
-                button.setText(newText);
+                var countValue = currText.isBlank()
+                        ? 1
+                        : Integer.parseInt(button.getText()) + 1;
+                if (countValue <= countLimit) {
+                    button.setText(String.valueOf(countValue));
+                    clickAction.run();
+                }
             } else {
+                clickAction.run();
                 button.setEnabled(false);
             }
             event.getSource().getParent().ifPresent(p ->
                     p.addClassNames(
                             LumoUtility.Background.PRIMARY_10, LumoUtility.Border.ALL, LumoUtility.BorderColor.PRIMARY));
-            clickAction.run();
         });
         return button;
     }
@@ -349,10 +367,9 @@ public class CleverestComponents {
         VerticalLayout topListLayout = new VerticalLayout();
         topListLayout.setSpacing(false);
         topListLayout.setPadding(false);
-        Button submit = CleverestComponents.primaryButton("Ответить", e -> {
-        });
-        submit.setEnabled(false);
-        submit.setWidthFull();
+        Button submit = CleverestComponents.submitButton(
+                e -> answersConsumer.accept(topListLayout.getChildren().map(component -> component.getElement().getText()).toList()));
+
         Button addToListButton = new Button(VaadinIcon.PLUS_CIRCLE.create());
         addToListButton.addClickShortcut(Key.ENTER);
         TextField textField = CleverestComponents.answerInput(event -> {
@@ -373,9 +390,6 @@ public class CleverestComponents {
             submit.setEnabled(topListLayout.getChildren().count() == topSize);
         });
         addToListButton.setEnabled(false);
-        submit.addClickListener(event -> {
-            answersConsumer.accept(topListLayout.getChildren().map(component -> component.getElement().getText()).toList());
-        });
 
         HorizontalLayout userInput = new HorizontalLayout(textField, addToListButton);
         userInput.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
@@ -394,7 +408,7 @@ public class CleverestComponents {
                                                           Consumer<AnswerModel> answerConsumer) {
         return simpleOptionsComponents(questionModel, answerConsumer, clickEnabled,
                 new ComponentRenderer<Component, AnswerModel>(
-                        answerModel -> optionButton(answerModel.getText(), () -> {
+                        answerModel -> optionComponent(answerModel.getText(), 15, event -> {
                         })));
     }
 
@@ -424,10 +438,8 @@ public class CleverestComponents {
                                                     ComponentRenderer<? extends Component, AnswerModel> componentRenderer) {
         ListBox<AnswerModel> options = new ListBox<>();
 
-        Button submit = primaryButton("Ответить", event -> answerConsumer.accept(options.getValue()));
+        Button submit = submitButton(event -> answerConsumer.accept(options.getValue()));
         submit.setVisible(clickActionEnabled);
-        submit.setWidthFull();
-        submit.setEnabled(false);
 
         options.setWidthFull();
         options.setReadOnly(!clickActionEnabled);
@@ -471,10 +483,8 @@ public class CleverestComponents {
 
     public static List<Component> userMatchAnswersComponents(QuestionModel questionModel,
                                                              Consumer<List<MutablePair<AnswerModel, AnswerModel>>> listOfAnswerLinksConsumer) {
-        Button submit = primaryButton("Ответить", event -> {
+        Button submit = submitButton(event -> {
         });
-        submit.setWidthFull();
-        submit.setEnabled(false);
 
         LinkQuestionsComponent component = new LinkQuestionsComponent(questionModel);
         component.addPairLinkedEventListener(event -> submit.setEnabled(event.isDone()));
