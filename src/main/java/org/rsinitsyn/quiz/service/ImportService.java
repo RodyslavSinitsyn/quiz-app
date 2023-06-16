@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
@@ -34,11 +35,14 @@ public class ImportService {
         if (lines.length == 0) {
             throw new RuntimeException("Невалидный формат импортируемого файла");
         }
-        List<QuestionEntity> questionEntities = Arrays.stream(lines).map(this::toEntity).toList();
+        List<QuestionEntity> questionEntities = Arrays.stream(lines).map(this::toEntity).filter(Objects::nonNull).toList();
         questionEntities.forEach(questionService::saveEntityAndImage);
     }
 
     private QuestionEntity toEntity(String line) {
+        if (line.isBlank()) {
+            return null;
+        }
         String[] tokens = line.split("[|]");
 
         if (tokens.length < 5) {

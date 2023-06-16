@@ -80,7 +80,9 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
     private final ImportService importService;
     private final UserService userService;
 
-    public QuestionsPage(QuestionService questionService, ImportService importService, UserService userService) {
+    public QuestionsPage(QuestionService questionService,
+                         ImportService importService,
+                         UserService userService) {
         this.questionService = questionService;
         this.importService = importService;
         this.userService = userService;
@@ -90,7 +92,10 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
         configureCategoryForm();
         configureDialog();
 
-        add(QuizComponents.mainHeader("База вопросов"), createToolbar(), spinner, grid);
+        add(QuizComponents.mainHeader("База вопросов"),
+                createToolbar(),
+                spinner,
+                grid);
     }
 
     private void configureDialog() {
@@ -220,7 +225,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
         categoryForm = new QuestionCategoryForm(questionService.findAllCategories(), new QuestionCategoryBindingModel());
         categoryForm.setWidth("30em");
         categoryForm.addListener(QuestionCategoryForm.SaveCategoryEvent.class, event -> {
-            questionService.saveQuestionCategory(event.getModel());
+            questionService.saveQuestionCategory(event.getModel().getCategoryName());
             formDialog.close();
             categoryForm.setModel(null);
             categoryForm.setCategories(questionService.findAllCategories());

@@ -2,13 +2,16 @@ package org.rsinitsyn.quiz.utils;
 
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.Lumo;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
 public class SessionWrapper {
 
     public static String getLoggedUser() {
         return StringUtils.defaultIfEmpty(
-                (String) VaadinSession.getCurrent().getAttribute("user"),
+                (String) Optional.ofNullable(VaadinSession.getCurrent())
+                        .map(session -> session.getAttribute("user"))
+                        .orElse(null),
                 "Аноним"
         );
     }

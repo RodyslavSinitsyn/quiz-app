@@ -80,11 +80,16 @@ public class QuestionService {
     }
 
     @CacheEvict(value = "allCategories", allEntries = true)
-    public void saveQuestionCategory(QuestionCategoryBindingModel model) {
+    public QuestionCategoryEntity saveQuestionCategory(String categoryName) {
         QuestionCategoryEntity entity = new QuestionCategoryEntity();
-        entity.setName(model.getCategoryName());
+        entity.setName(categoryName);
         QuestionCategoryEntity saved = questionCategoryDao.save(entity);
         log.info("Category saved, name: {}", saved.getName());
+        return saved;
+    }
+
+    public Optional<QuestionCategoryEntity> findCategoryByName(String name) {
+        return questionCategoryDao.findByName(name);
     }
 
     public QuestionEntity findByIdLazy(UUID id) {
