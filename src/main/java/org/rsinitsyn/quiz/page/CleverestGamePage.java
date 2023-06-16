@@ -41,7 +41,6 @@ import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /*
     constructor
@@ -76,7 +75,6 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
     private CleverestBroadcaster broadcaster;
     private String originalLocation;
 
-    @Autowired
     // Each time on navigate from outside
     public CleverestGamePage(QuestionService questionService,
                              GameService gameService,

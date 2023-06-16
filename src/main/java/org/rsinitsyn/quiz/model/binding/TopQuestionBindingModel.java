@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class TopQuestionBindingModel extends AbstractQuestionBindingModel {
-    private String id;
     @NotBlank
     private String topListText;
 

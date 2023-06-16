@@ -196,13 +196,13 @@ public class LinkQuestionsComponent extends HorizontalLayout {
                     } else if (currRight == null && !isLeft) {
                         currRight = new LinkItemDto(event.getSource(), answerModel, null, isLeft);
                     }
-                    setSomeFields(isLeft ? currLeft : currRight, isLeft, event.getSource(), answerModel);
+                    updateSideRow(isLeft ? currLeft : currRight, isLeft, event.getSource(), answerModel);
                     eventHandler.onComponentEvent(event);
                 }
         );
     }
 
-    private void setSomeFields(LinkItemDto currDto,
+    private void updateSideRow(LinkItemDto currDto,
                                boolean isLeft,
                                Component selectedComponent,
                                AnswerModel answerModel) {

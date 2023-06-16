@@ -18,7 +18,6 @@ import org.hibernate.validator.constraints.Length;
 @Data
 @NoArgsConstructor
 public class FourAnswersQuestionBindingModel extends AbstractQuestionBindingModel {
-    private String id;
     private String category;
     private String author;
     private InputStream audio;

@@ -37,7 +37,6 @@ import org.rsinitsyn.quiz.page.StatisticPage;
 import org.rsinitsyn.quiz.service.UserService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
 @Slf4j
@@ -61,7 +60,6 @@ public class MainLayout extends AppLayout implements
     private UserService userService;
     private Environment environment;
 
-    @Autowired
     public MainLayout(UserService userService,
                       Environment environment) {
         this.userService = userService;
