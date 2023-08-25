@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.service;
+package org.rsinitsyn.quiz.service.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.service;
+package org.rsinitsyn.quiz.service.ai;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
+import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.stereotype.Service;
 

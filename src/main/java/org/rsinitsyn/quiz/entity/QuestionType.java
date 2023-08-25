@@ -8,5 +8,6 @@ public enum QuestionType {
     PRECISION,
     OR,
     TOP,
-    LINK;
+    LINK,
+    TIME_LIMITED;
 }

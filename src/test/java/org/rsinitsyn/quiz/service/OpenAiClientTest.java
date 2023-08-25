@@ -11,7 +11,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.rsinitsyn.quiz.dto.ChatRequestDto;
 import org.rsinitsyn.quiz.properties.QuizAppProperties;
-import org.springframework.http.ResponseEntity;
+import org.rsinitsyn.quiz.service.ai.OpenAiClient;
 import org.springframework.web.client.RestTemplate;
 
 @ExtendWith(MockitoExtension.class)
