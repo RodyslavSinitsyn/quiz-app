@@ -31,7 +31,7 @@ Cleverest is an engaging and dynamic quiz game app that allows players to manage
 - **Vaadin**: A modern Java-based UI framework for building an interactive and responsive user interface.
 
 ### Database
-- **PostgreSQL**: Relational database for storing game and user data.
+- **H2**: Im-memory relational database for storing game and user data.
 
 ### Monitoring
 - **Prometheus**: Collects and stores metrics for real-time monitoring.
