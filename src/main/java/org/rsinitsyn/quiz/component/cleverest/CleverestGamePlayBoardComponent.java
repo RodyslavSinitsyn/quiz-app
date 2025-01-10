@@ -195,7 +195,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                         SessionWrapper.getLoggedUser(),
                         questionModel,
                         pairs.stream().map(pair -> pair.getLeft().getText() + " = " + pair.getRight().getText()).collect(Collectors.joining(", ")),
-                        () -> questionModel.areAnswersCorrect(pairs)
+                        () -> false
                 );
             }));
         }
@@ -371,9 +371,12 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.SEMIBOLD);
             row.add(userAnswerSpan);
             if (approveManually) {
-                int countLimit = QuestionType.TOP.equals(question.getType())
-                        ? question.getAnswers().size()
-                        : 0;
+                int countLimit;
+                switch (question.getType()) {
+                    case TOP -> countLimit = question.getAnswers().size();
+                    case LINK -> countLimit = question.getAnswers().size() / 2;
+                    default -> countLimit = 0;
+                }
                 Button approveButton =
                         CleverestComponents.approveButton(
                                 () -> approveAction.accept(userGameState.getUsername()),

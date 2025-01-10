@@ -215,6 +215,7 @@ public class QuestionService {
         // NOT UPDATABLE
         if (model.getId() == null) {
             QuestionEntity question = new QuestionEntity();
+            question.setValidRange(model.getRange().intValue());
             setFieldsForQuestionEntity(question, model, QuestionType.PRECISION, false);
             setPhotoFieldsForQuestionEntity(question, model.getPhotoLocation());
 

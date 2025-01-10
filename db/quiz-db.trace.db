@@ -2444,3 +2444,9 @@ group by u.username [42122-210]
 	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)
 	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)
 	at java.base/java.lang.Thread.run(Thread.java:829)
+2023-10-13 12:47:04 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "ANSWERDESCRIPTIONTEXT CHARACTER VARYING(255)": "U&'(2)\\0417\\043d\\0430\\043a \\0443\\0441\\0442\\0430\\043d\\0430\\0432\\043b\\0438\\0432\\04... (391)"; SQL statement:
+insert into questions (answerDescriptionPhotoFilename, answerDescriptionText, audioFilename, categoryId, createdBy, creationDate, optionsOnly, originalPhotoUrl, photoFilename, text, type, validRange, id) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) [22001-214]
+2023-10-13 12:50:16 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "ANSWERDESCRIPTIONTEXT CHARACTER VARYING(255)": "U&'\\0421\\0442\\043e\\044f\\043d\\043a\\0430 \\0437\\0430\\043f\\0440\\0435\\0449\\0430\\0435\\... (280)"; SQL statement:
+insert into questions (answerDescriptionPhotoFilename, answerDescriptionText, audioFilename, categoryId, createdBy, creationDate, optionsOnly, originalPhotoUrl, photoFilename, text, type, validRange, id) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) [22001-214]
