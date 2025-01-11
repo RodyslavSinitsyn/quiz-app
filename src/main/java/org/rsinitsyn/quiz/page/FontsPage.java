@@ -1,18 +1,22 @@
 package org.rsinitsyn.quiz.page;
 
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.*;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
 
 @Route(value = "/fonts", layout = MainLayout.class)
 @PageTitle("Fonts")
-public class FontsPage extends VerticalLayout {
+@Slf4j
+public class FontsPage extends VerticalLayout implements BeforeEnterObserver, BeforeLeaveObserver, AfterNavigationObserver {
 
     public FontsPage() {
+        log.info("constructor FontsPage");
         setSpacing(true);
         setPadding(true);
         setAlignItems(Alignment.START);
@@ -103,6 +107,8 @@ public class FontsPage extends VerticalLayout {
         add(dummyText(LumoUtility.FontSize.XLARGE, LumoUtility.FontWeight.EXTRABOLD));
         add(dummyText(LumoUtility.FontSize.XXLARGE, LumoUtility.FontWeight.EXTRABOLD));
         add(dummyText(LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.EXTRABOLD));
+
+        add(new Span("constructor"));
     }
 
     private Span dummyText(String fontSize, String fontWeight) {
@@ -111,5 +117,40 @@ public class FontsPage extends VerticalLayout {
         span.addClassNames(fontSize, fontWeight, LumoUtility.LineHeight.XSMALL);
         span.addComponentAsFirst(new Hr());
         return span;
+    }
+
+    @Override
+    public void afterNavigation(AfterNavigationEvent afterNavigationEvent) {
+        log.info("afterNavigation: refresh {}, path {}",
+                afterNavigationEvent.isRefreshEvent(),
+                afterNavigationEvent.getLocation().getPath());
+        add(new Span("afterNavigation"));
+    }
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent beforeEnterEvent) {
+        log.info("beforeEnter: refresh {}",
+                beforeEnterEvent.isRefreshEvent());
+        add(new Span("beforeEnter"));
+    }
+
+    @Override
+    public void beforeLeave(BeforeLeaveEvent beforeLeaveEvent) {
+        log.info("beforeLeave: continueaction {}, path: {}",
+                beforeLeaveEvent.getContinueNavigationAction(),
+                beforeLeaveEvent.getLocation().getPath());
+        add(new Span("beforeLeave"));
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        log.info("onAttach");
+        add(new Span("onAttach"));
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        log.info("onDetach");
+        add(new Span("onDetach"));
     }
 }

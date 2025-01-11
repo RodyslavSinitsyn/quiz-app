@@ -3,12 +3,14 @@ package org.rsinitsyn.quiz.config;
 import org.rsinitsyn.quiz.properties.QuizAppProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
-public class IntegrationConfiguration {
+@ConditionalOnProperty(prefix = "quiz.openai", name = "enabled", havingValue = "true")
+public class OpenAiIntegrationConfiguration {
 
     @Bean
     @Qualifier("openaiRestTemplate")

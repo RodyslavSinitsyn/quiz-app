@@ -6,13 +6,16 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.rsinitsyn.quiz.config.OpenAiIntegrationConfiguration;
 import org.rsinitsyn.quiz.dto.ChatRequestDto;
 import org.rsinitsyn.quiz.properties.QuizAppProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 @Component
 @RequiredArgsConstructor
+@ConditionalOnBean(OpenAiIntegrationConfiguration.class)
 public class OpenAiClient {
     private final RestTemplate openaiRestTemplate;
     private final QuizAppProperties properties;
