@@ -25,6 +25,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import jakarta.annotation.security.PermitAll;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.cleverest.CleverestGamePlayBoardComponent;
@@ -54,6 +56,7 @@ import org.rsinitsyn.quiz.utils.SessionWrapper;
 @Route(value = "/cleverest", layout = MainLayout.class)
 @PageTitle("Cleverest")
 @PreserveOnRefresh // do not call constructor when refresh page
+@PermitAll
 public class CleverestGamePage extends VerticalLayout implements HasUrlParameter<String>,
         BeforeEnterObserver,
         BeforeLeaveObserver,

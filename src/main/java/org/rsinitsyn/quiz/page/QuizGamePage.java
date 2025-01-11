@@ -10,6 +10,8 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.router.Route;
 import java.util.UUID;
+
+import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.MainLayout;
@@ -27,6 +29,7 @@ import org.rsinitsyn.quiz.service.UserService;
 @Route(value = "/quiz", layout = MainLayout.class)
 @PageTitle("Game")
 @PreserveOnRefresh
+@PermitAll
 public class QuizGamePage extends VerticalLayout implements HasUrlParameter<String>, AfterNavigationObserver {
 
     private String gameId;

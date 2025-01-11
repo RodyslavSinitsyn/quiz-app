@@ -1,36 +1,35 @@
 package org.rsinitsyn.quiz.service;
 
-import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.rsinitsyn.quiz.dao.UserDao;
 import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserDao userDao;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     @CacheEvict(value = "allRegisteredUsers", allEntries = true)
-    public void loginUser(String username) {
-        userDao.findByUsername(username)
-                .ifPresentOrElse(userEntity -> {
-                    userEntity.setLastVisitDate(LocalDateTime.now());
-                }, () -> {
-                    UserEntity entity = new UserEntity();
-                    entity.setUsername(username);
-                    entity.setRegistrationDate(LocalDateTime.now());
-                    entity.setLastVisitDate(LocalDateTime.now());
-                    userDao.save(entity);
-                });
+    public UserEntity registerUser(String username, String password) {
+        UserEntity entity = new UserEntity();
+        entity.setUsername(username);
+        entity.setPassword(passwordEncoder.encode(password));
+        entity.setRegistrationDate(LocalDateTime.now());
+        entity.setLastVisitDate(LocalDateTime.now());
+        return userDao.save(entity);
     }
 
     @Cacheable(value = "allRegisteredUsers")

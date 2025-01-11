@@ -1,43 +1,29 @@
 package org.rsinitsyn.quiz.component;
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.tabs.TabsVariant;
-import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.router.AfterNavigationEvent;
-import com.vaadin.flow.router.AfterNavigationObserver;
-import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
-import com.vaadin.flow.router.BeforeLeaveEvent;
-import com.vaadin.flow.router.BeforeLeaveObserver;
-import com.vaadin.flow.router.RouterLink;
-import com.vaadin.flow.server.VaadinSession;
+import com.vaadin.flow.router.*;
+import com.vaadin.flow.spring.security.AuthenticationContext;
 import com.vaadin.flow.theme.lumo.Lumo;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import org.rsinitsyn.quiz.entity.UserEntity;
-import org.rsinitsyn.quiz.page.FontsPage;
-import org.rsinitsyn.quiz.page.NewGamePage;
-import org.rsinitsyn.quiz.page.QuestionsPage;
-import org.rsinitsyn.quiz.page.StatisticPage;
-import org.rsinitsyn.quiz.service.UserService;
+import org.rsinitsyn.quiz.page.*;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.core.env.Environment;
+
+import java.util.Arrays;
 
 @Slf4j
 public class MainLayout extends AppLayout implements
@@ -55,18 +41,15 @@ public class MainLayout extends AppLayout implements
     private Button themeToggle = new Button();
     private boolean darkTheme = false;
 
-    private Dialog dialog = new Dialog();
+    private final Environment environment;
+    private final AuthenticationContext authenticationContext;
 
-    private UserService userService;
-    private Environment environment;
-
-    public MainLayout(UserService userService,
-                      Environment environment) {
-        this.userService = userService;
+    public MainLayout(Environment environment,
+                      AuthenticationContext authenticationContext) {
         this.environment = environment;
+        this.authenticationContext = authenticationContext;
 
         updateTheme();
-        configureDialog();
         configureToggleTheme();
         configureAuthComponents();
 
@@ -157,9 +140,8 @@ public class MainLayout extends AppLayout implements
         loginButton.addClassNames(LumoUtility.Margin.MEDIUM);
         loginButton.setIcon(VaadinIcon.SIGN_IN.create());
         loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
-        loginButton.addClickListener(event -> {
-            dialog.open();
-        });
+        loginButton.addClickListener(event ->
+                getUI().ifPresent(ui -> ui.navigate(LoginPage.class)));
 
         exitButton.setText("");
         exitButton.setIcon(VaadinIcon.SIGN_OUT.create());
@@ -170,57 +152,19 @@ public class MainLayout extends AppLayout implements
                     new Span("Подтвердите действие"),
                     "Выйти из системы?",
                     () -> {
-                        renderAfterLogout();
-                        VaadinSession.getCurrent().close();
+                        authenticationContext.logout();
+                        renderAnonymous();
                     });
         });
 
-        if (SessionWrapper.getLoggedUser().equals("Аноним")) {
-            renderAfterLogout();
-            if (!dialog.isOpened()) {
-                dialog.open();
-            }
+        if(SessionWrapper.isAuthenticated()) {
+            renderAuthorizedUser(SessionWrapper.getLoggedUser());
         } else {
-            renderAfterLogin(SessionWrapper.getLoggedUser());
+            renderAnonymous();
         }
     }
 
-    private void configureDialog() {
-        dialog.setCloseOnOutsideClick(false);
-        dialog.setCloseOnEsc(true);
-        dialog.setHeaderTitle("Войдите");
-
-        TextField userNameInput = new TextField();
-        userNameInput.setWidthFull();
-        userNameInput.setLabel("Имя нового пользователя");
-        userNameInput.setRequired(true);
-        userNameInput.setTooltipText("Ввод нового имени автоматически создаст нового пользователя");
-
-        Button submit = new Button();
-        submit.setText("Войти");
-        submit.setWidthFull();
-        submit.addClickShortcut(Key.ENTER);
-        submit.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        submit.addClickListener(event -> loginUser(userNameInput.getValue()));
-
-        Select<String> users = new Select<>();
-        users.setLabel("Выбрать из уже созданных");
-        users.setWidthFull();
-        users.setItems(userService.findAllOrderByVisitDateDesc().stream().map(UserEntity::getUsername).toList());
-        users.addValueChangeListener(event -> loginUser(event.getValue()));
-
-        dialog.add(users, userNameInput, submit);
-    }
-
-    private void loginUser(String username) {
-        userService.loginUser(username);
-        VaadinSession.getCurrent().setAttribute("user", username);
-        renderAfterLogin(username);
-        dialog.close();
-        getUI().ifPresent(ui -> ui.getPage().reload());
-    }
-
-    private void renderAfterLogin(String loggedUserName) {
+    private void renderAuthorizedUser(String loggedUserName) {
         loggedUserNameSpan.setVisible(true);
         loggedUserNameSpan.setText(loggedUserName);
         loggedUserNameSpan.addClassNames(LumoUtility.FontWeight.BOLD);
@@ -229,7 +173,7 @@ public class MainLayout extends AppLayout implements
         exitButton.setVisible(true);
     }
 
-    private void renderAfterLogout() {
+    private void renderAnonymous() {
         loggedUserNameSpan.setVisible(false);
         loggedUserNameSpan.setText("");
         loginButton.setVisible(true);

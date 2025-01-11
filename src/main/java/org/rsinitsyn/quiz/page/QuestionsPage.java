@@ -22,33 +22,15 @@ import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import java.io.InputStream;
-import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.сustom.QuestionListGrid;
-import org.rsinitsyn.quiz.component.сustom.form.AbstractQuestionCreationForm;
-import org.rsinitsyn.quiz.component.сustom.form.LinkQuestionForm;
-import org.rsinitsyn.quiz.component.сustom.form.OrQuestionForm;
-import org.rsinitsyn.quiz.component.сustom.form.PhotoQuestionForm;
-import org.rsinitsyn.quiz.component.сustom.form.PrecisionQuestionForm;
-import org.rsinitsyn.quiz.component.сustom.form.QuestionCategoryForm;
-import org.rsinitsyn.quiz.component.сustom.form.QuestionForm;
-import org.rsinitsyn.quiz.component.сustom.form.TopQuestionForm;
+import org.rsinitsyn.quiz.component.сustom.form.*;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
-import org.rsinitsyn.quiz.model.binding.AbstractQuestionBindingModel;
-import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
-import org.rsinitsyn.quiz.model.binding.LinkQuestionBindingModel;
-import org.rsinitsyn.quiz.model.binding.OrQuestionBindingModel;
-import org.rsinitsyn.quiz.model.binding.PhotoQuestionBindingModel;
-import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
-import org.rsinitsyn.quiz.model.binding.QuestionCategoryBindingModel;
-import org.rsinitsyn.quiz.model.binding.TopQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.*;
 import org.rsinitsyn.quiz.service.ImportService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.service.UserService;
@@ -56,9 +38,16 @@ import org.rsinitsyn.quiz.utils.ModelConverterUtils;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
 @Slf4j
 @Route(value = "/list", layout = MainLayout.class)
 @PageTitle("Questions")
+@PermitAll
 public class QuestionsPage extends VerticalLayout implements AfterNavigationObserver {
 
     private QuestionListGrid grid;

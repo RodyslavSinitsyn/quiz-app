@@ -7,15 +7,18 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import java.util.Collections;
-import java.util.function.Consumer;
+import jakarta.annotation.security.PermitAll;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.сustom.GameListGrid;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 
+import java.util.Collections;
+import java.util.function.Consumer;
+
 @Route(value = "/", layout = MainLayout.class)
 @PageTitle("Game")
+@PermitAll
 public class NewGamePage extends VerticalLayout {
 
     private static final String FONT_SIZE = LumoUtility.FontSize.XLARGE;
