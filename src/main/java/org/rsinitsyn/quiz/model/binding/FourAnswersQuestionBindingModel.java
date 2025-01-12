@@ -18,7 +18,6 @@ import org.hibernate.validator.constraints.Length;
 @Data
 @NoArgsConstructor
 public class FourAnswersQuestionBindingModel extends AbstractQuestionBindingModel {
-    private String category;
     private String author;
     private InputStream audio;
     private List<AnswerBindingModel> answers = new ArrayList<>();
@@ -26,13 +25,12 @@ public class FourAnswersQuestionBindingModel extends AbstractQuestionBindingMode
     public FourAnswersQuestionBindingModel(String id,
                                            String text,
                                            List<AnswerBindingModel> answers,
-                                           String category,
                                            String author,
                                            String photoLocation,
+                                           String category,
                                            String answerDescriptionText) {
-        super(id, text, answerDescriptionText, photoLocation);
+        super(id, text, answerDescriptionText, photoLocation, category);
         this.answers = answers;
-        this.category = category;
         this.author = author;
     }
 

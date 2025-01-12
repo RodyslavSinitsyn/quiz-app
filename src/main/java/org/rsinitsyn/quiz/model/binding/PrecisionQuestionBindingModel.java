@@ -14,4 +14,16 @@ public class PrecisionQuestionBindingModel extends AbstractQuestionBindingModel 
     private Double answerText;
     @NotNull
     private Double range;
+
+    public PrecisionQuestionBindingModel(String id,
+                                         String text,
+                                         String answerDescriptionText,
+                                         String photoLocation,
+                                         String category,
+                                         Double answerText,
+                                         Double range) {
+        super(id, text, answerDescriptionText, photoLocation, category);
+        this.answerText = answerText;
+        this.range = range;
+    }
 }

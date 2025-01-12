@@ -21,4 +21,5 @@ public class AbstractQuestionBindingModel {
     @Length(max = 1000)
     @PhotoUrlValid
     private String photoLocation;
+    private String category;
 }

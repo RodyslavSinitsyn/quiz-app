@@ -6,10 +6,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.сustom.AnswerField;
@@ -18,10 +14,14 @@ import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
 @Slf4j
 public class QuestionForm extends AbstractQuestionCreationForm<FourAnswersQuestionBindingModel> {
 
-    private ComboBox<String> category = new ComboBox<>();
     private ComboBox<String> author = new ComboBox<>();
     private VerticalLayout inputsLayout = new VerticalLayout();
     private List<AnswerField> answers = new ArrayList<>();
@@ -29,11 +29,11 @@ public class QuestionForm extends AbstractQuestionCreationForm<FourAnswersQuesti
     private final Binder<FourAnswersQuestionBindingModel> binder =
             new BeanValidationBinder<>(FourAnswersQuestionBindingModel.class);
 
-    public QuestionForm(List<QuestionCategoryEntity> categoryEntityList, List<UserEntity> usersList) {
+    public QuestionForm(List<QuestionCategoryEntity> categories, List<UserEntity> usersList) {
+        super(categories);
         binder.bindInstanceFields(this);
 
         setUsersList(usersList);
-        setCategoryList(categoryEntityList);
 
         inputsLayout.setAlignItems(FlexComponent.Alignment.START);
         inputsLayout.setDefaultHorizontalComponentAlignment(FlexComponent.Alignment.STRETCH);
@@ -43,8 +43,7 @@ public class QuestionForm extends AbstractQuestionCreationForm<FourAnswersQuesti
 
         add(text);
         add(inputsLayout);
-        add(category,
-                author,
+        add(author,
                 QuizComponents.uploadComponent("Импортировать аудио",
                         (buffer, event) -> {
                             InputStream inputStream = buffer.getInputStream();
@@ -76,12 +75,6 @@ public class QuestionForm extends AbstractQuestionCreationForm<FourAnswersQuesti
         inputsLayout.removeAll();
         answers.forEach(binder::removeBinding);
         answers.clear();
-    }
-
-    @Override
-    public void setCategoryList(List<QuestionCategoryEntity> entities) {
-        category.setItems(entities.stream().map(QuestionCategoryEntity::getName).toList());
-        category.setLabel("Тема вопроса");
     }
 
     public void setUsersList(List<UserEntity> users) {

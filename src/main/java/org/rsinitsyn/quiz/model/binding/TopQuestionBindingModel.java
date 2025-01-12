@@ -10,8 +10,8 @@ public class TopQuestionBindingModel extends AbstractQuestionBindingModel {
     @NotBlank
     private String topListText;
 
-    public TopQuestionBindingModel(String id, String text, String topListText, String originalPhotoUrl, String answerDescriptionText) {
-        super(id, text, answerDescriptionText, originalPhotoUrl);
+    public TopQuestionBindingModel(String id, String text, String topListText, String originalPhotoUrl, String category, String answerDescriptionText) {
+        super(id, text, answerDescriptionText, originalPhotoUrl, category);
         this.topListText = topListText;
     }
 }

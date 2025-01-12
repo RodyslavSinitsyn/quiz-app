@@ -58,6 +58,6 @@ class AIResponseParserServiceTest {
         parserService.saveQuestionsFromAI(json);
 
         // then
-        Mockito.verify(mockQuestionService, Mockito.times(3)).saveEntityAndImage(Mockito.any(QuestionEntity.class));
+        Mockito.verify(mockQuestionService, Mockito.times(3)).saveEntityAndResources(Mockito.any(QuestionEntity.class));
     }
 }

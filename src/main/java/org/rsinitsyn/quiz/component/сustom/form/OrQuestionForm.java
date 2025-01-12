@@ -4,7 +4,11 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
+
+import java.util.List;
 import java.util.function.Consumer;
+
+import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.model.binding.OrQuestionBindingModel;
 
 public class OrQuestionForm extends AbstractQuestionCreationForm<OrQuestionBindingModel> {
@@ -16,7 +20,8 @@ public class OrQuestionForm extends AbstractQuestionCreationForm<OrQuestionBindi
             new BeanValidationBinder<>(OrQuestionBindingModel.class);
 
 
-    public OrQuestionForm() {
+    public OrQuestionForm(List<QuestionCategoryEntity> categories) {
+        super(categories);
         binder.bindInstanceFields(this);
 
         correctAnswerText.setRequired(true);

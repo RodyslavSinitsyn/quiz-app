@@ -71,6 +71,20 @@ vaadin {
     }
 }
 
+application {
+    applicationDefaultJvmArgs = [
+            '-Xms256m',
+            '-Xmx768m',
+            '-XX:+UseG1GC',
+            '-Xlog:gc*:file=logs/gc.log:time,uptime,level,tags',
+            '-XX:MetaspaceSize=128m',
+            '-XX:MaxMetaspaceSize=256m',
+            '-Dfile.encoding=UTF-8',
+            '-XX:+HeapDumpOnOutOfMemoryError',
+            '-XX:HeapDumpPath=./heapdump.hprof',
+    ]
+}
+
 tasks.named('test') {
     useJUnitPlatform()
 }

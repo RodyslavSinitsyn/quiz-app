@@ -1,14 +1,14 @@
 spring:
   application:
     name: quiz-app
-    devtools:
-      livereload:
-        enabled: true
-        port: 35730
-      restart:
-        poll-interval: 2s
-        quiet-period: 1s
-        enabled: true
+  devtools:
+    livereload:
+      enabled: false
+      port: 35730
+    restart:
+      poll-interval: 2s
+      quiet-period: 1s
+      enabled: false
 
   # DB properties
   datasource:
@@ -41,7 +41,7 @@ quiz:
   profiling: false
   monitoring: false
   job:
-    cleanupCleverestGames: true
+    cleanupCleverestGames: false
     uCarNumberGeneratorJob: false
 
 management:

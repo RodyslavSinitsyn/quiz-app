@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.EqualsAndHashCode;
@@ -55,6 +56,12 @@ public class QuestionEntity {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     private Set<QuestionGrade> grades = new HashSet<>();
+
+    @Transient
+    private Set<String> resourcesToDelete = new HashSet<>();
+
+    @Transient
+    private boolean shouldSaveImage = true;
 
     public void addAnswer(AnswerEntity answerEntity) {
         answerEntity.setQuestion(this);

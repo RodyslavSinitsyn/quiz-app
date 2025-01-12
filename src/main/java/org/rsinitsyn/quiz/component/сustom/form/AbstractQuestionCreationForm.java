@@ -5,6 +5,7 @@ import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -33,12 +34,14 @@ public abstract class AbstractQuestionCreationForm<T extends AbstractQuestionBin
     protected final TextField photoLocation = new TextField("Ссылка на фото");
     protected final Checkbox enableDescription = new Checkbox("Описане ответа", false);
     protected final TextArea answerDescriptionText = new TextArea("Детальный ответ");
+    protected final ComboBox<String> category = new ComboBox<>();
 
     private final Button save = new Button("Сохранить");
     private final Button delete = new Button("Удалить");
     private final Button cancel = new Button("Отмена");
 
-    public AbstractQuestionCreationForm() {
+    public AbstractQuestionCreationForm(List<QuestionCategoryEntity> categoryEntityList) {
+        setCategoryList(categoryEntityList);
         setWidth("30em");
         setVisibility(false);
         configureTextInput();
@@ -58,6 +61,7 @@ public abstract class AbstractQuestionCreationForm<T extends AbstractQuestionBin
     }
 
     protected void addCommonComponents() {
+        add(category);
         add(photoLocation);
         add(enableDescription);
         add(new Hr());
@@ -120,7 +124,8 @@ public abstract class AbstractQuestionCreationForm<T extends AbstractQuestionBin
     }
 
     public void setCategoryList(List<QuestionCategoryEntity> allCategories) {
-        // override if needed
+        category.setItems(allCategories.stream().map(QuestionCategoryEntity::getName).toList());
+        category.setLabel("Тема вопроса");
     }
 
     public static abstract class QuestionFormEvent extends ComponentEvent<FormLayout> {

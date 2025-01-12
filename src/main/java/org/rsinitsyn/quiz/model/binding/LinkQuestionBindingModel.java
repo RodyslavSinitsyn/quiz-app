@@ -16,9 +16,10 @@ public class LinkQuestionBindingModel extends AbstractQuestionBindingModel {
                                     String text,
                                     String answerDescriptionText,
                                     String photoLocation,
+                                    String category,
                                     String leftAnswers,
                                     String rightAnswers) {
-        super(id, text, answerDescriptionText, photoLocation);
+        super(id, text, answerDescriptionText, photoLocation, category);
         this.leftAnswers = leftAnswers;
         this.rightAnswers = rightAnswers;
     }

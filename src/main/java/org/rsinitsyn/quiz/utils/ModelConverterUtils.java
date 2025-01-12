@@ -42,9 +42,9 @@ public class ModelConverterUtils {
                 questionEntity.getId().toString(),
                 questionEntity.getText(),
                 answerBindingModels,
-                questionEntity.getCategory().getName(),
                 questionEntity.getCreatedBy(),
                 questionEntity.getOriginalPhotoUrl(),
+                questionEntity.getCategory().getName(),
                 questionEntity.getAnswerDescriptionText());
     }
 
@@ -59,6 +59,7 @@ public class ModelConverterUtils {
         model.setRange(Double.valueOf(questionEntity.getValidRange()));
         model.setAnswerText(Double.valueOf(questionEntity.getAnswers().stream().findFirst().orElseThrow().getText()));
         model.setPhotoLocation(questionEntity.getOriginalPhotoUrl());
+        model.setCategory(questionEntity.getCategory().getName());
         model.setAnswerDescriptionText(questionEntity.getAnswerDescriptionText());
 
         return model;
@@ -71,6 +72,7 @@ public class ModelConverterUtils {
                 new ArrayList<>(questionEntity.getAnswers()).get(0).getText(),
                 new ArrayList<>(questionEntity.getAnswers()).get(1).getText(),
                 questionEntity.getOriginalPhotoUrl(),
+                questionEntity.getCategory().getName(),
                 questionEntity.getAnswerDescriptionText()
         );
     }
@@ -81,6 +83,7 @@ public class ModelConverterUtils {
                 questionEntity.getText(),
                 questionEntity.getAnswers().stream().map(AnswerEntity::getText).collect(Collectors.joining(System.lineSeparator())),
                 questionEntity.getOriginalPhotoUrl(),
+                questionEntity.getCategory().getName(),
                 questionEntity.getAnswerDescriptionText()
         );
     }
@@ -92,6 +95,7 @@ public class ModelConverterUtils {
                 questionEntity.getText(),
                 questionEntity.getAnswerDescriptionText(),
                 questionEntity.getOriginalPhotoUrl(),
+                questionEntity.getCategory().getName(),
                 answerEntities.get(0).getPhotoFilename(),
                 answerEntities.get(1).getPhotoFilename(),
                 answerEntities.get(2).getPhotoFilename(),
@@ -105,6 +109,7 @@ public class ModelConverterUtils {
                 questionEntity.getText(),
                 questionEntity.getAnswerDescriptionText(),
                 questionEntity.getOriginalPhotoUrl(),
+                questionEntity.getCategory().getName(),
                 questionEntity.getAnswers().stream()
                         .filter(AnswerEntity::isCorrect)
                         .map(AnswerEntity::getText)

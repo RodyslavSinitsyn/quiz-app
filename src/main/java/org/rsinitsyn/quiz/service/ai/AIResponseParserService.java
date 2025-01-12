@@ -31,7 +31,7 @@ public class AIResponseParserService {
             for (JsonNode jsonNode : jsonArray) {
                 questions.add(toQuestionEntity(jsonNode));
             }
-            questions.forEach(questionService::saveEntityAndImage);
+            questions.forEach(questionService::saveEntityAndResources);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e.getMessage(), e);
         }

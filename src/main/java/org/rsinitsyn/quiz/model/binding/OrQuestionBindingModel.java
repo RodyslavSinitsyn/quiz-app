@@ -18,8 +18,9 @@ public class OrQuestionBindingModel extends AbstractQuestionBindingModel {
             String correctAnswerText,
             String optionAnswerText,
             String photoLocation,
+            String category,
             String answerDescriptionText) {
-        super(id, text, answerDescriptionText, photoLocation);
+        super(id, text, answerDescriptionText, photoLocation, category);
         this.correctAnswerText = correctAnswerText;
         this.optionAnswerText = optionAnswerText;
     }

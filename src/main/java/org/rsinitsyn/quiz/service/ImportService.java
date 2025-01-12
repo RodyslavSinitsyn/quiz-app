@@ -36,7 +36,7 @@ public class ImportService {
             throw new RuntimeException("Невалидный формат импортируемого файла");
         }
         List<QuestionEntity> questionEntities = Arrays.stream(lines).map(this::toEntity).filter(Objects::nonNull).toList();
-        questionEntities.forEach(questionService::saveEntityAndImage);
+        questionEntities.forEach(questionService::saveEntityAndResources);
     }
 
     private QuestionEntity toEntity(String line) {
