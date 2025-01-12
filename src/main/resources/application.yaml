@@ -12,21 +12,24 @@ spring:
 
   # DB properties
   datasource:
-    url: jdbc:h2:file:./db/quiz-db-dev;AUTO_SERVER=TRUE
-    username: sa
-    password:
-    driverClassName: org.h2.Driver
+    username: qa-user
+    password: qa-password
+    url: jdbc:postgresql://localhost:5432/qa-db
+
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       # TODO none
-      ddl-auto: update
+      ddl-auto: validate
       naming:
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy # underscore
     show-sql: true
     open-in-view: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
+
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+    enabled: true
+    contexts: ${spring.profiles.active}
 
 quiz:
   openai:

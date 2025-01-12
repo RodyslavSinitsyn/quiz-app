@@ -14,6 +14,7 @@ import org.rsinitsyn.quiz.utils.SessionWrapper;
 @AnonymousAllowed
 public class LoginPage extends VerticalLayout implements BeforeEnterObserver, HasUrlParameter<String> {
 
+    // https://vaadin.com/docs/latest/components/login
     private final LoginForm loginForm = new LoginForm();
     private String registeredUsername;
 

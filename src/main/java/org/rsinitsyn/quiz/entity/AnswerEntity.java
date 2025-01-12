@@ -38,7 +38,7 @@ public class AnswerEntity {
     @Transient
     private String photoUrl;
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "questionId", referencedColumnName = "id")
+    @JoinColumn(name = "question_id", referencedColumnName = "id")
     @ToString.Exclude
     private QuestionEntity question;
 

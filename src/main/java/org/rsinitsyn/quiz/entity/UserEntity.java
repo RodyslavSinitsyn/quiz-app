@@ -35,6 +35,9 @@ public class UserEntity implements UserDetails {
     @NotEmpty(message = "Имя пользователя не может быть пустым")
     @Column(unique = true, nullable = false)
     private String username;
+    private String email;
+    private String firstName;
+    private String lastName;
     private String password; // TODO: Set required after DB migration
     private LocalDateTime registrationDate;
     private LocalDateTime lastVisitDate;

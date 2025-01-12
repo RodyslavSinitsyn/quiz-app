@@ -25,20 +25,20 @@ public class GameQuestionUserEntity {
     private GameQuestionUserId id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("gameId")
-    @JoinColumn(name = "gameId")
+    @MapsId("game_id")
+    @JoinColumn(name = "game_id")
     @ToString.Exclude
     private GameEntity game;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @MapsId("questionId")
-    @JoinColumn(name = "questionId")
+    @MapsId("question_id")
+    @JoinColumn(name = "question_id")
     @ToString.Exclude
     private QuestionEntity question;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @MapsId("userId")
-    @JoinColumn(name = "userId")
+    @MapsId("user_id")
+    @JoinColumn(name = "user_id")
     @ToString.Exclude
     private UserEntity user;
 

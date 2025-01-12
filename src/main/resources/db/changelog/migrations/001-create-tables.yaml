@@ -1,0 +1,365 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1-users
+      author: rsinitsyn
+      comment: Create 'users_tbl' table
+      labels: users
+      runAlways: false
+      runOnChange: false
+      preConditions:
+        - onFail: HALT
+          not:
+            tableExists:
+              tableName: users_tbl
+      rollback:
+        - dropTable:
+            tableName: users_tbl
+      changes:
+        - createTable:
+            tableName: users_tbl
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: users_tbl_pk
+              - column:
+                  name: username
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: users_tbl_username_uq
+              - column:
+                  name: password
+                  type: varchar(255)
+              - column:
+                  name: email
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+                    unique: true
+                    uniqueConstraintName: users_tbl_email_uq
+              - column:
+                  name: first_name
+                  type: varchar(255)
+              - column:
+                  name: last_name
+                  type: varchar(255)
+              - column:
+                  name: registration_date
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_visit_date
+                  type: timestamp
+  - changeSet:
+      id: 1-question_categories
+      author: rsinitsyn
+      comment: Create 'question_categories' table
+      labels: categories
+      runAlways: false
+      runOnChange: false
+      preConditions:
+        - onFail: HALT
+          not:
+            tableExists:
+              tableName: question_categories
+      rollback:
+        - dropTable:
+            tableName: question_categories
+      changes:
+        - createTable:
+            tableName: question_categories
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: question_categories_pk
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: question_categories_name_uq
+  - changeSet:
+      id: 1-questions
+      author: rsinitsyn
+      comment: Create 'questions' table
+      labels: questions
+      runAlways: false
+      runOnChange: false
+      preConditions:
+        - onFail: HALT
+          not:
+            tableExists:
+              tableName: questions
+      rollback:
+        - dropTable:
+            tableName: questions
+      changes:
+        - createTable:
+            tableName: questions
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: questions_pk
+              - column:
+                  name: audio_filename
+                  type: varchar(255)
+              - column:
+                  name: created_by
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: text
+                  type: varchar(1000)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(255)
+              - column:
+                  name: category_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: questions_category_id_fk
+                    referencedTableName: question_categories
+                    referencedColumnNames: id
+              - column:
+                  name: photo_filename
+                  type: varchar(255)
+              - column:
+                  name: original_photo_url
+                  type: varchar(1000)
+              - column:
+                  name: answer_description_text
+                  type: varchar(255)
+              - column:
+                  name: answer_description_photo_filename
+                  type: varchar(255)
+              - column:
+                  name: valid_range
+                  type: integer
+              - column:
+                  name: options_only
+                  type: boolean
+              - column:
+                  name: creation_date
+                  type: timestamp
+  - changeSet:
+      id: 1-answers
+      author: rsinitsyn
+      comment: Create 'answers' table
+      labels: answers
+      runAlways: false
+      runOnChange: false
+      preConditions:
+        - onFail: HALT
+          not:
+            tableExists:
+              tableName: answers
+      rollback:
+        - dropTable:
+            tableName: answers
+      changes:
+        - createTable:
+            tableName: answers
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: answers_pk
+              - column:
+                  name: correct
+                  type: boolean
+                  constraints:
+                    nullable: false
+              - column:
+                  name: number
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: text
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: question_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: answers_question_id_fk
+                    referencedTableName: questions
+                    referencedColumnNames: id
+              - column:
+                  name: photo_filename
+                  type: varchar(255)
+  - changeSet:
+      id: 1-games
+      author: rsinitsyn
+      comment: Create 'games' table
+      labels: games
+      runAlways: false
+      runOnChange: false
+      preConditions:
+        - onFail: HALT
+          not:
+            tableExists:
+              tableName: games
+      rollback:
+        - dropTable:
+            tableName: games
+      changes:
+        - createTable:
+            tableName: games
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: games_pk
+              - column:
+                  name: created_by
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: creation_date
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: finish_date
+                  type: timestamp
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(255)
+              - column:
+                  name: status
+                  type: varchar(255)
+  - changeSet:
+      id: 1-games_questions
+      author: rsinitsyn
+      comment: Create 'games_questions' table
+      labels: games,questions
+      runAlways: false
+      runOnChange: false
+      preConditions:
+        - onFail: HALT
+          not:
+            tableExists:
+              tableName: games_questions
+      rollback:
+        - dropTable:
+            tableName: games_questions
+      changes:
+        - createTable:
+            tableName: games_questions
+            columns:
+              - column:
+                  name: game_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: games_questions_game_id_fk
+                    referencedTableName: games
+                    referencedColumnNames: id
+              - column:
+                  name: question_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: games_questions_question_id_fk
+                    referencedTableName: questions
+                    referencedColumnNames: id
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: games_questions_user_id_fk
+                    referencedTableName: users_tbl
+                    referencedColumnNames: id
+              - column:
+                  name: answered
+                  type: boolean
+              - column:
+                  name: order_number
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: answer_text
+                  type: varchar(255)
+        - addPrimaryKey:
+            tableName: games_questions
+            constraintName: games_questions_pk
+            columnNames: game_id,question_id,user_id
+  - changeSet:
+      id: 1-question_grades
+      author: rsinitsyn
+      comment: Create 'question_grades' table
+      labels: questions
+      runAlways: false
+      runOnChange: false
+      preConditions:
+        - onFail: HALT
+          not:
+            tableExists:
+              tableName: question_grades
+      rollback:
+        - dropTable:
+            tableName: question_grades
+      changes:
+        - createTable:
+            tableName: question_grades
+            columns:
+              - column:
+                  name: question_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: question_grades_question_id_fk
+                    referencedTableName: questions
+                    referencedColumnNames: id
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: question_grades_user_id_fk
+                    referencedTableName: users_tbl
+                    referencedColumnNames: id
+              - column:
+                  name: grade
+                  type: integer
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: question_grades
+            columnNames: question_id,user_id

@@ -12,9 +12,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
-@EnableWebSecurity(debug = true)
+@EnableWebSecurity
 public class SecurityConfig extends VaadinWebSecurity {
 
+    // https://vaadin.com/docs/latest/flow/security/enabling-security
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         // Delegating the responsibility of general configurations

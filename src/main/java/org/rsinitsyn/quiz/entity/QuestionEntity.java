@@ -1,19 +1,7 @@
 package org.rsinitsyn.quiz.entity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderBy;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -38,27 +26,25 @@ public class QuestionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    @Column(nullable = false, columnDefinition = "CHARACTER VARYING(1000)")
     private String text;
     @Enumerated(EnumType.STRING)
     private QuestionType type;
     private String createdBy;
     @Column(nullable = false)
     private LocalDateTime creationDate;
-    @Column(columnDefinition = "CHARACTER VARYING(1000)")
     private String originalPhotoUrl;
     private String photoFilename;
     private String audioFilename;
-    @Column(columnDefinition = "BOOLEAN DEFAULT TRUE")
     private boolean optionsOnly;
     private Integer validRange;
     private String answerDescriptionText;
     private String answerDescriptionPhotoFilename;  // TODO For now not used
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "categoryId", referencedColumnName = "id")
+    @JoinColumn(name = "category_id", referencedColumnName = "id")
     private QuestionCategoryEntity category;
 
-    @Formula("SELECT count(*) FROM games_questions gq WHERE gq.questionId = id")
+//    @Formula("SELECT count(*) FROM games_questions gq WHERE gq.question_id = id")
+    @Transient
     private long gamesQuestionsCount;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)

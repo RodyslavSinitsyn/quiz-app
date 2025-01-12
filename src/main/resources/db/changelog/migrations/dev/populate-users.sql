@@ -1,0 +1,17 @@
+INSERT INTO users_tbl(id, "registrationDate", "lastVisitDate", username, "password") VALUES
+                                     (UUID '87a01429-7861-45df-93a2-6dddcd3f2fb9', TIMESTAMP '2025-01-11 11:34:57.807539', TIMESTAMP '2023-04-07 16:00:00.587603', 'admin', '$2a$10$en/1FqI3s.Hwa/YNaJSqJeuK5e9XHqxm154LcCNtm.ARquMIlAETi'),
+                                     (UUID 'ebd71248-73fa-4faf-a4f9-e1d0ecd8724f', TIMESTAMP '2023-06-14 20:53:44.431497', TIMESTAMP '2023-04-07 16:00:13.347547', 'FireFox', NULL),
+                                     (UUID '3ad597c3-08f0-4325-87e5-85280bacbbdb', TIMESTAMP '2023-06-15 17:17:08.175923', TIMESTAMP '2023-04-07 16:00:37.64398', 'Chrome Incognito', NULL),
+                                     (UUID 'dc8e3c06-62b2-450e-b84d-1bdd5ea15afa', TIMESTAMP '2023-08-25 12:04:31.727591', TIMESTAMP '2023-04-08 10:54:25.004745', 'iPhone 11 Pro Max ', NULL),
+                                     (UUID 'b707e90d-ea87-4022-be30-21af485213d9', TIMESTAMP '2023-08-10 15:36:06.127779', TIMESTAMP '2023-04-08 13:43:26.784921', U&'\041d\0430\0441\0442\044e\0448\043a\0430', NULL),
+                                     (UUID 'aa18fec4-3760-4904-a201-b70e7f24febc', TIMESTAMP '2023-05-10 19:07:58.21245', TIMESTAMP '2023-04-08 18:05:07.711937', U&'\0410\0439\0444\043e\043d \041d\0430\0441\0442\044f ', NULL),
+                                     (UUID '67649ff3-60e9-4894-857c-1b9921c5a730', TIMESTAMP '2023-06-15 16:55:22.912242', TIMESTAMP '2023-04-09 18:29:21.495818', 'iPhone ', NULL),
+                                     (UUID 'c5b58339-75dc-4ab6-be44-fee31d438767', TIMESTAMP '2023-06-14 20:02:01.812036', TIMESTAMP '2023-04-09 18:47:15.757908', U&'\0420\0430\0434\0438\0441\043b\0430\0432', NULL),
+                                     (UUID '200a76bb-dacb-4b7b-a3d2-76ffc90cb458', TIMESTAMP '2023-06-14 13:14:00.322418', TIMESTAMP '2023-05-16 14:31:10.074404', 'Test1', NULL),
+                                     (UUID '687166b8-ae85-43b9-b8b6-3de515de3fc9', TIMESTAMP '2023-06-16 16:39:03.367335', TIMESTAMP '2023-06-16 16:39:03.367296', 'ChatGPT', NULL),
+                                     (UUID 'd8caa7ce-bae8-4e1c-91b3-f39e067d2da2', TIMESTAMP '2023-08-25 12:04:11.321696', TIMESTAMP '2023-07-04 13:11:16.87075', U&'\0421\043e\0441\0438\0441\043a\0430', NULL),
+                                     (UUID 'f421acc4-0caf-49db-afb3-003e80297531', TIMESTAMP '2023-07-04 13:25:36.285991', TIMESTAMP '2023-07-04 13:25:36.285971', U&'\0421\043e\0441\0438\0441\043a\0410', NULL),
+                                     (UUID '8938d9c0-e6fc-48ae-8f6e-ca1b19ce5385', TIMESTAMP '2023-07-04 13:43:13.433779', TIMESTAMP '2023-07-04 13:35:32.938091', 'https://qalearning.com.ua/theory/about_qa/shpargalka-z-testuvannya/', NULL),
+                                     (UUID '1cd35021-95d5-4f56-9e70-32e1519f0988', TIMESTAMP '2023-07-04 13:41:54.268134', TIMESTAMP '2023-07-04 13:36:39.706414', '               ', NULL),
+                                     (UUID '88845614-227b-4f93-be08-b6e8125cefc2', TIMESTAMP '2023-07-04 13:43:19.402103', TIMESTAMP '2023-07-04 13:36:59.048435', '   ', NULL),
+                                     (UUID '92991aae-d8fd-4a87-b796-388037489313', TIMESTAMP '2025-01-11 15:48:49.134695', TIMESTAMP '2025-01-11 15:48:49.13468', 'radik', '$2a$10$ufgxy7..dMqZfvRU6X8TJO84wBp4qmJbvk8wTxgzIyjLHt7odKnky')

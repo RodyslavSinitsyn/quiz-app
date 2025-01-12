@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2-dev
+      author: rsinitsyn
+      comment: Insert existing value into 'users_tbl'
+      context: dev
+      labels: users
+      runAlways: false
+      runOnChange: false
+      preConditions:
+        - onFail: HALT
+          tableExists:
+            tableName: users_tbl
+      rollback:
+        - delete:
+            tableName: users_tbl
+      changes:
+        - sqlFile:
+            path: db/changelog/migrations/dev/populate-users.sql

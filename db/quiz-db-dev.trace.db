@@ -6257,3 +6257,6 @@ Caused by: org.h2.mvstore.MVStoreException: The write format 2 is smaller than t
 	at org.h2.mvstore.MVStore$Builder.open(MVStore.java:2036)
 	at org.h2.mvstore.db.Store.<init>(Store.java:133)
 	... 26 more
+2025-01-11 16:58:55 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "SCRIPT TO 'data.sql' [*]DATA"; SQL statement:
+SCRIPT TO 'data.sql' DATA [42000-214]
