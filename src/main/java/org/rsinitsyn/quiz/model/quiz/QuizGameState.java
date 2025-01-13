@@ -1,17 +1,17 @@
 package org.rsinitsyn.quiz.model.quiz;
 
 import jakarta.validation.constraints.NotBlank;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.validator.constraints.Length;
 import org.rsinitsyn.quiz.entity.GameStatus;
+import org.rsinitsyn.quiz.model.AnswerHint;
+import org.rsinitsyn.quiz.model.HintsState;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.utils.QuizUtils;
+
+import java.util.*;
 
 /**
  * Represents the state of one specific quiz game
@@ -74,5 +74,12 @@ public class QuizGameState {
             return null;
         }
         return new ArrayList<>(questions).get(index);
+    }
+
+    public HintsState getHintsState() {
+        return new HintsState(isHintsEnabled(),
+                Map.of(AnswerHint.HALF, halfHintUsed,
+                        AnswerHint.THREE, threeLeftHintUsed,
+                        AnswerHint.CORRECT_COUNT, revelCountHintUsed));
     }
 }

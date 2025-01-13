@@ -462,6 +462,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         } else {
             subscribeOnPlayerOnlyEvents(attachEvent);
         }
+        log.trace("onAttach. subscribe {}", subs.size());
     }
 
     private void subscribeOnPlayerOnlyEvents(AttachEvent attachEvent) {

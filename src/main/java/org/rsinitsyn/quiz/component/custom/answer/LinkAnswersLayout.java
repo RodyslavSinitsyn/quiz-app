@@ -6,7 +6,6 @@ import org.rsinitsyn.quiz.component.custom.LinkAnswersComponent;
 import org.rsinitsyn.quiz.model.QuestionModel;
 
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class LinkAnswersLayout extends AbstractAnswersLayout {
 
@@ -34,13 +33,8 @@ public class LinkAnswersLayout extends AbstractAnswersLayout {
             }
         }
         var userAnswers = pairs.stream()
-                .flatMap(pair -> Stream.of(pair.getLeft(), pair.getRight()))
+                .map(pair -> pair.getLeft().getText() + " = " + pair.getRight().getText())
                 .collect(Collectors.toSet());
-        fireEvent(new AnswerChosenEvent<>(this, userAnswers, areCorrect));
-    }
-
-    @Override
-    protected boolean isSubmitButtonEnabled() {
-        return false;
+        fireEvent(new AnswerChosenEvent(userAnswers, areCorrect));
     }
 }

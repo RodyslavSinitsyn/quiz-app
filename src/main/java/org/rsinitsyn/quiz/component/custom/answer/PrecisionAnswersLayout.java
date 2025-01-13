@@ -19,12 +19,8 @@ public class PrecisionAnswersLayout extends AbstractAnswersLayout {
     @Override
     protected void renderAnswers() {
         numberField.setLabel("Погрешность: +-" + question.getValidRange());
+        numberField.addValueChangeListener(e -> submitButton.setEnabled(true));
         add(numberField);
-    }
-
-    @Override
-    protected boolean isSubmitButtonEnabled() {
-        return numberField.getValue() != 0;
     }
 
     @Override
@@ -37,9 +33,6 @@ public class PrecisionAnswersLayout extends AbstractAnswersLayout {
             int validAnswerNumeric = Integer.parseInt(question.getAnswers().stream().findFirst().orElseThrow().getText());
             isCorrect = Math.abs(validAnswerNumeric - userAnswerNumeric) <= question.getValidRange();
         }
-        userAnswer.setCorrect(isCorrect);
-        userAnswer.setNumber(0);
-
-        fireEvent(new AnswerChosenEvent<>(this, Collections.singleton(userAnswer), isCorrect));
+        fireEvent(new AnswerChosenEvent(Collections.singleton(userAnswer.getText()), isCorrect));
     }
 }

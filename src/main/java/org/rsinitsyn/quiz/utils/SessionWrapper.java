@@ -4,6 +4,7 @@ import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.Lumo;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.entity.UserEntity;
+import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -46,5 +47,14 @@ public class SessionWrapper {
                 (String) VaadinSession.getCurrent().getAttribute("theme"),
                 Lumo.LIGHT
         );
+    }
+
+    // TODO: Temp
+    public static void addAttr(QuizGameState value) {
+        VaadinSession.getCurrent().setAttribute("state", value);
+    }
+
+    public static QuizGameState getQuizGameState() {
+        return (QuizGameState) VaadinSession.getCurrent().getAttribute("state");
     }
 }

@@ -11,6 +11,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.model.QuestionModel;
 
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.MOBILE_MEDIUM_FONT;
@@ -27,15 +28,10 @@ public class TopAnswersLayout extends AbstractAnswersLayout {
 
     @Override
     protected void submitHandler(ClickEvent<Button> event) {
-        var answerModels = topListLayout.getChildren()
+        Set<String> answerModels = topListLayout.getChildren()
                 .map(component -> component.getElement().getText())
-                .map(text -> {
-                    var answerModel = new QuestionModel.AnswerModel();
-                    answerModel.setText(text);
-                    return answerModel;
-                })
                 .collect(Collectors.toSet());
-        fireEvent(new AnswerChosenEvent<>(this, answerModels, false, true));
+        fireEvent(new AnswerChosenEvent(answerModels, false, true));
     }
 
     @Override
@@ -48,6 +44,7 @@ public class TopAnswersLayout extends AbstractAnswersLayout {
         Button addToListButton = new Button(VaadinIcon.PLUS_CIRCLE.create());
         TextField textField = CleverestComponents.answerInput(event -> {
             addToListButton.setEnabled(!event.getValue().isBlank());
+            submitButton.setEnabled(topListLayout.getChildren().count() == topSize);
         });
         configureAddToListButton(addToListButton, textField);
 
@@ -69,16 +66,12 @@ public class TopAnswersLayout extends AbstractAnswersLayout {
             topListItem.addClickListener(e -> {
                 topListLayout.remove(e.getSource());
                 textField.setEnabled(topListLayout.getChildren().count() != topSize);
+                submitButton.setEnabled(topListLayout.getChildren().count() == topSize);
             });
             topListLayout.add(topListItem);
             textField.setValue("");
             textField.setEnabled(topListLayout.getChildren().count() != topSize);
         });
         addToListButton.setEnabled(false);
-    }
-
-    @Override
-    protected boolean isSubmitButtonEnabled() {
-        return topListLayout.getChildren().count() == topSize;
     }
 }

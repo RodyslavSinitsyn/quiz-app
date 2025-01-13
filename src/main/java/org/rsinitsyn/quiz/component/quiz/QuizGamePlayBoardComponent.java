@@ -1,49 +1,42 @@
 package org.rsinitsyn.quiz.component.quiz;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.router.BeforeLeaveEvent;
 import com.vaadin.flow.router.BeforeLeaveObserver;
 import com.vaadin.flow.shared.Registration;
-import com.vaadin.flow.theme.lumo.LumoUtility;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javazoom.jl.player.Player;
 import lombok.Getter;
-import lombok.SneakyThrows;
-import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
+import lombok.extern.slf4j.Slf4j;
+import org.rsinitsyn.quiz.component.custom.answer.AbstractAnswersLayout;
+import org.rsinitsyn.quiz.component.custom.question.BaseQuestionLayout;
+import org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory;
 import org.rsinitsyn.quiz.entity.GameStatus;
-import org.rsinitsyn.quiz.entity.QuestionType;
+import org.rsinitsyn.quiz.model.AnswerHint;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.utils.AudioUtils;
 import org.rsinitsyn.quiz.utils.QuizComponents;
-import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
-import static org.rsinitsyn.quiz.model.QuestionModel.AnswerModel.defaultWrong;
-import static org.rsinitsyn.quiz.utils.StaticValuesHolder.CORRECT_ANSWER_AUDIOS;
-import static org.rsinitsyn.quiz.utils.StaticValuesHolder.SUBMIT_ANSWER_AUDIOS;
-import static org.rsinitsyn.quiz.utils.StaticValuesHolder.WRONG_ANSWER_AUDIOS;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
+import static org.rsinitsyn.quiz.utils.StaticValuesHolder.*;
+
+@Slf4j
 public class QuizGamePlayBoardComponent extends VerticalLayout implements BeforeLeaveObserver {
 
-    private VerticalLayout questionLayout = new VerticalLayout();
-    private QuizGameAnswersComponent answersComponent;
-    private HorizontalLayout hintsLayout = new HorizontalLayout();
+    private BaseQuestionLayout questionLayout;
     private Div progressBarLabel = new Div();
     private ProgressBar progressBar = new ProgressBar();
 
@@ -51,6 +44,8 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 
     private QuestionModel currQuestion;
     private Player lastPlayedAudio = null;
+
+    private List<Registration> subscriptions = new ArrayList<>();
 
     public QuizGamePlayBoardComponent(QuizGameState gameState) {
         this.gameState = gameState;
@@ -72,12 +67,14 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 
         if (currQuestion.isOptionsOnly() || gameState.isAnswerOptionsEnabled()) {
             questionLayout = createQuestionLayout();
-            hintsLayout = createHintsLayout();
-            answersComponent = createAnswersComponent();
-            add(questionLayout, hintsLayout, answersComponent);
+            unsubscribeQuestionLayout();
+            subscribeQuestionLayout();
+            add(questionLayout);
         } else {
-            questionLayout = createQuestionLayout();
-            add(questionLayout, createRevealButton());
+            throw new RuntimeException("WITHOUT OPTIONS NOT WORKING");
+//            questionLayout = createQuestionLayout();
+//            configureQuestionLayout();
+//            add(questionLayout, createRevealButton());
         }
 
         progressBarLabel = createProgressBarLabel();
@@ -86,138 +83,99 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         add(progressBarLabel, progressBar);
     }
 
-    private Button createRevealButton() {
-        Button button = new Button("Узнать ответ");
-        button.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
-        button.addClassNames(LumoUtility.AlignSelf.CENTER);
+//    private Button createRevealButton() {
+//        Button button = new Button("Узнать ответ");
+//        button.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
+//        button.addClassNames(LumoUtility.AlignSelf.CENTER);
+//
+//        Paragraph correctAnswersSpan = new Paragraph(currQuestion.getAnswers()
+//                .stream()
+//                .filter(QuestionModel.AnswerModel::isCorrect)
+//                .map(QuestionModel.AnswerModel::getText)
+//                .collect(Collectors.joining(System.lineSeparator())));
+//        correctAnswersSpan.setId("bla-bla");
+//        correctAnswersSpan.getStyle().set("white-space", "pre-line");
+//        correctAnswersSpan.addClassNames(LumoUtility.FontSize.XXXLARGE,
+//                LumoUtility.FontWeight.BOLD,
+//                LumoUtility.TextAlignment.CENTER);
+//        correctAnswersSpan.setWidthFull();
+//
+//        Runnable revealAction = () -> {
+//            ConfirmDialog dialog = new ConfirmDialog();
+//            dialog.setCancelable(false);
+//            dialog.setCloseOnEsc(false);
+//
+//            dialog.setConfirmText("Верный ответ!");
+//            dialog.setConfirmButtonTheme(ButtonVariant.LUMO_SUCCESS.getVariantName() + " " + ButtonVariant.LUMO_PRIMARY.getVariantName());
+//            dialog.setText(correctAnswersSpan);
+//            dialog.addConfirmListener(event -> {
+//                fireEvent(
+//                        new SubmitUserAnswer(
+//                                this,
+//                                currQuestion,
+//                                currQuestion.getAnswers().stream().filter(QuestionModel.AnswerModel::isCorrect).collect(Collectors.toSet())));
+//                dialog.close();
+//                gameState.incrementCorrectAnswersCounter();
+//                renderQuestion();
+//            });
+//
+//            dialog.setRejectText("Неверно...");
+//            dialog.setRejectable(true);
+//            dialog.setRejectButtonTheme(ButtonVariant.LUMO_ERROR.getVariantName() + " " + ButtonVariant.LUMO_PRIMARY.getVariantName());
+//            dialog.addRejectListener(event -> {
+//                fireEvent(
+//                        new SubmitUserAnswer(
+//                                this,
+//                                currQuestion,
+//                                Collections.singleton(currQuestion.getAnswers().stream()
+//                                        .filter(m -> !m.isCorrect())
+//                                        .findFirst()
+//                                        .orElse(defaultWrong()))));
+//                dialog.close();
+//                renderQuestion();
+//            });
+//            dialog.open();
+//            AudioUtils.playStaticSoundAsync(StaticValuesHolder.REVEAL_ANSWER_AUDIOS.next());
+//        };
+//        button.addClickListener(event -> {
+//            Optional.ofNullable(lastPlayedAudio).ifPresent(Player::close);
+//            if (!gameState.isIntrigueEnabled()) {
+//                revealAction.run();
+//                return;
+//            }
+//            showIntrigueAndRunAction(revealAction);
+//        });
+//        return button;
+//    }
 
-        Paragraph correctAnswersSpan = new Paragraph(currQuestion.getAnswers()
-                .stream()
-                .filter(QuestionModel.AnswerModel::isCorrect)
-                .map(QuestionModel.AnswerModel::getText)
-                .collect(Collectors.joining(System.lineSeparator())));
-        correctAnswersSpan.setId("bla-bla");
-        correctAnswersSpan.getStyle().set("white-space", "pre-line");
-        correctAnswersSpan.addClassNames(LumoUtility.FontSize.XXXLARGE,
-                LumoUtility.FontWeight.BOLD,
-                LumoUtility.TextAlignment.CENTER);
-        correctAnswersSpan.setWidthFull();
-
-        Runnable revealAction = () -> {
-            ConfirmDialog dialog = new ConfirmDialog();
-            dialog.setCancelable(false);
-            dialog.setCloseOnEsc(false);
-
-            dialog.setConfirmText("Верный ответ!");
-            dialog.setConfirmButtonTheme(ButtonVariant.LUMO_SUCCESS.getVariantName() + " " + ButtonVariant.LUMO_PRIMARY.getVariantName());
-            dialog.setText(correctAnswersSpan);
-            dialog.addConfirmListener(event -> {
-                fireEvent(
-                        new QuizGamePlayBoardComponent.SubmitAnswerEvent(
-                                this,
-                                currQuestion,
-                                currQuestion.getAnswers().stream().filter(QuestionModel.AnswerModel::isCorrect).collect(Collectors.toSet())));
-                dialog.close();
-                gameState.incrementCorrectAnswersCounter();
-                renderQuestion();
-            });
-
-            dialog.setRejectText("Неверно...");
-            dialog.setRejectable(true);
-            dialog.setRejectButtonTheme(ButtonVariant.LUMO_ERROR.getVariantName() + " " + ButtonVariant.LUMO_PRIMARY.getVariantName());
-            dialog.addRejectListener(event -> {
-                fireEvent(
-                        new QuizGamePlayBoardComponent.SubmitAnswerEvent(
-                                this,
-                                currQuestion,
-                                Collections.singleton(currQuestion.getAnswers().stream()
-                                        .filter(m -> !m.isCorrect())
-                                        .findFirst()
-                                        .orElse(defaultWrong()))));
-                dialog.close();
-                renderQuestion();
-            });
-            dialog.open();
-            AudioUtils.playStaticSoundAsync(StaticValuesHolder.REVEAL_ANSWER_AUDIOS.next());
-        };
-        button.addClickListener(event -> {
-            Optional.ofNullable(lastPlayedAudio).ifPresent(Player::close);
-            if (!gameState.isIntrigueEnabled()) {
-                revealAction.run();
-                return;
-            }
-            showIntrigueAndRunAction(revealAction);
-        });
-        return button;
+    private BaseQuestionLayout createQuestionLayout() {
+        currQuestion.setHintsState(gameState.getHintsState()); // TODO: Pass hints to the answers, castil
+        return QuestionLayoutFactory.get(currQuestion);
     }
 
-    private HorizontalLayout createHintsLayout() {
-        var layout = new HorizontalLayout();
-
-        if (!gameState.isHintsEnabled()) {
-            layout.setVisible(false);
-            return layout;
-        }
-
-        if (currQuestion.getType().equals(QuestionType.MULTI)) {
-            Button revealCountHint = new Button("Количество ответов");
-            revealCountHint.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            revealCountHint.setEnabled(!gameState.isRevelCountHintUsed());
-            revealCountHint.addClickListener(event -> {
-                revealCountHint.setText("Верных ответов: "
-                        + currQuestion.getAnswers().stream().filter(QuestionModel.AnswerModel::isCorrect).count());
-                revealCountHint.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
+    private void subscribeQuestionLayout() {
+        subscriptions.add(questionLayout.addListener(BaseQuestionLayout.QuestionAnsweredEvent.class, event -> {
+            Optional.ofNullable(lastPlayedAudio).ifPresent(Player::close);
+            if (gameState.isIntrigueEnabled()) {
+                showIntrigueAndRunAction(() -> submitAnswer(event));
+            } else {
+                submitAnswer(event);
+            }
+        }));
+        subscriptions.add(questionLayout.getAnswersLayout().addListener(AbstractAnswersLayout.HintUsedEvent.class, event -> {
+            if (event.getHint() == AnswerHint.HALF) {
+                gameState.setHalfHintUsed(true);
+            } else if (event.getHint() == AnswerHint.THREE) {
+                gameState.setThreeLeftHintUsed(true);
+            } else if (event.getHint() == AnswerHint.CORRECT_COUNT) {
                 gameState.setRevelCountHintUsed(true);
-            });
-            layout.add(revealCountHint);
-            return layout;
-        }
-
-        // For QuestionType.TEXT
-        Button halfHint = new Button("50 на 50");
-        halfHint.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        halfHint.addClickListener(event -> {
-            gameState.setHalfHintUsed(true);
-            answersComponent.removeWrongAnswersAndRerender(2);
-            layout.getChildren().forEach(component -> ((Button) component).setEnabled(false));
-        });
-        halfHint.setEnabled(!gameState.isHalfHintUsed());
-
-        Button threeLeftHint = new Button("3/4");
-        threeLeftHint.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        threeLeftHint.addClickListener(event -> {
-            gameState.setThreeLeftHintUsed(true);
-            answersComponent.removeWrongAnswersAndRerender(1);
-            layout.getChildren().forEach(component -> ((Button) component).setEnabled(false));
-        });
-        threeLeftHint.setEnabled(!gameState.isThreeLeftHintUsed());
-
-        layout.add(halfHint, threeLeftHint);
-        layout.setAlignItems(Alignment.CENTER);
-        return layout;
-    }
-
-    private QuizGameAnswersComponent createAnswersComponent() {
-        var answersComponent = new QuizGameAnswersComponent(currQuestion);
-        answersComponent.addListener(QuizGameAnswersComponent.AnswerChoosenEvent.class, event -> {
-            Optional.ofNullable(lastPlayedAudio).ifPresent(Player::close);
-            if (!gameState.isIntrigueEnabled()) {
-                submitOptionableAnswer(event.getAnswers());
-                return;
             }
-            showIntrigueAndRunAction(() -> submitOptionableAnswer(event.getAnswers()));
-        });
-        return answersComponent;
+        }));
     }
 
-    @SneakyThrows
-    private VerticalLayout createQuestionLayout() {
-        return CleverestComponents.questionLayout(
-                currQuestion,
-                List.of(LumoUtility.FontSize.XXXLARGE),
-                "25em",
-                true
-        );
+    private void unsubscribeQuestionLayout() {
+        subscriptions.forEach(Registration::remove);
+        subscriptions.clear();
     }
 
     private Div createProgressBarLabel() {
@@ -236,26 +194,25 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         return progressBar;
     }
 
-    private void submitOptionableAnswer(Set<QuestionModel.AnswerModel> answers) {
-        verifyAnswerAndNotify(answers);
-        fireEvent(new SubmitAnswerEvent(this, currQuestion, answers));
+    private void submitAnswer(BaseQuestionLayout.QuestionAnsweredEvent event) {
+        calculateScoreAndShowPopup(event.getAnswerChosenEvent().isCorrect());
+        fireEvent(new SubmitUserAnswer(this, currQuestion, event.getAnswerChosenEvent().getAnswers(), event.getAnswerChosenEvent().isCorrect()));
         renderQuestion();
     }
 
-    private void verifyAnswerAndNotify(Set<QuestionModel.AnswerModel> answerModels) {
-        boolean correct = currQuestion.areAnswersCorrect(answerModels);
-        NotificationVariant variant;
-        if (correct) {
+    private void calculateScoreAndShowPopup(boolean isCorrect) {
+        NotificationVariant popupVariant;
+        if (isCorrect) {
             gameState.incrementCorrectAnswersCounter();
             AudioUtils.playStaticSoundAsync(CORRECT_ANSWER_AUDIOS.next());
-            variant = NotificationVariant.LUMO_SUCCESS;
+            popupVariant = NotificationVariant.LUMO_SUCCESS;
         } else {
             AudioUtils.playStaticSoundAsync(WRONG_ANSWER_AUDIOS.next());
-            variant = NotificationVariant.LUMO_ERROR;
+            popupVariant = NotificationVariant.LUMO_ERROR;
         }
-        String notifyText = correct ? "Правильный ответ!" : "Неверно...";
+        String notifyText = isCorrect ? "Правильный ответ!" : "Неверно...";
         Notification notification = Notification.show(notifyText, 3_000, Notification.Position.TOP_STRETCH);
-        notification.addThemeVariants(variant);
+        notification.addThemeVariants(popupVariant);
     }
 
     private void showIntrigueAndRunAction(Runnable action) {
@@ -303,23 +260,42 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     }
 
     @Getter
-    public static class SubmitAnswerEvent extends ComponentEvent<QuizGamePlayBoardComponent> {
-        private QuestionModel question;
-        private Set<QuestionModel.AnswerModel> answer;
+    public static class SubmitUserAnswer extends ComponentEvent<QuizGamePlayBoardComponent> {
+        private final QuestionModel question;
+        private final Set<String> answers;
+        private final boolean correct;
 
-        public SubmitAnswerEvent(QuizGamePlayBoardComponent source, boolean fromClient) {
-            super(source, fromClient);
-        }
-
-        public SubmitAnswerEvent(QuizGamePlayBoardComponent source, QuestionModel question, Set<QuestionModel.AnswerModel> answer) {
-            this(source, false);
+        public SubmitUserAnswer(QuizGamePlayBoardComponent source,
+                                QuestionModel question,
+                                Set<String> answers,
+                                boolean correct) {
+            super(source, false);
             this.question = question;
-            this.answer = answer;
+            this.answers = answers;
+            this.correct = correct;
         }
     }
 
     public <T extends ComponentEvent<?>> Registration addListener(Class<T> eventType,
                                                                   ComponentEventListener<T> listener) {
         return getEventBus().addListener(eventType, listener);
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        if (subscriptions.isEmpty()) {
+            subscribeQuestionLayout();
+            log.trace("onAttach. subscribe {}", subscriptions.size());
+        } else {
+            log.trace("onAttach. already subscribed {}", subscriptions.size());
+        }
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        log.trace("onDetach. unsubscribe {}", subscriptions.size());
+        unsubscribeQuestionLayout();
     }
 }

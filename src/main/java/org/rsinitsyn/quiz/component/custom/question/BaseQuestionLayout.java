@@ -1,7 +1,9 @@
 package org.rsinitsyn.quiz.component.custom.question;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Image;
@@ -11,16 +13,20 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.component.custom.answer.AbstractAnswersLayout;
 import org.rsinitsyn.quiz.component.custom.answer.AnswerLayoutsFactory;
+import org.rsinitsyn.quiz.component.custom.event.StubEvent;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.utils.AudioUtils;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 public class BaseQuestionLayout extends VerticalLayout {
 
     protected final QuestionModel questionModel;
@@ -28,7 +34,10 @@ public class BaseQuestionLayout extends VerticalLayout {
     protected final String imageHeight = "25em";
     protected final boolean isAdmin = false;
 
+    @Getter
     private AbstractAnswersLayout answersLayout;
+
+    private List<Registration> subscriptions = new ArrayList<>();
 
     public BaseQuestionLayout(QuestionModel questionModel) {
         this.questionModel = questionModel;
@@ -102,20 +111,14 @@ public class BaseQuestionLayout extends VerticalLayout {
 
     private void renderAnswersLayout() {
         answersLayout = AnswerLayoutsFactory.get(questionModel);
-        answersLayout.addListener(AbstractAnswersLayout.AnswerChosenEvent.class, event -> {
-            fireEvent(new QuestionAnsweredEvent(this, true, event));
-        });
         add(answersLayout);
     }
 
     @Getter
-    public static class QuestionAnsweredEvent extends ComponentEvent<BaseQuestionLayout> {
+    public static class QuestionAnsweredEvent extends StubEvent {
         private final AbstractAnswersLayout.AnswerChosenEvent answerChosenEvent;
 
-        public QuestionAnsweredEvent(BaseQuestionLayout source,
-                                     boolean fromClient,
-                                     AbstractAnswersLayout.AnswerChosenEvent answerChosenEvent) {
-            super(source, fromClient);
+        public QuestionAnsweredEvent(AbstractAnswersLayout.AnswerChosenEvent answerChosenEvent) {
             this.answerChosenEvent = answerChosenEvent;
         }
     }
@@ -123,5 +126,22 @@ public class BaseQuestionLayout extends VerticalLayout {
     public <T extends ComponentEvent<?>> Registration addListener(Class<T> eventType,
                                                                   ComponentEventListener<T> listener) {
         return getEventBus().addListener(eventType, listener);
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        subscriptions.add(answersLayout.addListener(AbstractAnswersLayout.AnswerChosenEvent.class, event -> {
+            fireEvent(new QuestionAnsweredEvent(event));
+        }));
+        log.trace("onAttach. subscribe {}", subscriptions.size());
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        log.trace("onDetach. unsubscribe {}", subscriptions.size());
+        subscriptions.forEach(Registration::remove);
+        subscriptions.clear();
     }
 }

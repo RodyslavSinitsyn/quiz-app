@@ -42,17 +42,13 @@ public class PhotoAnswersLayout extends AbstractAnswersLayout {
                     );
                     return image;
                 }));
+        options.addValueChangeListener(e -> submitButton.setEnabled(true));
         add(options);
     }
 
     @Override
     protected void submitHandler(ClickEvent<Button> event) {
         var userAnswer = options.getValue();
-        fireEvent(new AnswerChosenEvent<>(this, Collections.singleton(userAnswer), userAnswer.isCorrect()));
-    }
-
-    @Override
-    protected boolean isSubmitButtonEnabled() {
-        return options.getValue() != null;
+        fireEvent(new AnswerChosenEvent(Collections.singleton(userAnswer.getText()), userAnswer.isCorrect()));
     }
 }

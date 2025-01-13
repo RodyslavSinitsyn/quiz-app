@@ -22,6 +22,8 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.custom.ColorPicker;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
@@ -29,6 +31,7 @@ import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 
+@Slf4j
 public class CleverestWaitingRoomComponent extends VerticalLayout {
 
     private String gameId;
@@ -222,10 +225,12 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
                                 updatePlayersGrid(event.getUsername());
                             });
                         }));
+        log.trace("onAttach. subscribe {}", subscriptions.size());
     }
 
     @Override
     protected void onDetach(DetachEvent detachEvent) {
+        log.trace("onDetach. unsubscribe {}", subscriptions.size());
         subscriptions.forEach(Registration::remove);
         subscriptions.clear();
     }

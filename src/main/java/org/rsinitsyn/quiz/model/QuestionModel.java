@@ -38,6 +38,7 @@ public class QuestionModel {
     private String answerDescription;
     private Map<String, AnswerHistory> playersAnswersHistory;
     private Set<AnswerModel> answers;
+    private HintsState hintsState;
 
     // for cleverest
     private boolean alreadyAnswered;

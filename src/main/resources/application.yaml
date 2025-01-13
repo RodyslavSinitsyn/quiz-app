@@ -59,7 +59,5 @@ management:
         include: [ 'health', 'info', 'metrics', 'prometheus' ]
 
 logging:
-  #  pattern:
-  #    level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
   level:
-    org.rsinitsyn.quiz: DEBUG
+    org.rsinitsyn.quiz: TRACE

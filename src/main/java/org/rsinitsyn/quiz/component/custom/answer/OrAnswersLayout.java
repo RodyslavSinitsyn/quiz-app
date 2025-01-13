@@ -20,22 +20,18 @@ public class OrAnswersLayout extends AbstractAnswersLayout {
 
     @Override
     protected void renderAnswers() {
+        radioButtonGroup.setItems(copiedAnswerList);
         radioButtonGroup.setRenderer(
                 new ComponentRenderer<Component, QuestionModel.AnswerModel>(
                         am -> CleverestComponents.optionComponent(am.getText(), 50, event -> {
                         })));
-
+        radioButtonGroup.addValueChangeListener(e -> submitButton.setEnabled(true));
         add(radioButtonGroup);
     }
 
     @Override
     protected void submitHandler(ClickEvent<Button> event) {
-        var userAnswer = radioButtonGroup.getOptionalValue().orElseThrow();
-        fireEvent(new AnswerChosenEvent<>(this, Collections.singleton(userAnswer), userAnswer.isCorrect()));
-    }
-
-    @Override
-    protected boolean isSubmitButtonEnabled() {
-        return radioButtonGroup.getOptionalValue().isPresent();
+        var userAnswer = radioButtonGroup.getValue();
+        fireEvent(new AnswerChosenEvent(Collections.singleton(userAnswer.getText()), userAnswer.isCorrect()));
     }
 }

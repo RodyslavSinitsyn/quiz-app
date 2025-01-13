@@ -10,8 +10,9 @@ public class AnswerLayoutsFactory {
             case TEXT -> new AnswersLayout(questionModel);
             case LINK -> new LinkAnswersLayout(questionModel);
             case MULTI -> new MultiAnswersLayout(questionModel);
-            case OR -> new AnswersLayout(questionModel);
+            case OR -> new OrAnswersLayout(questionModel);
             case PHOTO -> new PhotoAnswersLayout(questionModel);
+            case PRECISION -> new PrecisionAnswersLayout(questionModel);
             case TOP -> new TopAnswersLayout(questionModel);
             default -> throw new IllegalArgumentException("Unknown question type: " + questionType);
         };

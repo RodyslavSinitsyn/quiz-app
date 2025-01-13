@@ -47,7 +47,7 @@ public class NewGamePage extends VerticalLayout {
         layout.setWidthFull();
         layout.setDefaultHorizontalComponentAlignment(Alignment.CENTER);
         layout.add(
-                createPlayGameButton("Викторина", ui -> ui.navigate(QuizGamePage.class)),
+                createPlayGameButton("Викторина", ui -> ui.navigate(QuizGameConfigurePage.class)),
                 createPlayGameButton("Самый умный", ui -> ui.navigate(CleverestGamePage.class))
         );
         return layout;
