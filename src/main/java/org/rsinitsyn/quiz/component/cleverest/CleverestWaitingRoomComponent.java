@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
-import org.rsinitsyn.quiz.component.сustom.ColorPicker;
+import org.rsinitsyn.quiz.component.custom.ColorPicker;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.utils.QuizUtils;

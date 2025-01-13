@@ -47,7 +47,7 @@ public abstract class AbstractQuestionUpdateStrategy<T extends AbstractQuestionB
     protected void commonHook(T model, QuestionEntity question, QuestionEntity persistEntity) {
         question.setText(model.getText());
         question.setAnswerDescriptionText(model.getAnswerDescriptionText());
-        setPhotoFieldsForQuestionEntity(question, persistEntity, model.getPhotoLocation());
+        setPhotoFields(question, persistEntity, model.getPhotoLocation());
         questionCategoryDao.findByName(model.getCategory())
                 .ifPresentOrElse(
                         question::setCategory,
@@ -92,46 +92,31 @@ public abstract class AbstractQuestionUpdateStrategy<T extends AbstractQuestionB
         return answerEntity;
     }
 
-    // TODO: Handle for images
-    protected void setPhotoFieldsForQuestionEntity(QuestionEntity question,
-                                                   QuestionEntity oldEntity,
-                                                   String newPhotoUrl) {
-        // New entity and if photo exist should save
+    protected void setPhotoFields(QuestionEntity question,
+                                  QuestionEntity oldEntity,
+                                  String newPhotoUrl) {
         if (oldEntity == null && StringUtils.isNotEmpty(newPhotoUrl)) {
             question.setOriginalPhotoUrl(newPhotoUrl);
-            question.setPhotoFilename(
-                    properties.getFilesFolder() + QuizUtils.generateFilename(newPhotoUrl));
+            question.setPhotoFilename(properties.getFilesFolder() + QuizUtils.generateFilename(newPhotoUrl));
             return;
         }
-        // Edit entity
-        if (oldEntity != null) {
-            var oldPhotoUrl = oldEntity.getOriginalPhotoUrl();
-            if (StringUtils.isEmpty(newPhotoUrl) && StringUtils.isNotEmpty(oldPhotoUrl)) {
-                // oldPhoto exists, newPhoto empty, then delete old photo
+        String oldPhotoUrl = oldEntity.getOriginalPhotoUrl();
+        if (StringUtils.isEmpty(newPhotoUrl)) {
+            if (StringUtils.isNotEmpty(oldPhotoUrl)) {
                 question.getResourcesToDelete().add(oldEntity.getPhotoFilename());
                 question.setPhotoFilename(null);
                 question.setOriginalPhotoUrl(null);
-            } else if (StringUtils.isEmpty(oldPhotoUrl) && StringUtils.isNotEmpty(newPhotoUrl)) {
-                // oldPhoto not exists, newPhoto exists, then create new photo
-                question.setOriginalPhotoUrl(newPhotoUrl);
-                question.setPhotoFilename(
-                        properties.getFilesFolder() + QuizUtils.generateFilename(newPhotoUrl));
-            } else if (StringUtils.equals(oldPhotoUrl, newPhotoUrl)) {
-                // if equal, then reset oldPhoto data to editable entity
-                question.setOriginalPhotoUrl(oldPhotoUrl);
-                question.setPhotoFilename(oldEntity.getPhotoFilename());
-                question.setShouldSaveImage(false);
-            } else {
-                // if not equal, delete old and create new
-                if (StringUtils.isNotEmpty(oldPhotoUrl)) {
-                    question.getResourcesToDelete().add(oldEntity.getPhotoFilename());
-                }
-                if (StringUtils.isNotEmpty(newPhotoUrl)) {
-                    question.setOriginalPhotoUrl(newPhotoUrl);
-                    question.setPhotoFilename(
-                            properties.getFilesFolder() + QuizUtils.generateFilename(newPhotoUrl));
-                }
             }
+        } else if (!StringUtils.equals(oldPhotoUrl, newPhotoUrl)) {
+            if (StringUtils.isNotEmpty(oldPhotoUrl)) {
+                question.getResourcesToDelete().add(oldEntity.getPhotoFilename());
+            }
+            question.setOriginalPhotoUrl(newPhotoUrl);
+            question.setPhotoFilename(properties.getFilesFolder() + QuizUtils.generateFilename(newPhotoUrl));
+        } else {
+            question.setOriginalPhotoUrl(oldPhotoUrl);
+            question.setPhotoFilename(oldEntity.getPhotoFilename());
+            question.setShouldSaveImage(false);
         }
     }
 

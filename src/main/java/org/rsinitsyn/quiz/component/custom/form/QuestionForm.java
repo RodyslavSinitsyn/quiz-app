@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.component.сustom.form;
+package org.rsinitsyn.quiz.component.custom.form;
 
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -8,7 +8,7 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.rsinitsyn.quiz.component.сustom.AnswerField;
+import org.rsinitsyn.quiz.component.custom.AnswerField;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;

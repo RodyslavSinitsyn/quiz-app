@@ -9,7 +9,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import jakarta.annotation.security.PermitAll;
 import org.rsinitsyn.quiz.component.MainLayout;
-import org.rsinitsyn.quiz.component.сustom.GameListGrid;
+import org.rsinitsyn.quiz.component.custom.GameListGrid;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 

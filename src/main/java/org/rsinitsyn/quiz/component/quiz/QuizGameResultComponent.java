@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.rsinitsyn.quiz.component.сustom.GameResultsComponent;
+import org.rsinitsyn.quiz.component.custom.GameResultsComponent;
 import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;

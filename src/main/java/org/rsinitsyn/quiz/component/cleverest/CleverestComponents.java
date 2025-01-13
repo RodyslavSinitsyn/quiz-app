@@ -34,7 +34,7 @@ import java.util.function.Consumer;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
-import org.rsinitsyn.quiz.component.сustom.LinkQuestionsComponent;
+import org.rsinitsyn.quiz.component.custom.LinkAnswersComponent;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
@@ -486,7 +486,7 @@ public class CleverestComponents {
         Button submit = submitButton(event -> {
         });
 
-        LinkQuestionsComponent component = new LinkQuestionsComponent(questionModel);
+        LinkAnswersComponent component = new LinkAnswersComponent(questionModel);
         component.addPairLinkedEventListener(event -> submit.setEnabled(event.isDone()));
 
         submit.addClickListener(event -> listOfAnswerLinksConsumer.accept(component.getPairs()));

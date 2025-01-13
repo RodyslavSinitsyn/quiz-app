@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.component.сustom;
+package org.rsinitsyn.quiz.component.custom;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;

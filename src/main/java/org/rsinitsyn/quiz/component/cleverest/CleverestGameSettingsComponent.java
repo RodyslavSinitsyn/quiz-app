@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 import lombok.Getter;
-import org.rsinitsyn.quiz.component.сustom.QuestionListGrid;
+import org.rsinitsyn.quiz.component.custom.QuestionListGrid;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 

@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.component.сustom.form;
+package org.rsinitsyn.quiz.component.custom.form;
 
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;

@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.component.сustom;
+package org.rsinitsyn.quiz.component.custom;
 
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
@@ -22,7 +22,7 @@ import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
 
-public class LinkQuestionsComponent extends HorizontalLayout {
+public class LinkAnswersComponent extends HorizontalLayout {
 
     private final List<MutablePair<LinkItemDto, LinkItemDto>> resultPairs = new ArrayList<>();
     private final int desiredPairsSize;
@@ -41,7 +41,7 @@ public class LinkQuestionsComponent extends HorizontalLayout {
     private LinkItemDto currRight = null;
     private Boolean leftSelectedFirst = null;
 
-    public LinkQuestionsComponent(QuestionModel questionModel) {
+    public LinkAnswersComponent(QuestionModel questionModel) {
         this.desiredPairsSize = (int) questionModel.getAnswers().stream().filter(AnswerModel::isCorrect).count();
 
         setPadding(false);
@@ -222,11 +222,11 @@ public class LinkQuestionsComponent extends HorizontalLayout {
                 .findFirst().orElse(null);
     }
 
-    public static class PairLinkedEvent extends ComponentEvent<LinkQuestionsComponent> {
+    public static class PairLinkedEvent extends ComponentEvent<LinkAnswersComponent> {
         @Getter
         private boolean done;
 
-        public PairLinkedEvent(LinkQuestionsComponent source,
+        public PairLinkedEvent(LinkAnswersComponent source,
                                boolean done) {
             super(source, true);
             this.done = done;
