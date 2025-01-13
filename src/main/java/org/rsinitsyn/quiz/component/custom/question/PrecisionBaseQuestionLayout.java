@@ -2,11 +2,12 @@ package org.rsinitsyn.quiz.component.custom.question;
 
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 
 public class PrecisionBaseQuestionLayout extends BaseQuestionLayout {
-    public PrecisionBaseQuestionLayout(QuestionModel questionModel) {
-        super(questionModel);
+
+    public PrecisionBaseQuestionLayout(QuestionLayoutRequest request) {
+        super(request);
     }
 
     @Override

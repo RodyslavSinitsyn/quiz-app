@@ -9,7 +9,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
-import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,7 +22,7 @@ public class TopAnswersLayout extends AbstractAnswersLayout {
 
     private final VerticalLayout topListLayout = new VerticalLayout();
 
-    public TopAnswersLayout(QuestionModel question) {
+    public TopAnswersLayout(AnswerLayoutRequest question) {
         super(question);
     }
 

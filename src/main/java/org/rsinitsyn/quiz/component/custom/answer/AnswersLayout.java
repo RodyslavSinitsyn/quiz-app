@@ -8,6 +8,7 @@ import com.vaadin.flow.component.listbox.ListBox;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.model.AnswerHint;
+import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 
 import java.util.Collections;
@@ -16,8 +17,8 @@ import java.util.List;
 public class AnswersLayout extends AbstractAnswersLayout {
     private final ListBox<QuestionModel.AnswerModel> options = new ListBox<>();
 
-    public AnswersLayout(QuestionModel question) {
-        super(question);
+    public AnswersLayout(AnswerLayoutRequest request) {
+        super(request);
     }
 
     @Override

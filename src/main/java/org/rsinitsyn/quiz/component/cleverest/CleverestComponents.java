@@ -2,12 +2,7 @@ package org.rsinitsyn.quiz.component.cleverest;
 
 import com.flowingcode.vaadin.addons.carousel.Carousel;
 import com.flowingcode.vaadin.addons.carousel.Slide;
-import com.vaadin.flow.component.AbstractField;
-import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.ComponentEventListener;
-import com.vaadin.flow.component.HasValue;
-import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -16,7 +11,6 @@ import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.listbox.ListBox;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -24,24 +18,20 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
-import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.jfancy.StarsRating;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
 import lombok.experimental.UtilityClass;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.MutablePair;
-import org.rsinitsyn.quiz.component.custom.LinkAnswersComponent;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
-import org.rsinitsyn.quiz.utils.AudioUtils;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
+
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
 @UtilityClass
 public class CleverestComponents {
@@ -251,55 +241,6 @@ public class CleverestComponents {
     }
 
     // Big Business Layouts
-    public VerticalLayout questionLayout(QuestionModel questionModel,
-                                         List<String> textContentClasses,
-                                         String imageHeight,
-                                         boolean isAdmin) {
-        VerticalLayout layout = new VerticalLayout();
-        layout.setSpacing(false);
-        layout.setPadding(false);
-        layout.addClassNames(LumoUtility.Margin.Top.MEDIUM);
-        layout.setDefaultHorizontalComponentAlignment(FlexComponent.Alignment.CENTER);
-
-        if (StringUtils.isNotEmpty(questionModel.getPhotoFilename())) {
-            Image image = new Image();
-            image.setSrc(QuizUtils.createStreamResourceForPhoto(questionModel.getPhotoFilename()));
-            image.setMaxHeight(imageHeight);
-            if (!isAdmin) image.setWidthFull();
-            image.getStyle().set("object-fit", "cover");
-            image.getStyle().set("object-position", "center center");
-            layout.add(image);
-        }
-
-        Span categorySpan = new Span(questionModel.getCategoryName());
-        categorySpan.addClassNames(LumoUtility.FontWeight.LIGHT, MOBILE_SMALL_FONT);
-        layout.add(categorySpan);
-
-        Span textContent = CleverestComponents.questionTextSpan(
-                questionModel.getText(),
-                textContentClasses.toArray(new String[]{}));
-
-        layout.add(questionModel.getType().equals(QuestionType.PRECISION)
-                ? new Span(VaadinIcon.STAR.create(), textContent)
-                : textContent);
-
-        if (StringUtils.isNotEmpty(questionModel.getAudioFilename())) {
-            Button playAudioButton = new Button("Слушать", VaadinIcon.PLAY_CIRCLE.create());
-            playAudioButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST,
-                    ButtonVariant.LUMO_PRIMARY,
-                    ButtonVariant.LUMO_SMALL);
-            playAudioButton.setEnabled(isAdmin);
-            playAudioButton.addClickListener(event -> {
-                AudioUtils.playSoundAsync(questionModel.getAudioFilename());
-            });
-            layout.add(playAudioButton);
-            // TODO Play audio on each device
-//            AudioPlayer audioPlayer = new AudioPlayer(QuizUtils.createStreamResourceForAudio(questionModel.getAudioFilename()));
-//            layout.add(audioPlayer);
-        }
-        return layout;
-    }
-
     public VerticalLayout usersScoreTableLayout(Map<String, UserGameState> users) {
         var layout = new VerticalLayout();
         users.forEach((username, userGameState) -> {
@@ -361,95 +302,7 @@ public class CleverestComponents {
         return layout;
     }
 
-    public List<Component> userTopListInputComponents(QuestionModel questionModel,
-                                                      Consumer<List<String>> answersConsumer) {
-        int topSize = questionModel.getAnswers().size();
-        VerticalLayout topListLayout = new VerticalLayout();
-        topListLayout.setSpacing(false);
-        topListLayout.setPadding(false);
-        Button submit = CleverestComponents.submitButton(
-                e -> answersConsumer.accept(topListLayout.getChildren().map(component -> component.getElement().getText()).toList()));
-
-        Button addToListButton = new Button(VaadinIcon.PLUS_CIRCLE.create());
-        addToListButton.addClickShortcut(Key.ENTER);
-        TextField textField = CleverestComponents.answerInput(event -> {
-            addToListButton.setEnabled(!event.getValue().isBlank());
-        });
-        addToListButton.addClickListener(event -> {
-            Button topListItem = new Button(textField.getValue());
-            topListItem.addClassNames(MOBILE_MEDIUM_FONT);
-            topListItem.setWidthFull();
-            topListItem.addClickListener(e -> {
-                topListLayout.remove(e.getSource());
-                textField.setEnabled(topListLayout.getChildren().count() != topSize);
-                submit.setEnabled(topListLayout.getChildren().count() == topSize);
-            });
-            topListLayout.add(topListItem);
-            textField.setValue("");
-            textField.setEnabled(topListLayout.getChildren().count() != topSize);
-            submit.setEnabled(topListLayout.getChildren().count() == topSize);
-        });
-        addToListButton.setEnabled(false);
-
-        HorizontalLayout userInput = new HorizontalLayout(textField, addToListButton);
-        userInput.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
-        userInput.setAlignItems(FlexComponent.Alignment.END);
-        userInput.setWidthFull();
-
-        return List.of(
-                userInput,
-                topListLayout,
-                submit
-        );
-    }
-
-    public List<Component> userTextOptionsInputComponents(QuestionModel questionModel,
-                                                          boolean clickEnabled,
-                                                          Consumer<AnswerModel> answerConsumer) {
-        return simpleOptionsComponents(questionModel, answerConsumer, clickEnabled,
-                new ComponentRenderer<Component, AnswerModel>(
-                        answerModel -> optionComponent(answerModel.getText(), 15, event -> {
-                        })));
-    }
-
-    public static List<Component> userPhotoOptionsInputComponents(QuestionModel questionModel,
-                                                                  Consumer<AnswerModel> answerConsumer) {
-        return simpleOptionsComponents(questionModel, answerConsumer, true, new ComponentRenderer<Component, AnswerModel>(
-                answerModel -> {
-                    Image image = new Image();
-                    image.setSrc(QuizUtils.createStreamResourceForPhoto(answerModel.getPhotoFilename()));
-                    image.setMaxHeight(SMALL_IMAGE_HEIGHT);
-                    image.setWidthFull();
-                    image.getStyle().set("object-fit", "cover");
-                    image.getStyle().set("object-position", "center center");
-                    image.addClassNames(
-                            LumoUtility.AlignSelf.CENTER,
-                            LumoUtility.Border.ALL,
-                            LumoUtility.BorderRadius.MEDIUM,
-                            LumoUtility.BorderColor.PRIMARY
-                    );
-                    return image;
-                }));
-    }
-
-    private List<Component> simpleOptionsComponents(QuestionModel questionModel,
-                                                    Consumer<AnswerModel> answerConsumer,
-                                                    boolean clickActionEnabled,
-                                                    ComponentRenderer<? extends Component, AnswerModel> componentRenderer) {
-        ListBox<AnswerModel> options = new ListBox<>();
-
-        Button submit = submitButton(event -> answerConsumer.accept(options.getValue()));
-        submit.setVisible(clickActionEnabled);
-
-        options.setWidthFull();
-        options.setReadOnly(!clickActionEnabled);
-        options.setItems(questionModel.getShuffledAnswers());
-        options.setRenderer(componentRenderer);
-        options.addValueChangeListener(event -> submit.setEnabled(true));
-
-        return List.of(options, submit);
-    }
-
+    // TODO: Carousel for admin
     public static List<Component> userPhotoOptionsInputComponentsCarousel(QuestionModel questionModel) {
         List<AnswerModel> shuffledAnswers = questionModel.getShuffledAnswers();
         var slides = shuffledAnswers.stream()
@@ -479,18 +332,5 @@ public class CleverestComponents {
 //        nav.setAlignItems(FlexComponent.Alignment.CENTER);
 
         return List.of(carousel);
-    }
-
-    public static List<Component> userMatchAnswersComponents(QuestionModel questionModel,
-                                                             Consumer<List<MutablePair<AnswerModel, AnswerModel>>> listOfAnswerLinksConsumer) {
-        Button submit = submitButton(event -> {
-        });
-
-        LinkAnswersComponent component = new LinkAnswersComponent(questionModel);
-        component.addPairLinkedEventListener(event -> submit.setEnabled(event.isDone()));
-
-        submit.addClickListener(event -> listOfAnswerLinksConsumer.accept(component.getPairs()));
-
-        return List.of(component, submit);
     }
 }

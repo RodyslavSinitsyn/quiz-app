@@ -6,6 +6,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
+import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 
 import java.util.Collections;
@@ -14,7 +15,7 @@ public class OrAnswersLayout extends AbstractAnswersLayout {
 
     private final RadioButtonGroup<QuestionModel.AnswerModel> radioButtonGroup = new RadioButtonGroup<>();
 
-    public OrAnswersLayout(QuestionModel question) {
+    public OrAnswersLayout(AnswerLayoutRequest question) {
         super(question);
     }
 

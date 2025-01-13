@@ -21,15 +21,13 @@ import org.rsinitsyn.quiz.component.custom.question.BaseQuestionLayout;
 import org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.model.AnswerHint;
+import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.utils.AudioUtils;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.rsinitsyn.quiz.utils.StaticValuesHolder.*;
 
@@ -149,8 +147,12 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 //    }
 
     private BaseQuestionLayout createQuestionLayout() {
-        currQuestion.setHintsState(gameState.getHintsState()); // TODO: Pass hints to the answers, castil
-        return QuestionLayoutFactory.get(currQuestion);
+        return QuestionLayoutFactory.get(QuestionLayoutRequest.builder()
+                .question(currQuestion)
+                .hintsState(gameState.getHintsState())
+                .imageHeight("25em")
+                .textClasses(Collections.emptyList())
+                .build());
     }
 
     private void subscribeQuestionLayout() {

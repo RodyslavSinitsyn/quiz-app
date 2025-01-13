@@ -4,6 +4,7 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.textfield.NumberField;
 import org.apache.commons.lang3.StringUtils;
+import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 
 import java.util.Collections;
@@ -12,7 +13,7 @@ public class PrecisionAnswersLayout extends AbstractAnswersLayout {
 
     private final NumberField numberField = new NumberField();
 
-    public PrecisionAnswersLayout(QuestionModel question) {
+    public PrecisionAnswersLayout(AnswerLayoutRequest question) {
         super(question);
     }
 

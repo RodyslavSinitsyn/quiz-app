@@ -1,14 +1,14 @@
 package org.rsinitsyn.quiz.component.custom.question;
 
-import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 
 public class QuestionLayoutFactory {
 
-    public static BaseQuestionLayout get(QuestionModel question) {
-        var type = question.getType();
+    public static BaseQuestionLayout get(QuestionLayoutRequest request) {
+        var type = request.getQuestion().getType();
         return switch (type) {
-            case PRECISION -> new PrecisionBaseQuestionLayout(question);
-            default -> new BaseQuestionLayout(question);
+            case PRECISION -> new PrecisionBaseQuestionLayout(request);
+            default -> new BaseQuestionLayout(request);
         };
     }
 }

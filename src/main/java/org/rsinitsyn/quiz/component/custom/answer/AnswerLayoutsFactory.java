@@ -1,19 +1,19 @@
 package org.rsinitsyn.quiz.component.custom.answer;
 
-import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 
 public class AnswerLayoutsFactory {
 
-    public static AbstractAnswersLayout get(QuestionModel questionModel) {
-        var questionType = questionModel.getType();
+    public static AbstractAnswersLayout get(AnswerLayoutRequest request) {
+        var questionType = request.getQuestion().getType();
         return switch (questionType) {
-            case TEXT -> new AnswersLayout(questionModel);
-            case LINK -> new LinkAnswersLayout(questionModel);
-            case MULTI -> new MultiAnswersLayout(questionModel);
-            case OR -> new OrAnswersLayout(questionModel);
-            case PHOTO -> new PhotoAnswersLayout(questionModel);
-            case PRECISION -> new PrecisionAnswersLayout(questionModel);
-            case TOP -> new TopAnswersLayout(questionModel);
+            case TEXT -> new AnswersLayout(request);
+            case LINK -> new LinkAnswersLayout(request);
+            case MULTI -> new MultiAnswersLayout(request);
+            case OR -> new OrAnswersLayout(request);
+            case PHOTO -> new PhotoAnswersLayout(request);
+            case PRECISION -> new PrecisionAnswersLayout(request);
+            case TOP -> new TopAnswersLayout(request);
             default -> throw new IllegalArgumentException("Unknown question type: " + questionType);
         };
     }

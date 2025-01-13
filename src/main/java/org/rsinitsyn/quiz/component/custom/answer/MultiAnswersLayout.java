@@ -8,6 +8,7 @@ import com.vaadin.flow.component.listbox.MultiSelectListBox;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.model.AnswerHint;
+import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 
 import java.util.Collections;
@@ -18,7 +19,7 @@ public class MultiAnswersLayout extends AbstractAnswersLayout {
 
     private final MultiSelectListBox<QuestionModel.AnswerModel> multiAnswerListBox = new MultiSelectListBox<>();
 
-    public MultiAnswersLayout(QuestionModel question) {
+    public MultiAnswersLayout(AnswerLayoutRequest question) {
         super(question);
     }
 

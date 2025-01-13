@@ -9,6 +9,7 @@ import lombok.Getter;
 import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.component.custom.event.StubEvent;
 import org.rsinitsyn.quiz.model.AnswerHint;
+import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.HintsState;
 import org.rsinitsyn.quiz.model.QuestionModel;
 
@@ -28,10 +29,10 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
     protected final Button submitButton = CleverestComponents.submitButton(e -> {
     });
 
-    public AbstractAnswersLayout(QuestionModel question) {
-        this.question = question;
-        this.copiedAnswerList = new ArrayList<>(question.getShuffledAnswers());
-        this.hintsState = question.getHintsState();
+    public AbstractAnswersLayout(AnswerLayoutRequest request) {
+        this.question = request.getQuestion();
+        this.copiedAnswerList = new ArrayList<>(request.getQuestion().getShuffledAnswers());
+        this.hintsState = request.getHintsState();
         setAlignItems(Alignment.STRETCH);
     }
 

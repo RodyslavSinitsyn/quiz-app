@@ -19,6 +19,8 @@ import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.component.custom.answer.AbstractAnswersLayout;
 import org.rsinitsyn.quiz.component.custom.answer.AnswerLayoutsFactory;
 import org.rsinitsyn.quiz.component.custom.event.StubEvent;
+import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
+import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.utils.AudioUtils;
 import org.rsinitsyn.quiz.utils.QuizUtils;
@@ -30,20 +32,22 @@ import java.util.List;
 public class BaseQuestionLayout extends VerticalLayout {
 
     protected final QuestionModel questionModel;
-    protected final List<String> textContentClasses = List.of(LumoUtility.FontSize.XXXLARGE);
-    protected final String imageHeight = "25em";
-    protected final boolean isAdmin = false;
+    protected final boolean isAdmin;
+    protected final String imageHeight;
+    protected final List<String> textContentClasses;
 
     @Getter
     private AbstractAnswersLayout answersLayout;
 
     private List<Registration> subscriptions = new ArrayList<>();
 
-    public BaseQuestionLayout(QuestionModel questionModel) {
-        this.questionModel = questionModel;
-
+    public BaseQuestionLayout(QuestionLayoutRequest request) {
+        this.questionModel = request.getQuestion();
+        this.isAdmin = request.isAdmin();
+        this.imageHeight = request.getImageHeight();
+        this.textContentClasses = request.getTextClasses();
         configureStyles();
-        renderComponents();
+        renderComponents(request);
     }
 
     private void configureStyles() {
@@ -53,12 +57,12 @@ public class BaseQuestionLayout extends VerticalLayout {
         setDefaultHorizontalComponentAlignment(Alignment.CENTER);
     }
 
-    private void renderComponents() {
+    private void renderComponents(QuestionLayoutRequest request) {
         renderCategory();
         renderImage();
         renderQuestionText();
         renderAudio();
-        renderAnswersLayout();
+        renderAnswersLayout(request);
     }
 
     protected void renderImage() {
@@ -109,9 +113,14 @@ public class BaseQuestionLayout extends VerticalLayout {
         }
     }
 
-    private void renderAnswersLayout() {
-        answersLayout = AnswerLayoutsFactory.get(questionModel);
-        add(answersLayout);
+    private void renderAnswersLayout(QuestionLayoutRequest request) {
+        if (!isAdmin) {
+            answersLayout = AnswerLayoutsFactory.get(AnswerLayoutRequest.builder()
+                    .question(questionModel)
+                    .hintsState(request.getHintsState())
+                    .build());
+            add(answersLayout);
+        }
     }
 
     @Getter
@@ -131,9 +140,11 @@ public class BaseQuestionLayout extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        subscriptions.add(answersLayout.addListener(AbstractAnswersLayout.AnswerChosenEvent.class, event -> {
-            fireEvent(new QuestionAnsweredEvent(event));
-        }));
+        if (answersLayout != null) {
+            subscriptions.add(answersLayout.addListener(AbstractAnswersLayout.AnswerChosenEvent.class, event -> {
+                fireEvent(new QuestionAnsweredEvent(event));
+            }));
+        }
         log.trace("onAttach. subscribe {}", subscriptions.size());
     }
 

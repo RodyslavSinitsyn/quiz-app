@@ -3,6 +3,7 @@ package org.rsinitsyn.quiz.component.custom.answer;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.button.Button;
 import org.rsinitsyn.quiz.component.custom.LinkAnswersComponent;
+import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 
 import java.util.stream.Collectors;
@@ -11,8 +12,8 @@ public class LinkAnswersLayout extends AbstractAnswersLayout {
 
     private final LinkAnswersComponent component;
 
-    public LinkAnswersLayout(QuestionModel question) {
-        super(question);
+    public LinkAnswersLayout(AnswerLayoutRequest request) {
+        super(request);
         this.component = new LinkAnswersComponent(question);
     }
 
