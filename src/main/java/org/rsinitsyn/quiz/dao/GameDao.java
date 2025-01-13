@@ -28,4 +28,6 @@ public interface GameDao extends JpaRepository<GameEntity, UUID> {
             "LEFT JOIN FETCH ge.gameQuestions " +
             "ORDER BY ge.creationDate DESC")
     List<GameEntity> findAllJoinGamesQuestionsNewFirst();
+
+    boolean existsById(UUID id);
 }

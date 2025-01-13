@@ -1,13 +1,15 @@
 package org.rsinitsyn.quiz.model;
 
-import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import java.util.Collections;
 import java.util.List;
 
-@Builder
 @Getter
+@Setter
+@Accessors(chain = true, fluent = true)
 public class QuestionLayoutRequest {
    private QuestionModel question;
    private boolean isAdmin = false;

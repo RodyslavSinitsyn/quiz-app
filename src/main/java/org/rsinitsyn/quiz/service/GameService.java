@@ -1,27 +1,11 @@
 package org.rsinitsyn.quiz.service;
 
 import io.micrometer.observation.annotation.Observed;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.dao.GameDao;
 import org.rsinitsyn.quiz.dao.GameQuestionUserDao;
-import org.rsinitsyn.quiz.entity.GameEntity;
-import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
-import org.rsinitsyn.quiz.entity.GameQuestionUserId;
-import org.rsinitsyn.quiz.entity.GameStatus;
-import org.rsinitsyn.quiz.entity.GameType;
-import org.rsinitsyn.quiz.entity.UserEntity;
+import org.rsinitsyn.quiz.entity.*;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
@@ -29,6 +13,12 @@ import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @Observed(name = "gameService")
 @Service
@@ -43,6 +33,10 @@ public class GameService {
     public GameEntity findById(String id) {
         return gameDao.findByIdJoinQuestions(UUID.fromString(id))
                 .orElse(null);
+    }
+
+    public boolean exists(UUID id) {
+        return gameDao.existsById(id);
     }
 
     @Transactional
@@ -84,7 +78,6 @@ public class GameService {
             newEntity.setAnswered(correctAnswerProvider.get());
             newEntity.setAnswerText(String.join(",", answersList));
             newEntity.setOrderNumber(gameQuestionUserDao.getMaxOrderNumber(primaryKey.getGameId()) + 1);
-
             gameQuestionUserDao.save(newEntity);
         }
     }
@@ -117,7 +110,7 @@ public class GameService {
     @Transactional(propagation = Propagation.REQUIRED)
     public void linkQuestionsWithGame(String id, QuizGameState stateModel) {
         GameEntity gameEntity = findById(id);
-        setNewFields(gameEntity, stateModel.getGameName(), GameStatus.STARTED);
+        setNewFields(gameEntity, stateModel.getGameName(), GameStatus.NOT_STARTED);
         log.info("Updating game, id: {}", id);
 
         UserEntity user = userService.findByUsername(stateModel.getPlayerName());
@@ -188,6 +181,34 @@ public class GameService {
 
     public List<GameEntity> findAllNewFirst() {
         return gameDao.findAllJoinGamesQuestionsNewFirst();
+    }
+
+    @Transactional(readOnly = true)
+    public QuizGameState getQuizGameState(String gameId) {
+        var gameEntity = findById(gameId);
+        var gameQuestions = gameEntity.getGameQuestions();
+        var state = new QuizGameState();
+        state.setGameId(gameEntity.getId());
+        state.setGameName(gameEntity.getName());
+        state.setPlayerName(gameEntity.getPlayerNames().stream().findFirst().orElseThrow());
+        state.setAnswerOptionsEnabled(true);
+        state.setQuestions(gameQuestions.stream()
+                .sorted(Comparator.comparing(GameQuestionUserEntity::getOrderNumber, Comparator.naturalOrder()))
+                .map(GameQuestionUserEntity::getQuestion)
+                .map(questionService::toQuizQuestionModel)
+                .collect(Collectors.toSet()));
+        gameQuestions.stream()
+                .filter(e -> Boolean.TRUE.equals(e.getAnswered()))
+                .forEach(e -> {
+                    state.incrementCorrectAnswersCounter();
+                });
+        state.setStatus(gameEntity.getStatus());
+        var currentQuestionNumber = (int) (gameQuestions.size() - gameQuestions
+                .stream()
+                .filter(e -> e.getAnswered() == null)
+                .count());
+        state.setCurrentQuestionNumber(Math.max(0, currentQuestionNumber));
+        return state;
     }
 
     @Transactional

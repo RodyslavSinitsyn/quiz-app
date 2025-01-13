@@ -27,7 +27,10 @@ import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.utils.AudioUtils;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.rsinitsyn.quiz.utils.StaticValuesHolder.*;
 
@@ -38,17 +41,19 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     private Div progressBarLabel = new Div();
     private ProgressBar progressBar = new ProgressBar();
 
-    private final QuizGameState gameState;
-
+    private QuizGameState gameState;
     private QuestionModel currQuestion;
     private Player lastPlayedAudio = null;
 
     private List<Registration> subscriptions = new ArrayList<>();
 
-    public QuizGamePlayBoardComponent(QuizGameState gameState) {
+    public QuizGamePlayBoardComponent() {
+        setPadding(false);
+    }
+
+    public void setState(QuizGameState gameState) {
         this.gameState = gameState;
         renderQuestion();
-        setPadding(false);
     }
 
     private void renderQuestion() {
@@ -147,12 +152,9 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 //    }
 
     private BaseQuestionLayout createQuestionLayout() {
-        return QuestionLayoutFactory.get(QuestionLayoutRequest.builder()
+        return QuestionLayoutFactory.get(new QuestionLayoutRequest()
                 .question(currQuestion)
-                .hintsState(gameState.getHintsState())
-                .imageHeight("25em")
-                .textClasses(Collections.emptyList())
-                .build());
+                .hintsState(gameState.getHintsState()));
     }
 
     private void subscribeQuestionLayout() {

@@ -126,14 +126,11 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
         List<String> questionClasses = isAdmin ? List.of(LumoUtility.FontSize.XXXLARGE) : List.of(CleverestComponents.MOBILE_LARGE_FONT);
         String imageHeight = isAdmin ? CleverestComponents.LARGE_IMAGE_HEIGHT : CleverestComponents.MEDIUM_IMAGE_HEIGHT;
-        var questionLayout = QuestionLayoutFactory.get(QuestionLayoutRequest
-                .builder()
+        var questionLayout = QuestionLayoutFactory.get(new QuestionLayoutRequest()
                 .question(questionModel)
                 .isAdmin(isAdmin)
                 .imageHeight(imageHeight)
-                .textClasses(questionClasses)
-                .hintsState(HintsState.disabled())
-                .build());
+                .textClasses(questionClasses));
         questionLayout.addListener(BaseQuestionLayout.QuestionAnsweredEvent.class, event -> {
             broadcaster.sendSubmitAnswerEventAndCheckScore(gameId,
                     SessionWrapper.getLoggedUser(),
@@ -185,13 +182,11 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         Button button = CleverestComponents.primaryButton(String.valueOf(question.getPoints()), event -> {
             broadcaster.sendQuestionChoosenEvent(gameId, question, userToAnswer);
             Dialog questionTextDialog = CleverestComponents.openDialog(
-                    QuestionLayoutFactory.get(QuestionLayoutRequest.builder()
+                    QuestionLayoutFactory.get(new QuestionLayoutRequest()
                             .question(question)
                             .isAdmin(isAdmin)
                             .imageHeight("25em")
-                            .textClasses(List.of(LumoUtility.FontSize.XXXLARGE))
-                            .hintsState(HintsState.disabled())
-                            .build()),
+                            .textClasses(List.of(LumoUtility.FontSize.XXXLARGE))),
                     "Вопрос",
                     () -> {
                     }

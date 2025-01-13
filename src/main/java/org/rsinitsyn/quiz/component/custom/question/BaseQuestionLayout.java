@@ -42,10 +42,10 @@ public class BaseQuestionLayout extends VerticalLayout {
     private List<Registration> subscriptions = new ArrayList<>();
 
     public BaseQuestionLayout(QuestionLayoutRequest request) {
-        this.questionModel = request.getQuestion();
+        this.questionModel = request.question();
         this.isAdmin = request.isAdmin();
-        this.imageHeight = request.getImageHeight();
-        this.textContentClasses = request.getTextClasses();
+        this.imageHeight = request.imageHeight();
+        this.textContentClasses = request.textClasses();
         configureStyles();
         renderComponents(request);
     }
@@ -117,7 +117,7 @@ public class BaseQuestionLayout extends VerticalLayout {
         if (!isAdmin) {
             answersLayout = AnswerLayoutsFactory.get(AnswerLayoutRequest.builder()
                     .question(questionModel)
-                    .hintsState(request.getHintsState())
+                    .hintsState(request.hintsState())
                     .build());
             add(answersLayout);
         }

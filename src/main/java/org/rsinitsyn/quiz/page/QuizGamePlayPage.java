@@ -10,12 +10,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.quiz.QuizGamePlayBoardComponent;
 import org.rsinitsyn.quiz.component.quiz.QuizGameResultComponent;
+import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.service.GameService;
+import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Route(value = "/quiz/game", layout = MainLayout.class)
@@ -27,7 +30,7 @@ public class QuizGamePlayPage extends VerticalLayout implements HasUrlParameter<
     private String gameId;
     private QuizGameState gameState;
 
-    private QuizGamePlayBoardComponent playBoardComponent;
+    private QuizGamePlayBoardComponent playBoardComponent = new QuizGamePlayBoardComponent();
     private QuizGameResultComponent resulComponent;
 
     private GameService gameService;
@@ -36,12 +39,6 @@ public class QuizGamePlayPage extends VerticalLayout implements HasUrlParameter<
 
     public QuizGamePlayPage(GameService gameService) {
         this.gameService = gameService;
-        this.gameState = SessionWrapper.getQuizGameState();
-        renderComponents();
-    }
-
-    private void renderComponents() {
-        configurePlayGameComponent();
     }
 
     @Override
@@ -49,13 +46,33 @@ public class QuizGamePlayPage extends VerticalLayout implements HasUrlParameter<
         if (event.isRefreshEvent()) {
             return;
         }
-        if (gameService.findById(gameId) == null) {
-            getUI().ifPresent(ui -> ui.navigateToClient("/"));
+        if (!gameService.exists(UUID.fromString(gameId))) {
+            getUI().ifPresent(ui -> {
+                ui.navigateToClient("/");
+                QuizComponents.infoNotification("Game not found");
+            });
+            return;
         }
+        this.gameState = gameService.getQuizGameState(gameId);
+        if (!SessionWrapper.getLoggedUser().equals(gameState.getPlayerName())) {
+            getUI().ifPresent(ui -> {
+                ui.navigateToClient("/");
+                QuizComponents.infoNotification("Not your game");
+            });
+            return;
+        }
+        if (gameState.getStatus() == GameStatus.FINISHED) {
+            configureQuizGameResultComponent();
+            return;
+        }
+        if (gameState.getStatus() == GameStatus.NOT_STARTED) {
+            gameService.update(gameId, gameState.getGameName(), GameStatus.STARTED);
+        }
+        configurePlayGameComponent();
     }
 
     private void configurePlayGameComponent() {
-        playBoardComponent = new QuizGamePlayBoardComponent(gameState);
+        playBoardComponent.setState(gameState);
         add(playBoardComponent);
     }
 
