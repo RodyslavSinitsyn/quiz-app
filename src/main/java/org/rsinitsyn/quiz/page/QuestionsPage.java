@@ -32,15 +32,18 @@ import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.binding.*;
 import org.rsinitsyn.quiz.service.ImportService;
+import org.rsinitsyn.quiz.service.QuestionCategoryService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.service.UserService;
 import org.rsinitsyn.quiz.utils.ModelConverterUtils;
 import org.rsinitsyn.quiz.utils.QuizComponents;
-import org.rsinitsyn.quiz.utils.SessionWrapper;
+import org.springframework.security.concurrent.DelegatingSecurityContextExecutor;
 
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -54,7 +57,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
     private TextField filterText = new TextField();
     private MultiSelectComboBox<QuestionCategoryEntity> categoryFilter = new MultiSelectComboBox<>();
     private HorizontalLayout groupedOperations = new HorizontalLayout();
-    private Span spinner = new Span();
+    private Span spinner = new Span("Loading...");
 
     private Dialog formDialog;
     private QuestionCategoryForm categoryForm;
@@ -68,13 +71,19 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
     private final QuestionService questionService;
     private final ImportService importService;
     private final UserService userService;
+    private final QuestionCategoryService categoryService;
+    // Async workaround, move to separate service
+    private final Executor executor = Executors.newSingleThreadExecutor();
+    private final Executor securityDelegatingExecutor = new DelegatingSecurityContextExecutor(executor);
 
     public QuestionsPage(QuestionService questionService,
                          ImportService importService,
-                         UserService userService) {
+                         UserService userService,
+                         QuestionCategoryService categoryService) {
         this.questionService = questionService;
         this.importService = importService;
         this.userService = userService;
+        this.categoryService = categoryService;
 
         configureGrid();
         configureForms();
@@ -131,74 +140,36 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
 
     @SuppressWarnings("all")
     private void updateListAsync() {
+        spinner.setVisible(true);
         UI ui = getUI().orElse(null);
-        String loggedUser = SessionWrapper.getLoggedUser();
-        CompletableFuture.supplyAsync(() -> questionService.findAllCreatedByUser(loggedUser))
+        CompletableFuture.supplyAsync(() -> questionService.findAllCreatedByCurrentUser(), securityDelegatingExecutor)
                 .thenAccept(questionEntities -> ui.access(() -> {
                     grid.setQuestions(questionEntities);
+                    spinner.setVisible(false);
                 }));
     }
 
     private void configureForms() {
-        // question form
-        var categories = questionService.findAllCategories();
+        var categories = categoryService.findAllCategories();
         form = new QuestionForm(categories, userService.findAllOrderByVisitDateDesc());
-        form.addSaveEventListener(event -> {
-            questionService.saveOrUpdate((FourAnswersQuestionBindingModel) event.getModel());
-            updateListAsync();
-            formDialog.close();
-            grid.asMultiSelect().clear();
-        });
-
-        // photo
         photoForm = new PhotoQuestionForm(categories);
-        photoForm.addSaveEventListener(event -> {
-            questionService.saveOrUpdate((PhotoQuestionBindingModel) event.getModel());
-            updateListAsync();
-            formDialog.close();
-            grid.asMultiSelect().clear();
-        });
-
-        // precision
         precisionForm = new PrecisionQuestionForm(categories);
-        precisionForm.addSaveEventListener(event -> {
-            questionService.saveOrUpdate((PrecisionQuestionBindingModel) event.getModel());
-            updateListAsync();
-            formDialog.close();
-        });
-
-        // or
         orForm = new OrQuestionForm(categories);
-        orForm.addSaveEventListener(event -> {
-            questionService.saveOrUpdate((OrQuestionBindingModel) event.getModel());
-            updateListAsync();
-            formDialog.close();
-        });
-
-        // top
         topForm = new TopQuestionForm(categories);
-        topForm.addSaveEventListener(event -> {
-            questionService.saveOrUpdate((TopQuestionBindingModel) event.getModel());
-            updateListAsync();
-            formDialog.close();
-        });
-
-        // link
         linkForm = new LinkQuestionForm(categories);
-        linkForm.addSaveEventListener(event -> {
-            questionService.saveOrUpdate((LinkQuestionBindingModel) event.getModel());
-            updateListAsync();
-            formDialog.close();
-        });
-
         configureAbstractQuestionFormsDefault(form, photoForm, precisionForm, orForm, topForm, linkForm);
     }
 
     @SafeVarargs
     private void configureAbstractQuestionFormsDefault(AbstractQuestionCreationForm<? extends AbstractQuestionBindingModel>... forms) {
         for (AbstractQuestionCreationForm<? extends AbstractQuestionBindingModel> form : forms) {
+            form.addSaveEventListener(event -> {
+                questionService.saveOrUpdate(event.getModel());
+                updateListAsync();
+                formDialog.close();
+            });
             form.addDeleteEventListener(event -> {
-                questionService.deleteById(((AbstractQuestionBindingModel) event.getModel()).getId());
+                questionService.deleteById(event.getModel().getId());
                 updateListAsync();
                 formDialog.close();
                 grid.asMultiSelect().clear();
@@ -209,14 +180,14 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
     }
 
     private void configureCategoryForm() {
-        categoryForm = new QuestionCategoryForm(questionService.findAllCategories(), new QuestionCategoryBindingModel());
+        categoryForm = new QuestionCategoryForm(categoryService.findAllCategories(), new QuestionCategoryBindingModel());
         categoryForm.setWidth("30em");
         categoryForm.addListener(QuestionCategoryForm.SaveCategoryEvent.class, event -> {
-            questionService.saveQuestionCategory(event.getModel().getCategoryName());
+            categoryService.save(event.getModel().getCategoryName());
             formDialog.close();
             categoryForm.setModel(null);
-            categoryForm.setCategories(questionService.findAllCategories());
-            categoryFilter.setItems(questionService.findAllCategories());
+            categoryForm.setCategories(categoryService.findAllCategories());
+            categoryFilter.setItems(categoryService.findAllCategories());
         });
         categoryForm.addListener(QuestionCategoryForm.CloseCategoryFormEvent.class, event -> {
             categoryForm.setModel(null);
@@ -233,7 +204,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
         filterText.setReadOnly(true); // TODO Back later
 
         categoryFilter.setPlaceholder("Выбрать тему...");
-        categoryFilter.setItems(questionService.findAllCategories());
+        categoryFilter.setItems(categoryService.findAllCategories());
         categoryFilter.setItemLabelGenerator(item -> item.getName());
         categoryFilter.addSelectionListener(event -> {
             if (event.getValue().isEmpty()) {
@@ -348,7 +319,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
         updateCategoryButton.addClickListener(event -> {
             Select<QuestionCategoryEntity> select = new Select<>();
             select.setPlaceholder("Тема");
-            select.setItems(questionService.findAllCategories());
+            select.setItems(categoryService.findAllCategories());
             select.setRenderer(new ComponentRenderer<Component, QuestionCategoryEntity>(
                     category -> new Span(category.getName())));
 
@@ -376,17 +347,6 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
         });
 
         groupedOperations.add(deleteAllButton, updateCategoryButton, updateOptionsOnly);
-    }
-
-    private void editQuestion(FourAnswersQuestionBindingModel model) {
-        if (model == null) {
-            formDialog.close();
-            form.setModel(null);
-        } else {
-            addToDialogAndOpen(form);
-            form.setCategoryList(questionService.findAllCategories());
-            form.setModel(model);
-        }
     }
 
     private void addToDialogAndOpen(Component component) {

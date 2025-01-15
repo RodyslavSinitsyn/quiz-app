@@ -1,17 +1,18 @@
 package org.rsinitsyn.quiz.service.strategy.update;
 
-import org.rsinitsyn.quiz.dao.QuestionCategoryDao;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
 import org.rsinitsyn.quiz.properties.QuizAppProperties;
+import org.rsinitsyn.quiz.service.QuestionCategoryService;
 import org.springframework.stereotype.Service;
 
 @Service
 public class PreciseQuestionUpdateStrategy extends AbstractQuestionUpdateStrategy<PrecisionQuestionBindingModel> {
 
-    public PreciseQuestionUpdateStrategy(QuizAppProperties properties, QuestionCategoryDao questionCategoryDao) {
-        super(properties, questionCategoryDao);
+    public PreciseQuestionUpdateStrategy(QuizAppProperties properties,
+                                         QuestionCategoryService categoryService) {
+        super(properties, categoryService);
     }
 
     @Override

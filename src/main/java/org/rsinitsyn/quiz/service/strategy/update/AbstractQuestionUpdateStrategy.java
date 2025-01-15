@@ -1,13 +1,13 @@
 package org.rsinitsyn.quiz.service.strategy.update;
 
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.rsinitsyn.quiz.dao.QuestionCategoryDao;
 import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.model.binding.AbstractQuestionBindingModel;
 import org.rsinitsyn.quiz.properties.QuizAppProperties;
+import org.rsinitsyn.quiz.service.QuestionCategoryService;
+import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.stereotype.Component;
@@ -16,12 +16,16 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 public abstract class AbstractQuestionUpdateStrategy<T extends AbstractQuestionBindingModel> implements QuestionUpdateStrategy<T> {
-    public static final String GENERAL_CATEGORY = "Общие";
 
     protected final QuizAppProperties properties;
-    protected final QuestionCategoryDao questionCategoryDao;
+    protected final QuestionCategoryService categoryService;
+
+    public AbstractQuestionUpdateStrategy(QuizAppProperties properties,
+                                          QuestionCategoryService categoryService) {
+        this.properties = properties;
+        this.categoryService = categoryService;
+    }
 
     public abstract void setType(T model, QuestionEntity question);
 
@@ -48,13 +52,10 @@ public abstract class AbstractQuestionUpdateStrategy<T extends AbstractQuestionB
         question.setText(model.getText());
         question.setAnswerDescriptionText(model.getAnswerDescriptionText());
         setPhotoFields(question, persistEntity, model.getPhotoLocation());
-        questionCategoryDao.findByName(model.getCategory())
+        categoryService.findByName(model.getCategory())
                 .ifPresentOrElse(
                         question::setCategory,
-                        () -> {
-                            QuestionCategoryEntity defaultCategory = getOrCreateDefaultCategory();
-                            question.setCategory(defaultCategory);
-                        });
+                        () -> question.setCategory(categoryService.getOrCreateDefaultCategory()));
     }
 
     protected void createHook(T model, QuestionEntity question) {
@@ -100,7 +101,7 @@ public abstract class AbstractQuestionUpdateStrategy<T extends AbstractQuestionB
             question.setPhotoFilename(properties.getFilesFolder() + QuizUtils.generateFilename(newPhotoUrl));
             return;
         }
-        String oldPhotoUrl = oldEntity.getOriginalPhotoUrl();
+        String oldPhotoUrl = oldEntity != null ? oldEntity.getOriginalPhotoUrl() : null;
         if (StringUtils.isEmpty(newPhotoUrl)) {
             if (StringUtils.isNotEmpty(oldPhotoUrl)) {
                 question.getResourcesToDelete().add(oldEntity.getPhotoFilename());
@@ -119,14 +120,4 @@ public abstract class AbstractQuestionUpdateStrategy<T extends AbstractQuestionB
             question.setShouldSaveImage(false);
         }
     }
-
-    protected QuestionCategoryEntity getOrCreateDefaultCategory() {
-        return questionCategoryDao.findByName(GENERAL_CATEGORY)
-                .orElseGet(() -> {
-                    QuestionCategoryEntity categoryEntity = new QuestionCategoryEntity();
-                    categoryEntity.setName(GENERAL_CATEGORY);
-                    return questionCategoryDao.save(categoryEntity);
-                });
-    }
-
 }

@@ -53,7 +53,7 @@ public class QuizGamePlayPage extends VerticalLayout implements HasUrlParameter<
             });
             return;
         }
-        this.gameState = gameService.getQuizGameState(gameId);
+        this.gameState = gameService.restoreQuizGameState(gameId);
         if (!SessionWrapper.getLoggedUser().equals(gameState.getPlayerName())) {
             getUI().ifPresent(ui -> {
                 ui.navigateToClient("/");
@@ -66,7 +66,7 @@ public class QuizGamePlayPage extends VerticalLayout implements HasUrlParameter<
             return;
         }
         if (gameState.getStatus() == GameStatus.NOT_STARTED) {
-            gameService.update(gameId, gameState.getGameName(), GameStatus.STARTED);
+            gameService.updateStatus(gameId, GameStatus.STARTED);
         }
         configurePlayGameComponent();
     }

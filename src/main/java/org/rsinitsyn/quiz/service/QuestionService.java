@@ -3,19 +3,16 @@ package org.rsinitsyn.quiz.service;
 import io.micrometer.observation.annotation.Observed;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.dao.GameQuestionUserDao;
-import org.rsinitsyn.quiz.dao.QuestionCategoryDao;
 import org.rsinitsyn.quiz.dao.QuestionDao;
 import org.rsinitsyn.quiz.dao.QuestionGradeDao;
 import org.rsinitsyn.quiz.entity.*;
 import org.rsinitsyn.quiz.model.AnswerHistory;
 import org.rsinitsyn.quiz.model.QuestionModel;
-import org.rsinitsyn.quiz.model.binding.*;
-import org.rsinitsyn.quiz.properties.QuizAppProperties;
-import org.rsinitsyn.quiz.service.strategy.update.*;
+import org.rsinitsyn.quiz.model.binding.AbstractQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
+import org.rsinitsyn.quiz.service.strategy.update.AbstractQuestionUpdateStrategy;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,63 +26,27 @@ import java.util.stream.Collectors;
 @Slf4j
 public class QuestionService {
 
-    public static final String GENERAL_CATEGORY = "Общие";
-
     private final QuestionDao questionDao;
-    private final QuestionCategoryDao questionCategoryDao;
     private final GameQuestionUserDao gameQuestionUserDao;
     private final QuestionGradeDao questionGradeDao;
     private final ResourceService resourceService;
     private final UserService userService;
-    private final QuizAppProperties properties;
-    private final Map<
+    private Map<
             String,
             AbstractQuestionUpdateStrategy<? extends AbstractQuestionBindingModel>> questionUpdateStrategyMap;
 
     public QuestionService(QuestionDao questionDao,
-                           QuestionCategoryDao questionCategoryDao,
                            GameQuestionUserDao gameQuestionUserDao,
                            QuestionGradeDao questionGradeDao,
                            ResourceService resourceService,
                            UserService userService,
-                           QuizAppProperties properties,
                            @Qualifier("questionUpdateStrategyMap") Map<String, AbstractQuestionUpdateStrategy<? extends AbstractQuestionBindingModel>> questionUpdateStrategyMap) {
         this.questionDao = questionDao;
-        this.questionCategoryDao = questionCategoryDao;
         this.gameQuestionUserDao = gameQuestionUserDao;
         this.questionGradeDao = questionGradeDao;
         this.resourceService = resourceService;
         this.userService = userService;
-        this.properties = properties;
         this.questionUpdateStrategyMap = questionUpdateStrategyMap;
-    }
-
-    @Cacheable(value = "allCategories")
-    public List<QuestionCategoryEntity> findAllCategories() {
-        return questionCategoryDao.findAllOrderByName();
-    }
-
-    @Cacheable(value = "defaultCategory")
-    public QuestionCategoryEntity getOrCreateDefaultCategory() {
-        return questionCategoryDao.findByName(GENERAL_CATEGORY)
-                .orElseGet(() -> {
-                    QuestionCategoryEntity categoryEntity = new QuestionCategoryEntity();
-                    categoryEntity.setName(GENERAL_CATEGORY);
-                    return questionCategoryDao.save(categoryEntity);
-                });
-    }
-
-    @CacheEvict(value = "allCategories", allEntries = true)
-    public QuestionCategoryEntity saveQuestionCategory(String categoryName) {
-        QuestionCategoryEntity entity = new QuestionCategoryEntity();
-        entity.setName(categoryName);
-        QuestionCategoryEntity saved = questionCategoryDao.save(entity);
-        log.info("Category saved, name: {}", saved.getName());
-        return saved;
-    }
-
-    public Optional<QuestionCategoryEntity> findCategoryByName(String name) {
-        return questionCategoryDao.findByName(name);
     }
 
     public QuestionEntity findByIdLazy(UUID id) {
@@ -109,9 +70,7 @@ public class QuestionService {
         if (username.equals("admin")) {
             return questionDao.findAllJoinAnswersAndCategoryNewFirst();
         }
-        return questionDao.findAllJoinAnswersAndCategoryNewFirst()
-                .stream().filter(entity -> entity.getCreatedBy().equals(username))
-                .toList();
+        return questionDao.findAllJoinAnswersAndCategoryNewFirst(username);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
@@ -144,7 +103,7 @@ public class QuestionService {
                                 .collect(Collectors.toMap(
                                         gqe -> gqe.getUser().getUsername(),
                                         gqe -> AnswerHistory.ofAnswerResult(gqe.getAnswered()),
-                                        (gqeRight, gqeWrong) -> gqeRight)));
+                                        (correctAnswer, wrongAnswer) -> correctAnswer)));
                     }
 
                     QuestionModel questionModel = toQuizQuestionModel(question);
@@ -180,68 +139,20 @@ public class QuestionService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public void saveOrUpdate(TopQuestionBindingModel model) {
-        var strategy = (TopQuestionUpdateStrategy)
+    public <T extends AbstractQuestionBindingModel> void saveOrUpdate(T model) {
+        AbstractQuestionUpdateStrategy<? extends AbstractQuestionBindingModel> abstractStrategy =
                 questionUpdateStrategyMap.get(model.getClass().getSimpleName());
-        var question = strategy.prepareEntity(model, model.getId() == null
+        @SuppressWarnings("unchecked")
+        AbstractQuestionUpdateStrategy<T> specificStrategy = (AbstractQuestionUpdateStrategy<T>) abstractStrategy;
+        var question = specificStrategy.prepareEntity(model, model.getId() == null
                 ? null
                 : findById(UUID.fromString(model.getId())));
         saveEntityAndResources(question);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRED)
-    public void saveOrUpdate(PrecisionQuestionBindingModel model) {
-        var strategy = (PreciseQuestionUpdateStrategy)
-                questionUpdateStrategyMap.get(model.getClass().getSimpleName());
-        var question = strategy.prepareEntity(model, model.getId() == null
-                ? null
-                : findById(UUID.fromString(model.getId())));
-        saveEntityAndResources(question);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRED)
-    public void saveOrUpdate(OrQuestionBindingModel model) {
-        var strategy = (OrQuestionUpdateStrategy)
-                questionUpdateStrategyMap.get(model.getClass().getSimpleName());
-        var question = strategy.prepareEntity(model, model.getId() == null
-                ? null
-                : findById(UUID.fromString(model.getId())));
-        saveEntityAndResources(question);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRED)
-    public void saveOrUpdate(PhotoQuestionBindingModel model) {
-        var strategy = (PhotoQuestionUpdateStrategy)
-                questionUpdateStrategyMap.get(model.getClass().getSimpleName());
-        var question = strategy.prepareEntity(model, model.getId() == null
-                ? null
-                : findById(UUID.fromString(model.getId())));
-        saveEntityAndResources(question);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRED)
-    public void saveOrUpdate(LinkQuestionBindingModel model) {
-        var strategy = (LinkQuestionUpdateStrategy)
-                questionUpdateStrategyMap.get(model.getClass().getSimpleName());
-        var question = strategy.prepareEntity(model, model.getId() == null
-                ? null
-                : findById(UUID.fromString(model.getId())));
-        saveEntityAndResources(question);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRED)
-    public void saveOrUpdate(FourAnswersQuestionBindingModel model) {
-        var strategy = (FourAnswersQuestionUpdateStrategy)
-                questionUpdateStrategyMap.get(model.getClass().getSimpleName());
-        if (model.getId() == null) {
-            QuestionEntity saved = questionDao.save(strategy.prepareEntity(model, null));
-            resourceService.saveImageFromUrl(saved.getPhotoFilename(), saved.getOriginalPhotoUrl());
-            resourceService.saveAudio(saved.getAudioFilename(), model.getAudio());
-        } else {
-            var persistent = questionDao.findById(UUID.fromString(model.getId())).orElseThrow();
-            var updated = strategy.prepareEntity(model, persistent);
-            saveEntityAndResources(updated);
-            // audio not editable for now
+        // TODO: Temp solution for saving audio only for one question type
+        if (model instanceof FourAnswersQuestionBindingModel fourAnswersModel) {
+            if (fourAnswersModel.getId() == null) {
+                resourceService.saveAudio(question.getAudioFilename(), fourAnswersModel.getAudio());
+            }
         }
     }
 

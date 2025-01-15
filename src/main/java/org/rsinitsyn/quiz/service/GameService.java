@@ -1,6 +1,7 @@
 package org.rsinitsyn.quiz.service;
 
 import io.micrometer.observation.annotation.Observed;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.dao.GameDao;
@@ -29,10 +30,15 @@ public class GameService {
     private final GameQuestionUserDao gameQuestionUserDao;
     private final QuestionService questionService;
     private final UserService userService;
+    private final EntityManager entityManager;
 
     public GameEntity findById(String id) {
         return gameDao.findByIdJoinQuestions(UUID.fromString(id))
                 .orElse(null);
+    }
+
+    public List<GameEntity> findAllNewFirst() {
+        return gameDao.findAllJoinGamesQuestionsNewFirst();
     }
 
     public boolean exists(UUID id) {
@@ -82,15 +88,14 @@ public class GameService {
         }
     }
 
-    public boolean createIfNotExists(String id, GameType gameType) {
-        Optional<GameEntity> gameEntityOptional = gameDao.findById(UUID.fromString(id));
-        if (gameEntityOptional.isPresent()) {
+    public boolean createIfNotExists(String id, String name, GameType gameType) {
+        if (gameDao.existsById(UUID.fromString(id))) {
             log.info("Game already exists, id: {}", id);
             return false;
         }
         GameEntity entity = new GameEntity();
         entity.setId(UUID.fromString(id));
-        entity.setName("Cleverest");
+        entity.setName(name);
         entity.setStatus(GameStatus.NOT_STARTED);
         entity.setType(gameType);
         entity.setCreatedBy(SessionWrapper.getLoggedUser());
@@ -101,18 +106,18 @@ public class GameService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public void update(String id, String name, GameStatus status) {
-        GameEntity gameEntity = gameDao.findById(UUID.fromString(id)).orElseThrow();
-        setNewFields(gameEntity, name, status);
-        log.info("Updating game, id: {}", id);
+    public void updateStatus(String id, GameStatus status) {
+        entityManager.createQuery("update GameEntity set status = :status where id = :id")
+                .setParameter("status", status)
+                .setParameter("id", UUID.fromString(id))
+                .executeUpdate();
+        log.info("Updated game, id: {}", id);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
     public void linkQuestionsWithGame(String id, QuizGameState stateModel) {
         GameEntity gameEntity = findById(id);
-        setNewFields(gameEntity, stateModel.getGameName(), GameStatus.NOT_STARTED);
         log.info("Updating game, id: {}", id);
-
         UserEntity user = userService.findByUsername(stateModel.getPlayerName());
         AtomicInteger questionOrder = new AtomicInteger(0);
         List<GameQuestionUserEntity> gameQuestionEntitiesToSave = stateModel.getQuestions().stream().map(questionModel -> {
@@ -131,12 +136,6 @@ public class GameService {
 
         List<GameQuestionUserEntity> savedGameQuestions = gameQuestionUserDao.saveAll(gameQuestionEntitiesToSave);
         log.info("Saved game questions, size: {}", savedGameQuestions.size());
-    }
-
-    private void setNewFields(GameEntity gameEntity, String name, GameStatus status) {
-        gameEntity.setName(name);
-        gameEntity.setCreatedBy(SessionWrapper.getLoggedUser());
-        gameEntity.setStatus(status);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
@@ -172,19 +171,11 @@ public class GameService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     public void finishGame(String id) {
-        gameDao.findById(UUID.fromString(id))
-                .ifPresent(gameEntity -> {
-                    gameEntity.setStatus(GameStatus.FINISHED);
-                    gameEntity.setFinishDate(LocalDateTime.now());
-                });
-    }
-
-    public List<GameEntity> findAllNewFirst() {
-        return gameDao.findAllJoinGamesQuestionsNewFirst();
+        updateStatus(id, GameStatus.FINISHED);
     }
 
     @Transactional(readOnly = true)
-    public QuizGameState getQuizGameState(String gameId) {
+    public QuizGameState restoreQuizGameState(String gameId) {
         var gameEntity = findById(gameId);
         var gameQuestions = gameEntity.getGameQuestions();
         var state = new QuizGameState();

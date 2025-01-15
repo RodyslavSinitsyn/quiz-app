@@ -12,14 +12,28 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public interface QuestionDao extends JpaRepository<QuestionEntity, UUID> {
-    @Query("select distinct q from QuestionEntity q " +
-            "join fetch q.category " +
-            "join fetch q.answers " +
-            "left join fetch q.grades " +
-            "order by q.creationDate desc ")
+    @Query("""
+            select distinct q from QuestionEntity q
+            join fetch q.category
+            join fetch q.answers
+            left join fetch q.grades
+            where q.createdBy = :createdBy
+            order by q.creationDate desc
+            """)
+    List<QuestionEntity> findAllJoinAnswersAndCategoryNewFirst(@Param("createdBy") String createdBy);
+
+    @Query("""
+            select distinct q from QuestionEntity q
+            join fetch q.category
+            join fetch q.answers
+            left join fetch q.grades
+            order by q.creationDate desc
+            """)
     List<QuestionEntity> findAllJoinAnswersAndCategoryNewFirst();
 
     List<QuestionEntity> findAllByCreatedBy(String createdBy);
+
+    int countAllByCreatedBy(String createdBy);
 
     @Query("SELECT qe FROM QuestionEntity qe JOIN FETCH qe.answers WHERE qe.id = :id")
     Optional<QuestionEntity> findByIdJoinAnswers(@Param("id") UUID id);

@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -34,16 +33,11 @@ public class UserService {
 
     @Cacheable(value = "allRegisteredUsers")
     public List<UserEntity> findAllOrderByVisitDateDesc() {
-        return userDao.findAll().stream()
-                .sorted(Comparator.comparing(UserEntity::getLastVisitDate, Comparator.reverseOrder()))
-                .toList();
+        return userDao.findAllByOrderByLastVisitDateDesc();
     }
 
-    public List<UserEntity> findAllExceptCurrent() {
-        return findAllOrderByVisitDateDesc()
-                .stream()
-                .filter(userEntity -> !userEntity.getUsername().equals(SessionWrapper.getLoggedUser()))
-                .toList();
+    public List<UserEntity> findAllExceptLogged() {
+        return userDao.findAllByUsernameNotOrderByLastVisitDateDesc(SessionWrapper.getLoggedUser());
     }
 
     public UserEntity findByUsername(String username) {

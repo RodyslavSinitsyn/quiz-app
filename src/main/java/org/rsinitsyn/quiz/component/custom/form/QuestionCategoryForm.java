@@ -13,6 +13,7 @@ import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.shared.Registration;
 import java.util.List;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
@@ -27,6 +28,7 @@ public class QuestionCategoryForm extends FormLayout {
     private Button saveButton = new Button();
     private Button cancelButton = new Button();
 
+    @Setter
     private List<QuestionCategoryEntity> categories;
 
     public QuestionCategoryForm(List<QuestionCategoryEntity> categories, QuestionCategoryBindingModel model) {
@@ -72,10 +74,6 @@ public class QuestionCategoryForm extends FormLayout {
     public void setModel(QuestionCategoryBindingModel model) {
         this.model = model;
         this.binder.readBean(model);
-    }
-
-    public void setCategories(List<QuestionCategoryEntity> categories) {
-        this.categories = categories;
     }
 
     @Getter

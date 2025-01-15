@@ -1,18 +1,20 @@
 package org.rsinitsyn.quiz.service.strategy.update;
 
-import org.rsinitsyn.quiz.dao.QuestionCategoryDao;
 import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.binding.OrQuestionBindingModel;
 import org.rsinitsyn.quiz.properties.QuizAppProperties;
+import org.rsinitsyn.quiz.service.QuestionCategoryService;
 import org.springframework.stereotype.Service;
 
 @Service
 public class OrQuestionUpdateStrategy extends AbstractQuestionUpdateStrategy<OrQuestionBindingModel> {
 
-    public OrQuestionUpdateStrategy(QuizAppProperties properties, QuestionCategoryDao questionCategoryDao) {
-        super(properties, questionCategoryDao);
+
+    public OrQuestionUpdateStrategy(QuizAppProperties properties,
+                                    QuestionCategoryService categoryService) {
+        super(properties, categoryService);
     }
 
     @Override

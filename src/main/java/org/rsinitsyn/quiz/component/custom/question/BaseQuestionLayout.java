@@ -16,6 +16,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
+import org.rsinitsyn.quiz.component.custom.AudioPlayer;
 import org.rsinitsyn.quiz.component.custom.answer.AbstractAnswersLayout;
 import org.rsinitsyn.quiz.component.custom.answer.AnswerLayoutsFactory;
 import org.rsinitsyn.quiz.component.custom.event.StubEvent;
@@ -107,9 +108,10 @@ public class BaseQuestionLayout extends VerticalLayout {
             });
 
             add(playAudioButton);
-            // TODO Play audio on each device
-//            AudioPlayer audioPlayer = new AudioPlayer(QuizUtils.createStreamResourceForAudio(questionModel.getAudioFilename()));
-//            layout.add(audioPlayer);
+
+            //  TODO: Play audio on each device (not working for mobile)
+            AudioPlayer audioPlayer = new AudioPlayer(QuizUtils.createStreamResourceForAudio(questionModel.getAudioFilename()));
+            add(audioPlayer);
         }
     }
 

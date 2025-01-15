@@ -32,7 +32,7 @@ public class ApplicationConfiguration implements AppShellConfigurator, VaadinSer
                     e.getSession().getSession().setMaxInactiveInterval(3_600); // one hour
                 });
         event.getSource().addSessionDestroyListener(e -> {
-            log.info("Session closed: {}", e.getSession().getSession().getId());
+            log.info("Session closed: {}", e.getSession());
         });
     }
 }

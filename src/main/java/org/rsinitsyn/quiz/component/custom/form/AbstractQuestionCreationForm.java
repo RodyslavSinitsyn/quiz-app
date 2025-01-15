@@ -128,28 +128,29 @@ public abstract class AbstractQuestionCreationForm<T extends AbstractQuestionBin
         category.setLabel("Тема вопроса");
     }
 
+    @Getter
     public static abstract class QuestionFormEvent extends ComponentEvent<FormLayout> {
-        @Getter
-        private Object model;
+
+        private AbstractQuestionBindingModel model;
 
         public QuestionFormEvent(AbstractQuestionCreationForm source) {
             super(source, false);
         }
 
-        public QuestionFormEvent(AbstractQuestionCreationForm source, Object model) {
+        public QuestionFormEvent(AbstractQuestionCreationForm source, AbstractQuestionBindingModel model) {
             this(source);
             this.model = model;
         }
     }
 
     public static class SaveEvent extends QuestionFormEvent {
-        public SaveEvent(AbstractQuestionCreationForm source, Object model) {
+        public SaveEvent(AbstractQuestionCreationForm source, AbstractQuestionBindingModel model) {
             super(source, model);
         }
     }
 
     public static class DeleteEvent extends QuestionFormEvent {
-        public DeleteEvent(AbstractQuestionCreationForm source, Object model) {
+        public DeleteEvent(AbstractQuestionCreationForm source, AbstractQuestionBindingModel model) {
             super(source, model);
         }
     }

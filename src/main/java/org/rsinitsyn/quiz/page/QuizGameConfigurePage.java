@@ -50,7 +50,7 @@ public class QuizGameConfigurePage extends VerticalLayout {
     private void configureGameSettingsComponent() {
         settingsComponent = new QuizGameSettingsComponent(
                 questionService.findAllByCurrentUserAsModel(),
-                userService.findAllExceptCurrent());
+                userService.findAllExceptLogged());
         add(settingsComponent);
     }
 
@@ -59,10 +59,9 @@ public class QuizGameConfigurePage extends VerticalLayout {
         super.onAttach(attachEvent);
         subscriptions.add(settingsComponent.addListener(QuizGameSettingsComponent.StartGameEvent.class, event -> {
             var newGameId = UUID.randomUUID().toString();
-            SessionWrapper.addAttr(event.getGameState());
-            gameService.createIfNotExists(newGameId, GameType.QUIZ);
+            gameService.createIfNotExists(newGameId, event.getGameState().getGameName(), GameType.QUIZ);
             gameService.linkQuestionsWithGame(newGameId, event.getGameState());
-            getUI().ifPresent(ui -> ui.navigate(QuizGamePlayPage.class, newGameId)); // TODO: Pass state or get from DB!!!
+            getUI().ifPresent(ui -> ui.navigate(QuizGamePlayPage.class, newGameId));
         }));
         log.trace("onAttach. subscribe {}", subscriptions.size());
     }

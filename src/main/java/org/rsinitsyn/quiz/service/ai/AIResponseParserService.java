@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.entity.AnswerEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
+import org.rsinitsyn.quiz.service.QuestionCategoryService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class AIResponseParserService {
 
     private final ObjectMapper objectMapper;
     private final QuestionService questionService;
+    private final QuestionCategoryService categoryService;
 
     public void saveQuestionsFromAI(String response) {
         try {
@@ -57,8 +59,8 @@ public class AIResponseParserService {
         }
 
         String categoryName = jsonNode.get("categoryName").asText();
-        var persistentCategory = questionService.findCategoryByName(categoryName)
-                .orElseGet(() -> questionService.saveQuestionCategory(categoryName));
+        var persistentCategory = categoryService.findByName(categoryName)
+                .orElseGet(() -> categoryService.save(categoryName));
         question.setCategory(persistentCategory);
 
         return question;

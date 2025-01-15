@@ -25,6 +25,7 @@ public class ImportService {
     private static final String DEFAULT_DELIMITER = "|";
 
     private final QuestionService questionService;
+    private final QuestionCategoryService categoryService;
     private final QuizAppProperties properties;
 
     @SneakyThrows
@@ -69,7 +70,7 @@ public class ImportService {
         entity.setCreatedBy(SessionWrapper.getLoggedUser());
         entity.setCreationDate(LocalDateTime.now());
         entity.setType(correctAnswersCount > 1 ? QuestionType.MULTI : QuestionType.TEXT);
-        entity.setCategory(questionService.getOrCreateDefaultCategory());
+        entity.setCategory(categoryService.getOrCreateDefaultCategory());
 
         return entity;
     }

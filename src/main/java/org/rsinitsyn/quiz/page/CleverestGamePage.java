@@ -98,7 +98,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
         Registration settCompletedEvent = gameSettingsComponent.addListener(CleverestGameSettingsComponent.SettingsCompletedEvent.class,
                 event -> {
                     String newGameId = UUID.randomUUID().toString();
-                    gameService.createIfNotExists(newGameId, GameType.CLEVEREST);
+                    gameService.createIfNotExists(newGameId, "Cleverest", GameType.CLEVEREST);
                     broadcaster.createState(
                             newGameId,
                             SessionWrapper.getLoggedUser(),
@@ -227,7 +227,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
                 gameId,
                 CleverestBroadcaster.AllUsersReadyEvent.class, event -> {
                     if (isAdmin) {
-                        gameService.update(gameId, "Cleverest", GameStatus.STARTED);
+                        gameService.updateStatus(gameId, GameStatus.STARTED);
                         gameService.linkQuestionsAndUsersWithGame(
                                 gameId,
                                 event.getUsernames(),

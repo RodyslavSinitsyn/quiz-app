@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.rsinitsyn.quiz.entity.GameEntity;
+import org.rsinitsyn.quiz.entity.GameStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,13 +16,17 @@ public interface GameDao extends JpaRepository<GameEntity, UUID> {
     @Query("SELECT DISTINCT ge FROM GameEntity ge LEFT JOIN FETCH ge.gameQuestions WHERE ge.id = :id")
     Optional<GameEntity> findByIdJoinQuestions(@Param("id") UUID id);
 
-    List<GameEntity> findAllByCreatedBy(String createdBy);
+    List<GameEntity> findAllByCreatedByAndStatus(String createdBy, GameStatus status);
+
+    int countAllByCreatedByAndStatus(String createdBy, GameStatus status);
 
     @Query("SELECT DISTINCT ge " +
             "FROM GameEntity ge " +
             "LEFT JOIN FETCH ge.gameQuestions gq " +
-            "WHERE gq.user.username = :playerName")
-    List<GameEntity> findAllByPlayerName(@Param("playerName") String playerName);
+            "WHERE gq.user.username = :playerName " +
+            "AND ge.status = :status")
+    List<GameEntity> findAllByPlayerNameAndStatus(@Param("playerName") String playerName,
+                                                  @Param("status") GameStatus status);
 
     @Query("SELECT DISTINCT ge " +
             "FROM GameEntity ge " +

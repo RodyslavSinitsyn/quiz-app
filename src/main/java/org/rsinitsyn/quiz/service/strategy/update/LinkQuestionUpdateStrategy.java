@@ -1,10 +1,10 @@
 package org.rsinitsyn.quiz.service.strategy.update;
 
-import org.rsinitsyn.quiz.dao.QuestionCategoryDao;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.binding.LinkQuestionBindingModel;
 import org.rsinitsyn.quiz.properties.QuizAppProperties;
+import org.rsinitsyn.quiz.service.QuestionCategoryService;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -12,8 +12,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 public class LinkQuestionUpdateStrategy extends AbstractQuestionUpdateStrategy<LinkQuestionBindingModel> {
 
-    public LinkQuestionUpdateStrategy(QuizAppProperties properties, QuestionCategoryDao questionCategoryDao) {
-        super(properties, questionCategoryDao);
+
+    public LinkQuestionUpdateStrategy(QuizAppProperties properties,
+                                      QuestionCategoryService categoryService) {
+        super(properties, categoryService);
     }
 
     @Override
