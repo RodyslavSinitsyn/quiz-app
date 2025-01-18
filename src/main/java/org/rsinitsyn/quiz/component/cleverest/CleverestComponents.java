@@ -2,7 +2,11 @@ package org.rsinitsyn.quiz.component.cleverest;
 
 import com.flowingcode.vaadin.addons.carousel.Carousel;
 import com.flowingcode.vaadin.addons.carousel.Slide;
-import com.vaadin.flow.component.*;
+import com.vaadin.flow.component.AbstractField;
+import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -20,7 +24,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import de.jfancy.StarsRating;
 import lombok.experimental.UtilityClass;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
@@ -295,14 +298,14 @@ public class CleverestComponents {
         layout.setAlignItems(FlexComponent.Alignment.CENTER);
         layout.add(userInfoLightSpan("Оцените сложность вопроса", MOBILE_SMALL_FONT));
 
-        StarsRating rating = new StarsRating(0, 5, true);
-        rating.addValueChangeListener(event -> eventHandler.accept(event.getValue()));
-        layout.add(rating);
+        // TODO: Not working with new Vaadin, find replacement
+//        StarsRating rating = new StarsRating(0, 5, true);
+//        rating.addValueChangeListener(event -> eventHandler.accept(event.getValue()));
+//        layout.add(rating);
 
         return layout;
     }
 
-    // TODO: Carousel for admin
     public static List<Component> userPhotoOptionsInputComponentsCarousel(QuestionModel questionModel) {
         List<AnswerModel> shuffledAnswers = questionModel.getShuffledAnswers();
         var slides = shuffledAnswers.stream()

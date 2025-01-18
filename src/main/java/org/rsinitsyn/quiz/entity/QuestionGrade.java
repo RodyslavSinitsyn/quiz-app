@@ -27,12 +27,12 @@ public class QuestionGrade {
     @Max(value = 5)
     private int grade;
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("question_id")
+    @MapsId("questionId")
     @JoinColumn(name = "question_id")
     @ToString.Exclude
     private QuestionEntity question;
     @ManyToOne(fetch = FetchType.EAGER)
-    @MapsId("user_id")
+    @MapsId("userId")
     @JoinColumn(name = "user_id")
     @ToString.Exclude
     private UserEntity user;

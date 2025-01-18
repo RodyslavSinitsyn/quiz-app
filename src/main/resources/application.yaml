@@ -3,12 +3,12 @@ spring:
     name: quiz-app
   devtools:
     livereload:
-      enabled: false
+      enabled: true
       port: 35730
     restart:
       poll-interval: 2s
       quiet-period: 1s
-      enabled: false
+      enabled: true
 
   # DB properties
   datasource:
