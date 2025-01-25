@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2-prod
+      author: rsinitsyn
+      comment: Migrate DB data from H2
+      context: prod
+      labels: migration
+      runAlways: false
+      runOnChange: false
+      changes:
+        - sqlFile:
+            path: db/changelog/migrations/prod/h2-prod-data.sql
