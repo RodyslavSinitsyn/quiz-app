@@ -24,7 +24,7 @@ repositories {
 
 ext {
     set('vaadinVersion', "24.5.10")
-    isProd = System.properties['env'] == 'prod'
+    isProd = System.getenv('VAADIN_MODE') == 'prod'
 }
 
 dependencies {
@@ -67,6 +67,7 @@ vaadin {
     if (isProd) {
         print('Prod mode in gradle')
         productionMode = true
+        forceProductionBuild = true
     }
 }
 

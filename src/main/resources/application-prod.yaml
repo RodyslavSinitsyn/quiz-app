@@ -22,3 +22,7 @@ quiz:
 
 vaadin:
   productionMode: true
+
+logging:
+  level:
+    org.rsinitsyn.quiz: INFO
