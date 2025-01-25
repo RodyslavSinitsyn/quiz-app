@@ -9,7 +9,7 @@ import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Hr;
-import com.vaadin.flow.component.html.Label;
+import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -151,7 +151,7 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
     }
 
     private void configureQuestionsList() {
-        Label label = new Label();
+        var label = new NativeLabel();
 
         questions.removeAll();
         questions.setId("questions-list-box");
