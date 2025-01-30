@@ -187,7 +187,7 @@ public class GameService {
                 .sorted(Comparator.comparing(GameQuestionUserEntity::getOrderNumber, Comparator.naturalOrder()))
                 .map(GameQuestionUserEntity::getQuestion)
                 .map(questionService::toQuizQuestionModel)
-                .collect(Collectors.toSet()));
+                .collect(Collectors.toCollection(LinkedHashSet::new)));
         gameQuestions.stream()
                 .filter(e -> Boolean.TRUE.equals(e.getAnswered()))
                 .forEach(e -> {

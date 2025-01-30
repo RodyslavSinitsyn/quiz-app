@@ -242,7 +242,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
             BeforeLeaveEvent.ContinueNavigationAction leaveAction =
                     event.postpone();
             QuizComponents.openConfirmDialog(
-                    new Span("Покинув страницу придется начать с начала!"),
+                    new Span("Можно будет продолжить позже"),
                     "Покинуть игру?",
                     leaveAction::proceed
             );
