@@ -33,7 +33,7 @@ public abstract class AbstractQuestionCreationForm<T extends AbstractQuestionBin
     protected final TextArea text = new TextArea("Текст вопроса");
     protected final TextField photoLocation = new TextField("Ссылка на фото");
     protected final Checkbox enableDescription = new Checkbox("Описане ответа", false);
-    protected final TextArea answerDescriptionText = new TextArea("Детальный ответ");
+    protected final TextArea answerDescriptionText = new TextArea("Описание ответ");
     protected final ComboBox<String> category = new ComboBox<>();
 
     private final Button save = new Button("Сохранить");

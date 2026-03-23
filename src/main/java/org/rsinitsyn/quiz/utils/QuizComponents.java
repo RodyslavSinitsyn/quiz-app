@@ -92,7 +92,7 @@ public class QuizComponents {
         } else {
             result.getElement().getThemeList().add("badge");
         }
-        result.add(questionType.icon);
+        result.add(questionType.icon.create());
         return result;
     }
 

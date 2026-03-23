@@ -6,14 +6,14 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public enum QuestionType {
-    TEXT(VaadinIcon.QUESTION.create()),
-    PHOTO(VaadinIcon.PICTURE.create()),
-    MULTI(VaadinIcon.QUESTION.create()),
-    PRECISION((VaadinIcon.DOT_CIRCLE.create())),
-    OR(VaadinIcon.CORNER_UPPER_LEFT.create()),
-    TOP(VaadinIcon.LIST_UL.create()),
-    LINK(VaadinIcon.LINK.create()),
-    SEQUENCE(VaadinIcon.LIST_OL.create());
+    TEXT(VaadinIcon.QUESTION),
+    PHOTO(VaadinIcon.PICTURE),
+    MULTI(VaadinIcon.QUESTION),
+    PRECISION((VaadinIcon.DOT_CIRCLE)),
+    OR(VaadinIcon.CORNER_UPPER_LEFT),
+    TOP(VaadinIcon.LIST_UL),
+    LINK(VaadinIcon.LINK),
+    SEQUENCE(VaadinIcon.LIST_OL);
 
-    public final Icon icon;
+    public final VaadinIcon icon;
 }

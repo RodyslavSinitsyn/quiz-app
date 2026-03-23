@@ -40,12 +40,12 @@ import org.springframework.security.concurrent.DelegatingSecurityContextExecutor
 
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static org.rsinitsyn.quiz.utils.ModelConverterUtils.*;
 
 @Slf4j
@@ -144,7 +144,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
     private void updateListAsync() {
         spinner.setVisible(true);
         UI ui = getUI().orElse(null);
-        CompletableFuture.supplyAsync(() -> questionService.findAllCreatedByCurrentUser(), securityDelegatingExecutor)
+        supplyAsync(() -> questionService.findAllCreatedByCurrentUser(), securityDelegatingExecutor)
                 .thenAccept(questionEntities -> ui.access(() -> {
                     grid.setQuestions(questionEntities);
                     spinner.setVisible(false);

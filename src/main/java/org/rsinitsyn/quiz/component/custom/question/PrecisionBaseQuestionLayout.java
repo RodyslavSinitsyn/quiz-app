@@ -4,6 +4,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 
+@Deprecated
 public class PrecisionBaseQuestionLayout extends BaseQuestionLayout {
 
     public PrecisionBaseQuestionLayout(QuestionLayoutRequest request) {

@@ -6,9 +6,6 @@ public class QuestionLayoutFactory {
 
     public static BaseQuestionLayout createQuestionLayout(QuestionLayoutRequest request) {
         var type = request.question().getType();
-        return switch (type) {
-            case PRECISION -> new PrecisionBaseQuestionLayout(request);
-            default -> new BaseQuestionLayout(request);
-        };
+        return new BaseQuestionLayout(request);
     }
 }

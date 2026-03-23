@@ -105,8 +105,8 @@ public final class QuizUtils {
         ui.access(action);
     }
 
-    public static void runActionInUi(Optional<UI> optUi, Command action) {
-        runActionInUi(optUi.orElseThrow(() -> new RuntimeException("UI not exists!")), action);
+    public static void runActionInUi(Optional<UI> maybeUi, Command action) {
+        runActionInUi(maybeUi.orElseThrow(() -> new RuntimeException("UI not exists!")), action);
     }
 
 //

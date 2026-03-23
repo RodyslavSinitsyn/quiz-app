@@ -1,17 +1,11 @@
 package org.rsinitsyn.quiz.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+import org.rsinitsyn.quiz.utils.QuizUtils;
 
 import java.time.LocalDateTime;
 import java.util.*;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-import org.hibernate.annotations.Formula;
-import org.rsinitsyn.quiz.utils.QuizUtils;
 
 @Entity
 @Table(name = "questions")
@@ -57,7 +51,7 @@ public class QuestionEntity {
     @Transient
     private boolean shouldSaveImage = true;
 
-    //    @Formula("SELECT count(*) FROM games_questions gq WHERE gq.question_id = id")
+//    @Formula("SELECT count(*) FROM games_questions gq WHERE gq.question_id = id")
     @Transient
     private long gamesQuestionsCount;
 

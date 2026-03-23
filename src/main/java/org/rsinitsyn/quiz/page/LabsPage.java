@@ -13,6 +13,7 @@ import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.service.QuestionService;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -27,12 +28,32 @@ import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory
 @PermitAll
 public class LabsPage extends VerticalLayout {
 
-    public LabsPage() {
+    private final QuestionService questionService;
+
+    public LabsPage(final QuestionService questionService) {
+        this.questionService = questionService;
+
         final var fontSizes = new LinkedList<String>();
         fontSizes.add(LumoUtility.FontSize.XLARGE);
         fontSizes.add(LumoUtility.FontSize.XXLARGE);
 
+        final var questions = questionService.findAllByCurrentUserAsModel();
+        if (questions.isEmpty()) {
+            renderMockQuestions(fontSizes);
+            return;
+        }
 
+        for (final var question : questions) {
+            final var sequenceQuestion = createQuestionLayout(new QuestionLayoutRequest()
+                    .host(false)
+                    .textClasses(List.of(LumoUtility.FontSize.XLARGE))
+                    .question(question));
+            add(sequenceQuestion);
+            add(new Hr());
+        }
+    }
+
+    private void renderMockQuestions(final LinkedList<String> fontSizes) {
         for (final var questionType : QuestionType.values()) {
 
             if (questionType == QuestionType.PHOTO) {
