@@ -123,7 +123,8 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
             } else if (event.getItem().getType().equals(QuestionType.OR)) {
                 orForm.setModel(toOrQuestionBindingModel(event.getItem()));
                 addToDialogAndOpen(orForm);
-            } else if (event.getItem().getType().equals(QuestionType.TOP)) {
+            } else if (event.getItem().getType().equals(QuestionType.TOP)
+                    || event.getItem().getType().equals(QuestionType.SEQUENCE)) {
                 topForm.setModel(toTopQuestionBindingModel(event.getItem()));
                 addToDialogAndOpen(topForm);
             } else if (event.getItem().getType().equals(QuestionType.PHOTO)) {

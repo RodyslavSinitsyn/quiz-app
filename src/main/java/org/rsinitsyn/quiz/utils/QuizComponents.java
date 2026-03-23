@@ -89,22 +89,10 @@ public class QuizComponents {
         Span result = new Span();
         if (optionsOnly) {
             result.getElement().getThemeList().add("badge contrast");
-        } else if (questionType.equals(QuestionType.TOP)) {
-            result.getElement().getThemeList().add("badge error");
         } else {
             result.getElement().getThemeList().add("badge");
         }
-        Icon typeIcon;
-        switch (questionType) {
-            case TOP -> typeIcon = VaadinIcon.LIST_OL.create();
-            case TEXT -> typeIcon = VaadinIcon.QUESTION.create();
-            case OR -> typeIcon = VaadinIcon.CORNER_UPPER_LEFT.create();
-            case MULTI -> typeIcon = VaadinIcon.LIST_UL.create();
-            case PHOTO -> typeIcon = VaadinIcon.PICTURE.create();
-            case LINK -> typeIcon = VaadinIcon.LINK.create();
-            default -> typeIcon = VaadinIcon.DOT_CIRCLE.create();
-        }
-        result.add(typeIcon);
+        result.add(questionType.icon);
         return result;
     }
 
