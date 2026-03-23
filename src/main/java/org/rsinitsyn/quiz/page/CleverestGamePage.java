@@ -65,7 +65,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
     static final long serialVersionUID = 6789L;
 
     private String gameId;
-    private boolean isAdmin;
+    private boolean gameHost;
     private List<Registration> subs = new ArrayList<>();
 
     private CleverestGameSettingsComponent gameSettingsComponent = new CleverestGameSettingsComponent(new ArrayList<>());
@@ -125,7 +125,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
             waitingRoomComponent = new CleverestWaitingRoomComponent(
                     gameId,
                     broadcaster,
-                    isAdmin);
+                    gameHost);
             add(waitingRoomComponent);
         } else if (status.equals(GameStatus.STARTED)) {
             configureAndAddPlayBoardComponent(event.isRefreshEvent());
@@ -140,7 +140,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
             navigateToNewGamePage("Игра уже началась, вы там не учавствуете", getUI().orElseThrow());
             return;
         }
-        playBoardComponent.setState(gameId, broadcaster, isAdmin, refreshEvent);
+        playBoardComponent.setState(gameId, broadcaster, gameHost, refreshEvent);
         add(playBoardComponent);
     }
 
@@ -149,7 +149,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
         resultComponent.setState(
                 gameState.getUsers().values(),
                 gameState.getHistory(),
-                isAdmin ? "" : SessionWrapper.getLoggedUser()
+                gameHost ? "" : SessionWrapper.getLoggedUser()
         );
         add(resultComponent);
     }
@@ -184,7 +184,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
             navigateToNewGamePage("Состояние игры не создано", ui);
             return;
         }
-        this.isAdmin = gameEntity.getCreatedBy().equals(SessionWrapper.getLoggedUser());
+        this.gameHost = gameEntity.getCreatedBy().equals(SessionWrapper.getLoggedUser());
         // sub on events here because self reload does not trigger onAttach again
         subOnEvents(ui);
         renderComponents(gameEntity, event);
@@ -226,7 +226,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
         subs.add(broadcaster.subscribe(
                 gameId,
                 CleverestBroadcaster.AllUsersReadyEvent.class, event -> {
-                    if (isAdmin) {
+                    if (gameHost) {
                         gameService.updateStatus(gameId, GameStatus.STARTED);
                         gameService.linkQuestionsAndUsersWithGame(
                                 gameId,
@@ -242,7 +242,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
                     });
                 })
         );
-        if (isAdmin) {
+        if (gameHost) {
             subs.add(broadcaster.subscribe(gameId,
                     CleverestBroadcaster.SaveUserAnswersEvent.class,
                     event -> gameService.submitAnswersBatch(gameId, event.getQuestion(), event.getUserStates())));

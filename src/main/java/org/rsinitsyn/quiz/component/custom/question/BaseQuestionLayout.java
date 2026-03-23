@@ -18,7 +18,6 @@ import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.component.custom.AudioPlayer;
 import org.rsinitsyn.quiz.component.custom.answer.AbstractAnswersLayout;
 import org.rsinitsyn.quiz.component.custom.answer.AbstractAnswersLayout.AnswerChosenEvent;
-import org.rsinitsyn.quiz.component.custom.answer.AnswerLayoutsFactory;
 import org.rsinitsyn.quiz.component.custom.event.StubEvent;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
@@ -37,7 +36,7 @@ import static org.rsinitsyn.quiz.utils.QuizUtils.createStreamResourceForPhoto;
 public class BaseQuestionLayout extends VerticalLayout {
 
     protected final QuestionModel questionModel;
-    protected final boolean isAdmin;
+    protected final boolean host;
     protected final String imageHeight;
     protected final List<String> textContentClasses;
 
@@ -48,7 +47,7 @@ public class BaseQuestionLayout extends VerticalLayout {
 
     public BaseQuestionLayout(QuestionLayoutRequest request) {
         this.questionModel = request.question();
-        this.isAdmin = request.isAdmin();
+        this.host = request.host();
         this.imageHeight = request.imageHeight();
         this.textContentClasses = request.textClasses();
         configureStyling();
@@ -76,7 +75,7 @@ public class BaseQuestionLayout extends VerticalLayout {
                     Image image = new Image();
                     image.setSrc(createStreamResourceForPhoto(filename));
                     image.setMaxHeight(imageHeight);
-                    if (!isAdmin) image.setWidthFull();
+                    if (!host) image.setWidthFull();
                     image.getStyle().set("object-fit", "cover");
                     image.getStyle().set("object-position", "center center");
 
@@ -105,7 +104,7 @@ public class BaseQuestionLayout extends VerticalLayout {
             playAudioButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST,
                     ButtonVariant.LUMO_PRIMARY,
                     ButtonVariant.LUMO_SMALL);
-            playAudioButton.setEnabled(isAdmin);
+            playAudioButton.setEnabled(host);
             playAudioButton.addClickListener(event -> {
                 AudioUtils.playSoundAsync(filename);
             });
@@ -119,13 +118,14 @@ public class BaseQuestionLayout extends VerticalLayout {
     }
 
     private void renderAnswersLayout(QuestionLayoutRequest request) {
-        if (!isAdmin) {
-            answersLayout = createAnswerLayout(AnswerLayoutRequest.builder()
-                    .question(questionModel)
-                    .hintsState(request.hintsState())
-                    .build());
-            add(answersLayout);
+        if (host) {
+//            return;
         }
+        answersLayout = createAnswerLayout(AnswerLayoutRequest.builder()
+                .question(questionModel)
+                .hintsState(request.hintsState())
+                .build());
+        add(answersLayout);
     }
 
     @Getter

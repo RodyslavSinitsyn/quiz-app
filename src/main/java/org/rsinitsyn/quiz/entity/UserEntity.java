@@ -17,8 +17,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.NaturalId;
+import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import static org.rsinitsyn.quiz.utils.SessionWrapper.ADMIN_NAME;
 
 @Entity
 @Table(name = "users_tbl")
@@ -44,6 +48,9 @@ public class UserEntity implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (username.equals(ADMIN_NAME)) {
+            return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        }
         return List.of();
     }
 

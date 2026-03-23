@@ -134,7 +134,7 @@ public class QuestionService {
                 .build();
     }
 
-    private Set<AnswerModel> toQuizAnswerModel(Set<AnswerEntity> answerEntitySet) {
+    private List<AnswerModel> toQuizAnswerModel(List<AnswerEntity> answerEntitySet) {
         return answerEntitySet.stream()
                 .map(answerEntity -> AnswerModel.builder()
                         .text(answerEntity.getText())
@@ -142,7 +142,7 @@ public class QuestionService {
                         .number(answerEntity.getNumber())
                         .photoFilename(answerEntity.getPhotoFilename())
                         .build())
-                .collect(Collectors.toSet());
+                .toList();
     }
 
     @Transactional(propagation = Propagation.REQUIRED)

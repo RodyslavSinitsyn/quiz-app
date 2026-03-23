@@ -2,11 +2,7 @@ package org.rsinitsyn.quiz.component.cleverest;
 
 import com.flowingcode.vaadin.addons.carousel.Carousel;
 import com.flowingcode.vaadin.addons.carousel.Slide;
-import com.vaadin.flow.component.AbstractField;
-import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.ComponentEventListener;
-import com.vaadin.flow.component.HasValue;
+import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -24,7 +20,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import lombok.experimental.UtilityClass;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
@@ -36,8 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-@UtilityClass
-public class CleverestComponents {
+public final class CleverestComponents {
 
     public static final String LARGE_IMAGE_HEIGHT = "30em";
     public static final String MEDIUM_IMAGE_HEIGHT = "17.5em";
@@ -47,7 +41,11 @@ public class CleverestComponents {
     public static final String MOBILE_MEDIUM_FONT = LumoUtility.FontSize.XLARGE;
     public static final String MOBILE_LARGE_FONT = LumoUtility.FontSize.XXLARGE;
 
-    public Dialog openDialog(Component component, String headerTitle, Runnable closeAction) {
+    private CleverestComponents() {
+        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
+
+    public static Dialog openDialog(Component component, String headerTitle, Runnable closeAction) {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle(headerTitle);
         dialog.add(component);
@@ -60,7 +58,7 @@ public class CleverestComponents {
         return dialog;
     }
 
-    public Span questionTextSpan(String text, String... classes) {
+    public static Span questionTextSpan(String text, String... classes) {
         Span span = new Span();
         span.setText(text);
         span.addClassNames(
@@ -73,7 +71,7 @@ public class CleverestComponents {
         return span;
     }
 
-    public Span userAnswerSpan(UserGameState userGameState, QuestionType questionType, String... classes) {
+    public static Span userAnswerSpan(UserGameState userGameState, QuestionType questionType, String... classes) {
         Span userAnswer = new Span();
         if (questionType.equals(QuestionType.PHOTO)) {
             userAnswer.add(QuizComponents.largeAvatar(userGameState.getLastAnswerText()));
@@ -89,7 +87,7 @@ public class CleverestComponents {
                 userAnswer);
     }
 
-    public Span userNameSpan(String username, String textColor, String... classes) {
+    public static Span userNameSpan(String username, String textColor, String... classes) {
         return QuizComponents.appendTextBorder(new Span() {{
             setText(username);
             getStyle().set("color", textColor);
@@ -97,7 +95,7 @@ public class CleverestComponents {
         }});
     }
 
-    public Span correctAnswerSpan(QuestionModel questionModel, String... classes) {
+    public static Span correctAnswerSpan(QuestionModel questionModel, String... classes) {
         Span span = new Span();
         span.addClassNames(classes);
         span.addClassNames(LumoUtility.TextAlignment.CENTER,
@@ -117,7 +115,7 @@ public class CleverestComponents {
         return span;
     }
 
-    public Span answerDescriptionSpan(String answerDescription, String... classes) {
+    public static Span answerDescriptionSpan(String answerDescription, String... classes) {
         Span span = new Span();
         span.addClassNames(classes);
         span.addClassNames(LumoUtility.TextAlignment.CENTER,
@@ -129,7 +127,7 @@ public class CleverestComponents {
         return span;
     }
 
-    public Span userInfoLightSpan(String text, String... classes) {
+    public static Span userInfoLightSpan(String text, String... classes) {
         Span span = new Span();
         span.setText(text);
         span.addClassNames(
@@ -140,7 +138,7 @@ public class CleverestComponents {
     }
 
 
-    private Span delimiterSpan(String... classes) {
+    private static Span delimiterSpan(String... classes) {
         Span span = new Span();
         span.setText(": ");
         span.addClassNames(classes);
@@ -148,15 +146,15 @@ public class CleverestComponents {
     }
 
     // Form Elements
-    public Notification notification(String text, NotificationVariant variant) {
+    public static Notification notification(String text, NotificationVariant variant) {
         Notification notification = Notification.show(text, 1_500, Notification.Position.TOP_STRETCH);
         notification.addThemeVariants(variant);
         return notification;
     }
 
-    public Div optionComponent(String text,
-                               int maxLength,
-                               ComponentEventListener<ClickEvent<Div>> eventHandler) {
+    public static Div optionComponent(String text,
+                                      int maxLength,
+                                      ComponentEventListener<ClickEvent<Div>> eventHandler) {
         var option = new Div();
         option.setWidthFull();
         option.setText(text);
@@ -174,7 +172,7 @@ public class CleverestComponents {
         return option;
     }
 
-    public TextField answerInput(HasValue.ValueChangeListener<? super AbstractField.ComponentValueChangeEvent<TextField, String>> valueChangeHandler) {
+    public static TextField answerInput(HasValue.ValueChangeListener<? super AbstractField.ComponentValueChangeEvent<TextField, String>> valueChangeHandler) {
         TextField textField = new TextField("Введите ответ");
         textField.setValueChangeMode(ValueChangeMode.EAGER);
         textField.addThemeVariants(TextFieldVariant.LUMO_ALIGN_CENTER);
@@ -192,7 +190,7 @@ public class CleverestComponents {
         return submit;
     }
 
-    public Button primaryButton(String text, ComponentEventListener<ClickEvent<Button>> clickAction) {
+    public static Button primaryButton(String text, ComponentEventListener<ClickEvent<Button>> clickAction) {
         Button button = new Button(text);
         button.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
         button.addClickListener(clickAction);
@@ -200,8 +198,8 @@ public class CleverestComponents {
         return button;
     }
 
-    public Button approveButton(Runnable clickAction,
-                                int countLimit) {
+    public static Button approveButton(Runnable clickAction,
+                                       int countLimit) {
         Button button = new Button();
         button.setIcon(VaadinIcon.CHECK.create());
         button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -227,24 +225,24 @@ public class CleverestComponents {
     }
 
     // Icons
-    public Icon doneIcon() {
+    public static Icon doneIcon() {
         Icon icon = VaadinIcon.CHECK.create();
         icon.getElement().getThemeList().add("badge success");
         return icon;
     }
 
-    public Icon cancelIcon() {
+    public static Icon cancelIcon() {
         Icon icon = VaadinIcon.CLOSE_SMALL.create();
         icon.getElement().getThemeList().add("badge error");
         return icon;
     }
 
-    public Icon userCheckIcon() {
+    public static Icon userCheckIcon() {
         return VaadinIcon.USER_CHECK.create();
     }
 
     // Big Business Layouts
-    public VerticalLayout usersScoreTableLayout(Map<String, UserGameState> users) {
+    public static VerticalLayout usersScoreTableLayout(Map<String, UserGameState> users) {
         var layout = new VerticalLayout();
         users.forEach((username, userGameState) -> {
             HorizontalLayout row = new HorizontalLayout();
@@ -271,7 +269,7 @@ public class CleverestComponents {
         return layout;
     }
 
-    public HorizontalLayout userScoreLayout(String username, String ustTxtColor, int score, String... classes) {
+    public static HorizontalLayout userScoreLayout(String username, String ustTxtColor, int score, String... classes) {
         HorizontalLayout layout = new HorizontalLayout();
         layout.setAlignItems(FlexComponent.Alignment.CENTER);
         layout.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.STRETCH);
@@ -290,7 +288,7 @@ public class CleverestComponents {
         return layout;
     }
 
-    public VerticalLayout questionGradeLayout(Consumer<Integer> eventHandler) {
+    public static VerticalLayout questionGradeLayout(Consumer<Integer> eventHandler) {
         VerticalLayout layout = new VerticalLayout();
         layout.setSpacing(false);
         layout.setPadding(false);

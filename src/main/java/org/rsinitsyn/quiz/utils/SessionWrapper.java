@@ -13,6 +13,8 @@ import java.util.Optional;
 
 public class SessionWrapper {
 
+    public static final String ADMIN_NAME = "admin";
+
     public static String getLoggedUser() {
         return getLoggedUserEntity()
                 .map(UserEntity::getUsername)

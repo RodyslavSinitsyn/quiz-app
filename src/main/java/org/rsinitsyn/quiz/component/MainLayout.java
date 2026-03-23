@@ -110,6 +110,7 @@ public class MainLayout extends AppLayout implements
         tabs.add(createTab("Статистика", VaadinIcon.TRENDING_UP.create(), StatisticPage.class));
         if (Arrays.asList(environment.getActiveProfiles()).contains("dev")) {
             tabs.add(createTab("Шрифты", VaadinIcon.TEXT_LABEL.create(), FontsPage.class));
+            tabs.add(createTab("Labs", VaadinIcon.BOLT.create(), LabsPage.class));
         }
         return tabs;
     }

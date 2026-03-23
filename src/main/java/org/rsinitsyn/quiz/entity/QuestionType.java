@@ -4,7 +4,6 @@ public enum QuestionType {
     TEXT,
     PHOTO,
     MULTI,
-    MULTI_PHOTO,
     PRECISION,
     OR,
     TOP,

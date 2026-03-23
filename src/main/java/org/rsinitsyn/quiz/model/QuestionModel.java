@@ -27,7 +27,7 @@ public class QuestionModel {
     @Getter(AccessLevel.NONE)
     private String answerDescription;
     private Map<String, AnswerHistory> playersAnswersHistory;
-    private Set<AnswerModel> answers;
+    private List<AnswerModel> answers;
 
     // for cleverest, mutable
     @Setter

@@ -14,7 +14,7 @@ import static org.rsinitsyn.quiz.model.HintsState.disabledHintsState;
 @Accessors(chain = true, fluent = true)
 public class QuestionLayoutRequest {
    private QuestionModel question;
-   private boolean isAdmin = false;
+   private boolean host = false;
    private String imageHeight = "25em";
    private List<String> textClasses = Collections.emptyList();
    private HintsState hintsState = disabledHintsState();

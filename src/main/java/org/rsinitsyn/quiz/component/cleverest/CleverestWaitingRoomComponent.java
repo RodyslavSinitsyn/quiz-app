@@ -35,7 +35,7 @@ import org.rsinitsyn.quiz.utils.SessionWrapper;
 public class CleverestWaitingRoomComponent extends VerticalLayout {
 
     private String gameId;
-    private boolean isAdmin;
+    private boolean gameHost;
     private Grid<UserGameState> usersGrid = new Grid<>(UserGameState.class, false);
     private Select<String> winnerBet = new Select<>();
     private Select<String> loserBet = new Select<>();
@@ -49,16 +49,16 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
 
     public CleverestWaitingRoomComponent(String gameId,
                                          CleverestBroadcaster broadcaster,
-                                         boolean isAdmin) {
+                                         boolean gameHost) {
         this.gameId = gameId;
-        this.isAdmin = isAdmin;
+        this.gameHost = gameHost;
         this.broadcaster = broadcaster;
         this.winnerBet = betSelect(true);
         this.loserBet = betSelect(false);
         configurePlayersList();
         add(usersGrid);
-        if (isAdmin) {
-            configureAdminComponents(gameId);
+        if (gameHost) {
+            configureHostComponents(gameId);
         } else {
             configurePlayerComponents();
         }
@@ -177,7 +177,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         }
     }
 
-    private void configureAdminComponents(String gameId) {
+    private void configureHostComponents(String gameId) {
         Anchor link = new Anchor("http://localhost:8080/cleverest/" + gameId + "?player", "Invite link");
         link.getElement().setAttribute("target", "_blank");
         add(link);
@@ -211,7 +211,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
                         }
                         winnerBet.setItems(broadcaster.getState(gameId).getUsers().keySet());
                         loserBet.setItems(broadcaster.getState(gameId).getUsers().keySet());
-                        if (isAdmin) {
+                        if (gameHost) {
                             startGameButton.setEnabled(!broadcaster.getState(gameId).getUsers().isEmpty());
                         }
                     });
