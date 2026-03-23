@@ -42,13 +42,13 @@ public class LinkAnswersComponent extends HorizontalLayout {
     private Boolean leftSelectedFirst = null;
 
     public LinkAnswersComponent(QuestionModel questionModel) {
-        this.desiredPairsSize = (int) questionModel.getAnswers().stream().filter(AnswerModel::isCorrect).count();
+        this.desiredPairsSize = (int) questionModel.getAnswers().stream().filter(AnswerModel::correct).count();
 
         setPadding(false);
         setWidthFull();
 
-        List<AnswerModel> left = questionModel.getShuffledAnswers().stream().filter(AnswerModel::isCorrect).toList();
-        List<AnswerModel> right = questionModel.getShuffledAnswers().stream().filter(am -> !am.isCorrect()).toList();
+        List<AnswerModel> left = questionModel.getShuffledAnswers().stream().filter(AnswerModel::correct).toList();
+        List<AnswerModel> right = questionModel.getShuffledAnswers().stream().filter(am -> !am.correct()).toList();
 
         VerticalLayout leftSide = matchSideLayout(left, true);
         VerticalLayout rightSide = matchSideLayout(right, false);
@@ -185,7 +185,7 @@ public class LinkAnswersComponent extends HorizontalLayout {
                                            boolean isLeft,
                                            ComponentEventListener<ClickEvent<Div>> eventHandler) {
         return CleverestComponents.optionComponent(
-                answerModel.getText(),
+                answerModel.text(),
                 10,
                 event -> {
                     if (leftSelectedFirst == null) {

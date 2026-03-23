@@ -4,7 +4,6 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.button.Button;
 import org.rsinitsyn.quiz.component.custom.LinkAnswersComponent;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
-import org.rsinitsyn.quiz.model.QuestionModel;
 
 import java.util.stream.Collectors;
 
@@ -28,13 +27,13 @@ public class LinkAnswersLayout extends AbstractAnswersLayout {
         var pairs = component.getPairs(); // TODO: For now true if get all the matches
         boolean areCorrect = true;
         for (var pair : pairs) {
-            if (pair.getLeft().getNumber() != pair.getRight().getNumber()) {
+            if (pair.getLeft().number() != pair.getRight().number()) {
                 areCorrect = false;
                 break;
             }
         }
         var userAnswers = pairs.stream()
-                .map(pair -> pair.getLeft().getText() + " = " + pair.getRight().getText())
+                .map(pair -> pair.getLeft().text() + " = " + pair.getRight().text())
                 .collect(Collectors.toSet());
         fireEvent(new AnswerChosenEvent(userAnswers, areCorrect));
     }

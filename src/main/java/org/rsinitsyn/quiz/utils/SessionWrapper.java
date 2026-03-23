@@ -14,20 +14,17 @@ import java.util.Optional;
 public class SessionWrapper {
 
     public static String getLoggedUser() {
-        var loggedUserEntity = getLoggedUserEntity();
-        if (loggedUserEntity == null) {
-            return "Аноним";
-        }
-        return loggedUserEntity.getUsername();
+        return getLoggedUserEntity()
+                .map(UserEntity::getUsername)
+                .orElse("Аноним");
     }
 
-    public static UserEntity getLoggedUserEntity() {
+    public static Optional<UserEntity> getLoggedUserEntity() {
         return Optional.of(SecurityContextHolder.getContext())
                 .map(SecurityContext::getAuthentication)
                 .filter(authentication -> authentication.getPrincipal() instanceof UserEntity)
                 .map(Authentication::getPrincipal)
-                .map(UserEntity.class::cast)
-                .orElse(null);
+                .map(UserEntity.class::cast);
     }
 
     public static boolean isAuthenticated() {

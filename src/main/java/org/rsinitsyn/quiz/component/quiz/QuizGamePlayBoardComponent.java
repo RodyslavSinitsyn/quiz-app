@@ -152,7 +152,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
 //    }
 
     private BaseQuestionLayout createQuestionLayout() {
-        return QuestionLayoutFactory.get(new QuestionLayoutRequest()
+        return QuestionLayoutFactory.createQuestionLayout(new QuestionLayoutRequest()
                 .question(currQuestion)
                 .hintsState(gameState.getHintsState()));
     }

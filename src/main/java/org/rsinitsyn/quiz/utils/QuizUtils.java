@@ -48,23 +48,23 @@ public class QuizUtils {
         return divide(val, divideOn, 2);
     }
 
-    public StreamResource createStreamResourceForAudio(String audioFilename) {
-        return new StreamResource(audioFilename.split("/")[1], () -> {
+    public StreamResource createStreamResourceForAudio(String filename) {
+        return new StreamResource(filename.split("/")[1], () -> {
             try {
-                return new FileInputStream(readAudioFile(audioFilename));
+                return new FileInputStream(readAudioFile(filename));
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }
         });
     }
 
-    public StreamResource createStreamResourceForPhoto(String audioFilename) {
-        if (audioFilename.split("/").length != 2) {
+    public StreamResource createStreamResourceForPhoto(String filename) {
+        if (filename.split("/").length != 2) {
             return null;
         }
-        return new StreamResource(audioFilename.split("/")[1], () -> {
+        return new StreamResource(filename.split("/")[1], () -> {
             try {
-                return new FileInputStream(readImageFile(audioFilename));
+                return new FileInputStream(readImageFile(filename));
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }

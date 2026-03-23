@@ -7,6 +7,8 @@ import lombok.experimental.Accessors;
 import java.util.Collections;
 import java.util.List;
 
+import static org.rsinitsyn.quiz.model.HintsState.disabledHintsState;
+
 @Getter
 @Setter
 @Accessors(chain = true, fluent = true)
@@ -15,5 +17,5 @@ public class QuestionLayoutRequest {
    private boolean isAdmin = false;
    private String imageHeight = "25em";
    private List<String> textClasses = Collections.emptyList();
-   private HintsState hintsState = HintsState.disabled();
+   private HintsState hintsState = disabledHintsState();
 }

@@ -59,7 +59,7 @@ public abstract class AbstractQuestionUpdateStrategy<T extends AbstractQuestionB
     }
 
     protected void createHook(T model, QuestionEntity question) {
-        question.setId(UUID.randomUUID());
+//        question.setId(UUID.randomUUID());
         question.setCreationDate(LocalDateTime.now());
         question.setCreatedBy(SessionWrapper.getLoggedUser());
         question.setOptionsOnly(false);

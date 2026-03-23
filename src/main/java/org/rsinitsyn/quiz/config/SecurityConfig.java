@@ -28,8 +28,7 @@ public class SecurityConfig extends VaadinWebSecurity {
         // You can add any possible extra configurations of your own
         // here (the following is just an example):
 
-        // http.rememberMe().alwaysRemember(false);
-
+        http.rememberMe(config -> config.alwaysRemember(true));
         // Configure your static resources with public access before calling
         // super.configure(HttpSecurity) as it adds final anyRequest matcher
         http.authorizeHttpRequests(auth -> {
@@ -50,6 +49,16 @@ public class SecurityConfig extends VaadinWebSecurity {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new PasswordEncoder() {
+            @Override
+            public String encode(final CharSequence rawPassword) {
+                return rawPassword.toString();
+            }
+
+            @Override
+            public boolean matches(final CharSequence rawPassword, final String encodedPassword) {
+                return rawPassword.equals(encodedPassword);
+            }
+        };
     }
 }

@@ -5,7 +5,6 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.textfield.NumberField;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
-import org.rsinitsyn.quiz.model.QuestionModel;
 
 import java.util.Collections;
 
@@ -26,14 +25,13 @@ public class PrecisionAnswersLayout extends AbstractAnswersLayout {
 
     @Override
     protected void submitHandler(ClickEvent<Button> event) {
-        var userAnswer = new QuestionModel.AnswerModel();
-        userAnswer.setText(String.valueOf(numberField.getValue().intValue()));
+        final var answerText = String.valueOf(numberField.getValue().intValue());
         boolean isCorrect = false;
-        if (StringUtils.isNumeric(userAnswer.getText())) {
-            int userAnswerNumeric = Integer.parseInt(userAnswer.getText());
-            int validAnswerNumeric = Integer.parseInt(question.getAnswers().stream().findFirst().orElseThrow().getText());
+        if (StringUtils.isNumeric(answerText)) {
+            int userAnswerNumeric = Integer.parseInt(answerText);
+            int validAnswerNumeric = Integer.parseInt(question.getAnswers().stream().findFirst().orElseThrow().text());
             isCorrect = Math.abs(validAnswerNumeric - userAnswerNumeric) <= question.getValidRange();
         }
-        fireEvent(new AnswerChosenEvent(Collections.singleton(userAnswer.getText()), isCorrect));
+        fireEvent(new AnswerChosenEvent(Collections.singleton(answerText), isCorrect));
     }
 }

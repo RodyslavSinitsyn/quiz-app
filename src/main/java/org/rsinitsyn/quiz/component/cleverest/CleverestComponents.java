@@ -109,7 +109,7 @@ public class CleverestComponents {
         if (questionModel.getType().equals(QuestionType.PHOTO)) {
             span.add(new Image() {{
                 setMaxHeight(MEDIUM_IMAGE_HEIGHT);
-                setSrc(QuizUtils.createStreamResourceForPhoto(questionModel.getFirstCorrectAnswer().getPhotoFilename()));
+                setSrc(QuizUtils.createStreamResourceForPhoto(questionModel.getFirstCorrectAnswer().photoFilename()));
             }});
         } else {
             span.setText(questionModel.getCorrectAnswersAsText());
@@ -117,7 +117,7 @@ public class CleverestComponents {
         return span;
     }
 
-    public Span correctAnswerDescriptionSpan(QuestionModel questionModel, String... classes) {
+    public Span answerDescriptionSpan(String answerDescription, String... classes) {
         Span span = new Span();
         span.addClassNames(classes);
         span.addClassNames(LumoUtility.TextAlignment.CENTER,
@@ -125,7 +125,7 @@ public class CleverestComponents {
                 LumoUtility.BorderColor.PRIMARY);
         span.setWidthFull();
         span.getStyle().set("white-space", "pre-line");
-        span.setText(questionModel.getAnswerDescription());
+        span.setText(answerDescription);
         return span;
     }
 
@@ -311,7 +311,7 @@ public class CleverestComponents {
         var slides = shuffledAnswers.stream()
                 .map(answerModel -> {
                     Image image = new Image();
-                    image.setSrc(QuizUtils.createStreamResourceForPhoto(answerModel.getPhotoFilename()));
+                    image.setSrc(QuizUtils.createStreamResourceForPhoto(answerModel.photoFilename()));
                     image.setMaxHeight(LARGE_IMAGE_HEIGHT);
                     image.setWidthFull();
                     image.getStyle().set("object-fit", "contain");

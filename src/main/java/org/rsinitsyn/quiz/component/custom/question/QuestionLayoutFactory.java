@@ -4,7 +4,7 @@ import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 
 public class QuestionLayoutFactory {
 
-    public static BaseQuestionLayout get(QuestionLayoutRequest request) {
+    public static BaseQuestionLayout createQuestionLayout(QuestionLayoutRequest request) {
         var type = request.question().getType();
         return switch (type) {
             case PRECISION -> new PrecisionBaseQuestionLayout(request);

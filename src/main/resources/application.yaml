@@ -59,4 +59,4 @@ management:
 
 logging:
   level:
-    org.rsinitsyn.quiz: TRACE
+    org.rsinitsyn.quiz: DEBUG

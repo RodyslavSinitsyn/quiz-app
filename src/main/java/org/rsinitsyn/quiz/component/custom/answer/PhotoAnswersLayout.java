@@ -25,12 +25,12 @@ public class PhotoAnswersLayout extends AbstractAnswersLayout {
 
     @Override
     protected void renderAnswers() {
-        options.setItems(copiedAnswerList);
+        options.setItems(answers);
         options.setWidthFull();
         options.setRenderer(new ComponentRenderer<Component, QuestionModel.AnswerModel>(
                 answerModel -> {
                     Image image = new Image();
-                    image.setSrc(QuizUtils.createStreamResourceForPhoto(answerModel.getPhotoFilename()));
+                    image.setSrc(QuizUtils.createStreamResourceForPhoto(answerModel.photoFilename()));
                     image.setMaxHeight(SMALL_IMAGE_HEIGHT);
                     image.setWidthFull();
                     image.getStyle().set("object-fit", "cover");
@@ -50,6 +50,6 @@ public class PhotoAnswersLayout extends AbstractAnswersLayout {
     @Override
     protected void submitHandler(ClickEvent<Button> event) {
         var userAnswer = options.getValue();
-        fireEvent(new AnswerChosenEvent(Collections.singleton(userAnswer.getText()), userAnswer.isCorrect()));
+        fireEvent(new AnswerChosenEvent(Collections.singleton(userAnswer.text()), userAnswer.correct()));
     }
 }

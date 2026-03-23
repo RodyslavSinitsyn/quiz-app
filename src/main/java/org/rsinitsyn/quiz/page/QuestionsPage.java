@@ -35,7 +35,6 @@ import org.rsinitsyn.quiz.service.ImportService;
 import org.rsinitsyn.quiz.service.QuestionCategoryService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.service.UserService;
-import org.rsinitsyn.quiz.utils.ModelConverterUtils;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.springframework.security.concurrent.DelegatingSecurityContextExecutor;
 
@@ -46,6 +45,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static org.rsinitsyn.quiz.utils.ModelConverterUtils.*;
 
 @Slf4j
 @Route(value = "/list", layout = MainLayout.class)
@@ -117,22 +118,22 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
         grid.addItemClickListener(event -> {
             grid.select(event.getItem());
             if (event.getItem().getType().equals(QuestionType.PRECISION)) {
-                precisionForm.setModel(ModelConverterUtils.toPrecisionQuestionBindingModel(event.getItem()));
+                precisionForm.setModel(toPrecisionQuestionBindingModel(event.getItem()));
                 addToDialogAndOpen(precisionForm);
             } else if (event.getItem().getType().equals(QuestionType.OR)) {
-                orForm.setModel(ModelConverterUtils.toOrQuestionBindingModel(event.getItem()));
+                orForm.setModel(toOrQuestionBindingModel(event.getItem()));
                 addToDialogAndOpen(orForm);
             } else if (event.getItem().getType().equals(QuestionType.TOP)) {
-                topForm.setModel(ModelConverterUtils.toTopQuestionBindingModel(event.getItem()));
+                topForm.setModel(toTopQuestionBindingModel(event.getItem()));
                 addToDialogAndOpen(topForm);
             } else if (event.getItem().getType().equals(QuestionType.PHOTO)) {
-                photoForm.setModel(ModelConverterUtils.toPhotoQuestionBindingModel(event.getItem()));
+                photoForm.setModel(toPhotoQuestionBindingModel(event.getItem()));
                 addToDialogAndOpen(photoForm);
             } else if (event.getItem().getType().equals(QuestionType.LINK)) {
-                linkForm.setModel(ModelConverterUtils.toLinkQuestionBindingModel(event.getItem()));
+                linkForm.setModel(toLinkQuestionBindingModel(event.getItem()));
                 addToDialogAndOpen(linkForm);
             } else {
-                form.setModel(ModelConverterUtils.toFourAnswersQuestionBindingModel(event.getItem()));
+                form.setModel(toFourAnswersQuestionBindingModel(event.getItem()));
                 addToDialogAndOpen(form);
             }
         });
@@ -238,7 +239,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
             addToDialogAndOpen(orForm);
         });
 
-        Button addTopQuestionButton = createButton("Топ", event -> {
+        Button addTopQuestionButton = createButton("Топ/Порядок", event -> {
             grid.asMultiSelect().clear();
             topForm.setModel(new TopQuestionBindingModel());
             addToDialogAndOpen(topForm);
@@ -284,8 +285,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
 
     private Button createButton(String text, ComponentEventListener<ClickEvent<Button>> eventHandler) {
         Button button = new Button(text);
-        button.addThemeVariants(ButtonVariant.LUMO_SMALL,
-                ButtonVariant.LUMO_PRIMARY);
+        button.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
         button.addClickListener(eventHandler);
         return button;
     }

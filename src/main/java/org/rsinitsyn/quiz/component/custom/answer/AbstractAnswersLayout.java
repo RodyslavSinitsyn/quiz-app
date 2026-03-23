@@ -6,7 +6,6 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.shared.Registration;
 import lombok.Getter;
-import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.component.custom.event.StubEvent;
 import org.rsinitsyn.quiz.model.AnswerHint;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
@@ -18,20 +17,22 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.submitButton;
+
 public abstract class AbstractAnswersLayout extends VerticalLayout {
 
     protected final QuestionModel question;
-    protected final List<QuestionModel.AnswerModel> copiedAnswerList;
+    protected final List<QuestionModel.AnswerModel> answers;
     protected HintsState hintsState;
 
     // Components
     protected final HorizontalLayout hintsLayout = new HorizontalLayout();
-    protected final Button submitButton = CleverestComponents.submitButton(e -> {
+    protected final Button submitButton = submitButton(e -> {
     });
 
     public AbstractAnswersLayout(AnswerLayoutRequest request) {
         this.question = request.getQuestion();
-        this.copiedAnswerList = new ArrayList<>(request.getQuestion().getShuffledAnswers());
+        this.answers = new ArrayList<>(request.getQuestion().getShuffledAnswers());
         this.hintsState = request.getHintsState();
         setAlignItems(Alignment.STRETCH);
     }
@@ -64,7 +65,7 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
     protected void renderHintsLayout() {
         hintsLayout.removeAll();
         var hintComponents = getHintsComponents();
-        if (!hintsState.isHintsEnabled() || hintComponents.isEmpty()) {
+        if (!hintsState.hintsEnabled() || hintComponents.isEmpty()) {
             hintsLayout.setVisible(false);
             return;
         }
@@ -74,8 +75,8 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
     }
 
     protected void removeWrongAnswersAndRerender(int answersToRemove) {
-        copiedAnswerList.removeAll(copiedAnswerList.stream()
-                .filter(answerModel -> !answerModel.isCorrect())
+        answers.removeAll(answers.stream()
+                .filter(answerModel -> !answerModel.correct())
                 .limit(answersToRemove)
                 .toList());
         renderAnswers();
@@ -83,8 +84,8 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
 
     @Getter
     public static class AnswerChosenEvent extends StubEvent {
-        private Set<String> answers;
-        private boolean isCorrect;
+        private final Set<String> answers;
+        private final boolean isCorrect;
         private boolean manuallyApprove = false;
 
         public AnswerChosenEvent(Set<String> answers,

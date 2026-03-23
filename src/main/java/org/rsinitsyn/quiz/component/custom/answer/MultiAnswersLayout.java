@@ -25,10 +25,10 @@ public class MultiAnswersLayout extends AbstractAnswersLayout {
 
     @Override
     protected void renderAnswers() {
-        multiAnswerListBox.setItems(copiedAnswerList);
+        multiAnswerListBox.setItems(answers);
         multiAnswerListBox.setRenderer(
                 new ComponentRenderer<Component, QuestionModel.AnswerModel>(
-                        am -> CleverestComponents.optionComponent(am.getText(), 50, event -> {
+                        am -> CleverestComponents.optionComponent(am.text(), 50, event -> {
                         })));
         multiAnswerListBox.addValueChangeListener(e -> submitButton.setEnabled(true));
         add(multiAnswerListBox);
@@ -37,13 +37,13 @@ public class MultiAnswersLayout extends AbstractAnswersLayout {
     @Override
     protected void submitHandler(ClickEvent<Button> event) {
         var userAnswers = multiAnswerListBox.getSelectedItems();
-        long correctAnswersCount = question.getAnswers().stream().filter(QuestionModel.AnswerModel::isCorrect).count();
-        long userCorrectAnswersCount = userAnswers.stream().filter(QuestionModel.AnswerModel::isCorrect).count();
+        long correctAnswersCount = question.getAnswers().stream().filter(QuestionModel.AnswerModel::correct).count();
+        long userCorrectAnswersCount = userAnswers.stream().filter(QuestionModel.AnswerModel::correct).count();
         boolean userHasOnlyCorrectAnswers = userCorrectAnswersCount == userAnswers.size();
         boolean isCorrect = userHasOnlyCorrectAnswers && correctAnswersCount == userCorrectAnswersCount;
 
         fireEvent(new AnswerChosenEvent(multiAnswerListBox.getSelectedItems().stream()
-                .map(QuestionModel.AnswerModel::getText)
+                .map(QuestionModel.AnswerModel::text)
                 .collect(Collectors.toSet()),
                 isCorrect));
     }
@@ -52,10 +52,10 @@ public class MultiAnswersLayout extends AbstractAnswersLayout {
     protected List<Component> getHintsComponents() {
         Button revealCountHint = new Button("Количество ответов");
         revealCountHint.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        revealCountHint.setEnabled(hintsState.getHintsUsage().get(AnswerHint.CORRECT_COUNT));
+        revealCountHint.setEnabled(hintsState.hintsUsage().get(AnswerHint.CORRECT_COUNT));
         revealCountHint.addClickListener(event -> {
             revealCountHint.setText("Верных ответов: "
-                    + question.getAnswers().stream().filter(QuestionModel.AnswerModel::isCorrect).count());
+                    + question.getAnswers().stream().filter(QuestionModel.AnswerModel::correct).count());
             revealCountHint.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
             fireEvent(new HintUsedEvent(AnswerHint.CORRECT_COUNT));
         });

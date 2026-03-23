@@ -19,7 +19,6 @@ import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.MOBILE_
 public class TopAnswersLayout extends AbstractAnswersLayout {
 
     private int topSize = 0;
-
     private final VerticalLayout topListLayout = new VerticalLayout();
 
     public TopAnswersLayout(AnswerLayoutRequest question) {

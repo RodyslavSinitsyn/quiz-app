@@ -15,6 +15,8 @@ import org.rsinitsyn.quiz.model.binding.PhotoQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.TopQuestionBindingModel;
 
+import static org.rsinitsyn.quiz.entity.QuestionType.SEQUENCE;
+
 @UtilityClass
 public class ModelConverterUtils {
 
@@ -82,6 +84,7 @@ public class ModelConverterUtils {
                 questionEntity.getId().toString(),
                 questionEntity.getText(),
                 questionEntity.getAnswers().stream().map(AnswerEntity::getText).collect(Collectors.joining(System.lineSeparator())),
+                questionEntity.getType() == SEQUENCE,
                 questionEntity.getOriginalPhotoUrl(),
                 questionEntity.getCategory().getName(),
                 questionEntity.getAnswerDescriptionText()

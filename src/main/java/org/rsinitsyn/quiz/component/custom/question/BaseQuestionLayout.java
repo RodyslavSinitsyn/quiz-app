@@ -14,10 +14,10 @@ import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.component.custom.AudioPlayer;
 import org.rsinitsyn.quiz.component.custom.answer.AbstractAnswersLayout;
+import org.rsinitsyn.quiz.component.custom.answer.AbstractAnswersLayout.AnswerChosenEvent;
 import org.rsinitsyn.quiz.component.custom.answer.AnswerLayoutsFactory;
 import org.rsinitsyn.quiz.component.custom.event.StubEvent;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
@@ -28,6 +28,10 @@ import org.rsinitsyn.quiz.utils.QuizUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.questionTextSpan;
+import static org.rsinitsyn.quiz.component.custom.answer.AnswerLayoutsFactory.createAnswerLayout;
+import static org.rsinitsyn.quiz.utils.QuizUtils.createStreamResourceForPhoto;
 
 @Slf4j
 public class BaseQuestionLayout extends VerticalLayout {
@@ -40,18 +44,18 @@ public class BaseQuestionLayout extends VerticalLayout {
     @Getter
     private AbstractAnswersLayout answersLayout;
 
-    private List<Registration> subscriptions = new ArrayList<>();
+    private final List<Registration> subscriptions = new ArrayList<>();
 
     public BaseQuestionLayout(QuestionLayoutRequest request) {
         this.questionModel = request.question();
         this.isAdmin = request.isAdmin();
         this.imageHeight = request.imageHeight();
         this.textContentClasses = request.textClasses();
-        configureStyles();
+        configureStyling();
         renderComponents(request);
     }
 
-    private void configureStyles() {
+    private void configureStyling() {
         setSpacing(false);
         setPadding(false);
         addClassNames(LumoUtility.Margin.Top.MEDIUM);
@@ -67,16 +71,17 @@ public class BaseQuestionLayout extends VerticalLayout {
     }
 
     protected void renderImage() {
-        if (StringUtils.isNotEmpty(questionModel.getPhotoFilename())) {
-            Image image = new Image();
-            image.setSrc(QuizUtils.createStreamResourceForPhoto(questionModel.getPhotoFilename()));
-            image.setMaxHeight(imageHeight);
-            if (!isAdmin) image.setWidthFull();
-            image.getStyle().set("object-fit", "cover");
-            image.getStyle().set("object-position", "center center");
+        questionModel.photoFilename()
+                .ifPresent(filename -> {
+                    Image image = new Image();
+                    image.setSrc(createStreamResourceForPhoto(filename));
+                    image.setMaxHeight(imageHeight);
+                    if (!isAdmin) image.setWidthFull();
+                    image.getStyle().set("object-fit", "cover");
+                    image.getStyle().set("object-position", "center center");
 
-            add(image);
-        }
+                    add(image);
+                });
     }
 
     protected void renderCategory() {
@@ -91,33 +96,31 @@ public class BaseQuestionLayout extends VerticalLayout {
     }
 
     protected Span getQuestionTextElement() {
-        return CleverestComponents.questionTextSpan(
-                questionModel.getText(),
-                textContentClasses.toArray(new String[]{}));
+        return questionTextSpan(questionModel.getText(), textContentClasses.toArray(new String[]{}));
     }
 
     protected void renderAudio() {
-        if (StringUtils.isNotEmpty(questionModel.getAudioFilename())) {
+        questionModel.audioFilename().ifPresent(filename -> {
             Button playAudioButton = new Button("Слушать", VaadinIcon.PLAY_CIRCLE.create());
             playAudioButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST,
                     ButtonVariant.LUMO_PRIMARY,
                     ButtonVariant.LUMO_SMALL);
             playAudioButton.setEnabled(isAdmin);
             playAudioButton.addClickListener(event -> {
-                AudioUtils.playSoundAsync(questionModel.getAudioFilename());
+                AudioUtils.playSoundAsync(filename);
             });
 
             add(playAudioButton);
 
-            //  TODO: Play audio on each device (not working for mobile)
-            AudioPlayer audioPlayer = new AudioPlayer(QuizUtils.createStreamResourceForAudio(questionModel.getAudioFilename()));
+            //  TODO: Play audio on each device
+            AudioPlayer audioPlayer = new AudioPlayer(QuizUtils.createStreamResourceForAudio(filename));
             add(audioPlayer);
-        }
+        });
     }
 
     private void renderAnswersLayout(QuestionLayoutRequest request) {
         if (!isAdmin) {
-            answersLayout = AnswerLayoutsFactory.get(AnswerLayoutRequest.builder()
+            answersLayout = createAnswerLayout(AnswerLayoutRequest.builder()
                     .question(questionModel)
                     .hintsState(request.hintsState())
                     .build());
@@ -127,9 +130,9 @@ public class BaseQuestionLayout extends VerticalLayout {
 
     @Getter
     public static class QuestionAnsweredEvent extends StubEvent {
-        private final AbstractAnswersLayout.AnswerChosenEvent answerChosenEvent;
+        private final AnswerChosenEvent answerChosenEvent;
 
-        public QuestionAnsweredEvent(AbstractAnswersLayout.AnswerChosenEvent answerChosenEvent) {
+        public QuestionAnsweredEvent(AnswerChosenEvent answerChosenEvent) {
             this.answerChosenEvent = answerChosenEvent;
         }
     }
@@ -143,9 +146,12 @@ public class BaseQuestionLayout extends VerticalLayout {
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         if (answersLayout != null) {
-            subscriptions.add(answersLayout.addListener(AbstractAnswersLayout.AnswerChosenEvent.class, event -> {
-                fireEvent(new QuestionAnsweredEvent(event));
-            }));
+            final var registration = answersLayout.addListener(
+                    AnswerChosenEvent.class,
+                    event -> {
+                        fireEvent(new QuestionAnsweredEvent(event));
+                    });
+            subscriptions.add(registration);
         }
         log.trace("onAttach. subscribe {}", subscriptions.size());
     }

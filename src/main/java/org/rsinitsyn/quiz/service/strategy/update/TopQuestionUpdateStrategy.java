@@ -1,13 +1,15 @@
 package org.rsinitsyn.quiz.service.strategy.update;
 
 import org.rsinitsyn.quiz.entity.QuestionEntity;
-import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.binding.TopQuestionBindingModel;
 import org.rsinitsyn.quiz.properties.QuizAppProperties;
 import org.rsinitsyn.quiz.service.QuestionCategoryService;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.rsinitsyn.quiz.entity.QuestionType.SEQUENCE;
+import static org.rsinitsyn.quiz.entity.QuestionType.TOP;
 
 @Service
 public class TopQuestionUpdateStrategy extends AbstractQuestionUpdateStrategy<TopQuestionBindingModel> {
@@ -20,7 +22,7 @@ public class TopQuestionUpdateStrategy extends AbstractQuestionUpdateStrategy<To
 
     @Override
     public void setType(TopQuestionBindingModel model, QuestionEntity question) {
-        question.setType(QuestionType.TOP);
+        question.setType(model.isSequence() ? SEQUENCE : TOP);
     }
 
     @Override

@@ -13,10 +13,7 @@ import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.custom.question.BaseQuestionLayout;
-import org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory;
-import org.rsinitsyn.quiz.model.HintsState;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
@@ -27,6 +24,11 @@ import org.rsinitsyn.quiz.utils.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.answerDescriptionSpan;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.openDialog;
+import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory.createQuestionLayout;
+import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
 @Slf4j
 public class CleverestGamePlayBoardComponent extends VerticalLayout {
@@ -103,7 +105,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         };
         Runnable userAction = () -> {
         };
-        CleverestComponents.openDialog(rulesComponent, "Раунд " + roundNumber, isAdmin ? adminAction : userAction); // Show rules for all
+        openDialog(rulesComponent, "Раунд " + roundNumber, isAdmin ? adminAction : userAction); // Show rules for all
     }
 
     private void renderQuestion(QuestionModel question, int questionNumber, int totalQuestions, int roundNumber) {
@@ -126,14 +128,14 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
         List<String> questionClasses = isAdmin ? List.of(LumoUtility.FontSize.XXXLARGE) : List.of(CleverestComponents.MOBILE_LARGE_FONT);
         String imageHeight = isAdmin ? CleverestComponents.LARGE_IMAGE_HEIGHT : CleverestComponents.MEDIUM_IMAGE_HEIGHT;
-        var questionLayout = QuestionLayoutFactory.get(new QuestionLayoutRequest()
+        var questionLayout = createQuestionLayout(new QuestionLayoutRequest()
                 .question(questionModel)
                 .isAdmin(isAdmin)
                 .imageHeight(imageHeight)
                 .textClasses(questionClasses));
         questionLayout.addListener(BaseQuestionLayout.QuestionAnsweredEvent.class, event -> {
             broadcaster.sendSubmitAnswerEventAndCheckScore(gameId,
-                    SessionWrapper.getLoggedUser(),
+                    getLoggedUser(),
                     questionModel,
                     String.join("", event.getAnswerChosenEvent().getAnswers()),
                     () -> event.getAnswerChosenEvent().isCorrect());
@@ -143,8 +145,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
     private VerticalLayout createQuestionGrade(QuestionModel questionModel) {
         return CleverestComponents.questionGradeLayout(scoreVal -> {
-            broadcaster.sendQuestionGradedEvent(gameId, questionModel, SessionWrapper.getLoggedUser(), scoreVal);
-            CleverestComponents.notification(SessionWrapper.getLoggedUser() + ", спасибо за фидбек!", NotificationVariant.LUMO_CONTRAST);
+            broadcaster.sendQuestionGradedEvent(gameId, questionModel, getLoggedUser(), scoreVal);
+            CleverestComponents.notification(getLoggedUser() + ", спасибо за фидбек!", NotificationVariant.LUMO_CONTRAST);
         });
     }
 
@@ -181,8 +183,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     private Button createCategoryQuestionButton(UserGameState userToAnswer, QuestionModel question) {
         Button button = CleverestComponents.primaryButton(String.valueOf(question.getPoints()), event -> {
             broadcaster.sendQuestionChoosenEvent(gameId, question, userToAnswer);
-            Dialog questionTextDialog = CleverestComponents.openDialog(
-                    QuestionLayoutFactory.get(new QuestionLayoutRequest()
+            Dialog questionTextDialog = openDialog(
+                    createQuestionLayout(new QuestionLayoutRequest()
                             .question(question)
                             .isAdmin(isAdmin)
                             .imageHeight("25em")
@@ -225,14 +227,14 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     }
 
     private void renderUserPersonalScore() {
-        UserGameState userState = broadcaster.getState(gameId).getUsers().get(SessionWrapper.getLoggedUser());
+        UserGameState userState = broadcaster.getState(gameId).getUsers().get(getLoggedUser());
         if (userState == null) {
             // This should probably never happen
             log.warn("Not joined user is accessing started Cleverest game");
             return;
         }
         topContainer.removeAll();
-        topContainer.add(CleverestComponents.userScoreLayout(SessionWrapper.getLoggedUser(), userState.getColor(), userState.getScore(), CleverestComponents.MOBILE_LARGE_FONT));
+        topContainer.add(CleverestComponents.userScoreLayout(getLoggedUser(), userState.getColor(), userState.getScore(), CleverestComponents.MOBILE_LARGE_FONT));
     }
 
     private void showUsersScore(boolean roundOver, int revealScoreAfter, Runnable onCloseAction) {
@@ -241,7 +243,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 : new VerticalLayout(CleverestComponents.userInfoLightSpan(
                 "Вопросов до таблицы результатов: " + revealScoreAfter, LumoUtility.FontSize.XXXLARGE));
 
-        CleverestComponents.openDialog(usersScoreLayout, "Таблица результатов", () -> {
+        openDialog(usersScoreLayout, "Таблица результатов", () -> {
             if (roundOver) {
                 broadcaster.sendNewRoundEvent(gameId);
                 return;
@@ -265,21 +267,20 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         } else {
             AudioUtils.playStaticSoundAsync(StaticValuesHolder.REVEAL_ANSWER_AUDIOS.next());
         }
-        VerticalLayout answers = new VerticalLayout();
-        answers.setSpacing(true);
-        answers.setDefaultHorizontalComponentAlignment(Alignment.START);
-        answers.setAlignItems(Alignment.START);
-        answers.addClassNames(LumoUtility.FontSize.XXXLARGE);
+        VerticalLayout answersLayout = new VerticalLayout();
+        answersLayout.setSpacing(true);
+        answersLayout.setDefaultHorizontalComponentAlignment(Alignment.START);
+        answersLayout.setAlignItems(Alignment.START);
+        answersLayout.addClassNames(LumoUtility.FontSize.XXXLARGE);
 
         // answer span text
-        answers.add(CleverestComponents.correctAnswerSpan(question,
+        answersLayout.add(CleverestComponents.correctAnswerSpan(question,
                 LumoUtility.FontSize.XXXLARGE,
                 LumoUtility.FontWeight.SEMIBOLD));
-        if (StringUtils.isNotBlank(question.getAnswerDescription())) {
-            answers.add(CleverestComponents.correctAnswerDescriptionSpan(question,
-                    LumoUtility.FontSize.XXLARGE,
-                    LumoUtility.FontWeight.LIGHT));
-        }
+        question.answerDescription().ifPresent(answerDescription ->
+                answersLayout.add(answerDescriptionSpan(answerDescription,
+                        LumoUtility.FontSize.XXLARGE,
+                        LumoUtility.FontWeight.LIGHT)));
 
         users.forEach(userGameState -> {
             HorizontalLayout row = new HorizontalLayout();
@@ -313,10 +314,10 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                 countLimit);
                 row.add(approveButton);
             }
-            answers.add(row);
+            answersLayout.add(row);
         });
 
-        CleverestComponents.openDialog(answers, "Ответы", () -> {
+        openDialog(answersLayout, "Ответы", () -> {
             onCloseAction.run();
             broadcaster.getState(gameId).updateUserPositions();
             broadcaster.sendUpdatePersonalScoreEvent(gameId);
@@ -333,8 +334,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             resultComponent.setState(gameState.getSortedByScoreUsers().values(), gameState.getHistory(), "");
         } else {
             renderUserPersonalScore();
-            midContainer.add(CleverestComponents.userInfoLightSpan("Итоговое место: " + gameState.getUsers().get(SessionWrapper.getLoggedUser()).getLastPosition(), CleverestComponents.MOBILE_LARGE_FONT));
-            resultComponent.setState(gameState.getSortedByScoreUsers().values(), gameState.getHistory(), SessionWrapper.getLoggedUser());
+            midContainer.add(CleverestComponents.userInfoLightSpan("Итоговое место: " + gameState.getUsers().get(getLoggedUser()).getLastPosition(), CleverestComponents.MOBILE_LARGE_FONT));
+            resultComponent.setState(gameState.getSortedByScoreUsers().values(), gameState.getHistory(), getLoggedUser());
         }
         midContainer.add(resultComponent);
     }
@@ -347,7 +348,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 if (isAdmin) {
                     updateUserAnswerGiven(event.getUserGameState());
                 }
-                if (event.getUserGameState().getUsername().equals(SessionWrapper.getLoggedUser())) {
+                if (event.getUserGameState().getUsername().equals(getLoggedUser())) {
                     midContainer.setEnabled(false);
                 }
                 if (event.getRoundNumber() == 3) {
@@ -375,7 +376,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     renderTopContainerForAdmin(Collections.singletonList(event.getUserToAnswer()));
                     renderCategoriesTable(event.getUserToAnswer(), event.getData());
                 } else {
-                    if (SessionWrapper.getLoggedUser().equals(event.getUserToAnswer().getUsername())) {
+                    if (getLoggedUser().equals(event.getUserToAnswer().getUsername())) {
                         midContainer.add(CleverestComponents.userInfoLightSpan("Время отвечать!", LumoUtility.TextColor.PRIMARY, CleverestComponents.MOBILE_LARGE_FONT));
                     } else {
                         midContainer.add(CleverestComponents.userInfoLightSpan("В ожидании вопроса", LumoUtility.TextColor.SECONDARY, CleverestComponents.MOBILE_LARGE_FONT));
@@ -396,7 +397,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     }
 
     private void subscribeOnPlayerOnlyEvents(AttachEvent attachEvent) {
-        log.debug("Subscribed on player events: {}", SessionWrapper.getLoggedUser());
+        log.debug("Subscribed on player events: {}", getLoggedUser());
         subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.UpdatePersonalScoreEvent.class,
                 event -> QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
                     log.debug("Updating score from event");
@@ -405,7 +406,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.QuestionChoosenEvent.class,
                 event -> QuizUtils.runActionInUi(attachEvent.getUI().getUI(),
                         () -> {
-                            if (SessionWrapper.getLoggedUser().equals(event.getUserToAnswer().getUsername())) {
+                            if (getLoggedUser().equals(event.getUserToAnswer().getUsername())) {
                                 QuizUtils.runActionInUi(attachEvent.getUI().getUI(),
                                         () -> renderQuestionLayout(event.getQuestion(), 1,1,1)); // TODO Real numbers
                             }
@@ -413,7 +414,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     }
 
     private void subscribeOnAdminOnlyEvents(AttachEvent attachEvent) {
-        log.debug("Subscribed on admin events: {}", SessionWrapper.getLoggedUser());
+        log.debug("Subscribed on admin events: {}", getLoggedUser());
         subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.AllUsersAnsweredEvent.class, event -> {
             AudioUtils.playStaticSoundAsync(StaticValuesHolder.SUBMIT_ANSWER_SHORT_AUDIOS.next()).thenRun(() -> {
                 log.debug("Submit audio finished, run action in ui: {}, {}", attachEvent.getUI(), gameId);

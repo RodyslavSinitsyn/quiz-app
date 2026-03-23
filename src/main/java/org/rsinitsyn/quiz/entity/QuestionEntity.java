@@ -3,10 +3,8 @@ package org.rsinitsyn.quiz.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -44,14 +42,10 @@ public class QuestionEntity {
     @JoinColumn(name = "category_id", referencedColumnName = "id")
     private QuestionCategoryEntity category;
 
-//    @Formula("SELECT count(*) FROM games_questions gq WHERE gq.question_id = id")
-    @Transient
-    private long gamesQuestionsCount;
-
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("number")
     @ToString.Exclude
-    private Set<AnswerEntity> answers = new HashSet<>();
+    private List<AnswerEntity> answers = new ArrayList<>();
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
@@ -62,6 +56,10 @@ public class QuestionEntity {
 
     @Transient
     private boolean shouldSaveImage = true;
+
+    //    @Formula("SELECT count(*) FROM games_questions gq WHERE gq.question_id = id")
+    @Transient
+    private long gamesQuestionsCount;
 
     public void addAnswer(AnswerEntity answerEntity) {
         answerEntity.setQuestion(this);

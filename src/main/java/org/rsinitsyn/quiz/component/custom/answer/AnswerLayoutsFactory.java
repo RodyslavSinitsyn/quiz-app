@@ -4,7 +4,7 @@ import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 
 public class AnswerLayoutsFactory {
 
-    public static AbstractAnswersLayout get(AnswerLayoutRequest request) {
+    public static AbstractAnswersLayout createAnswerLayout(AnswerLayoutRequest request) {
         var questionType = request.getQuestion().getType();
         return switch (questionType) {
             case TEXT -> new AnswersLayout(request);

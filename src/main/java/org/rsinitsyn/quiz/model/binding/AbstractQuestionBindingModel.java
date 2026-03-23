@@ -10,7 +10,7 @@ import org.rsinitsyn.quiz.validator.PhotoUrlValid;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class AbstractQuestionBindingModel {
+public abstract class AbstractQuestionBindingModel {
     public static final int TEXT_LENGTH_LIMIT = 1000;
 
     private String id;

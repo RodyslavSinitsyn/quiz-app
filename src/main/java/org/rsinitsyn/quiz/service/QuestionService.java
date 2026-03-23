@@ -21,6 +21,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.rsinitsyn.quiz.model.QuestionModel.*;
+
 @Observed(name = "questionService")
 @Service
 @Slf4j
@@ -106,14 +108,17 @@ public class QuestionService {
                                         (correctAnswer, wrongAnswer) -> correctAnswer)));
                     }
 
-                    QuestionModel questionModel = toQuizQuestionModel(question);
-                    questionModel.setPlayersAnswersHistory(answerHistoryMap);
-                    return questionModel;
+                    return toQuizQuestionModel(question, answerHistoryMap);
                 })
                 .toList();
     }
 
     public QuestionModel toQuizQuestionModel(QuestionEntity question) {
+        return toQuizQuestionModel(question, new HashMap<>());
+    }
+
+    public QuestionModel toQuizQuestionModel(QuestionEntity question,
+                                             final Map<String, AnswerHistory> playersAnswersHistory) {
         return QuestionModel.builder()
                 .id(question.getId())
                 .text(question.getText())
@@ -125,25 +130,27 @@ public class QuestionService {
                 .optionsOnly(question.isOptionsOnly())
                 .validRange(question.getValidRange())
                 .answerDescription(question.getAnswerDescriptionText())
+                .playersAnswersHistory(playersAnswersHistory)
                 .build();
     }
 
-    private Set<QuestionModel.AnswerModel> toQuizAnswerModel(Set<AnswerEntity> answerEntitySet) {
+    private Set<AnswerModel> toQuizAnswerModel(Set<AnswerEntity> answerEntitySet) {
         return answerEntitySet.stream()
-                .map(answerEntity -> new QuestionModel.AnswerModel(
-                        answerEntity.getText(),
-                        answerEntity.isCorrect(),
-                        answerEntity.getNumber(),
-                        answerEntity.getPhotoFilename()))
+                .map(answerEntity -> AnswerModel.builder()
+                        .text(answerEntity.getText())
+                        .correct(answerEntity.isCorrect())
+                        .number(answerEntity.getNumber())
+                        .photoFilename(answerEntity.getPhotoFilename())
+                        .build())
                 .collect(Collectors.toSet());
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
     public <T extends AbstractQuestionBindingModel> void saveOrUpdate(T model) {
-        AbstractQuestionUpdateStrategy<? extends AbstractQuestionBindingModel> abstractStrategy =
+        final var abstractStrategy =
                 questionUpdateStrategyMap.get(model.getClass().getSimpleName());
         @SuppressWarnings("unchecked")
-        AbstractQuestionUpdateStrategy<T> specificStrategy = (AbstractQuestionUpdateStrategy<T>) abstractStrategy;
+        final var specificStrategy = (AbstractQuestionUpdateStrategy<T>) abstractStrategy;
         var question = specificStrategy.prepareEntity(model, model.getId() == null
                 ? null
                 : findById(UUID.fromString(model.getId())));

@@ -9,5 +9,5 @@ public enum QuestionType {
     OR,
     TOP,
     LINK,
-    TIME_LIMITED;
+    SEQUENCE;
 }
