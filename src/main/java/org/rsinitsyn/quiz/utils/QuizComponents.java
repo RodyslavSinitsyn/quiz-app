@@ -12,17 +12,16 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.upload.SucceededEvent;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.apache.commons.lang3.StringUtils;
-import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 
+import java.io.InputStream;
 import java.util.function.BiConsumer;
 
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.horizontalLayoutBetween;
@@ -112,7 +111,8 @@ public final class QuizComponents {
         upload.setUploadButton(new Button(uploadLabel));
         upload.setDropAllowed(true);
         upload.setMaxFiles(maxFiles);
-        upload.setDropLabel(new NativeLabel("Перетащить файл сюда"));
+        upload.setMaxFileSize(1024 * 1024 * 50);
+        upload.setDropLabel(new NativeLabel("Выбрать файлы"));
         if (allowedTypes != null) {
             upload.setAcceptedFileTypes(allowedTypes);
         }
@@ -142,10 +142,17 @@ public final class QuizComponents {
         return avatar(photoFilename);
     }
 
-    private static Avatar avatar(String photoFilename, AvatarVariant... variant) {
+    public static Avatar avatar(String photoFilename, AvatarVariant... variant) {
         Avatar avatar = new Avatar();
         avatar.addThemeVariants(variant);
         avatar.setImageResource(createStreamResourceForPhoto(photoFilename));
+        return avatar;
+    }
+
+    public static Avatar avatar(InputStream photoData, AvatarVariant... variant) {
+        Avatar avatar = new Avatar();
+        avatar.addThemeVariants(variant);
+        avatar.setImageResource(createStreamResourceForPhoto("name", photoData));
         return avatar;
     }
 }

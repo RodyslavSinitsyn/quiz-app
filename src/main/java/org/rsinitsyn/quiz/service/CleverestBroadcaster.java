@@ -5,6 +5,8 @@ import com.vaadin.flow.component.ComponentEventBus;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.shared.Registration;
+
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -65,6 +67,7 @@ public class CleverestBroadcaster {
     public void sendJoinUserEvent(String gameId,
                                   String username,
                                   String userColor,
+                                  InputStream photo,
                                   String winnerBet,
                                   String loserBet) {
         CleverestGameState gameState = getState(gameId);
@@ -73,11 +76,13 @@ public class CleverestBroadcaster {
             var state = new UserGameState();
             state.setUsername(username);
             state.setColor(userColor);
+            state.setPhoto(photo);
             return state;
         });
 
         gameState.getUsers().computeIfPresent(username, (key, userGameState) -> {
             userGameState.setColor(userColor);
+            userGameState.setPhoto(photo);
             userGameState.updateBet(StringUtils.defaultIfEmpty(winnerBet, ""), true, false);
             userGameState.updateBet(StringUtils.defaultIfEmpty(loserBet, ""), false, false);
             return userGameState;

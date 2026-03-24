@@ -73,8 +73,8 @@ vaadin {
 
 application {
     applicationDefaultJvmArgs = [
-            '-Xms256m',
-            '-Xmx1024m',
+            '-Xms1000m',
+            '-Xmx2048m',
             '-XX:+UseG1GC',
             '-Xlog:gc*:file=logs/gc.log:time,uptime,level,tags',
             '-XX:MetaspaceSize=128m',

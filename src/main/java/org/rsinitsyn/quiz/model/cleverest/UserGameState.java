@@ -1,5 +1,6 @@
 package org.rsinitsyn.quiz.model.cleverest;
 
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
@@ -21,6 +22,7 @@ import org.rsinitsyn.quiz.utils.QuizUtils;
 public class UserGameState implements Comparable<UserGameState> {
     private String username;
     private String color;
+    private InputStream photo;
 
     private boolean lastWasCorrect;
 //    @Setter(AccessLevel.NONE)
@@ -110,6 +112,7 @@ public class UserGameState implements Comparable<UserGameState> {
         return new UserGameState(
                 username,
                 color,
+                photo,
                 lastWasCorrect,
                 lastAnswerText,
                 lastPosition,
