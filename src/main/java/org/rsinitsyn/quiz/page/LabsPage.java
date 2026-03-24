@@ -15,9 +15,12 @@ import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.component.custom.answer.AbstractAnswersLayout;
 import org.rsinitsyn.quiz.component.custom.question.BaseQuestionLayout;
 import org.rsinitsyn.quiz.component.custom.question.BaseQuestionLayout.QuestionAnsweredEvent;
+import org.rsinitsyn.quiz.entity.QuestionHintType;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
+import org.rsinitsyn.quiz.model.QuestionModel.HintModel;
 import org.rsinitsyn.quiz.service.QuestionService;
 
 import java.util.LinkedList;
@@ -28,6 +31,7 @@ import static com.vaadin.flow.component.notification.NotificationVariant.LUMO_CO
 import static java.util.UUID.randomUUID;
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.notification;
 import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory.createQuestionLayout;
+import static org.rsinitsyn.quiz.entity.QuestionHintType.PHOTO;
 
 @Route(value = "/labs", layout = MainLayout.class)
 @PageTitle("Labs")
@@ -86,10 +90,15 @@ public class LabsPage extends VerticalLayout {
                             .text(randomText(10))
                             .type(questionType)
                             .answers(List.of(
-                                    new QuestionModel.AnswerModel(randomText(1), true, 1, null),
-                                    new QuestionModel.AnswerModel(randomText(7), true, 2, null),
-                                    new QuestionModel.AnswerModel(randomText(20), true, 3, null),
-                                    new QuestionModel.AnswerModel(randomText(35), true, 4, null)
+                                    new AnswerModel(randomText(1), true, 1, null),
+                                    new AnswerModel(randomText(7), true, 2, null),
+                                    new AnswerModel(randomText(20), true, 3, null),
+                                    new AnswerModel(randomText(35), true, 4, null)
+                            ))
+                            .hints(List.of(
+                                    HintModel.builder().number(0).type(PHOTO).photoFilename("dev/a788c959-0872-41af-a7e9-b610e44e0cb3.jpg").build(),
+                                    HintModel.builder().number(1).type(PHOTO).photoFilename("dev/f784a157-5647-437a-a679-2db9192c3c52.jpg").build(),
+                                    HintModel.builder().number(2).type(PHOTO).photoFilename("dev/ced3dfc0-33e4-4e9e-b803-730faf01159b.jpg").build()
                             ))
                             .build())
             );

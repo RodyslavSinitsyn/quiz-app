@@ -13,7 +13,7 @@ import org.rsinitsyn.quiz.utils.QuizUtils;
 
 import java.util.Collections;
 
-import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.SMALL_IMAGE_HEIGHT;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
 
 public class PhotoAnswersLayout extends AbstractAnswersLayout {
 
@@ -28,21 +28,7 @@ public class PhotoAnswersLayout extends AbstractAnswersLayout {
         options.setItems(answers);
         options.setWidthFull();
         options.setRenderer(new ComponentRenderer<Component, QuestionModel.AnswerModel>(
-                answerModel -> {
-                    Image image = new Image();
-                    image.setSrc(QuizUtils.createStreamResourceForPhoto(answerModel.photoFilename()));
-                    image.setMaxHeight(SMALL_IMAGE_HEIGHT);
-                    image.setWidthFull();
-                    image.getStyle().set("object-fit", "cover");
-                    image.getStyle().set("object-position", "center center");
-                    image.addClassNames(
-                            LumoUtility.AlignSelf.CENTER,
-                            LumoUtility.Border.ALL,
-                            LumoUtility.BorderRadius.MEDIUM,
-                            LumoUtility.BorderColor.PRIMARY
-                    );
-                    return image;
-                }));
+                answerModel -> image(answerModel.photoFilename(), MEDIUM_IMAGE_HEIGHT)));
         options.addValueChangeListener(e -> submitButton.setEnabled(true));
         add(options);
     }

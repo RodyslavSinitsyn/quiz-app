@@ -6,7 +6,6 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -28,9 +27,8 @@ import org.rsinitsyn.quiz.utils.QuizUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.questionTextSpan;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
 import static org.rsinitsyn.quiz.component.custom.answer.AnswerLayoutsFactory.createAnswerLayout;
-import static org.rsinitsyn.quiz.utils.QuizUtils.createStreamResourceForPhoto;
 
 @Slf4j
 public class BaseQuestionLayout extends VerticalLayout {
@@ -63,31 +61,19 @@ public class BaseQuestionLayout extends VerticalLayout {
 
     private void renderComponents(QuestionLayoutRequest request) {
         renderCategory();
-        renderImage();
         renderQuestionText();
+        renderImage();
         renderAudio();
         renderAnswersLayout(request);
     }
 
     protected void renderImage() {
         questionModel.photoFilename()
-                .ifPresent(filename -> {
-                    Image image = new Image();
-                    image.setSrc(createStreamResourceForPhoto(filename));
-                    image.setMaxHeight(imageHeight);
-                    if (!host) image.setWidthFull();
-                    image.getStyle().set("object-fit", "cover");
-                    image.getStyle().set("object-position", "center center");
-
-                    add(image);
-                });
+                .ifPresent(filename -> add(image(filename, imageHeight)));
     }
 
     protected void renderCategory() {
-        Span categorySpan = new Span(questionModel.getCategoryName());
-        categorySpan.addClassNames(LumoUtility.FontWeight.LIGHT, CleverestComponents.MOBILE_SMALL_FONT);
-
-        add(categorySpan);
+        add(smallTextSpan(questionModel.getCategoryName()));
     }
 
     protected void renderQuestionText() {
@@ -118,13 +104,11 @@ public class BaseQuestionLayout extends VerticalLayout {
     }
 
     private void renderAnswersLayout(QuestionLayoutRequest request) {
-        if (host) {
-//            return;
-        }
         answersLayout = createAnswerLayout(AnswerLayoutRequest.builder()
                 .question(questionModel)
                 .hintsState(request.hintsState())
                 .build());
+        answersLayout.setEnabled(!host);
         add(answersLayout);
     }
 

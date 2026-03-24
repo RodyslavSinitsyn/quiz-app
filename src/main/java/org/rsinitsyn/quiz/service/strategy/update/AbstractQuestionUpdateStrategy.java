@@ -131,6 +131,7 @@ public abstract class AbstractQuestionUpdateStrategy<T extends AbstractQuestionB
     protected List<QuestionHintEntity> createHints(T model) {
         final var counter = new AtomicInteger(0);
         return model.getHintsText().lines()
+                .filter(StringUtils::isNoneBlank)
                 .map(line -> {
                     final var entity = new QuestionHintEntity();
                     entity.setType(TEXT);

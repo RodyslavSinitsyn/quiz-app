@@ -22,8 +22,10 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.rsinitsyn.quiz.model.QuestionModel.*;
+import static org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
+import static org.rsinitsyn.quiz.model.QuestionModel.HintModel;
 import static org.rsinitsyn.quiz.utils.Profiles.PROD;
+import static org.rsinitsyn.quiz.utils.SessionWrapper.ADMIN_NAME;
 
 @Observed(name = "questionService")
 @Service
@@ -71,7 +73,7 @@ public class QuestionService {
 
     @Transactional(readOnly = true)
     public List<QuestionEntity> findAllCreatedByUser(String username) {
-        if (username.equals("admin")) {
+        if (username.equals(ADMIN_NAME)) {
             final var questionsWithAnswers = questionDao.findAllWithAnswers();
             questionDao.findAllWithHints();
             return questionsWithAnswers;
@@ -130,7 +132,8 @@ public class QuestionService {
                 .text(question.getText())
                 .type(question.getType())
                 .categoryName(question.getCategory().getName())
-                .answers(toQuizAnswerModel(question.getAnswers()))
+                .answers(toAnswerModel(question.getAnswers()))
+                .hints(toHintModel(question.getHints()))
                 .photoFilename(question.getPhotoFilename())
                 .audioFilename(question.getAudioFilename())
                 .optionsOnly(question.isOptionsOnly())
@@ -140,13 +143,24 @@ public class QuestionService {
                 .build();
     }
 
-    private List<AnswerModel> toQuizAnswerModel(List<AnswerEntity> answerEntitySet) {
-        return answerEntitySet.stream()
+    private List<AnswerModel> toAnswerModel(List<AnswerEntity> answerEntities) {
+        return answerEntities.stream()
                 .map(answerEntity -> AnswerModel.builder()
                         .text(answerEntity.getText())
                         .correct(answerEntity.isCorrect())
                         .number(answerEntity.getNumber())
                         .photoFilename(answerEntity.getPhotoFilename())
+                        .build())
+                .toList();
+    }
+
+    private List<HintModel> toHintModel(List<QuestionHintEntity> questionHints) {
+        return questionHints.stream()
+                .map(entity -> HintModel.builder()
+                        .text(entity.getText())
+                        .number(entity.getNumber())
+                        .photoFilename(entity.getPhotoFilename())
+                        .type(entity.getType())
                         .build())
                 .toList();
     }

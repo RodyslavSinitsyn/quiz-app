@@ -1,32 +1,37 @@
 package org.rsinitsyn.quiz.utils;
 
+import javazoom.jl.decoder.JavaLayerException;
+import javazoom.jl.player.Player;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.util.Pair;
+
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
-import javazoom.jl.decoder.JavaLayerException;
-import javazoom.jl.player.Player;
-import lombok.SneakyThrows;
-import lombok.experimental.UtilityClass;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.util.Pair;
 
-@UtilityClass
+import static java.util.concurrent.CompletableFuture.runAsync;
+
 @Slf4j
-public class AudioUtils {
+public final class AudioUtils {
     public static final String STATIC_FILES_FOLDER = "static/";
 
-    public CompletableFuture<Void> playSoundAsync(String audioFileName) {
-        return CompletableFuture.runAsync(() -> createAndPlayPlayer(audioFileName));
+    private AudioUtils() {
+        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
     }
 
-    public CompletableFuture<Void> playStaticSoundAsync(String audioFileName) {
-        return CompletableFuture.runAsync(() -> createAndPlayPlayer(STATIC_FILES_FOLDER + audioFileName));
+    public static CompletableFuture<Void> playSoundAsync(String audioFileName) {
+        return runAsync(() -> createAndPlayPlayer(audioFileName));
     }
 
-    public Player playStaticAudioAsyncAndGetPlayer(String audioFileName) {
+    public static CompletableFuture<Void> playStaticSoundAsync(String audioFileName) {
+        return runAsync(() -> createAndPlayPlayer(STATIC_FILES_FOLDER + audioFileName));
+    }
+
+    public static Player playStaticAudioAsyncAndGetPlayer(String audioFileName) {
         var audioData = createPlayerAndBuffer(STATIC_FILES_FOLDER + audioFileName);
-        CompletableFuture.runAsync(() -> {
+        runAsync(() -> {
             try {
                 audioData.getFirst().play();
             } catch (JavaLayerException e) {
@@ -40,7 +45,7 @@ public class AudioUtils {
     }
 
     @SneakyThrows
-    private void createAndPlayPlayer(String audioFileName) {
+    private static void createAndPlayPlayer(String audioFileName) {
         Pair<Player, BufferedInputStream> data = createPlayerAndBuffer(audioFileName);
         try {
             data.getFirst().play();
@@ -49,7 +54,7 @@ public class AudioUtils {
         }
     }
 
-    private Pair<Player, BufferedInputStream> createPlayerAndBuffer(String pathToAudioFile) {
+    private static Pair<Player, BufferedInputStream> createPlayerAndBuffer(String pathToAudioFile) {
         try {
             BufferedInputStream buffer = new BufferedInputStream(
                     new FileInputStream(QuizUtils.readAudioFile(pathToAudioFile)));
@@ -60,7 +65,7 @@ public class AudioUtils {
         }
     }
 
-    private void closeBuffer(BufferedInputStream bufferedInputStream) {
+    private static void closeBuffer(BufferedInputStream bufferedInputStream) {
         try {
             bufferedInputStream.close();
         } catch (IOException e) {

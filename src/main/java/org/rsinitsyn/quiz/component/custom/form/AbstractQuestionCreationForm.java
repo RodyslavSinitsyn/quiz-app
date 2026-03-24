@@ -24,6 +24,8 @@ import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.model.binding.AbstractQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
 
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.horizontalLayoutBetween;
+
 @Slf4j
 public abstract class AbstractQuestionCreationForm<T extends AbstractQuestionBindingModel> extends FormLayout {
 
@@ -114,7 +116,7 @@ public abstract class AbstractQuestionCreationForm<T extends AbstractQuestionBin
         layout.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
         layout.setAlignItems(FlexComponent.Alignment.START);
 
-        return layout;
+        return horizontalLayoutBetween(save, cancel, delete);
     }
 
     private void validateAndFireEvent() {

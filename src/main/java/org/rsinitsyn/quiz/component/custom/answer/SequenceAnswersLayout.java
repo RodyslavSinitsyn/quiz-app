@@ -2,20 +2,17 @@ package org.rsinitsyn.quiz.component.custom.answer;
 
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static java.util.stream.IntStream.range;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.horizontalLayoutBetween;
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.optionComponent;
 
 public class SequenceAnswersLayout extends AbstractAnswersLayout {
@@ -42,12 +39,7 @@ public class SequenceAnswersLayout extends AbstractAnswersLayout {
             up.setEnabled(i > 0);
             down.setEnabled(i < answers.size() - 1);
 
-            final var row = new HorizontalLayout(down, option, up);
-
-            row.setWidthFull();
-            row.setAlignItems(Alignment.CENTER);
-
-            sequenceContainer.add(row);
+            sequenceContainer.add(horizontalLayoutBetween(down, option, up));
         }
 
         if (getChildren().noneMatch(component -> component == sequenceContainer)) {

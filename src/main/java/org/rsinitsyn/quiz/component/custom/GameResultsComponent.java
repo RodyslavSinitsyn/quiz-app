@@ -3,15 +3,15 @@ package org.rsinitsyn.quiz.component.custom;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
-import org.rsinitsyn.quiz.utils.QuizComponents;
 
+import java.util.Optional;
+
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.horizontalLayoutBetween;
 import static org.rsinitsyn.quiz.utils.QuizComponents.questionDescription;
 import static org.rsinitsyn.quiz.utils.QuizComponents.smallAvatar;
 
@@ -31,8 +31,6 @@ public class GameResultsComponent extends VerticalLayout {
             return;
         }
         gameEntity.getGameQuestions().forEach(question -> {
-            HorizontalLayout column = new HorizontalLayout();
-
             Span answerIcon;
             if (question.getAnswered() == null) {
                 answerIcon = new Span(VaadinIcon.MINUS_CIRCLE_O.create());
@@ -57,12 +55,11 @@ public class GameResultsComponent extends VerticalLayout {
                 userAnswer.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
             }
 
-            column.add(answerIcon,
+            add(horizontalLayoutBetween(answerIcon,
                     categoryName,
                     questionDescription(question.getQuestion()),
                     userAnswer,
-                    userName);
-            add(column);
+                    userName));
             Optional.ofNullable(rowSeparator).ifPresent(this::add);
         });
     }

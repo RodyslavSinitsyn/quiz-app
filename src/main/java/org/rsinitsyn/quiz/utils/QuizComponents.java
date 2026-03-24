@@ -16,15 +16,16 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.upload.SucceededEvent;
 import com.vaadin.flow.component.upload.Upload;
-import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.apache.commons.lang3.StringUtils;
+import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 
 import java.util.function.BiConsumer;
 
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.horizontalLayoutBetween;
 import static org.rsinitsyn.quiz.utils.QuizUtils.createStreamResourceForPhoto;
 
 public final class QuizComponents {
@@ -120,8 +121,7 @@ public final class QuizComponents {
     }
 
     public static HorizontalLayout questionDescription(QuestionEntity question) {
-        HorizontalLayout row = new HorizontalLayout();
-        row.setAlignItems(FlexComponent.Alignment.CENTER);
+        final var row = horizontalLayoutBetween();
         if (StringUtils.isNotEmpty(question.getAudioFilename())) {
             Icon playSound = VaadinIcon.PLAY_CIRCLE.create();
             playSound.addClickListener(event -> AudioUtils.playSoundAsync(question.getAudioFilename()));
@@ -130,10 +130,7 @@ public final class QuizComponents {
         if (StringUtils.isNotEmpty(question.getPhotoFilename())) {
             row.add(smallAvatar(question.getPhotoFilename()));
         }
-        row.add(new Span(
-                question.getText().length() > 300
-                        ? question.getText().substring(0, 300).concat("...")
-                        : question.getText()));
+        row.add(new Span(question.getTextTruncated(300)));
         return row;
     }
 

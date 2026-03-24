@@ -4,17 +4,14 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.MOBILE_MEDIUM_FONT;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
 
 public class TopAnswersLayout extends AbstractAnswersLayout {
 
@@ -41,18 +38,12 @@ public class TopAnswersLayout extends AbstractAnswersLayout {
         topListLayout.setPadding(false);
 
         Button addToListButton = new Button(VaadinIcon.PLUS_CIRCLE.create());
-        TextField textField = CleverestComponents.answerInput(event -> {
+        TextField textField = textAnswerInput(event -> {
             addToListButton.setEnabled(!event.getValue().isBlank());
             submitButton.setEnabled(topListLayout.getChildren().count() == topSize);
         });
         configureAddToListButton(addToListButton, textField);
-
-        HorizontalLayout userInput = new HorizontalLayout(textField, addToListButton);
-        userInput.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
-        userInput.setAlignItems(FlexComponent.Alignment.END);
-        userInput.setWidthFull();
-
-        add(userInput);
+        add(horizontalLayoutBetween(textField, addToListButton));
         add(topListLayout);
     }
 

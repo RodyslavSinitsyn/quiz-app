@@ -1,22 +1,25 @@
 package org.rsinitsyn.quiz.component.custom.form;
 
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
+import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
+import org.rsinitsyn.quiz.model.binding.LinkQuestionBindingModel;
 
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
-import org.rsinitsyn.quiz.model.binding.LinkQuestionBindingModel;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.horizontalLayoutBetween;
 
 public class LinkQuestionForm extends AbstractQuestionCreationForm<LinkQuestionBindingModel> {
 
-    private final TextArea leftAnswers = new TextArea("Левый столбец");
-    private final TextArea rightAnswers = new TextArea("Правый столбец");
+    private final TextArea leftAnswers = new TextArea("Левый столбец"){{
+        setWidthFull();
+    }};
+    private final TextArea rightAnswers = new TextArea("Правый столбец"){{
+        setWidthFull();
+    }};
 
     private final Binder<LinkQuestionBindingModel> binder =
             new BeanValidationBinder<>(LinkQuestionBindingModel.class);
@@ -24,17 +27,7 @@ public class LinkQuestionForm extends AbstractQuestionCreationForm<LinkQuestionB
     public LinkQuestionForm(List<QuestionCategoryEntity> categories) {
         super(categories);
         binder.bindInstanceFields(this);
-
-        leftAnswers.setWidthFull();
-        rightAnswers.setWidthFull();
-
-        HorizontalLayout layout = new HorizontalLayout(leftAnswers, rightAnswers);
-        layout.setWidthFull();
-        layout.setPadding(false);
-
-        layout.setAlignItems(FlexComponent.Alignment.CENTER);
-
-        add(text, layout);
+        add(text, horizontalLayoutBetween(leftAnswers, rightAnswers));
         addCommonComponents();
     }
 

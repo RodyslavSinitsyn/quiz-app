@@ -15,6 +15,7 @@ public class AnswerLayoutsFactory {
             case PRECISION -> new PrecisionAnswersLayout(request);
             case TOP -> new TopAnswersLayout(request);
             case SEQUENCE -> new SequenceAnswersLayout(request);
+            case GUESS_PHOTO -> new GuessPhotoAnswersLayout(request);
             default -> throw new IllegalArgumentException("Unknown question type: " + questionType);
         };
     }

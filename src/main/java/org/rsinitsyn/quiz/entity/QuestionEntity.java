@@ -2,6 +2,7 @@ package org.rsinitsyn.quiz.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 
 import java.time.LocalDateTime;
@@ -61,6 +62,10 @@ public class QuestionEntity {
 //    @Formula("SELECT count(*) FROM games_questions gq WHERE gq.question_id = id")
     @Transient
     private long gamesQuestionsCount;
+
+    public String getTextTruncated(int maxWidth) {
+        return StringUtils.truncate(text, maxWidth);
+    }
 
     public void addAnswer(AnswerEntity answerEntity) {
         answerEntity.setQuestion(this);

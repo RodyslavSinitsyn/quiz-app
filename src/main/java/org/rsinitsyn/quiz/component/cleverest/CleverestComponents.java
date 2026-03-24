@@ -7,13 +7,15 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -22,14 +24,16 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
-import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.utils.QuizComponents;
-import org.rsinitsyn.quiz.utils.QuizUtils;
 
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+
+import static org.rsinitsyn.quiz.utils.QuizComponents.appendTextBorder;
+import static org.rsinitsyn.quiz.utils.QuizComponents.largeAvatar;
+import static org.rsinitsyn.quiz.utils.QuizUtils.createStreamResourceForPhoto;
 
 public final class CleverestComponents {
 
@@ -71,10 +75,33 @@ public final class CleverestComponents {
         return span;
     }
 
+    public static Span smallTextSpan(String text) {
+        Span span = new Span(text);
+        span.addClassNames(LumoUtility.FontWeight.LIGHT, CleverestComponents.MOBILE_SMALL_FONT);
+        return span;
+    }
+
+    public static HorizontalLayout horizontalLayoutBetween(Component... components) {
+        return horizontalLayout(JustifyContentMode.BETWEEN, components);
+    }
+
+    public static HorizontalLayout horizontalLayoutCenter(Component... components) {
+        return horizontalLayout(JustifyContentMode.CENTER, components);
+    }
+
+    public static HorizontalLayout horizontalLayout(JustifyContentMode mode, Component... components) {
+        HorizontalLayout layout = new HorizontalLayout();
+        layout.setWidthFull();
+        layout.setAlignItems(Alignment.CENTER);
+        layout.setJustifyContentMode(mode);
+        layout.add(components);
+        return layout;
+    }
+
     public static Span userAnswerSpan(UserGameState userGameState, QuestionType questionType, String... classes) {
         Span userAnswer = new Span();
         if (questionType.equals(QuestionType.PHOTO)) {
-            userAnswer.add(QuizComponents.largeAvatar(userGameState.getLastAnswerText()));
+            userAnswer.add(largeAvatar(userGameState.getLastAnswerText()));
         } else {
             userAnswer.add(String.valueOf(userGameState.getLastAnswerText()));
         }
@@ -88,7 +115,7 @@ public final class CleverestComponents {
     }
 
     public static Span userNameSpan(String username, String textColor, String... classes) {
-        return QuizComponents.appendTextBorder(new Span() {{
+        return appendTextBorder(new Span() {{
             setText(username);
             getStyle().set("color", textColor);
             addClassNames(classes);
@@ -105,10 +132,7 @@ public final class CleverestComponents {
         span.setWidthFull();
         span.getStyle().set("white-space", "pre-line");
         if (questionModel.getType().equals(QuestionType.PHOTO)) {
-            span.add(new Image() {{
-                setMaxHeight(MEDIUM_IMAGE_HEIGHT);
-                setSrc(QuizUtils.createStreamResourceForPhoto(questionModel.getFirstCorrectAnswer().photoFilename()));
-            }});
+            span.add(image(questionModel.getFirstCorrectAnswer().photoFilename(), MEDIUM_IMAGE_HEIGHT));
         } else {
             span.setText(questionModel.getCorrectAnswersAsText());
         }
@@ -172,7 +196,7 @@ public final class CleverestComponents {
         return option;
     }
 
-    public static TextField answerInput(HasValue.ValueChangeListener<? super AbstractField.ComponentValueChangeEvent<TextField, String>> valueChangeHandler) {
+    public static TextField textAnswerInput(HasValue.ValueChangeListener<? super AbstractField.ComponentValueChangeEvent<TextField, String>> valueChangeHandler) {
         TextField textField = new TextField("Введите ответ");
         textField.setValueChangeMode(ValueChangeMode.EAGER);
         textField.addThemeVariants(TextFieldVariant.LUMO_ALIGN_CENTER);
@@ -181,7 +205,6 @@ public final class CleverestComponents {
         textField.addValueChangeListener(valueChangeHandler);
         return textField;
     }
-
 
     public static Button submitButton(ComponentEventListener<ClickEvent<Button>> clickAction) {
         var submit = primaryButton("Ответить", clickAction);
@@ -198,11 +221,25 @@ public final class CleverestComponents {
         return button;
     }
 
+    public static Button secondaryButton(String text, ComponentEventListener<ClickEvent<Button>> clickAction) {
+        Button button = new Button(text);
+        button.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        button.addClickListener(clickAction);
+        button.addClassNames(MOBILE_MEDIUM_FONT);
+        return button;
+    }
+
+    public static Button iconButton(Icon icon, ComponentEventListener<ClickEvent<Button>> clickAction) {
+        Button button = new Button(icon);
+        button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        button.addClickListener(clickAction);
+        return button;
+    }
+
     public static Button approveButton(Runnable clickAction,
                                        int countLimit) {
-        Button button = new Button();
-        button.setIcon(VaadinIcon.CHECK.create());
-        button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        final var button = iconButton(VaadinIcon.CHECK.create(), event -> {
+        });
         button.addClickListener(event -> {
             if (countLimit > 0) {
                 String currText = event.getSource().getElement().getText();
@@ -218,8 +255,7 @@ public final class CleverestComponents {
                 button.setEnabled(false);
             }
             event.getSource().getParent().ifPresent(p ->
-                    p.addClassNames(
-                            LumoUtility.Background.PRIMARY_10, LumoUtility.Border.ALL, LumoUtility.BorderColor.PRIMARY));
+                    p.addClassNames(LumoUtility.Background.PRIMARY_10, LumoUtility.Border.ALL, LumoUtility.BorderColor.PRIMARY));
         });
         return button;
     }
@@ -270,22 +306,13 @@ public final class CleverestComponents {
     }
 
     public static HorizontalLayout userScoreLayout(String username, String ustTxtColor, int score, String... classes) {
-        HorizontalLayout layout = new HorizontalLayout();
-        layout.setAlignItems(FlexComponent.Alignment.CENTER);
-        layout.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.STRETCH);
-        layout.addClassNames(LumoUtility.Border.BOTTOM,
-                LumoUtility.FontWeight.SEMIBOLD);
-        layout.getStyle().set("border-color", ustTxtColor);
-        layout.setWidthFull();
-
         Span userScore = new Span(String.valueOf(score));
         userScore.addClassNames(classes);
         userScore.getStyle().set("color", ustTxtColor);
-
-        layout.add(userNameSpan(username, ustTxtColor, classes),
-                QuizComponents.appendTextBorder(userScore));
-
-        return layout;
+        return horizontalLayoutBetween(
+                userNameSpan(username, ustTxtColor, classes),
+                appendTextBorder(userScore),
+                new Hr());
     }
 
     public static VerticalLayout questionGradeLayout(Consumer<Integer> eventHandler) {
@@ -293,7 +320,7 @@ public final class CleverestComponents {
         layout.setSpacing(false);
         layout.setPadding(false);
         layout.setWidthFull();
-        layout.setAlignItems(FlexComponent.Alignment.CENTER);
+        layout.setAlignItems(Alignment.CENTER);
         layout.add(userInfoLightSpan("Оцените сложность вопроса", MOBILE_SMALL_FONT));
 
         // TODO: Not working with new Vaadin, find replacement
@@ -304,34 +331,34 @@ public final class CleverestComponents {
         return layout;
     }
 
-    public static List<Component> userPhotoOptionsInputComponentsCarousel(QuestionModel questionModel) {
-        List<AnswerModel> shuffledAnswers = questionModel.getShuffledAnswers();
-        var slides = shuffledAnswers.stream()
-                .map(answerModel -> {
-                    Image image = new Image();
-                    image.setSrc(QuizUtils.createStreamResourceForPhoto(answerModel.photoFilename()));
-                    image.setMaxHeight(LARGE_IMAGE_HEIGHT);
-                    image.setWidthFull();
-                    image.getStyle().set("object-fit", "contain");
-                    image.getStyle().set("object-position", "center center");
-                    return image;
-                })
+    public static Image image(String filename) {
+        return image(filename, null);
+    }
+
+    public static Image image(String filename, String height) {
+        Image image = new Image();
+        image.setSrc(createStreamResourceForPhoto(filename));
+        image.addClassName("quiz-photo");
+        if (height != null) {
+            image.setMaxHeight(height);
+        }
+        return image;
+    }
+
+    public static VerticalLayout manualPhotoCarousel(List<String> photoFilenames) {
+        var slides = photoFilenames.stream()
+                .map(CleverestComponents::image)
                 .map(Slide::new)
                 .toArray(Slide[]::new);
 
-        Carousel carousel = new Carousel(slides).withAutoProgress();
-        carousel.setWidthFull();
-        carousel.setSlideDuration(3);
-        carousel.setHeight(LARGE_IMAGE_HEIGHT);
+        Carousel carousel = new Carousel(slides)
+                .withStartPosition(photoFilenames.size() - 1)
+                .withoutNavigation();
+        carousel.addClassName("quiz-carousel");
+        carousel.setHeight(MEDIUM_IMAGE_HEIGHT);
 
-//        Button prev = new Button("<<", event -> carousel.movePrev());
-//        Button next = new Button(">>", event -> carousel.moveNext());
-//        var nav = new HorizontalLayout(prev, next);
-//        nav.setWidthFull();
-//        nav.addClassNames(LumoUtility.Margin.Bottom.XLARGE);
-//        nav.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-//        nav.setAlignItems(FlexComponent.Alignment.CENTER);
-
-        return List.of(carousel);
+        final var prev = iconButton(VaadinIcon.ARROW_CIRCLE_LEFT_O.create(), event -> carousel.movePrev());
+        final var next = iconButton(VaadinIcon.ARROW_CIRCLE_RIGHT_O.create(), event -> carousel.moveNext());
+        return new VerticalLayout(carousel, horizontalLayoutCenter(prev, next));
     }
 }

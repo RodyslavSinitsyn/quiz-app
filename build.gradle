@@ -89,12 +89,6 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-tasks.withType(JavaCompile) {
-    if (isProd) {
-        dependsOn 'vaadinPrepareFrontend'
-    }
-}
-
 tasks.named('bootJar') {
     if (isProd) {
         dependsOn 'vaadinBuildFrontend'

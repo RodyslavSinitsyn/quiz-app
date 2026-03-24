@@ -22,7 +22,7 @@ public interface QuestionDao extends JpaRepository<QuestionEntity, UUID> {
 
     @Query("""
             select distinct q from QuestionEntity q
-            join fetch q.hints
+            left join fetch q.hints
             where q.createdBy = :createdBy
             order by q.creationDate desc
             """)

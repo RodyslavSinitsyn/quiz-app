@@ -3,10 +3,13 @@ package org.rsinitsyn.quiz.model;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.rsinitsyn.quiz.entity.QuestionHintType;
 import org.rsinitsyn.quiz.entity.QuestionType;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.rsinitsyn.quiz.entity.QuestionHintType.*;
 
 @Getter
 @EqualsAndHashCode(exclude = {"playersAnswersHistory", "answers"})
@@ -28,6 +31,7 @@ public class QuestionModel {
     private String answerDescription;
     private Map<String, AnswerHistory> playersAnswersHistory;
     private List<AnswerModel> answers;
+    private List<HintModel> hints;
 
     // for cleverest, mutable
     @Setter
@@ -90,5 +94,17 @@ public class QuestionModel {
                               boolean correct,
                               int number,
                               String photoFilename) {
+    }
+
+    @Builder
+    public record HintModel(String text, String photoFilename, QuestionHintType type, int number) {
+
+        public boolean textType() {
+            return type == TEXT;
+        }
+
+        public boolean photoType() {
+            return type == PHOTO;
+        }
     }
 }

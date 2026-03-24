@@ -6,6 +6,17 @@ vaadin-item[selected] {
     background-color: rgba(173, 215, 255, 0.25);
 }
 
+.quiz-photo {
+    width: 100%;
+    object-fit: contain;
+    object-position: center center;
+    border: 5px solid black;
+}
+
+.quiz-carousel {
+    width: 100%;
+}
+
 /*Less than 700*/
 @media (max-width: 700px) {
 
