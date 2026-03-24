@@ -13,6 +13,7 @@ import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.service.strategy.update.AbstractQuestionUpdateStrategy;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.rsinitsyn.quiz.model.QuestionModel.*;
+import static org.rsinitsyn.quiz.utils.Profiles.PROD;
 
 @Observed(name = "questionService")
 @Service
@@ -36,19 +38,22 @@ public class QuestionService {
     private Map<
             String,
             AbstractQuestionUpdateStrategy<? extends AbstractQuestionBindingModel>> questionUpdateStrategyMap;
+    private final Environment environment;
 
     public QuestionService(QuestionDao questionDao,
                            GameQuestionUserDao gameQuestionUserDao,
                            QuestionGradeDao questionGradeDao,
                            ResourceService resourceService,
                            UserService userService,
-                           @Qualifier("questionUpdateStrategyMap") Map<String, AbstractQuestionUpdateStrategy<? extends AbstractQuestionBindingModel>> questionUpdateStrategyMap) {
+                           @Qualifier("questionUpdateStrategyMap") Map<String, AbstractQuestionUpdateStrategy<? extends AbstractQuestionBindingModel>> questionUpdateStrategyMap,
+                           Environment environment) {
         this.questionDao = questionDao;
         this.gameQuestionUserDao = gameQuestionUserDao;
         this.questionGradeDao = questionGradeDao;
         this.resourceService = resourceService;
         this.userService = userService;
         this.questionUpdateStrategyMap = questionUpdateStrategyMap;
+        this.environment = environment;
     }
 
     public QuestionEntity findByIdLazy(UUID id) {
@@ -59,20 +64,21 @@ public class QuestionService {
         return questionDao.findById(id).orElseThrow();
     }
 
-    @Transactional
-    public QuestionEntity findByIdJoinAnswers(UUID id) {
-        return questionDao.findByIdJoinAnswers(id).orElseThrow();
-    }
-
+    @Transactional(readOnly = true)
     public List<QuestionEntity> findAllCreatedByCurrentUser() {
         return findAllCreatedByUser(SessionWrapper.getLoggedUser());
     }
 
+    @Transactional(readOnly = true)
     public List<QuestionEntity> findAllCreatedByUser(String username) {
         if (username.equals("admin")) {
-            return questionDao.findAllJoinAnswersAndCategoryNewFirst();
+            final var questionsWithAnswers = questionDao.findAllWithAnswers();
+            questionDao.findAllWithHints();
+            return questionsWithAnswers;
         }
-        return questionDao.findAllJoinAnswersAndCategoryNewFirst(username);
+        final var allWithAnswers = questionDao.findAllWithAnswers(username);
+        questionDao.findAllWithHints(username);
+        return allWithAnswers;
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
@@ -149,8 +155,7 @@ public class QuestionService {
     public <T extends AbstractQuestionBindingModel> void saveOrUpdate(T model) {
         final var abstractStrategy =
                 questionUpdateStrategyMap.get(model.getClass().getSimpleName());
-        @SuppressWarnings("unchecked")
-        final var specificStrategy = (AbstractQuestionUpdateStrategy<T>) abstractStrategy;
+        @SuppressWarnings("unchecked") final var specificStrategy = (AbstractQuestionUpdateStrategy<T>) abstractStrategy;
         var question = specificStrategy.prepareEntity(model, model.getId() == null
                 ? null
                 : findById(UUID.fromString(model.getId())));
@@ -173,6 +178,10 @@ public class QuestionService {
         entity.getAnswers().forEach(answerEntity -> resourceService.saveImageFromUrl(
                 answerEntity.getPhotoFilename(),
                 answerEntity.getPhotoUrl()));
+        entity.getHints().forEach(questionHintEntity -> resourceService.saveImageFromInputStream(
+                questionHintEntity.getPhotoFilename(),
+                questionHintEntity.getPhotoInputStream()
+        ));
         log.info("Question saved/updated: {}", entity);
     }
 
@@ -226,6 +235,9 @@ public class QuestionService {
 
     @Transactional
     public void delete(QuestionEntity entity) {
+        if (Arrays.asList(environment.getActiveProfiles()).contains(PROD.value)) {
+            throw new IllegalStateException("Cannot delete question in production, only by demand");
+        }
         if (questionDao.deleteQuestionEntityById(entity.getId()) == 1) {
             resourceService.deleteImageFile(entity.getPhotoFilename());
             resourceService.deleteAudioFile(entity.getAudioFilename());

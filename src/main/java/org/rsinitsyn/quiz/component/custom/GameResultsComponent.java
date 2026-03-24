@@ -12,6 +12,9 @@ import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 
+import static org.rsinitsyn.quiz.utils.QuizComponents.questionDescription;
+import static org.rsinitsyn.quiz.utils.QuizComponents.smallAvatar;
+
 public class GameResultsComponent extends VerticalLayout {
 
     public GameResultsComponent(GameEntity gameEntity, Component rowSeparator) {
@@ -48,7 +51,7 @@ public class GameResultsComponent extends VerticalLayout {
             Span userAnswer = new Span();
 
             if (question.getQuestion().getType().equals(QuestionType.PHOTO)) {
-                userAnswer.add(QuizComponents.smallAvatar(question.getAnswerText()));
+                userAnswer.add(smallAvatar(question.getAnswerText()));
             } else {
                 userAnswer.add(StringUtils.defaultIfEmpty(question.getAnswerText(), ""));
                 userAnswer.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
@@ -56,7 +59,7 @@ public class GameResultsComponent extends VerticalLayout {
 
             column.add(answerIcon,
                     categoryName,
-                    QuizComponents.questionDescription(question.getQuestion()),
+                    questionDescription(question.getQuestion()),
                     userAnswer,
                     userName);
             add(column);

@@ -13,6 +13,8 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
+import static org.rsinitsyn.quiz.utils.QuizUtils.generateFilenameWithExt;
+
 @Service
 public class FourAnswersQuestionUpdateStrategy extends AbstractQuestionUpdateStrategy<FourAnswersQuestionBindingModel> {
 
@@ -35,7 +37,7 @@ public class FourAnswersQuestionUpdateStrategy extends AbstractQuestionUpdateStr
     protected void createHook(FourAnswersQuestionBindingModel model, QuestionEntity question) {
         super.createHook(model, question);
         if (model.getAudio() != null) {
-            question.setAudioFilename(properties.getFilesFolder() + QuizUtils.generateFilenameWithExt(".mp3"));
+            question.setAudioFilename(properties.getFilesFolder() + generateFilenameWithExt("mp3"));
         }
         AtomicInteger counter = new AtomicInteger(0);
         model.getAnswers().forEach(answerBindingModel -> {
@@ -67,7 +69,7 @@ public class FourAnswersQuestionUpdateStrategy extends AbstractQuestionUpdateStr
                         .filter(am -> am.getId().equals(id))
                         .findFirst().orElseThrow();
         entity.getAnswers().forEach(answerEntity -> {
-            FourAnswersQuestionBindingModel.AnswerBindingModel answerModel = getById.apply(answerEntity.getId());
+            final var answerModel = getById.apply(answerEntity.getId());
             answerEntity.setText(answerModel.getText());
             answerEntity.setNumber(answerModel.getIndex());
             answerEntity.setCorrect(answerModel.isCorrect());

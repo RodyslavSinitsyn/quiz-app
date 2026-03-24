@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static org.rsinitsyn.quiz.utils.QuizComponents.uploadComponent;
+
 @Slf4j
 public class QuestionForm extends AbstractQuestionCreationForm<FourAnswersQuestionBindingModel> {
 
@@ -43,13 +45,11 @@ public class QuestionForm extends AbstractQuestionCreationForm<FourAnswersQuesti
 
         add(text);
         add(inputsLayout);
-        add(author,
-                QuizComponents.uploadComponent("Импортировать аудио",
+        add(author, uploadComponent("Импортировать аудио",
                         (buffer, event) -> {
-                            InputStream inputStream = buffer.getInputStream();
+                            InputStream inputStream = buffer.getInputStream(event.getFileName());
                             model.setAudio(inputStream);
-                        }, ".mp3"));
-
+                        }, ".mp3", 1));
         addCommonComponents();
     }
 

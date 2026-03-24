@@ -11,6 +11,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DateFormat;
@@ -74,6 +75,10 @@ public final class QuizUtils {
         });
     }
 
+    public static StreamResource createStreamResourceForPhoto(String filename, InputStream inputStream) {
+        return new StreamResource(filename, () -> inputStream);
+    }
+
     public static String generateFilename(String urlPath) {
         String extension = StringUtils.defaultIfBlank(FilenameUtils.getExtension(urlPath), "jpg");
         extension = '.' + extension;
@@ -81,7 +86,7 @@ public final class QuizUtils {
     }
 
     public static String generateFilenameWithExt(String extension) {
-        return UUID.randomUUID() + extension;
+        return "%s.%s".formatted(UUID.randomUUID(), extension);
     }
 
     @SneakyThrows

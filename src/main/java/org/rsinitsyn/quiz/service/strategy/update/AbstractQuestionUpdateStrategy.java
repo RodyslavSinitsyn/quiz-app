@@ -1,19 +1,24 @@
 package org.rsinitsyn.quiz.service.strategy.update;
 
 import org.apache.commons.lang3.StringUtils;
-import org.rsinitsyn.quiz.entity.AnswerEntity;
-import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
-import org.rsinitsyn.quiz.entity.QuestionEntity;
+import org.rsinitsyn.quiz.entity.*;
 import org.rsinitsyn.quiz.model.binding.AbstractQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.LinkQuestionBindingModel;
 import org.rsinitsyn.quiz.properties.QuizAppProperties;
 import org.rsinitsyn.quiz.service.QuestionCategoryService;
-import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.QuizUtils;
-import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.time.LocalDateTime.*;
+import static org.rsinitsyn.quiz.entity.QuestionHintType.PHOTO;
+import static org.rsinitsyn.quiz.entity.QuestionHintType.TEXT;
+import static org.rsinitsyn.quiz.utils.QuizUtils.generateFilename;
+import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
 @Component
 public abstract class AbstractQuestionUpdateStrategy<T extends AbstractQuestionBindingModel> implements QuestionUpdateStrategy<T> {
@@ -59,10 +64,10 @@ public abstract class AbstractQuestionUpdateStrategy<T extends AbstractQuestionB
     }
 
     protected void createHook(T model, QuestionEntity question) {
-//        question.setId(UUID.randomUUID());
-        question.setCreationDate(LocalDateTime.now());
-        question.setCreatedBy(SessionWrapper.getLoggedUser());
+        question.setCreationDate(now());
+        question.setCreatedBy(getLoggedUser());
         question.setOptionsOnly(false);
+        createHints(model).forEach(question::addHint);
     }
 
     protected void updateHook(T model, QuestionEntity question, QuestionEntity persistEntity) {
@@ -73,18 +78,20 @@ public abstract class AbstractQuestionUpdateStrategy<T extends AbstractQuestionB
         question.setAudioFilename(persistEntity.getAudioFilename());
         question.setGrades(persistEntity.getGrades());
         question.setAnswers(persistEntity.getAnswers());
+        question.getHints().clear();
+        createHints(model).forEach(question::addHint);
     }
 
-    protected AnswerEntity createAnswerEntity(String text,
-                                              boolean correct,
-                                              int number,
-                                              String photoUrl) {
+    protected final AnswerEntity createAnswerEntity(String text,
+                                                    boolean correct,
+                                                    int number,
+                                                    String photoUrl) {
         AnswerEntity answerEntity = new AnswerEntity();
         answerEntity.setText(text);
         answerEntity.setCorrect(correct);
         answerEntity.setNumber(number);
         if (photoUrl != null) {
-            answerEntity.setPhotoFilename(properties.getFilesFolder() + QuizUtils.generateFilename(photoUrl));
+            answerEntity.setPhotoFilename(properties.getFilesFolder() + generateFilename(photoUrl));
             answerEntity.setPhotoUrl(photoUrl);
         } else {
             answerEntity.setPhotoFilename(null);
@@ -98,7 +105,7 @@ public abstract class AbstractQuestionUpdateStrategy<T extends AbstractQuestionB
                                   String newPhotoUrl) {
         if (oldEntity == null && StringUtils.isNotEmpty(newPhotoUrl)) {
             question.setOriginalPhotoUrl(newPhotoUrl);
-            question.setPhotoFilename(properties.getFilesFolder() + QuizUtils.generateFilename(newPhotoUrl));
+            question.setPhotoFilename(properties.getFilesFolder() + generateFilename(newPhotoUrl));
             return;
         }
         String oldPhotoUrl = oldEntity != null ? oldEntity.getOriginalPhotoUrl() : null;
@@ -113,11 +120,24 @@ public abstract class AbstractQuestionUpdateStrategy<T extends AbstractQuestionB
                 question.getResourcesToDelete().add(oldEntity.getPhotoFilename());
             }
             question.setOriginalPhotoUrl(newPhotoUrl);
-            question.setPhotoFilename(properties.getFilesFolder() + QuizUtils.generateFilename(newPhotoUrl));
+            question.setPhotoFilename(properties.getFilesFolder() + generateFilename(newPhotoUrl));
         } else {
             question.setOriginalPhotoUrl(oldPhotoUrl);
             question.setPhotoFilename(oldEntity.getPhotoFilename());
             question.setShouldSaveImage(false);
         }
+    }
+
+    protected List<QuestionHintEntity> createHints(T model) {
+        final var counter = new AtomicInteger(0);
+        return model.getHintsText().lines()
+                .map(line -> {
+                    final var entity = new QuestionHintEntity();
+                    entity.setType(TEXT);
+                    entity.setText(line);
+                    entity.setNumber(counter.getAndIncrement());
+                    return entity;
+                })
+                .toList();
     }
 }

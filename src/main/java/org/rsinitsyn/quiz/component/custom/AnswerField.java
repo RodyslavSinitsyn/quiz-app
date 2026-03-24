@@ -3,18 +3,25 @@ package org.rsinitsyn.quiz.component.custom;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.textfield.TextField;
+
 import java.util.Optional;
 import java.util.UUID;
-import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
 
-public class AnswerField extends CustomField<FourAnswersQuestionBindingModel.AnswerBindingModel> {
+import lombok.Getter;
+import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
+import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel.AnswerBindingModel;
+
+import static java.util.Optional.ofNullable;
+
+public class AnswerField extends CustomField<AnswerBindingModel> {
 
     private UUID id;
     private Checkbox correctOption = new Checkbox(false);
     private TextField text = new TextField("Вариант");
+    @Getter
     private int index;
 
-    public AnswerField(FourAnswersQuestionBindingModel.AnswerBindingModel answer) {
+    public AnswerField(AnswerBindingModel answer) {
         this.id = answer.getId();
         this.index = answer.getIndex();
         configure();
@@ -28,14 +35,9 @@ public class AnswerField extends CustomField<FourAnswersQuestionBindingModel.Ans
         text.setWidth("95%");
     }
 
-
-    public int getIndex() {
-        return index;
-    }
-
     @Override
-    protected FourAnswersQuestionBindingModel.AnswerBindingModel generateModelValue() {
-        return new FourAnswersQuestionBindingModel.AnswerBindingModel(
+    protected AnswerBindingModel generateModelValue() {
+        return new AnswerBindingModel(
                 id,
                 correctOption.getValue(),
                 text.getValue(),
@@ -44,8 +46,8 @@ public class AnswerField extends CustomField<FourAnswersQuestionBindingModel.Ans
     }
 
     @Override
-    protected void setPresentationValue(FourAnswersQuestionBindingModel.AnswerBindingModel answer) {
-        Optional.ofNullable(answer)
+    protected void setPresentationValue(AnswerBindingModel answer) {
+        ofNullable(answer)
                 .ifPresent(a -> {
                     correctOption.setValue(a.isCorrect());
                     text.setValue(a.getText());

@@ -15,6 +15,7 @@ import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static java.util.stream.IntStream.range;
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.optionComponent;
 
 public class SequenceAnswersLayout extends AbstractAnswersLayout {
@@ -68,8 +69,8 @@ public class SequenceAnswersLayout extends AbstractAnswersLayout {
 
     @Override
     protected void submitHandler(final ClickEvent<Button> event) {
-        final var correct = IntStream.range(0, answers.size())
-                .allMatch(i -> answers.get(i).number() == i + 1);
+        final var correct = range(0, answers.size())
+                .allMatch(i -> answers.get(i).number() == i);
 
         final var selected = answers.stream()
                 .map(AnswerModel::text)

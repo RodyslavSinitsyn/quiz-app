@@ -34,6 +34,7 @@ public abstract class AbstractQuestionCreationForm<T extends AbstractQuestionBin
     protected final TextField photoLocation = new TextField("Ссылка на фото");
     protected final Checkbox enableDescription = new Checkbox("Описане ответа", false);
     protected final TextArea answerDescriptionText = new TextArea("Описание ответ");
+    protected final TextArea hintsText = new TextArea("Подсказки", "Новая подсказка через перенос строки");
     protected final ComboBox<String> category = new ComboBox<>();
 
     private final Button save = new Button("Сохранить");
@@ -66,6 +67,8 @@ public abstract class AbstractQuestionCreationForm<T extends AbstractQuestionBin
         add(enableDescription);
         add(new Hr());
         add(answerDescriptionText);
+        add(hintsText);
+        add(new Hr());
         add(createButtonsLayout());
     }
 

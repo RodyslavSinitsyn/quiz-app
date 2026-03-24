@@ -47,6 +47,8 @@ import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static org.rsinitsyn.quiz.utils.ModelConverterUtils.*;
+import static org.rsinitsyn.quiz.utils.QuizComponents.openConfirmDialog;
+import static org.rsinitsyn.quiz.utils.QuizComponents.uploadComponent;
 
 @Slf4j
 @Route(value = "/list", layout = MainLayout.class)
@@ -68,6 +70,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
     private AbstractQuestionCreationForm<OrQuestionBindingModel> orForm;
     private AbstractQuestionCreationForm<TopQuestionBindingModel> topForm;
     private AbstractQuestionCreationForm<LinkQuestionBindingModel> linkForm;
+    private AbstractQuestionCreationForm<GuessPhotoQuestionBindingModel> guessPhotoForm;
 
     private final QuestionService questionService;
     private final ImportService importService;
@@ -133,6 +136,9 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
             } else if (event.getItem().getType().equals(QuestionType.LINK)) {
                 linkForm.setModel(toLinkQuestionBindingModel(event.getItem()));
                 addToDialogAndOpen(linkForm);
+            } else if (event.getItem().getType() == QuestionType.GUESS_PHOTO) {
+                guessPhotoForm.setModel(toGuessPhotoBindingModel(event.getItem()));
+                addToDialogAndOpen(guessPhotoForm);
             } else {
                 form.setModel(toFourAnswersQuestionBindingModel(event.getItem()));
                 addToDialogAndOpen(form);
@@ -159,7 +165,8 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
         orForm = new OrQuestionForm(categories);
         topForm = new TopQuestionForm(categories);
         linkForm = new LinkQuestionForm(categories);
-        configureAbstractQuestionFormsDefault(form, photoForm, precisionForm, orForm, topForm, linkForm);
+        guessPhotoForm = new GuessPhotoQuestionForm(categories);
+        configureAbstractQuestionFormsDefault(form, photoForm, precisionForm, orForm, topForm, linkForm, guessPhotoForm);
     }
 
     @SafeVarargs
@@ -252,13 +259,19 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
             addToDialogAndOpen(linkForm);
         });
 
-        Upload uploadComponent = QuizComponents.uploadComponent(
+        Button addGuessPhotoButton = createButton("УгадайФото", event -> {
+            grid.asMultiSelect().clear();
+            guessPhotoForm.setModel(new GuessPhotoQuestionBindingModel());
+            addToDialogAndOpen(guessPhotoForm);
+        });
+
+        Upload uploadComponent = uploadComponent(
                 "Импортировать",
                 (buffer, event) -> {
-                    InputStream inputStream = buffer.getInputStream();
+                    InputStream inputStream = buffer.getInputStream(event.getFileName());
                     importService.importQuestions(inputStream);
                     updateListAsync();
-                }, ".txt");
+                }, ".txt", 1);
 
         Button addCategoryButton = createButton("Добавить тему", event -> {
             categoryForm.setModel(new QuestionCategoryBindingModel());
@@ -275,7 +288,8 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
                 addOrQuestionButton,
                 addTopQuestionButton,
                 addLinkQuestionButton,
-                uploadComponent,
+                addGuessPhotoButton,
+//                uploadComponent, TODO: Upload anyway not updated
                 addCategoryButton,
                 groupedOperations);
         toolbar.setWidthFull();
@@ -303,7 +317,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
                     .collect(Collectors.joining(System.lineSeparator())));
             text.getStyle().set("white-space", "pre-line");
 
-            QuizComponents.openConfirmDialog(
+            openConfirmDialog(
                     text,
                     "Удалить все вопросы ниже?",
                     () -> {
@@ -324,7 +338,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
             select.setRenderer(new ComponentRenderer<Component, QuestionCategoryEntity>(
                     category -> new Span(category.getName())));
 
-            QuizComponents.openConfirmDialog(
+            openConfirmDialog(
                     select,
                     "Выберите тему",
                     () -> {

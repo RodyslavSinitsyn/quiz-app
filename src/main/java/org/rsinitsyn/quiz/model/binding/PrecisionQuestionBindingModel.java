@@ -20,9 +20,10 @@ public class PrecisionQuestionBindingModel extends AbstractQuestionBindingModel 
                                          String answerDescriptionText,
                                          String photoLocation,
                                          String category,
+                                         String hintsText,
                                          Double answerText,
                                          Double range) {
-        super(id, text, answerDescriptionText, photoLocation, category);
+        super(id, text, answerDescriptionText, photoLocation, category, hintsText);
         this.answerText = answerText;
         this.range = range;
     }

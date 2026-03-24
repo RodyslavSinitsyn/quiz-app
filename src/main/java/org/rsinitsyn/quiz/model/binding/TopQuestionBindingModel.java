@@ -17,8 +17,9 @@ public class TopQuestionBindingModel extends AbstractQuestionBindingModel {
                                    boolean sequence,
                                    String originalPhotoUrl,
                                    String category,
-                                   String answerDescriptionText) {
-        super(id, text, answerDescriptionText, originalPhotoUrl, category);
+                                   String answerDescriptionText,
+                                   String hintsText) {
+        super(id, text, answerDescriptionText, originalPhotoUrl, category, hintsText);
         this.topListText = topListText;
         this.sequence = sequence;
     }

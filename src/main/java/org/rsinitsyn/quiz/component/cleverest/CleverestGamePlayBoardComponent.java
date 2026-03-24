@@ -144,7 +144,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             broadcaster.sendSubmitAnswerEventAndCheckScore(gameId,
                     getLoggedUser(),
                     questionModel,
-                    String.join("", event.getAnswerChosenEvent().getAnswers()),
+                    String.join(", ", event.getAnswerChosenEvent().getAnswers()),
                     () -> event.getAnswerChosenEvent().isCorrect());
         });
         midContainer.add(questionLayout);

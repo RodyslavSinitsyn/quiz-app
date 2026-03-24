@@ -25,6 +25,8 @@ import org.springframework.core.env.Environment;
 
 import java.util.Arrays;
 
+import static org.rsinitsyn.quiz.utils.Profiles.DEV;
+
 @Slf4j
 public class MainLayout extends AppLayout implements
         AfterNavigationObserver,
@@ -108,7 +110,7 @@ public class MainLayout extends AppLayout implements
         tabs.add(createTab("Играть", VaadinIcon.PLAY_CIRCLE_O.create(), NewGamePage.class));
         tabs.add(createTab("Вопросы", VaadinIcon.QUESTION_CIRCLE_O.create(), QuestionsPage.class));
         tabs.add(createTab("Статистика", VaadinIcon.TRENDING_UP.create(), StatisticPage.class));
-        if (Arrays.asList(environment.getActiveProfiles()).contains("dev")) {
+        if (Arrays.asList(environment.getActiveProfiles()).contains(DEV.value)) {
             tabs.add(createTab("Шрифты", VaadinIcon.TEXT_LABEL.create(), FontsPage.class));
             tabs.add(createTab("Labs", VaadinIcon.BOLT.create(), LabsPage.class));
         }

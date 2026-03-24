@@ -363,3 +363,56 @@ databaseChangeLog:
         - addPrimaryKey:
             tableName: question_grades
             columnNames: question_id,user_id
+  - changeSet:
+      id: 1-question_hints
+      author: rsinitsyn
+      comment: Create 'question_hints' table
+      labels: questions
+      runAlways: false
+      runOnChange: false
+      preConditions:
+        - onFail: HALT
+          not:
+            tableExists:
+              tableName: question_hints
+      rollback:
+        - dropTable:
+            tableName: question_hints
+      changes:
+        - createTable:
+            tableName: question_hints
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: question_hints_pk
+              - column:
+                  name: text
+                  type: varchar(1000)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(255)
+              - column:
+                  name: photo_filename
+                  type: varchar(255)
+              - column:
+                  name: original_photo_url
+                  type: varchar(1000)
+              - column:
+                  name: number
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: question_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: question_hints_question_id_fk
+                    referencedTableName: questions
+                    referencedColumnNames: id

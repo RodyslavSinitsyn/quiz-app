@@ -6,6 +6,7 @@ import org.rsinitsyn.quiz.utils.QuizUtils;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "questions")
@@ -19,6 +20,7 @@ public class QuestionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+    @Column(nullable = false)
     private String text;
     @Enumerated(EnumType.STRING)
     private QuestionType type;
@@ -45,6 +47,11 @@ public class QuestionEntity {
     @ToString.Exclude
     private Set<QuestionGrade> grades = new HashSet<>();
 
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("number")
+    @ToString.Exclude
+    private List<QuestionHintEntity> hints = new ArrayList<>();
+
     @Transient
     private Set<String> resourcesToDelete = new HashSet<>();
 
@@ -60,6 +67,24 @@ public class QuestionEntity {
         answers.add(answerEntity);
     }
 
+    public AnswerEntity getCorrectAnswer() {
+        return answers.stream()
+                .filter(AnswerEntity::isCorrect)
+                .findFirst()
+                .orElseThrow();
+    }
+
+    public String getAnswersAsText() {
+        return answers.stream()
+                .map(AnswerEntity::getText)
+                .collect(Collectors.joining(", "));
+    }
+
+    public void addHint(QuestionHintEntity hintEntity) {
+        hintEntity.setQuestion(this);
+        hints.add(hintEntity);
+    }
+
     public void removeAnswer(AnswerEntity answerEntity) {
         answerEntity.setQuestion(null);
         answers.remove(answerEntity);
@@ -70,6 +95,12 @@ public class QuestionEntity {
                 getGrades().stream().mapToInt(QuestionGrade::getGrade).sum(),
                 getGrades().size(),
                 1);
+    }
+
+    public String getHintsAsText() {
+        return hints.stream()
+                .map(QuestionHintEntity::getText)
+                .collect(Collectors.joining(System.lineSeparator()));
     }
 
     public boolean presentInAnyGame() {

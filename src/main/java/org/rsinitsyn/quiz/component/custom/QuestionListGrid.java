@@ -56,7 +56,16 @@ public class QuestionListGrid extends Grid<QuestionEntity> {
                 .setHeader("Автор")
                 .setSortable(true);
         addMechanicColumn();
-        addColumn(new ComponentRenderer<>(entity -> {
+//        addGradeColumn(); TODO: Not needed for now
+        addColumn(new LocalDateTimeRenderer<>(QuestionEntity::getCreationDate, QuizUtils.DATE_FORMAT_VALUE))
+                .setHeader("Дата создания")
+                .setSortable(true)
+                .setComparator(Comparator.comparing(QuestionEntity::getCreationDate));
+        addThemeVariants(GridVariant.LUMO_WRAP_CELL_CONTENT);
+    }
+
+    private Column<QuestionEntity> addGradeColumn() {
+        return addColumn(new ComponentRenderer<>(entity -> {
             int size = entity.getGrades().size();
             if (size == 0) {
                 return VaadinIcon.MINUS_CIRCLE_O.create();
@@ -74,22 +83,13 @@ public class QuestionListGrid extends Grid<QuestionEntity> {
                         .collect(Collectors.joining(System.lineSeparator())))
                 .setSortable(true)
                 .setComparator(Comparator.comparingDouble(QuestionEntity::getGradeValue).thenComparingInt(q -> q.getGrades().size()));
-        addColumn(new LocalDateTimeRenderer<>(QuestionEntity::getCreationDate, QuizUtils.DATE_FORMAT_VALUE))
-                .setHeader("Дата создания")
-                .setSortable(true)
-                .setComparator(Comparator.comparing(QuestionEntity::getCreationDate));
-        addThemeVariants(GridVariant.LUMO_WRAP_CELL_CONTENT);
     }
 
     public void addTextColumn(int flexGrow) {
         addColumn(new ComponentRenderer<>(QuizComponents::questionDescription))
                 .setHeader("Текст")
                 .setFlexGrow(flexGrow)
-                .setTooltipGenerator(entity -> entity.getAnswers().stream()
-                        .filter(AnswerEntity::isCorrect)
-                        .map(AnswerEntity::getText)
-                        .collect(Collectors.joining(", "))
-                );
+                .setTooltipGenerator(QuestionEntity::getAnswersAsText);
     }
 
     public void addCategoryColumn() {

@@ -22,4 +22,5 @@ public abstract class AbstractQuestionBindingModel {
     @PhotoUrlValid
     private String photoLocation;
     private String category;
+    private String hintsText;
 }

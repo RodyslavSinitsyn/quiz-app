@@ -13,6 +13,8 @@ import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.model.binding.PhotoQuestionBindingModel;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 
+import static org.rsinitsyn.quiz.utils.QuizComponents.largeAvatar;
+
 public class PhotoQuestionForm extends AbstractQuestionCreationForm<PhotoQuestionBindingModel> {
 
     private VerticalLayout layout = new VerticalLayout();
@@ -58,10 +60,10 @@ public class PhotoQuestionForm extends AbstractQuestionCreationForm<PhotoQuestio
                 layout.add(correctOption, optionTwo, optionThree, optionFour);
             } else {
                 layout.add(
-                        QuizComponents.largeAvatar(model.getCorrectOption()),
-                        QuizComponents.largeAvatar(model.getOptionTwo()),
-                        QuizComponents.largeAvatar(model.getOptionThree()),
-                        QuizComponents.largeAvatar(model.getOptionFour())
+                        largeAvatar(model.getCorrectOption()),
+                        largeAvatar(model.getOptionTwo()),
+                        largeAvatar(model.getOptionThree()),
+                        largeAvatar(model.getOptionFour())
                 );
             }
         };

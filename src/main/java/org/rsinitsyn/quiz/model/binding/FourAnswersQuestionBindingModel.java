@@ -28,8 +28,9 @@ public class FourAnswersQuestionBindingModel extends AbstractQuestionBindingMode
                                            String author,
                                            String photoLocation,
                                            String category,
+                                           String hintsText,
                                            String answerDescriptionText) {
-        super(id, text, answerDescriptionText, photoLocation, category);
+        super(id, text, answerDescriptionText, photoLocation, category, hintsText);
         this.answers = answers;
         this.author = author;
     }
