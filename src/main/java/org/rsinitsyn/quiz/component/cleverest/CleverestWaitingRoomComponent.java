@@ -17,7 +17,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
@@ -29,13 +28,10 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.custom.ColorPicker;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
-import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
-import org.rsinitsyn.quiz.utils.SessionWrapper;
 
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.primaryButton;
@@ -90,7 +86,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         joinButton.addClickListener(event -> {
             dialog.removeAll();
             dialog.add(userDialogContent(
-                    broadcaster.getState(gameId).getUsers().get(getLoggedUser()),
+                    broadcaster.getState(gameId).getUserState(getLoggedUser()),
                     dialog));
             dialog.open();
         });
@@ -180,7 +176,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         Select<String> select = new Select<>();
         select.setWidthFull();
         select.setLabel("Сделайте ставку на " + (winner ? "победителя" : "проигравшего"));
-        select.setItems(broadcaster.getState(gameId).getUsers().keySet());
+        select.setItems(broadcaster.getState(gameId).getAllUsernames());
         select.addValueChangeListener(event -> {
             if (event.isFromClient()) {
                 broadcaster.sendBetEvent(gameId, getLoggedUser(), event.getValue(), winner);
@@ -191,9 +187,8 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
 
 
     private void updatePlayersGrid(String userWhoMadeAction) {
-        if (broadcaster.getState(gameId).getUsers() != null
-                && !broadcaster.getState(gameId).getUsers().isEmpty()) {
-            usersGrid.setItems(broadcaster.getState(gameId).getUsers().values());
+        if (broadcaster.getState(gameId).usersPresent()) {
+            usersGrid.setItems(broadcaster.getState(gameId).getAllUserStates());
         }
     }
 
@@ -208,7 +203,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         add(prodLink);
 
         startGameButton = primaryButton("Начать игру", e -> broadcaster.sendPlayersReadyEvent(gameId));
-        startGameButton.setEnabled(!broadcaster.getState(gameId).getUsers().isEmpty());
+        startGameButton.setEnabled(!broadcaster.getState(gameId).usersPresent());
         add(startGameButton);
     }
 
@@ -225,14 +220,14 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
                         updatePlayersGrid(event.getUsername());
                         if (getLoggedUser().equals(event.getUsername())) {
                             joinButton.setText(
-                                    !broadcaster.getState(gameId).getUsers().containsKey(event.getUsername())
-                                            ? "Играть"
-                                            : "Поменять настройки");
+                                    broadcaster.getState(gameId).userPresent(event.getUsername())
+                                            ? "Поменять настройки"
+                                            : "Играть");
                         }
-                        winnerBet.setItems(broadcaster.getState(gameId).getUsers().keySet());
-                        loserBet.setItems(broadcaster.getState(gameId).getUsers().keySet());
+                        winnerBet.setItems(broadcaster.getState(gameId).getAllUsernames());
+                        loserBet.setItems(broadcaster.getState(gameId).getAllUsernames());
                         if (gameHost) {
-                            startGameButton.setEnabled(!broadcaster.getState(gameId).getUsers().isEmpty());
+                            startGameButton.setEnabled(broadcaster.getState(gameId).usersPresent());
                         }
                     });
                 }));

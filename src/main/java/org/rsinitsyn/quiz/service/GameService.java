@@ -45,6 +45,7 @@ public class GameService {
         return gameDao.existsById(id);
     }
 
+    // TODO: Not pass entire state but less fields
     @Transactional
     public void submitAnswersBatch(String gameId, QuestionModel question, List<UserGameState> userStates) {
         userStates.forEach(userGameState -> {

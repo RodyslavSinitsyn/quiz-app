@@ -1,6 +1,8 @@
 package org.rsinitsyn.quiz.model.cleverest;
 
 import com.google.common.collect.Iterables;
+
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,12 +17,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import lombok.AccessLevel;
 import lombok.Getter;
+import org.apache.commons.collections4.MapUtils;
 import org.rsinitsyn.quiz.model.QuestionModel;
+
+import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
+import static org.rsinitsyn.quiz.model.cleverest.UserGameState.userGameState;
 
 @Getter
 public class CleverestGameState {
 
+    @Getter(AccessLevel.NONE)
     private final Map<String, UserGameState> users = new HashMap<>();
     private final String createdBy;
     private final List<QuestionModel> firstQuestions;
@@ -56,15 +65,55 @@ public class CleverestGameState {
         roundRules.put(3, "В третьем раунде по очереди нужно выбрать тему и ответить на вопрос. За верный ответ дают баллы, за неверный забирают. Количество баллов зависит от сложности вопроса.");
     }
 
+    public UserGameState addOrUpdateUser(String gameId,
+                                         String username,
+                                         String userColor,
+                                         InputStream photo,
+                                         String winnerBet,
+                                         String loserBet) {
+        users.computeIfAbsent(username, key -> userGameState(username, userColor));
+        return users.computeIfPresent(username, (key, userGameState) -> {
+            userGameState.updateColor(userColor);
+            userGameState.updateBet(defaultIfEmpty(winnerBet, ""), true, false);
+            userGameState.updateBet(defaultIfEmpty(loserBet, ""), false, false);
+            return userGameState;
+        });
+    }
+
+    public boolean usersPresent() {
+        return MapUtils.isNotEmpty(users);
+    }
+
+    public boolean userPresent(String username) {
+        return users.containsKey(username);
+    }
+
+    public UserGameState getUserState(String username) {
+        return users.get(username);
+    }
+
+    public Set<String> getAllUsernames() {
+        return users.keySet();
+    }
+
+    public List<UserGameState> getAllUserStates() {
+        return new ArrayList<>(users.values());
+    }
+
     public void putUserStateToHistory(QuestionModel key, UserGameState currUserState) {
-        List<UserGameState> states = history.get(key);
-        if (states == null || states.isEmpty()) {
-            List<UserGameState> temp = new ArrayList<>();
-            temp.add(currUserState.copy());
-            history.put(key, temp);
-        } else {
-            states.add(currUserState.copy());
-        }
+        history.computeIfAbsent(key, ignored -> new ArrayList<>(5))
+                .add(currUserState.copy());
+    }
+
+    public List<UserGameState> usersWhoAnswered() {
+        return users.values()
+                .stream()
+                .filter(UserGameState::isAnswerGiven)
+                .toList();
+    }
+
+    public void usersCleanState() {
+        users.values().forEach(UserGameState::prepareForNext);
     }
 
     public Map<String, UserGameState> getSortedByScoreUsers() {
@@ -142,7 +191,7 @@ public class CleverestGameState {
             if (userGameState.totalScore() < prevScoreHolder.get()) {
                 pos.incrementAndGet();
             }
-            userGameState.setLastPosition(pos.get());
+            userGameState.setLastPosition(pos.get()); // todo: remove setter
             prevScoreHolder.set(userGameState.totalScore());
         });
     }
@@ -184,7 +233,7 @@ public class CleverestGameState {
                 .collect(Collectors.groupingBy(Function.identity(),
                         Collectors.averagingLong(UserGameState::getLastResponseTime)))
                 .forEach((userGameState, avgTime) -> {
-                    users.get(userGameState.getUsername()).setAvgResponseTime(avgTime);
+                    users.get(userGameState.getUsername()).setAvgResponseTime(avgTime); // todo: remove setter
                 });
     }
 

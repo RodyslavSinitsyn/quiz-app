@@ -12,10 +12,11 @@ import java.util.stream.Collectors;
 import static org.rsinitsyn.quiz.entity.QuestionHintType.*;
 
 @Getter
-@EqualsAndHashCode(exclude = {"playersAnswersHistory", "answers"})
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@EqualsAndHashCode(of = {"id"})
+@ToString(of = {"id", "text"})
 public class QuestionModel {
     private UUID id;
     private String text;

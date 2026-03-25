@@ -31,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.cleverest.CleverestGamePlayBoardComponent;
 import org.rsinitsyn.quiz.component.cleverest.CleverestGameSettingsComponent;
+import org.rsinitsyn.quiz.component.cleverest.CleverestGameSettingsComponent.SettingsCompletedEvent;
 import org.rsinitsyn.quiz.component.cleverest.CleverestResultComponent;
 import org.rsinitsyn.quiz.component.cleverest.CleverestWaitingRoomComponent;
 import org.rsinitsyn.quiz.entity.GameEntity;
@@ -43,6 +44,8 @@ import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
+
+import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
 /*
     constructor
@@ -95,13 +98,13 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
 
     private void renderSettings() {
         gameSettingsComponent.setQuestions(questionService.findAllCreatedByCurrentUser());
-        Registration settCompletedEvent = gameSettingsComponent.addListener(CleverestGameSettingsComponent.SettingsCompletedEvent.class,
+        final var settingsCompleteEvent = gameSettingsComponent.addListener(SettingsCompletedEvent.class,
                 event -> {
                     String newGameId = UUID.randomUUID().toString();
                     gameService.createIfNotExists(newGameId, "Cleverest", GameType.CLEVEREST);
                     broadcaster.createState(
                             newGameId,
-                            SessionWrapper.getLoggedUser(),
+                            getLoggedUser(),
                             event.getFirstRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList()),
                             event.getSecondRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList()),
                             event.getThirdRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList())
@@ -111,7 +114,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
                     });
                 });
         add(gameSettingsComponent);
-        subs.addAll(List.of(settCompletedEvent));
+        subs.add(settingsCompleteEvent);
     }
 
     /*
@@ -147,9 +150,9 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
     private void configureAndAddResultComponent(CleverestGameState gameState) {
         resultComponent = new CleverestResultComponent();
         resultComponent.setState(
-                gameState.getUsers().values(),
+                gameState.getAllUserStates(),
                 gameState.getHistory(),
-                gameHost ? "" : SessionWrapper.getLoggedUser()
+                gameHost ? "" : getLoggedUser()
         );
         add(resultComponent);
     }
@@ -184,7 +187,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
             navigateToNewGamePage("Состояние игры не создано", ui);
             return;
         }
-        this.gameHost = gameEntity.getCreatedBy().equals(SessionWrapper.getLoggedUser());
+        this.gameHost = gameEntity.getCreatedBy().equals(getLoggedUser());
         // sub on events here because self reload does not trigger onAttach again
         subOnEvents(ui);
         renderComponents(gameEntity, event);
@@ -266,8 +269,8 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
 
     private boolean notInGameOrCreator(String gameId) {
         CleverestGameState state = broadcaster.getState(gameId);
-        return !state.getUsers().containsKey(SessionWrapper.getLoggedUser())
-                && !state.getCreatedBy().equals(SessionWrapper.getLoggedUser());
+        return !state.userPresent(getLoggedUser())
+                && !state.getCreatedBy().equals(getLoggedUser());
     }
 
     private void navigateToNewGamePage(String notificationText, UI ui) {

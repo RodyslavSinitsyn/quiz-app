@@ -22,6 +22,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.rsinitsyn.quiz.entity.QuestionGradeId.questionGradeId;
 import static org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
 import static org.rsinitsyn.quiz.model.QuestionModel.HintModel;
 import static org.rsinitsyn.quiz.utils.Profiles.PROD;
@@ -214,12 +215,9 @@ public class QuestionService {
     @Transactional(propagation = Propagation.REQUIRED)
     public void updateQuestionGrade(UUID questionId, String username, int grade) {
         UserEntity user = userService.findByUsername(username);
-        Optional<QuestionGrade> optEntity = questionGradeDao.findById(new QuestionGradeId(
-                questionId,
-                user.getId()
-        ));
-        if (optEntity.isPresent()) {
-            QuestionGrade updEntity = optEntity.get();
+        final var maybeQuestionGrade = questionGradeDao.findById(questionGradeId(questionId, user.getId()));
+        if (maybeQuestionGrade.isPresent()) {
+            QuestionGrade updEntity = maybeQuestionGrade.get();
             updEntity.setGrade(grade);
             log.info("Updated question grade, id: {}, grade: {}",
                     questionId + "-" + user.getId(),

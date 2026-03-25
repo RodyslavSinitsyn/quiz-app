@@ -6,51 +6,57 @@ import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+
+import lombok.*;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 
-@Data
+import static java.time.LocalDateTime.now;
+import static java.time.temporal.ChronoUnit.MILLIS;
+import static org.rsinitsyn.quiz.utils.QuizUtils.divide;
+
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(exclude = {"bets"})
+@EqualsAndHashCode(of = {"username", "color", "lastWasCorrect", "lastAnswerText", "score", "correctAnswersCount", "answerGiven"})
+@ToString(exclude = "bets")
 public class UserGameState implements Comparable<UserGameState> {
     private String username;
     private String color;
     private InputStream photo;
 
     private boolean lastWasCorrect;
-//    @Setter(AccessLevel.NONE)
     private String lastAnswerText;
+    @Setter
     private int lastPosition;
     private long lastResponseTime;
-    @Setter(AccessLevel.NONE)
     private int correctAnswersCount;
-    @Setter(AccessLevel.NONE)
     private int score = 0;
-    @Setter(AccessLevel.NONE)
     private boolean answerGiven;
     private Map<String, MutablePair<String, Boolean>> bets = new HashMap<>();
     private int betScore;
+    @Setter
     private Double avgResponseTime;
+
+    public static UserGameState userGameState(String username, String color) {
+        final var userGameState = new UserGameState();
+        userGameState.username = username;
+        userGameState.color = color;
+        return userGameState;
+    }
+
+    public void updateColor(String color) {
+        this.color = color;
+    }
 
     public void submitLatestAnswer(String answerText, LocalDateTime questionRenderTime) {
         lastAnswerText = answerText;
         answerGiven = true;
-        lastResponseTime = ChronoUnit.MILLIS.between(
-                questionRenderTime,
-                LocalDateTime.now());
+        lastResponseTime = MILLIS.between(questionRenderTime, now());
     }
 
-    public String lastResponseTimeSec() {
-        return QuizUtils.divide(
-                lastResponseTime,
-                1_000) + " сек.";
+    public String getLastResponseTimeSec() {
+        return "%.1f сек.".formatted(divide(lastResponseTime, 1_000));
     }
 
     public void prepareForNext() {
