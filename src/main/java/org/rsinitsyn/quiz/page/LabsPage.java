@@ -57,7 +57,7 @@ public class LabsPage extends VerticalLayout {
             add(sequenceQuestion);
             add(new Hr());
 
-            sequenceQuestion.addListener(QuestionAnsweredEvent.class, e -> {
+            sequenceQuestion.addAnsweredListener(e -> {
                 final var event = e.getAnswerGivenEvent();
                 final var text = "%s, %b, %d".formatted(
                         String.join(", ", event.getAnswers()),

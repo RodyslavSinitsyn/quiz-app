@@ -142,7 +142,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 .host(gameHost)
                 .imageHeight(imageHeight)
                 .textClasses(questionClasses));
-        questionLayout.addListener(QuestionAnsweredEvent.class, event -> {
+        questionLayout.addAnsweredListener(event -> {
             broadcaster.sendSubmitAnswerEventAndCheckScore(gameId,
                     getLoggedUser(),
                     questionModel,

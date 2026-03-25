@@ -1,8 +1,6 @@
 package org.rsinitsyn.quiz.component.cleverest;
 
 import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.ComponentEvent;
-import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.avatar.AvatarVariant;
 import com.vaadin.flow.component.button.Button;
@@ -204,11 +202,6 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         startGameButton = primaryButton("Начать игру", e -> broadcaster.sendPlayersReadyEvent(gameId));
         startGameButton.setEnabled(!broadcaster.getState(gameId).usersPresent());
         add(startGameButton);
-    }
-
-    public <T extends ComponentEvent<?>> Registration addListener(Class<T> eventType,
-                                                                  ComponentEventListener<T> listener) {
-        return getEventBus().addListener(eventType, listener);
     }
 
     @Override

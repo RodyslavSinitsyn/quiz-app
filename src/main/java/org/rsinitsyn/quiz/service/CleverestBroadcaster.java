@@ -461,7 +461,7 @@ public class CleverestBroadcaster {
         }
     }
 
-    public <T extends ComponentEvent<?>> Registration subscribe(String gameId,
+    public <T extends CleverestGameEvent> Registration subscribe(String gameId,
                                                                 Class<T> eventType,
                                                                 ComponentEventListener<T> listener) {
         ComponentEventBus eventBus = eventBuses.computeIfAbsent(gameId, bus -> new ComponentEventBus(new Div()));

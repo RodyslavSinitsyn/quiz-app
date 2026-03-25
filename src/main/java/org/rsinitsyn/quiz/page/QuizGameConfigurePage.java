@@ -15,7 +15,6 @@ import org.rsinitsyn.quiz.entity.GameType;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.service.UserService;
-import org.rsinitsyn.quiz.utils.SessionWrapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +56,7 @@ public class QuizGameConfigurePage extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        subscriptions.add(settingsComponent.addListener(QuizGameSettingsComponent.StartGameEvent.class, event -> {
+        subscriptions.add(settingsComponent.addStartGameListener(event -> {
             var newGameId = UUID.randomUUID().toString();
             gameService.createIfNotExists(newGameId, event.getGameState().getGameName(), GameType.QUIZ);
             gameService.linkQuestionsWithGame(newGameId, event.getGameState());

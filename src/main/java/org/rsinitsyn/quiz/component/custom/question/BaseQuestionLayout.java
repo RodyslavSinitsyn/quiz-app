@@ -1,7 +1,6 @@
 package org.rsinitsyn.quiz.component.custom.question;
 
 import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
@@ -123,20 +122,16 @@ public class BaseQuestionLayout extends VerticalLayout {
         }
     }
 
-    public <T extends ComponentEvent<?>> Registration addListener(Class<T> eventType,
-                                                                  ComponentEventListener<T> listener) {
-        return getEventBus().addListener(eventType, listener);
+    public Registration addAnsweredListener(ComponentEventListener<QuestionAnsweredEvent> listener) {
+        return getEventBus().addListener(QuestionAnsweredEvent.class, listener);
     }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         if (answersLayout != null) {
-            final var registration = answersLayout.addListener(
-                    AnswerGivenEvent.class,
-                    event -> {
-                        fireEvent(new QuestionAnsweredEvent(questionModel, event));
-                    });
+            final var registration = answersLayout.addAnswerGivenListener(
+                    event -> fireEvent(new QuestionAnsweredEvent(questionModel, event)));
             subscriptions.add(registration);
         }
         log.trace("onAttach. subscribe {}", subscriptions.size());

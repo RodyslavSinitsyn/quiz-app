@@ -96,19 +96,18 @@ public class QuizGamePlayPage extends VerticalLayout implements HasUrlParameter<
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        subscriptions.add(playBoardComponent.addListener(QuizGamePlayBoardComponent.FinishGameEvent.class, event -> {
+        subscriptions.add(playBoardComponent.addGameFinishedEventListener(event -> {
             gameService.finishGame(gameId);
             remove(playBoardComponent);
             configureQuizGameResultComponent();
         }));
-        subscriptions.add(playBoardComponent.addListener(SubmitUserAnswer.class, event -> {
-            gameService.submitAnswers(
-                    gameId,
-                    gameState.getPlayerName(),
-                    event.getQuestion(),
-                    event.getAnswers().stream().toList(),
-                    event::isCorrect);
-        }));
+        subscriptions.add(playBoardComponent.addSubmitUserAnswerEventListener(event ->
+                gameService.submitAnswers(
+                        gameId,
+                        gameState.getPlayerName(),
+                        event.getQuestion(),
+                        event.getAnswers().stream().toList(),
+                        event::isCorrect)));
         log.trace("onAttach. subscribe {}", subscriptions.size());
     }
 

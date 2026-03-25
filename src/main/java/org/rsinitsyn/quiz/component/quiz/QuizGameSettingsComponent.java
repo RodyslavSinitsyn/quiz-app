@@ -34,7 +34,6 @@ import org.rsinitsyn.quiz.model.AnswerHistory;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.utils.QuizComponents;
-import org.rsinitsyn.quiz.utils.QuizUtils;
 
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -292,8 +291,7 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
         }
     }
 
-    public <T extends ComponentEvent<?>> Registration addListener(Class<T> eventType,
-                                                                  ComponentEventListener<T> listener) {
-        return getEventBus().addListener(eventType, listener);
+    public Registration addStartGameListener(ComponentEventListener<StartGameEvent> listener) {
+        return getEventBus().addListener(StartGameEvent.class, listener);
     }
 }

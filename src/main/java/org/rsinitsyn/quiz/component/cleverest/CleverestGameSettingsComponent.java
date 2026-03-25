@@ -14,14 +14,15 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.shared.Registration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Stream;
 import lombok.Getter;
 import org.rsinitsyn.quiz.component.custom.QuestionListGrid;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.utils.QuizComponents;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Stream;
 
 public class CleverestGameSettingsComponent extends VerticalLayout {
 
@@ -265,8 +266,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
         }
     }
 
-    public <T extends ComponentEvent<?>> Registration addListener(Class<T> eventType,
-                                                                  ComponentEventListener<T> listener) {
-        return getEventBus().addListener(eventType, listener);
+    public Registration addSettingsCompletedListener(ComponentEventListener<SettingsCompletedEvent> listener) {
+        return getEventBus().addListener(SettingsCompletedEvent.class, listener);
     }
 }

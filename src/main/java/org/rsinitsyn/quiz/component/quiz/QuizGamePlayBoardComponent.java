@@ -16,7 +16,6 @@ import com.vaadin.flow.shared.Registration;
 import javazoom.jl.player.Player;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.rsinitsyn.quiz.component.custom.answer.AbstractAnswersLayout;
 import org.rsinitsyn.quiz.component.custom.question.BaseQuestionLayout;
 import org.rsinitsyn.quiz.component.custom.question.BaseQuestionLayout.QuestionAnsweredEvent;
 import org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory;
@@ -159,7 +158,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     }
 
     private void subscribeQuestionLayout() {
-        subscriptions.add(questionLayout.addListener(QuestionAnsweredEvent.class, event -> {
+        subscriptions.add(questionLayout.addAnsweredListener(event -> {
             Optional.ofNullable(lastPlayedAudio).ifPresent(Player::close);
             if (gameState.isIntrigueEnabled()) {
                 showIntrigueAndRunAction(() -> submitAnswer(event));
@@ -167,7 +166,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
                 submitAnswer(event);
             }
         }));
-        subscriptions.add(questionLayout.getAnswersLayout().addListener(AbstractAnswersLayout.HintUsedEvent.class, event -> {
+        subscriptions.add(questionLayout.getAnswersLayout().addHintUsedListener(event -> {
             if (event.getHint() == AnswerHint.HALF) {
                 gameState.setHalfHintUsed(true);
             } else if (event.getHint() == AnswerHint.THREE) {
@@ -237,7 +236,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         removeAll();
         Optional.ofNullable(lastPlayedAudio).ifPresent(Player::close);
         gameState.setStatus(GameStatus.FINISHED);
-        fireEvent(new FinishGameEvent(this, gameState));
+        fireEvent(new GameFinishedEvent(this, gameState));
     }
 
     @Override
@@ -254,14 +253,14 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     }
 
     @Getter
-    public static class FinishGameEvent extends ComponentEvent<QuizGamePlayBoardComponent> {
+    public static class GameFinishedEvent extends ComponentEvent<QuizGamePlayBoardComponent> {
         private QuizGameState model;
 
-        public FinishGameEvent(QuizGamePlayBoardComponent source, boolean fromClient) {
+        public GameFinishedEvent(QuizGamePlayBoardComponent source, boolean fromClient) {
             super(source, fromClient);
         }
 
-        public FinishGameEvent(QuizGamePlayBoardComponent source, QuizGameState model) {
+        public GameFinishedEvent(QuizGamePlayBoardComponent source, QuizGameState model) {
             this(source, false);
             this.model = model;
         }
@@ -284,9 +283,12 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         }
     }
 
-    public <T extends ComponentEvent<?>> Registration addListener(Class<T> eventType,
-                                                                  ComponentEventListener<T> listener) {
-        return getEventBus().addListener(eventType, listener);
+    public Registration addGameFinishedEventListener(ComponentEventListener<GameFinishedEvent> listener) {
+        return getEventBus().addListener(GameFinishedEvent.class, listener);
+    }
+
+    public Registration addSubmitUserAnswerEventListener(ComponentEventListener<SubmitUserAnswer> listener) {
+        return getEventBus().addListener(SubmitUserAnswer.class, listener);
     }
 
     @Override

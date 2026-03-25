@@ -20,6 +20,8 @@ import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.GameType;
 import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
+import org.rsinitsyn.quiz.service.CleverestBroadcaster.AllUsersReadyEvent;
+import org.rsinitsyn.quiz.service.CleverestBroadcaster.GameFinishedEvent;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
@@ -33,6 +35,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.rsinitsyn.quiz.service.CleverestBroadcaster.*;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
 /*
@@ -86,21 +89,20 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
 
     private void renderSettings() {
         gameSettingsComponent.setQuestions(questionService.findAllCreatedByCurrentUser());
-        final var settingsCompleteEvent = gameSettingsComponent.addListener(SettingsCompletedEvent.class,
-                event -> {
-                    String newGameId = UUID.randomUUID().toString();
-                    gameService.createIfNotExists(newGameId, "Cleverest", GameType.CLEVEREST);
-                    broadcaster.createState(
-                            newGameId,
-                            getLoggedUser(),
-                            event.getFirstRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList()),
-                            event.getSecondRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList()),
-                            event.getThirdRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList())
-                    );
-                    getUI().ifPresent(ui -> {
-                        ui.navigate(this.getClass(), newGameId);
-                    });
-                });
+        final var settingsCompleteEvent = gameSettingsComponent.addSettingsCompletedListener(event -> {
+            String newGameId = UUID.randomUUID().toString();
+            gameService.createIfNotExists(newGameId, "Cleverest", GameType.CLEVEREST);
+            broadcaster.createState(
+                    newGameId,
+                    getLoggedUser(),
+                    event.getFirstRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList()),
+                    event.getSecondRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList()),
+                    event.getThirdRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList())
+            );
+            getUI().ifPresent(ui -> {
+                ui.navigate(this.getClass(), newGameId);
+            });
+        });
         add(gameSettingsComponent);
         subs.add(settingsCompleteEvent);
     }
@@ -215,7 +217,7 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
         }
         subs.add(broadcaster.subscribe(
                 gameId,
-                CleverestBroadcaster.AllUsersReadyEvent.class, event -> {
+                AllUsersReadyEvent.class, event -> {
                     if (gameHost) {
                         gameService.updateStatus(gameId, GameStatus.STARTED);
                         gameService.linkQuestionsAndUsersWithGame(
@@ -234,19 +236,19 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
         );
         if (gameHost) {
             subs.add(broadcaster.subscribe(gameId,
-                    CleverestBroadcaster.SaveUsersAnswersEvent.class,
+                    SaveUsersAnswersEvent.class,
                     event -> gameService.submitAnswersBatch(
                             gameId,
                             event.getQuestion(),
                             event.getUserStateSnapshots())));
             subs.add(broadcaster.subscribe(
                     gameId,
-                    CleverestBroadcaster.GameFinishedEvent.class,
+                    GameFinishedEvent.class,
                     event -> gameService.finishGame(gameId)
             ));
             subs.add(broadcaster.subscribe(
                     gameId,
-                    CleverestBroadcaster.QuestionGradedEvent.class,
+                    QuestionGradedEvent.class,
                     event -> {
                         questionService.updateQuestionGrade(
                                 event.getQuestion().getId(),

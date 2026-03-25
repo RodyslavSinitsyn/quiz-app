@@ -112,8 +112,11 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
         }
     }
 
-    public <T extends ComponentEvent<?>> Registration addListener(Class<T> eventType,
-                                                                  ComponentEventListener<T> listener) {
-        return getEventBus().addListener(eventType, listener);
+    public Registration addAnswerGivenListener(ComponentEventListener<AnswerGivenEvent> listener) {
+        return getEventBus().addListener(AnswerGivenEvent.class, listener);
+    }
+
+    public Registration addHintUsedListener(ComponentEventListener<HintUsedEvent> listener) {
+        return getEventBus().addListener(HintUsedEvent.class, listener);
     }
 }
