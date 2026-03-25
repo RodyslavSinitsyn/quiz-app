@@ -2,14 +2,13 @@ package org.rsinitsyn.quiz.model.cleverest;
 
 import java.io.InputStream;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
 import lombok.*;
 import org.apache.commons.lang3.tuple.MutablePair;
-import org.rsinitsyn.quiz.utils.QuizUtils;
+import org.rsinitsyn.quiz.model.UserStateSnapshot;
 
 import static java.time.LocalDateTime.now;
 import static java.time.temporal.ChronoUnit.MILLIS;
@@ -29,7 +28,7 @@ public class UserGameState implements Comparable<UserGameState> {
     private String lastAnswerText;
     @Setter
     private int lastPosition;
-    private long lastResponseTime;
+    private long lastResponseTimeMs;
     private int correctAnswersCount;
     private int score = 0;
     private boolean answerGiven;
@@ -52,18 +51,18 @@ public class UserGameState implements Comparable<UserGameState> {
     public void submitLatestAnswer(String answerText, LocalDateTime questionRenderTime) {
         lastAnswerText = answerText;
         answerGiven = true;
-        lastResponseTime = MILLIS.between(questionRenderTime, now());
+        lastResponseTimeMs = MILLIS.between(questionRenderTime, now());
     }
 
     public String getLastResponseTimeSec() {
-        return "%.1f сек.".formatted(divide(lastResponseTime, 1_000));
+        return "%.1f сек.".formatted(divide(lastResponseTimeMs, 1_000));
     }
 
     public void prepareForNext() {
         lastWasCorrect = false;
         lastAnswerText = "";
         answerGiven = false;
-        lastResponseTime = 0;
+        lastResponseTimeMs = 0;
     }
 
     public void increaseBetScore() {
@@ -114,20 +113,7 @@ public class UserGameState implements Comparable<UserGameState> {
                 .compare(this, other);
     }
 
-    public UserGameState copy() {
-        return new UserGameState(
-                username,
-                color,
-                photo,
-                lastWasCorrect,
-                lastAnswerText,
-                lastPosition,
-                lastResponseTime,
-                correctAnswersCount,
-                score,
-                answerGiven,
-                bets,
-                betScore,
-                avgResponseTime);
+    public UserStateSnapshot snapshot() {
+        return new UserStateSnapshot(username, color, lastAnswerText, lastWasCorrect, answerGiven, lastResponseTimeMs, score);
     }
 }

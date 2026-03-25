@@ -2,7 +2,6 @@ package org.rsinitsyn.quiz.page;
 
 
 import com.vaadin.flow.component.html.Hr;
-import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -11,11 +10,7 @@ import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.RandomStringGenerator;
 import org.rsinitsyn.quiz.component.MainLayout;
-import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
-import org.rsinitsyn.quiz.component.custom.answer.AbstractAnswersLayout;
-import org.rsinitsyn.quiz.component.custom.question.BaseQuestionLayout;
 import org.rsinitsyn.quiz.component.custom.question.BaseQuestionLayout.QuestionAnsweredEvent;
-import org.rsinitsyn.quiz.entity.QuestionHintType;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
@@ -63,7 +58,7 @@ public class LabsPage extends VerticalLayout {
             add(new Hr());
 
             sequenceQuestion.addListener(QuestionAnsweredEvent.class, e -> {
-                final var event = e.getAnswerChosenEvent();
+                final var event = e.getAnswerGivenEvent();
                 final var text = "%s, %b, %d".formatted(
                         String.join(", ", event.getAnswers()),
                         event.isCorrect(),

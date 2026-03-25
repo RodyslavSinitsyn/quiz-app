@@ -1,6 +1,5 @@
 package org.rsinitsyn.quiz.component.custom.answer;
 
-import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -20,14 +19,6 @@ public class TopAnswersLayout extends AbstractAnswersLayout {
 
     public TopAnswersLayout(AnswerLayoutRequest question) {
         super(question);
-    }
-
-    @Override
-    protected void submitHandler(ClickEvent<Button> event) {
-        Set<String> answerModels = topListLayout.getChildren()
-                .map(component -> component.getElement().getText())
-                .collect(Collectors.toSet());
-        fireEvent(new AnswerChosenEvent(answerModels, false, true));
     }
 
     @Override
@@ -63,5 +54,13 @@ public class TopAnswersLayout extends AbstractAnswersLayout {
             textField.setEnabled(topListLayout.getChildren().count() != topSize);
         });
         addToListButton.setEnabled(false);
+    }
+
+    @Override
+    protected AnswerGivenEvent createAnswerGivenEvent() {
+        Set<String> answerModels = topListLayout.getChildren()
+                .map(component -> component.getElement().getText())
+                .collect(Collectors.toSet());
+        return new AnswerGivenEvent(answerModels, false, true);
     }
 }

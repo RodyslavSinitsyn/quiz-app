@@ -1,13 +1,13 @@
 package org.rsinitsyn.quiz.service;
 
 import com.vaadin.flow.component.ComponentEventBus;
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
+import org.rsinitsyn.quiz.model.UserStateSnapshot;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.*;
 
@@ -23,7 +23,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.rsinitsyn.quiz.model.cleverest.UserGameState.userGameState;
 
 class CleverestBroadcasterTest {
 
@@ -31,6 +30,7 @@ class CleverestBroadcasterTest {
     private final CleverestBroadcaster broadcaster = new CleverestBroadcaster();
 
     private final String createdBy = "host";
+    public final String color = "color";
     private String gameId;
 
     @BeforeEach
@@ -60,14 +60,14 @@ class CleverestBroadcasterTest {
         createEmptyState();
 
         // when
-        broadcaster.sendJoinUserEvent(gameId, "Alice", "color", null, "Bob", "Charlie");
+        broadcaster.sendJoinUserEvent(gameId, "Alice", color, null, "Bob", "Charlie");
 
         // then
         baseAssertions();
         assertSoftly(softly -> {
             final var alice = broadcaster.getState(gameId).getUserState("Alice");
             softly.assertThat(alice).isNotNull();
-            softly.assertThat(alice.getColor()).isEqualTo("color");
+            softly.assertThat(alice.getColor()).isEqualTo(color);
             softly.assertThat(alice.getBets()).hasSize(2);
         });
 
@@ -114,7 +114,7 @@ class CleverestBroadcasterTest {
 
             softly.assertThat(alice.getLastAnswerText()).isEqualTo("4");
             softly.assertThat(alice.isAnswerGiven()).isTrue();
-            softly.assertThat(alice.getLastResponseTime()).isGreaterThanOrEqualTo(0);
+            softly.assertThat(alice.getLastResponseTimeMs()).isGreaterThanOrEqualTo(0);
         });
         // and
         then(eventBus).should().fireEvent(new UserAnsweredEvent(gameId, "Alice", "0.0 сек.", 1));
@@ -144,7 +144,7 @@ class CleverestBroadcasterTest {
 
             softly.assertThat(alice.getLastAnswerText()).isEqualTo("22");
             softly.assertThat(alice.isAnswerGiven()).isTrue();
-            softly.assertThat(alice.getLastResponseTime()).isGreaterThanOrEqualTo(0);
+            softly.assertThat(alice.getLastResponseTimeMs()).isGreaterThanOrEqualTo(0);
         });
         // and
         then(eventBus).should().fireEvent(new UserAnsweredEvent(gameId, "Alice", "0.0 сек.", 1));
@@ -209,13 +209,13 @@ class CleverestBroadcasterTest {
             softly.assertThat(alice.isAnswerGiven()).isTrue();
             softly.assertThat(alice.isLastWasCorrect()).isFalse();
             softly.assertThat(alice.getLastAnswerText()).isEqualTo("4");
-            softly.assertThat(alice.getLastResponseTime()).isNotNegative();
+            softly.assertThat(alice.getLastResponseTimeMs()).isNotNegative();
 
             softly.assertThat(broadcaster.getState(gameId).getHistory()).isEmpty();
         });
 
         // when
-        broadcaster.sendSaveUserAnswersEvent(gameId, q);
+        broadcaster.sendSaveUsersAnswersEvent(gameId, q);
 
         // then
         baseAssertions();
@@ -226,10 +226,12 @@ class CleverestBroadcasterTest {
             softly.assertThat(alice.isAnswerGiven()).isFalse();
             softly.assertThat(alice.isLastWasCorrect()).isFalse();
             softly.assertThat(alice.getLastAnswerText()).isEmpty();
-            softly.assertThat(alice.getLastResponseTime()).isEqualTo(0);
+            softly.assertThat(alice.getLastResponseTimeMs()).isEqualTo(0);
         });
 
-        then(eventBus).should().fireEvent(new SaveUserAnswersEvent(gameId, q, broadcaster.getState(gameId).getHistory().get(q)));
+        then(eventBus).should().fireEvent(new SaveUsersAnswersEvent(gameId,
+                q,
+                List.of(new UserStateSnapshot("Alice", color, "4", false, true, 0, 0))));
     }
 
     @Test
@@ -307,7 +309,7 @@ class CleverestBroadcasterTest {
     }
 
     private UserGameState addUser(String username) {
-        return broadcaster.getState(gameId).addOrUpdateUser(gameId, username, "color", null, "", "");
+        return broadcaster.getState(gameId).addOrUpdateUser(gameId, username, color, null, "", "");
     }
 
     private UserGameState addUser(String username, String answer) {

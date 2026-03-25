@@ -8,7 +8,7 @@ import org.rsinitsyn.quiz.dao.GameDao;
 import org.rsinitsyn.quiz.dao.GameQuestionUserDao;
 import org.rsinitsyn.quiz.entity.*;
 import org.rsinitsyn.quiz.model.QuestionModel;
-import org.rsinitsyn.quiz.model.cleverest.UserGameState;
+import org.rsinitsyn.quiz.model.UserStateSnapshot;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.stereotype.Service;
@@ -47,14 +47,14 @@ public class GameService {
 
     // TODO: Not pass entire state but less fields
     @Transactional
-    public void submitAnswersBatch(String gameId, QuestionModel question, List<UserGameState> userStates) {
-        userStates.forEach(userGameState -> {
+    public void submitAnswersBatch(String gameId, QuestionModel question, List<UserStateSnapshot> userAnswers) {
+        userAnswers.forEach(answerSnapshot -> {
             submitAnswers(
                     gameId,
-                    userGameState.getUsername(),
+                    answerSnapshot.username(),
                     question,
-                    Collections.singletonList(userGameState.getLastAnswerText()),
-                    () -> userGameState.isAnswerGiven() ? userGameState.isLastWasCorrect() : null);
+                    Collections.singletonList(answerSnapshot.answerText()),
+                    () -> answerSnapshot.answerGiven() ? answerSnapshot.correct() : null);
         });
     }
 

@@ -1,6 +1,5 @@
 package org.rsinitsyn.quiz.component.custom.answer;
 
-import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -36,17 +35,17 @@ public class MultiAnswersLayout extends AbstractAnswersLayout {
     }
 
     @Override
-    protected void submitHandler(ClickEvent<Button> event) {
+    protected AnswerGivenEvent createAnswerGivenEvent() {
         var userAnswers = multiAnswerListBox.getSelectedItems();
         long correctAnswersCount = question.getAnswers().stream().filter(QuestionModel.AnswerModel::correct).count();
         long userCorrectAnswersCount = userAnswers.stream().filter(QuestionModel.AnswerModel::correct).count();
         boolean userHasOnlyCorrectAnswers = userCorrectAnswersCount == userAnswers.size();
         boolean isCorrect = userHasOnlyCorrectAnswers && correctAnswersCount == userCorrectAnswersCount;
 
-        fireEvent(new AnswerChosenEvent(multiAnswerListBox.getSelectedItems().stream()
+        return new AnswerGivenEvent(multiAnswerListBox.getSelectedItems().stream()
                 .map(QuestionModel.AnswerModel::text)
                 .collect(Collectors.toSet()),
-                isCorrect));
+                isCorrect);
     }
 
     @Override

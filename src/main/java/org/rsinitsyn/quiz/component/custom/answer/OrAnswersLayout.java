@@ -1,8 +1,6 @@
 package org.rsinitsyn.quiz.component.custom.answer;
 
-import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
@@ -31,8 +29,8 @@ public class OrAnswersLayout extends AbstractAnswersLayout {
     }
 
     @Override
-    protected void submitHandler(ClickEvent<Button> event) {
+    protected AnswerGivenEvent createAnswerGivenEvent() {
         var userAnswer = radioButtonGroup.getValue();
-        fireEvent(new AnswerChosenEvent(Collections.singleton(userAnswer.text()), userAnswer.correct()));
+        return new AnswerGivenEvent(Collections.singleton(userAnswer.text()), userAnswer.correct());
     }
 }

@@ -18,6 +18,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.UserStateSnapshot;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
@@ -29,7 +30,7 @@ public class CleverestResultComponent extends VerticalLayout {
     private final Grid<CleverestResultDto> historyGrid = new Grid<>(CleverestResultDto.class, false);
 
     public void setState(Collection<UserGameState> userGameStates,
-                         Map<QuestionModel, List<UserGameState>> history,
+                         Map<QuestionModel, List<UserStateSnapshot>> history,
                          String username) {
         AtomicInteger qNumber = new AtomicInteger(0);
         List<CleverestResultDto> results = history.entrySet()
@@ -98,8 +99,8 @@ public class CleverestResultComponent extends VerticalLayout {
             historyGrid.addColumn(new ComponentRenderer<>(resultDto -> {
                         var state = results.stream()
                                 .filter(dto -> dto.getNumber() == resultDto.getNumber())
-                                .flatMap(dto -> dto.getUserGameStates().stream())
-                                .filter(us -> us.getUsername().equals(username))
+                                .flatMap(dto -> dto.getSnapshots().stream())
+                                .filter(us -> us.username().equals(username))
                                 .findFirst().orElse(null);
 
                         VerticalLayout layout = new VerticalLayout();
@@ -107,13 +108,13 @@ public class CleverestResultComponent extends VerticalLayout {
                             layout.add(VaadinIcon.MINUS_CIRCLE_O.create());
                             return layout;
                         }
-                        layout.add(state.isLastWasCorrect()
+                        layout.add(state.correct()
                                 ? CleverestComponents.doneIcon() : CleverestComponents.cancelIcon());
-                        layout.add(new Span("Баллы: " + state.getScore()));
+                        layout.add(new Span("Баллы: " + state.score()));
 
-                        String timeInSeconds = String.format("%.2f сек.", state.getLastResponseTime() / 1000.0);
+                        String timeInSeconds = String.format("%.2f сек.", state.lastResponseTimeMs() / 1000.0);
                         layout.add(new Span("Время: " + timeInSeconds));
-                        layout.getStyle().set("color", state.getColor());
+                        layout.getStyle().set("color", state.color());
                         layout.getStyle().set("text-shadow", StaticValuesHolder.getFontBorder());
                         layout.setPadding(false);
                         return layout;
@@ -128,6 +129,6 @@ public class CleverestResultComponent extends VerticalLayout {
     static class CleverestResultDto {
         private int number;
         private QuestionModel question;
-        private List<UserGameState> userGameStates;
+        private List<UserStateSnapshot> snapshots;
     }
 }

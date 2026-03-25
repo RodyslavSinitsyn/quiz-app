@@ -1,7 +1,5 @@
 package org.rsinitsyn.quiz.component.custom.answer;
 
-import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.button.Button;
 import org.rsinitsyn.quiz.component.custom.LinkAnswersComponent;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 
@@ -23,7 +21,7 @@ public class LinkAnswersLayout extends AbstractAnswersLayout {
     }
 
     @Override
-    protected void submitHandler(ClickEvent<Button> event) {
+    protected AnswerGivenEvent createAnswerGivenEvent() {
         var pairs = component.getPairs(); // TODO: For now true if get all the matches
         boolean areCorrect = true;
         for (var pair : pairs) {
@@ -35,6 +33,6 @@ public class LinkAnswersLayout extends AbstractAnswersLayout {
         var userAnswers = pairs.stream()
                 .map(pair -> pair.getLeft().text() + " = " + pair.getRight().text())
                 .collect(Collectors.toSet());
-        fireEvent(new AnswerChosenEvent(userAnswers, areCorrect));
+        return new AnswerGivenEvent(userAnswers, areCorrect);
     }
 }

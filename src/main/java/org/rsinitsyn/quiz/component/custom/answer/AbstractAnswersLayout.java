@@ -49,14 +49,14 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
     }
 
     protected void renderSubmitButton() {
-        submitButton.addClickListener(this::submitHandler);
+        submitButton.addClickListener(e -> fireEvent(createAnswerGivenEvent()));
         submitButton.setEnabled(false);
         add(submitButton);
     }
 
     protected abstract void renderAnswers();
 
-    protected abstract void submitHandler(ClickEvent<Button> event);
+    protected abstract AnswerGivenEvent createAnswerGivenEvent();
 
     protected List<Component> getHintsComponents() {
         return Collections.emptyList();
@@ -83,20 +83,20 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
     }
 
     @Getter
-    public static class AnswerChosenEvent extends StubEvent {
+    public static class AnswerGivenEvent extends StubEvent {
         private final Set<String> answers;
         private final boolean isCorrect;
         private boolean manuallyApprove = false;
 
-        public AnswerChosenEvent(Set<String> answers,
-                                 boolean isCorrect) {
+        public AnswerGivenEvent(Set<String> answers,
+                                boolean isCorrect) {
             this.answers = answers;
             this.isCorrect = isCorrect;
         }
 
-        public AnswerChosenEvent(Set<String> answers,
-                                 boolean isCorrect,
-                                 boolean manuallyApprove) {
+        public AnswerGivenEvent(Set<String> answers,
+                                boolean isCorrect,
+                                boolean manuallyApprove) {
             this.answers = answers;
             this.isCorrect = isCorrect;
             this.manuallyApprove = manuallyApprove;

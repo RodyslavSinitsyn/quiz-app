@@ -22,7 +22,10 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import org.apache.commons.collections4.MapUtils;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.UserStateSnapshot;
 
+import static java.util.Map.Entry.comparingByValue;
+import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.rsinitsyn.quiz.model.cleverest.UserGameState.userGameState;
 
@@ -37,7 +40,7 @@ public class CleverestGameState {
     private final Map<String, List<QuestionModel>> thirdQuestions;
 
     private final Map<Integer, String> roundRules = new HashMap<>();
-    private final Map<QuestionModel, List<UserGameState>> history = new LinkedHashMap<>();
+    private final Map<QuestionModel, List<UserStateSnapshot>> history = new LinkedHashMap<>();
 
     // mutable
     private Iterator<UserGameState> usersToAnswerOrder = null;
@@ -102,7 +105,7 @@ public class CleverestGameState {
 
     public void putUserStateToHistory(QuestionModel key, UserGameState currUserState) {
         history.computeIfAbsent(key, ignored -> new ArrayList<>(5))
-                .add(currUserState.copy());
+                .add(currUserState.snapshot());
     }
 
     public List<UserGameState> usersWhoAnswered() {
@@ -116,22 +119,21 @@ public class CleverestGameState {
         users.values().forEach(UserGameState::prepareForNext);
     }
 
-    public Map<String, UserGameState> getSortedByScoreUsers() {
+    public Map<String, UserGameState> usersSortedByScore() {
         return users.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue())
-                .collect(Collectors.toMap(Map.Entry::getKey,
-                        Map.Entry::getValue,
+                .sorted(comparingByValue())
+                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue,
                         (e1, e2) -> e2,
                         LinkedHashMap::new));
     }
 
-    public Map<String, UserGameState> getSortedByResponseTimeUsers() {
+    public Map<String, UserStateSnapshot> userSnapshotsSortedByResponseTime() {
         return users.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue((s1, s2) -> Comparator
-                        .comparingLong(UserGameState::getLastResponseTime)
+                .sorted(comparingByValue((s1, s2) -> Comparator
+                        .comparingLong(UserGameState::getLastResponseTimeMs)
                         .compare(s1, s2)))
-                .collect(Collectors.toMap(Map.Entry::getKey,
-                        Map.Entry::getValue,
+                .collect(toMap(Map.Entry::getKey,
+                        v -> v.getValue().snapshot(),
                         (e1, e2) -> e2,
                         LinkedHashMap::new));
     }
@@ -158,7 +160,7 @@ public class CleverestGameState {
     }
 
     public void prepareUsersToAnswerOrder() {
-        usersToAnswerOrder = Iterables.cycle(getSortedByScoreUsers().values()).iterator();
+        usersToAnswerOrder = Iterables.cycle(usersSortedByScore().values()).iterator();
     }
 
     public boolean prepareNextQuestionAndCheckIsLast() {
@@ -184,7 +186,7 @@ public class CleverestGameState {
     }
 
     public void updateUserPositions() {
-        Map<String, UserGameState> sortedByScore = getSortedByScoreUsers();
+        Map<String, UserGameState> sortedByScore = usersSortedByScore();
         AtomicInteger pos = new AtomicInteger(1);
         AtomicInteger prevScoreHolder = new AtomicInteger(0);
         sortedByScore.forEach((username, userGameState) -> {
@@ -229,11 +231,11 @@ public class CleverestGameState {
 
         history.entrySet().stream()
                 .flatMap(e -> e.getValue().stream())
-                .filter(uState -> uState.getLastResponseTime() > 0)
+                .filter(uState -> uState.lastResponseTimeMs() > 0)
                 .collect(Collectors.groupingBy(Function.identity(),
-                        Collectors.averagingLong(UserGameState::getLastResponseTime)))
-                .forEach((userGameState, avgTime) -> {
-                    users.get(userGameState.getUsername()).setAvgResponseTime(avgTime); // todo: remove setter
+                        Collectors.averagingLong(UserStateSnapshot::lastResponseTimeMs)))
+                .forEach((snapshot, avgTime) -> {
+                    users.get(snapshot.username()).setAvgResponseTime(avgTime); // todo: remove setter
                 });
     }
 

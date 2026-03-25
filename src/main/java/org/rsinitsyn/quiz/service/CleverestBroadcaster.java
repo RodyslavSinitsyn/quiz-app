@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.UserStateSnapshot;
 import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.springframework.stereotype.Component;
@@ -92,13 +93,13 @@ public class CleverestBroadcaster {
         eventBuses.get(gameId).fireEvent(new AllUsersReadyEvent(gameId, getState(gameId).getAllUsernames()));
     }
 
-    public void sendSaveUserAnswersEvent(String gameId, QuestionModel question) {
+    public void sendSaveUsersAnswersEvent(String gameId, QuestionModel question) {
         CleverestGameState state = getState(gameId);
         var usersWhoAnswered = state.usersWhoAnswered();
 
         usersWhoAnswered.forEach(userState -> state.putUserStateToHistory(question, userState));
         log.info("History updated. Users gave answers count: {}. Save answers to DB: {}", usersWhoAnswered.size(), gameId);
-        eventBuses.get(gameId).fireEvent(new SaveUserAnswersEvent(
+        eventBuses.get(gameId).fireEvent(new SaveUsersAnswersEvent(
                 gameId,
                 question,
                 getState(gameId).getHistory().get(question)));
@@ -404,18 +405,18 @@ public class CleverestBroadcaster {
     }
 
     @Getter
-    @EqualsAndHashCode(of = {"question", "userStates"}, callSuper = true)
-    @ToString(of = {"question", "userStates"}, callSuper = true)
-    public static class SaveUserAnswersEvent extends CleverestGameEvent {
+    @EqualsAndHashCode(of = {"question", "userStateSnapshots"}, callSuper = true)
+    @ToString(of = {"question", "userStateSnapshots"}, callSuper = true)
+    public static class SaveUsersAnswersEvent extends CleverestGameEvent {
         private final QuestionModel question;
-        private final List<UserGameState> userStates;
+        private final List<UserStateSnapshot> userStateSnapshots;
 
-        public SaveUserAnswersEvent(String gameId,
-                                    QuestionModel question,
-                                    List<UserGameState> userStates) {
+        public SaveUsersAnswersEvent(String gameId,
+                                     QuestionModel question,
+                                     List<UserStateSnapshot> userStateSnapshots) {
             super(gameId);
             this.question = question;
-            this.userStates = userStates;
+            this.userStateSnapshots = userStateSnapshots;
         }
     }
 

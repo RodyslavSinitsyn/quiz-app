@@ -13,10 +13,9 @@ import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.component.custom.AudioPlayer;
 import org.rsinitsyn.quiz.component.custom.answer.AbstractAnswersLayout;
-import org.rsinitsyn.quiz.component.custom.answer.AbstractAnswersLayout.AnswerChosenEvent;
+import org.rsinitsyn.quiz.component.custom.answer.AbstractAnswersLayout.AnswerGivenEvent;
 import org.rsinitsyn.quiz.component.custom.event.StubEvent;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
@@ -114,10 +113,13 @@ public class BaseQuestionLayout extends VerticalLayout {
 
     @Getter
     public static class QuestionAnsweredEvent extends StubEvent {
-        private final AnswerChosenEvent answerChosenEvent;
+        private final QuestionModel question;
+        private final AnswerGivenEvent answerGivenEvent;
 
-        public QuestionAnsweredEvent(AnswerChosenEvent answerChosenEvent) {
-            this.answerChosenEvent = answerChosenEvent;
+        public QuestionAnsweredEvent(final QuestionModel question,
+                                     final AnswerGivenEvent answerGivenEvent) {
+            this.question = question;
+            this.answerGivenEvent = answerGivenEvent;
         }
     }
 
@@ -131,9 +133,9 @@ public class BaseQuestionLayout extends VerticalLayout {
         super.onAttach(attachEvent);
         if (answersLayout != null) {
             final var registration = answersLayout.addListener(
-                    AnswerChosenEvent.class,
+                    AnswerGivenEvent.class,
                     event -> {
-                        fireEvent(new QuestionAnsweredEvent(event));
+                        fireEvent(new QuestionAnsweredEvent(questionModel, event));
                     });
             subscriptions.add(registration);
         }

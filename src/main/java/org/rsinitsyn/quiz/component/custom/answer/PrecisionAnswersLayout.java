@@ -1,7 +1,5 @@
 package org.rsinitsyn.quiz.component.custom.answer;
 
-import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.textfield.NumberField;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
@@ -24,7 +22,7 @@ public class PrecisionAnswersLayout extends AbstractAnswersLayout {
     }
 
     @Override
-    protected void submitHandler(ClickEvent<Button> event) {
+    protected AnswerGivenEvent createAnswerGivenEvent() {
         final var answerText = String.valueOf(numberField.getValue().intValue());
         boolean isCorrect = false;
         if (StringUtils.isNumeric(answerText)) {
@@ -32,6 +30,6 @@ public class PrecisionAnswersLayout extends AbstractAnswersLayout {
             int validAnswerNumeric = Integer.parseInt(question.getAnswers().stream().findFirst().orElseThrow().text());
             isCorrect = Math.abs(validAnswerNumeric - userAnswerNumeric) <= question.getValidRange();
         }
-        fireEvent(new AnswerChosenEvent(Collections.singleton(answerText), isCorrect));
+        return new AnswerGivenEvent(Collections.singleton(answerText), isCorrect);
     }
 }

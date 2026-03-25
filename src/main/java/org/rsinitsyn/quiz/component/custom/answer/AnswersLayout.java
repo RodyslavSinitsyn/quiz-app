@@ -1,6 +1,5 @@
 package org.rsinitsyn.quiz.component.custom.answer;
 
-import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -34,9 +33,9 @@ public class AnswersLayout extends AbstractAnswersLayout {
     }
 
     @Override
-    protected void submitHandler(ClickEvent<Button> event) {
-        fireEvent(new AnswerChosenEvent(Collections.singleton(options.getValue().text()),
-                options.getValue().correct()));
+    protected AnswerGivenEvent createAnswerGivenEvent() {
+        return new AnswerGivenEvent(Collections.singleton(options.getValue().text()),
+                options.getValue().correct());
     }
 
     @Override

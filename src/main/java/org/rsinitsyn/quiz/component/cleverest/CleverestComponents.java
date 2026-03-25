@@ -24,8 +24,8 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.UserStateSnapshot;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
-import org.rsinitsyn.quiz.utils.QuizComponents;
 
 import java.util.List;
 import java.util.Map;
@@ -98,18 +98,18 @@ public final class CleverestComponents {
         return layout;
     }
 
-    public static Span userAnswerSpan(UserGameState userGameState, QuestionType questionType, String... classes) {
+    public static Span userAnswerSpan(UserStateSnapshot userStateSnapshot, QuestionType questionType, String... classes) {
         Span userAnswer = new Span();
         if (questionType.equals(QuestionType.PHOTO)) {
-            userAnswer.add(largeAvatar(userGameState.getLastAnswerText()));
+            userAnswer.add(largeAvatar(userStateSnapshot.answerText()));
         } else {
-            userAnswer.add(String.valueOf(userGameState.getLastAnswerText()));
+            userAnswer.add(String.valueOf(userStateSnapshot.answerText()));
         }
         userAnswer.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
         userAnswer.addClassNames(classes);
 
         return new Span(
-                userNameSpan(userGameState.getUsername(), userGameState.getColor(), classes),
+                userNameSpan(userStateSnapshot.username(), userStateSnapshot.color(), classes),
                 delimiterSpan(classes),
                 userAnswer);
     }

@@ -5,27 +5,8 @@ import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.AfterNavigationEvent;
-import com.vaadin.flow.router.AfterNavigationObserver;
-import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
-import com.vaadin.flow.router.BeforeEvent;
-import com.vaadin.flow.router.BeforeLeaveEvent;
-import com.vaadin.flow.router.BeforeLeaveObserver;
-import com.vaadin.flow.router.HasUrlParameter;
-import com.vaadin.flow.router.OptionalParameter;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.PreserveOnRefresh;
-import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.*;
 import com.vaadin.flow.shared.Registration;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import jakarta.annotation.security.PermitAll;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.MainLayout;
@@ -43,7 +24,14 @@ import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
-import org.rsinitsyn.quiz.utils.SessionWrapper;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
@@ -221,7 +209,6 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
         clearSubs();
     }
 
-
     private void subOnEvents(UI ui) {
         if (StringUtils.isEmpty(gameId)) {
             return;
@@ -247,8 +234,11 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
         );
         if (gameHost) {
             subs.add(broadcaster.subscribe(gameId,
-                    CleverestBroadcaster.SaveUserAnswersEvent.class,
-                    event -> gameService.submitAnswersBatch(gameId, event.getQuestion(), event.getUserStates())));
+                    CleverestBroadcaster.SaveUsersAnswersEvent.class,
+                    event -> gameService.submitAnswersBatch(
+                            gameId,
+                            event.getQuestion(),
+                            event.getUserStateSnapshots())));
             subs.add(broadcaster.subscribe(
                     gameId,
                     CleverestBroadcaster.GameFinishedEvent.class,

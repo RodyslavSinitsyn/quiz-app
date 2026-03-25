@@ -20,18 +20,17 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import lombok.extern.slf4j.Slf4j;
+import org.rsinitsyn.quiz.component.custom.ColorPicker;
+import org.rsinitsyn.quiz.model.cleverest.UserGameState;
+import org.rsinitsyn.quiz.service.CleverestBroadcaster;
+import org.rsinitsyn.quiz.utils.QuizUtils;
 
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-
-import lombok.extern.slf4j.Slf4j;
-import org.rsinitsyn.quiz.component.custom.ColorPicker;
-import org.rsinitsyn.quiz.model.cleverest.UserGameState;
-import org.rsinitsyn.quiz.service.CleverestBroadcaster;
-import org.rsinitsyn.quiz.utils.QuizUtils;
 
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.primaryButton;

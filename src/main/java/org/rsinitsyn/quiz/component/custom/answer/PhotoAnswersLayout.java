@@ -1,15 +1,10 @@
 package org.rsinitsyn.quiz.component.custom.answer;
 
-import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.listbox.ListBox;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
-import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
-import org.rsinitsyn.quiz.utils.QuizUtils;
 
 import java.util.Collections;
 
@@ -34,8 +29,8 @@ public class PhotoAnswersLayout extends AbstractAnswersLayout {
     }
 
     @Override
-    protected void submitHandler(ClickEvent<Button> event) {
+    protected AnswerGivenEvent createAnswerGivenEvent() {
         var userAnswer = options.getValue();
-        fireEvent(new AnswerChosenEvent(Collections.singleton(userAnswer.text()), userAnswer.correct()));
+        return new AnswerGivenEvent(Collections.singleton(userAnswer.text()), userAnswer.correct());
     }
 }

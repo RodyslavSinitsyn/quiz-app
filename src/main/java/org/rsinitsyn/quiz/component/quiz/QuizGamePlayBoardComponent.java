@@ -18,6 +18,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.custom.answer.AbstractAnswersLayout;
 import org.rsinitsyn.quiz.component.custom.question.BaseQuestionLayout;
+import org.rsinitsyn.quiz.component.custom.question.BaseQuestionLayout.QuestionAnsweredEvent;
 import org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.model.AnswerHint;
@@ -158,7 +159,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     }
 
     private void subscribeQuestionLayout() {
-        subscriptions.add(questionLayout.addListener(BaseQuestionLayout.QuestionAnsweredEvent.class, event -> {
+        subscriptions.add(questionLayout.addListener(QuestionAnsweredEvent.class, event -> {
             Optional.ofNullable(lastPlayedAudio).ifPresent(Player::close);
             if (gameState.isIntrigueEnabled()) {
                 showIntrigueAndRunAction(() -> submitAnswer(event));
@@ -198,9 +199,12 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         return progressBar;
     }
 
-    private void submitAnswer(BaseQuestionLayout.QuestionAnsweredEvent event) {
-        calculateScoreAndShowPopup(event.getAnswerChosenEvent().isCorrect());
-        fireEvent(new SubmitUserAnswer(this, currQuestion, event.getAnswerChosenEvent().getAnswers(), event.getAnswerChosenEvent().isCorrect()));
+    private void submitAnswer(QuestionAnsweredEvent event) {
+        calculateScoreAndShowPopup(event.getAnswerGivenEvent().isCorrect());
+        fireEvent(new SubmitUserAnswer(this,
+                event.getQuestion(),
+                event.getAnswerGivenEvent().getAnswers(),
+                event.getAnswerGivenEvent().isCorrect()));
         renderQuestion();
     }
 

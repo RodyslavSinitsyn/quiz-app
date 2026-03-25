@@ -1,6 +1,5 @@
 package org.rsinitsyn.quiz.component.custom.answer;
 
-import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -72,7 +71,7 @@ public class GuessPhotoAnswersLayout extends AbstractAnswersLayout {
     }
 
     @Override
-    protected void submitHandler(final ClickEvent<Button> event) {
-        fireEvent(new AnswerChosenEvent(Set.of(answerField.getValue()), false, true));
+    protected AnswerGivenEvent createAnswerGivenEvent() {
+        return new AnswerGivenEvent(Set.of(answerField.getValue()), false, true);
     }
 }

@@ -1,6 +1,5 @@
 package org.rsinitsyn.quiz.component.custom.answer;
 
-import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -31,7 +30,8 @@ public class SequenceAnswersLayout extends AbstractAnswersLayout {
             final var index = i;
             final var answer = answers.get(i);
 
-            final var option = optionComponent(answer.text(), 50, event -> {});
+            final var option = optionComponent(answer.text(), 50, event -> {
+            });
 
             final var up = new Button(VaadinIcon.ARROW_CIRCLE_UP.create(), e -> moveUp(index));
             final var down = new Button(VaadinIcon.ARROW_CIRCLE_DOWN.create(), e -> moveDown(index));
@@ -44,7 +44,8 @@ public class SequenceAnswersLayout extends AbstractAnswersLayout {
 
         if (getChildren().noneMatch(component -> component == sequenceContainer)) {
             add(sequenceContainer);
-        };
+        }
+        ;
 
         submitButton.setEnabled(true);
     }
@@ -60,7 +61,7 @@ public class SequenceAnswersLayout extends AbstractAnswersLayout {
     }
 
     @Override
-    protected void submitHandler(final ClickEvent<Button> event) {
+    protected AnswerGivenEvent createAnswerGivenEvent() {
         final var correct = range(0, answers.size())
                 .allMatch(i -> answers.get(i).number() == i);
 
@@ -68,6 +69,6 @@ public class SequenceAnswersLayout extends AbstractAnswersLayout {
                 .map(AnswerModel::text)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        fireEvent(new AnswerChosenEvent(selected, correct));
+        return new AnswerGivenEvent(selected, correct);
     }
 }
