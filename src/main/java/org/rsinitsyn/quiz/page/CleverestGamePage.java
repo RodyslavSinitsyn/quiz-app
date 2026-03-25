@@ -12,7 +12,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.cleverest.CleverestGamePlayBoardComponent;
 import org.rsinitsyn.quiz.component.cleverest.CleverestGameSettingsComponent;
-import org.rsinitsyn.quiz.component.cleverest.CleverestGameSettingsComponent.SettingsCompletedEvent;
 import org.rsinitsyn.quiz.component.cleverest.CleverestResultComponent;
 import org.rsinitsyn.quiz.component.cleverest.CleverestWaitingRoomComponent;
 import org.rsinitsyn.quiz.entity.GameEntity;
@@ -35,7 +34,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.rsinitsyn.quiz.service.CleverestBroadcaster.*;
+import static org.rsinitsyn.quiz.service.CleverestBroadcaster.QuestionGradedEvent;
+import static org.rsinitsyn.quiz.service.CleverestBroadcaster.SaveUsersAnswersEvent;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
 /*

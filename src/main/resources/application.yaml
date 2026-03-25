@@ -14,7 +14,7 @@ spring:
   datasource:
     username: qa-user
     password: qa-password
-    url: jdbc:postgresql://localhost:5432/qa-db
+    url: jdbc:postgresql://localhost:5433/qa-db
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect

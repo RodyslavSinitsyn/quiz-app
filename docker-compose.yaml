@@ -5,13 +5,13 @@ services:
   postgres:
     image: postgres:15
     container_name: quiz-app-postgres-dev
-    restart: always
+    restart: no
     environment:
       POSTGRES_USER: qa-user
       POSTGRES_PASSWORD: qa-password
       POSTGRES_DB: qa-db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     networks:
       - quiz-app-network
     volumes:
@@ -20,7 +20,7 @@ services:
   postgres-prod:
     image: postgres:15
     container_name: quiz-app-postgres-prod
-    restart: always
+    restart: no
     environment:
       POSTGRES_USER: qa-user
       POSTGRES_PASSWORD: qa-password

@@ -28,6 +28,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+import static com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.START;
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
 import static org.rsinitsyn.quiz.component.custom.question.BaseQuestionLayout.QuestionAnsweredEvent;
 import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory.createQuestionLayout;
@@ -292,7 +293,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                         LumoUtility.FontWeight.LIGHT)));
 
         users.forEach(userGameState -> {
-            final var row = horizontalLayoutBetween();
+            final var row = horizontalLayout(START);
             row.setDefaultVerticalComponentAlignment(Alignment.START);
             if (userGameState.correct()) {
                 row.addClassNames(LumoUtility.Background.PRIMARY_10, LumoUtility.Border.ALL, LumoUtility.BorderColor.PRIMARY);
