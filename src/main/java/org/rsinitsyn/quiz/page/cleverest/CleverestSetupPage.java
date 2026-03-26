@@ -10,15 +10,16 @@ import com.vaadin.flow.shared.Registration;
 import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
-import org.rsinitsyn.quiz.component.cleverest.CleverestGameSettingsComponent;
+import org.rsinitsyn.quiz.component.cleverest_old.CleverestGameSettingsComponent;
 import org.rsinitsyn.quiz.entity.GameType;
+import org.rsinitsyn.quiz.entity.QuestionEntity;
+import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Stream;
 
 import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
@@ -54,23 +55,31 @@ public class CleverestSetupPage extends VerticalLayout {
         subscriptions.add(settingsComponent.addSettingsCompletedListener(event -> {
             final var newGameId = UUID.randomUUID().toString();
             gameService.createIfNotExists(newGameId, "Cleverest", GameType.CLEVEREST);
+            final var r1 = shuffleAndToModel(event.getFirstRound());
+            final var r2 = shuffleAndToModel(event.getSecondRound());
+            final var r3 = shuffleAndToModel(event.getThirdRound());
+            gameService.linkQuestionsAndUsersWithGame(
+                    newGameId,
+                    Set.of(getLoggedUser()),
+                    Stream.concat(Stream.concat(r1.stream(), r2.stream()), r3.stream()).toList());
             broadcaster.createState(
                     newGameId,
                     getLoggedUser(),
-                    event.getFirstRound().stream()
-                            .map(questionService::toQuizQuestionModel)
-                            .collect(ArrayList::new, ArrayList::add, ArrayList::addAll),
-                    event.getSecondRound().stream()
-                            .map(questionService::toQuizQuestionModel)
-                            .collect(ArrayList::new, ArrayList::add, ArrayList::addAll),
-                    event.getThirdRound().stream()
-                            .map(questionService::toQuizQuestionModel)
-                            .collect(ArrayList::new, ArrayList::add, ArrayList::addAll)
-            );
+                    r1, r2, r3);
             attachEvent.getUI().navigate(CleverestWaitingPage.class, newGameId);
         }));
         logState(this, attachEvent.getUI(), "onAttach", false, subscriptions);
     }
+
+    private List<QuestionModel> shuffleAndToModel(List<QuestionEntity> questions) {
+        final var questionModels = new ArrayList<>(questions.stream()
+                .map(questionService::toQuizQuestionModel)
+                .toList());
+        Collections.shuffle(questionModels);
+        return questionModels;
+    }
+
+
 
     @Override
     protected void onDetach(final DetachEvent detachEvent) {

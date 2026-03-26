@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.component.cleverest;
+package org.rsinitsyn.quiz.component.cleverest_old;
 
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;

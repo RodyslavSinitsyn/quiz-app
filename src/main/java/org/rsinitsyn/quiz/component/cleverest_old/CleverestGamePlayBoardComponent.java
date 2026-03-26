@@ -1,7 +1,8 @@
-package org.rsinitsyn.quiz.component.cleverest;
+package org.rsinitsyn.quiz.component.cleverest_old;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
@@ -29,8 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import static com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.START;
-import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
-import static org.rsinitsyn.quiz.component.custom.question.BaseQuestionLayout.QuestionAnsweredEvent;
+import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
 import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory.createQuestionLayout;
 import static org.rsinitsyn.quiz.utils.AudioUtils.playStaticSoundAsync;
 import static org.rsinitsyn.quiz.utils.QuizUtils.runActionInUi;
@@ -50,26 +50,208 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
     private final List<Registration> subscriptions = new ArrayList<>();
 
-    public void setState(String gameId, CleverestBroadcaster broadcaster, boolean gameHost, boolean refreshEvent) {
-        log.debug("Render Cleverest game with id [{}]", gameId);
+    /**
+     * Entry point. Called from GamePage.configureAndAddPlayBoardComponent().
+     * UI must be passed explicitly — never rely on getUI() here because
+     * setState() is called before the component is attached (UI = -1 at that moment).
+     * Subscriptions are registered here (not in onAttach) so they are created
+     * exactly once per setState call, regardless of how many times Vaadin
+     * triggers attach/detach during the same navigation cycle.
+     */
+    public void setState(String gameId,
+                         CleverestBroadcaster broadcaster,
+                         boolean gameHost,
+                         boolean refreshEvent,
+                         UI ui) {
+        logState("SetState", true);
+        // Always clear first — guards against double-attach during @PreserveOnRefresh refresh cycle
+        clearSubs();
+
         this.gameId = gameId;
         this.broadcaster = broadcaster;
         this.gameHost = gameHost;
 
+        // Register all subscriptions right here with the known-good UI reference
+        subscribeOnEvents(ui);
+
         if (gameHost) {
             int currRound = broadcaster.getState(gameId).getRoundNumber();
             if (refreshEvent) {
+                // Restore question in midContainer first, then show the "refresh" dialog on top.
+                // When host closes the dialog the question is already visible behind it.
+                restoreCurrentQuestion(currRound);
                 showRoundRules(currRound, "Рефреш страницы.");
             } else {
                 showRoundRules(currRound, broadcaster.getState(gameId).getRoundRules().get(currRound));
             }
         } else {
             renderUserPersonalScore();
+            if (refreshEvent) {
+                // Re-render the current question so the player doesn't see a blank screen.
+                restoreCurrentQuestion(broadcaster.getState(gameId).getRoundNumber());
+            }
         }
         topContainer.setWidthFull();
         midContainer.setWidthFull();
         add(topContainer, midContainer);
+        logState("SetState", false);
     }
+
+    /**
+     * Restores the current question from broadcaster state during a page refresh.
+     * Does NOT call getCurrentQuestion() to avoid the side-effect of resetting
+     * questionRenderedTime — reads the question list directly by index instead.
+     * For round 3 (categories), renders the categories table instead of a question.
+     */
+    private void restoreCurrentQuestion(int roundNumber) {
+        CleverestGameState state = broadcaster.getState(gameId);
+        if (roundNumber == 3) {
+            // Round 3 is categories-based — nothing to restore here,
+            // the RenderCategoriesEvent will re-render on next action.
+            // Just show a waiting message for players.
+            if (!gameHost) {
+                midContainer.add(userInfoLightSpan("В ожидании вопроса", LumoUtility.TextColor.SECONDARY, CleverestComponents.MOBILE_LARGE_FONT));
+            }
+            return;
+        }
+        List<QuestionModel> questions = state.getCurrRoundQuestionsSource().get();
+        int idx = state.getQuestionNumber();
+        if (idx >= questions.size()) {
+            log.warn("restoreCurrentQuestion: questionNumber={} out of bounds (size={}), skipping", idx, questions.size());
+            return;
+        }
+        // Read directly — no side effects on questionRenderedTime
+        QuestionModel question = questions.get(idx);
+        log.info("Restoring question on refresh: round={}, idx={}, question={}", roundNumber, idx, question.getText());
+        if (gameHost) {
+            renderTopContainerForHost(state.getAllUserStates());
+        }
+        renderQuestionLayout(question, idx + 1, questions.size(), roundNumber);
+    }
+
+    // -------------------------------------------------------------------------
+    // Subscription setup — called once from setState, never from onAttach
+    // -------------------------------------------------------------------------
+
+    private void subscribeOnEvents(UI ui) {
+        subscriptions.add(broadcaster.subscribe(gameId, UserAnsweredEvent.class, event ->
+                runActionInUi(ui, () -> {
+                    if (gameHost) {
+                        updateUserAnswerGiven(event.getUsername(), event.getLastResponseTimeSec());
+                    }
+                    if (event.getUsername().equals(getLoggedUser())) {
+                        midContainer.setEnabled(false);
+                    }
+                    if (event.getRoundNumber() == 3) {
+                        runHostAction();
+                    } else {
+                        notification(event.getUsername() + " ответил", NotificationVariant.LUMO_CONTRAST);
+                    }
+                })));
+
+        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.GetQuestionEvent.class, event ->
+                runActionInUi(ui, () ->
+                        renderQuestion(
+                                event.getQuestion(),
+                                event.getQuestionNumber(),
+                                event.getTotalQuestionsInRound(),
+                                event.getRoundNumber()))));
+
+        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.RenderCategoriesEvent.class, event ->
+                runActionInUi(ui, () -> {
+                    midContainer.removeAll();
+                    if (gameHost) {
+                        renderTopContainerForHost(Collections.singletonList(event.getUserToAnswer()));
+                        renderCategoriesTable(event.getUserToAnswer(), event.getData());
+                    } else {
+                        if (getLoggedUser().equals(event.getUserToAnswer().getUsername())) {
+                            midContainer.add(userInfoLightSpan("Время отвечать!", LumoUtility.TextColor.PRIMARY, CleverestComponents.MOBILE_LARGE_FONT));
+                        } else {
+                            midContainer.add(userInfoLightSpan("В ожидании вопроса", LumoUtility.TextColor.SECONDARY, CleverestComponents.MOBILE_LARGE_FONT));
+                        }
+                    }
+                })));
+
+        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.RoundInfoEvent.class, event ->
+                runActionInUi(ui, () -> showRoundRules(event.getRoundNumber(), event.getRules()))));
+
+        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.GameFinishedEvent.class, event ->
+                runActionInUi(ui, this::renderResults)));
+
+        if (gameHost) {
+            subscribeOnHostOnlyEvents(ui);
+        } else {
+            subscribeOnPlayerOnlyEvents(ui);
+        }
+    }
+
+    private void subscribeOnPlayerOnlyEvents(UI ui) {
+        log.debug("Subscribed on player events: {}", getLoggedUser());
+
+        subscriptions.add(broadcaster.subscribe(gameId, UpdatePersonalScoreEvent.class, event ->
+                runActionInUi(ui, () -> {
+                    log.debug("Updating score from event");
+                    renderUserPersonalScore();
+                })));
+
+        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.QuestionChoosenEvent.class, event ->
+                runActionInUi(ui, () -> {
+                    if (getLoggedUser().equals(event.getUsername())) {
+                        renderQuestionLayout(event.getQuestion(), 1, 1, 1); // TODO Real numbers
+                    }
+                })));
+    }
+
+    private void subscribeOnHostOnlyEvents(UI ui) {
+        log.debug("Subscribed on host events: {}", getLoggedUser());
+
+        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.AllUsersAnsweredEvent.class, event ->
+                playStaticSoundAsync(StaticValuesHolder.SUBMIT_ANSWER_SHORT_AUDIOS.next()).thenRun(() -> {
+                    log.debug("Submit audio finished, run action in ui: {}, {}", ui, gameId);
+                    runActionInUi(ui, () -> {
+                        boolean approveManually = event.getCurrentRound() == 2;
+                        showCorrectAnswer(
+                                event.getQuestion(),
+                                broadcaster.getState(gameId).userSnapshotsSortedByResponseTime().values(),
+                                event.isRoundOver(),
+                                event.getRevealScoreAfter(),
+                                approveManually,
+                                uName -> {
+                                    broadcaster.getState(gameId).getUserState(uName).increaseScore();
+                                    broadcaster.sendUpdatePersonalScoreEvent(gameId);
+                                },
+                                () -> {
+                                },
+                                () -> broadcaster.sendGetQuestionEvent(gameId));
+                    });
+                })));
+    }
+
+    // -------------------------------------------------------------------------
+    // onAttach / onDetach — subscriptions are NOT managed here anymore.
+    // onDetach still clears subs as a safety net (e.g. if the component is
+    // removed from the layout without a new setState being called).
+    // -------------------------------------------------------------------------
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        // Intentionally empty — subscriptions are created in setState() with an
+        // explicit UI reference. Do NOT add subscriptions here.
+        logState("OnAttach (no-op)", true);
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        logState("OnDetach", true);
+        // Safety net: if this component is detached without a subsequent setState
+        // (e.g. navigating away), clean up to prevent ghost listeners.
+        clearSubs();
+        logState("OnDetach", false);
+    }
+
+    // -------------------------------------------------------------------------
+    // Rendering helpers (unchanged from original)
+    // -------------------------------------------------------------------------
 
     private void renderTopContainerForHost(Collection<UserGameState> userGameStates) {
         if (!gameHost) {
@@ -108,9 +290,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 broadcaster.sendGetQuestionEvent(gameId);
             }
         };
-        Runnable userAction = () -> {
-        };
-        openDialog(rulesComponent, "Раунд " + roundNumber, gameHost ? hostAction : userAction); // Show rules for all
+        openDialog(rulesComponent, "Раунд " + roundNumber, gameHost ? hostAction : () -> {
+        });
     }
 
     private void renderQuestion(QuestionModel question, int questionNumber, int totalQuestions, int roundNumber) {
@@ -130,10 +311,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 LumoUtility.FontWeight.SEMIBOLD,
                 LumoUtility.Margin.Bottom.MEDIUM,
                 LumoUtility.AlignSelf.START);
-        if (!gameHost) {
-            // TODO: Grade feature temporary not working
-//            midContainer.add(createQuestionGrade(questionModel));
-        }
+
         midContainer.add(questionNumberSpan);
 
         List<String> questionClasses = gameHost ? List.of(LumoUtility.FontSize.XXXLARGE) : List.of(CleverestComponents.MOBILE_LARGE_FONT);
@@ -151,13 +329,6 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     () -> event.getAnswerGivenEvent().isCorrect());
         });
         midContainer.add(questionLayout);
-    }
-
-    private VerticalLayout createQuestionGrade(QuestionModel questionModel) {
-        return questionGradeLayout(scoreVal -> {
-            broadcaster.sendQuestionGradedEvent(gameId, questionModel, getLoggedUser(), scoreVal);
-            notification(getLoggedUser() + ", спасибо за фидбек!", NotificationVariant.LUMO_CONTRAST);
-        });
     }
 
     private void renderCategoriesTable(UserGameState userToAnswer, Map<String, List<QuestionModel>> data) {
@@ -225,7 +396,9 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
     private void runHostAction() {
         if (gameHost) {
-            Optional.ofNullable(hostAction).ifPresentOrElse(Runnable::run, () -> log.debug("No host action to run, gameId: {}", gameId));
+            Optional.ofNullable(hostAction).ifPresentOrElse(
+                    Runnable::run,
+                    () -> log.debug("No host action to run, gameId: {}", gameId));
             hostAction = null;
         }
     }
@@ -239,7 +412,6 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     private void renderUserPersonalScore() {
         UserGameState userState = broadcaster.getState(gameId).getUserState(getLoggedUser());
         if (userState == null) {
-            // This should probably never happen
             log.warn("Not joined user is accessing started Cleverest game");
             return;
         }
@@ -283,7 +455,6 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         answersLayout.setAlignItems(Alignment.START);
         answersLayout.addClassNames(LumoUtility.FontSize.XXXLARGE);
 
-        // answer span text
         answersLayout.add(correctAnswerSpan(question,
                 LumoUtility.FontSize.XXXLARGE,
                 LumoUtility.FontWeight.SEMIBOLD));
@@ -313,8 +484,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     default -> countLimit = 0;
                 }
                 Button approveButton = approveButton(
-                                () -> approveAction.accept(userGameState.username()),
-                                countLimit);
+                        () -> approveAction.accept(userGameState.username()),
+                        countLimit);
                 row.add(approveButton);
             }
             answersLayout.add(row);
@@ -343,105 +514,13 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         midContainer.add(resultComponent);
     }
 
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        log.debug("onAttach: {}", gameId);
-        subscriptions.add(broadcaster.subscribe(gameId, UserAnsweredEvent.class, event -> {
-            runActionInUi(attachEvent.getUI(), () -> {
-                if (gameHost) {
-                    updateUserAnswerGiven(event.getUsername(), event.getLastResponseTimeSec());
-                }
-                if (event.getUsername().equals(getLoggedUser())) {
-                    midContainer.setEnabled(false);
-                }
-                if (event.getRoundNumber() == 3) {
-                    runHostAction();
-                } else {
-                    notification(event.getUsername() + " ответил", NotificationVariant.LUMO_CONTRAST);
-                }
-            });
-        }));
-
-        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.GetQuestionEvent.class, event -> {
-            runActionInUi(attachEvent.getUI(),
-                    () -> renderQuestion(
-                            event.getQuestion(),
-                            event.getQuestionNumber(),
-                            event.getTotalQuestionsInRound(),
-                            event.getRoundNumber()));
-        }));
-
-        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.RenderCategoriesEvent.class, event -> {
-            runActionInUi(attachEvent.getUI(), () -> {
-                midContainer.removeAll();
-
-                if (gameHost) {
-                    renderTopContainerForHost(Collections.singletonList(event.getUserToAnswer()));
-                    renderCategoriesTable(event.getUserToAnswer(), event.getData());
-                } else {
-                    if (getLoggedUser().equals(event.getUserToAnswer().getUsername())) {
-                        midContainer.add(userInfoLightSpan("Время отвечать!", LumoUtility.TextColor.PRIMARY, CleverestComponents.MOBILE_LARGE_FONT));
-                    } else {
-                        midContainer.add(userInfoLightSpan("В ожидании вопроса", LumoUtility.TextColor.SECONDARY, CleverestComponents.MOBILE_LARGE_FONT));
-                    }
-                }
-            });
-        }));
-        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.RoundInfoEvent.class,
-                event -> runActionInUi(attachEvent.getUI(), () -> showRoundRules(event.getRoundNumber(), event.getRules()))));
-        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.GameFinishedEvent.class,
-                event -> runActionInUi(attachEvent.getUI(), this::renderResults)));
-        if (gameHost) {
-            subscribeOnHostOnlyEvents(attachEvent);
-        } else {
-            subscribeOnPlayerOnlyEvents(attachEvent);
-        }
-        log.trace("onAttach. subscribe {}", subscriptions.size());
-    }
-
-    private void subscribeOnPlayerOnlyEvents(AttachEvent attachEvent) {
-        log.debug("Subscribed on player events: {}", getLoggedUser());
-        subscriptions.add(broadcaster.subscribe(gameId, UpdatePersonalScoreEvent.class,
-                event -> runActionInUi(attachEvent.getUI().getUI(), () -> {
-                    log.debug("Updating score from event");
-                    renderUserPersonalScore();
-                })));
-        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.QuestionChoosenEvent.class,
-                event -> runActionInUi(attachEvent.getUI().getUI(),
-                        () -> {
-                            if (getLoggedUser().equals(event.getUsername())) {
-                                runActionInUi(attachEvent.getUI().getUI(),
-                                        () -> renderQuestionLayout(event.getQuestion(), 1,1,1)); // TODO Real numbers
-                            }
-                        })));
-    }
-
-    private void subscribeOnHostOnlyEvents(AttachEvent attachEvent) {
-        log.debug("Subscribed on host events: {}", getLoggedUser());
-        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.AllUsersAnsweredEvent.class, event -> {
-            playStaticSoundAsync(StaticValuesHolder.SUBMIT_ANSWER_SHORT_AUDIOS.next()).thenRun(() -> {
-                log.debug("Submit audio finished, run action in ui: {}, {}", attachEvent.getUI(), gameId);
-                runActionInUi(attachEvent.getUI(), () -> {
-                    boolean approveManually = event.getCurrentRound() == 2;
-                    showCorrectAnswer(event.getQuestion(),
-                            broadcaster.getState(gameId).userSnapshotsSortedByResponseTime().values(),
-                            event.isRoundOver(),
-                            event.getRevealScoreAfter(),
-                            approveManually,
-                            uName -> {
-                                broadcaster.getState(gameId).getUserState(uName).increaseScore();
-                                broadcaster.sendUpdatePersonalScoreEvent(gameId);
-                            }, () -> {
-                            }, () -> broadcaster.sendGetQuestionEvent(gameId));
-                });
-            });
-        }));
-    }
-
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        log.debug("onDetach: {}", gameId);
+    private void clearSubs() {
         subscriptions.forEach(Registration::remove);
         subscriptions.clear();
+    }
+
+    private void logState(String action, boolean start) {
+        log.info("[FIX][PlayBoardComponent={}] {} [{}], User [{}], UI [{}], Subs size=[{}], items[{}]",
+                this.hashCode(), start ? "Start" : "End", action, getLoggedUser(), getUI().map(Object::hashCode).orElse(-1), subscriptions.size(), subscriptions);
     }
 }

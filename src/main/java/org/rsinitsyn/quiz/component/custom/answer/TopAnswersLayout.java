@@ -10,7 +10,7 @@ import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
+import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
 
 public class TopAnswersLayout extends AbstractAnswersLayout {
 

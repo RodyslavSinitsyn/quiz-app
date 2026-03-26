@@ -10,7 +10,6 @@ import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.RandomStringGenerator;
 import org.rsinitsyn.quiz.component.MainLayout;
-import org.rsinitsyn.quiz.component.custom.question.BaseQuestionLayout.QuestionAnsweredEvent;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
@@ -24,7 +23,7 @@ import java.util.Optional;
 
 import static com.vaadin.flow.component.notification.NotificationVariant.LUMO_CONTRAST;
 import static java.util.UUID.randomUUID;
-import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.notification;
+import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.notification;
 import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory.createQuestionLayout;
 import static org.rsinitsyn.quiz.entity.QuestionHintType.PHOTO;
 

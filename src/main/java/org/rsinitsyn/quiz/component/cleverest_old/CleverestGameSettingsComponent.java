@@ -1,8 +1,6 @@
-package org.rsinitsyn.quiz.component.cleverest;
+package org.rsinitsyn.quiz.component.cleverest_old;
 
-import com.vaadin.flow.component.ComponentEvent;
-import com.vaadin.flow.component.ComponentEventListener;
-import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
@@ -23,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
+
+import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
 
 public class CleverestGameSettingsComponent extends VerticalLayout {
 
@@ -246,6 +246,16 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
                     secondRoundGrid.getListDataView().getItems().toList(),
                     thirdRoundGrid.getListDataView().getItems().toList()));
         });
+    }
+
+    @Override
+    protected void onAttach(final AttachEvent attachEvent) {
+        logState(this, attachEvent.getUI(), "onAttach (no-op)", false, List.of());
+    }
+
+    @Override
+    protected void onDetach(final DetachEvent detachEvent) {
+        logState(this, detachEvent.getUI(), "onDetach (no-op)", false, List.of());
     }
 
     @Getter

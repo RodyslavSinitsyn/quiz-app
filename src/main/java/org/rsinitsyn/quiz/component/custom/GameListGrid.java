@@ -10,8 +10,8 @@ import com.vaadin.flow.data.renderer.LocalDateTimeRenderer;
 import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
 import org.rsinitsyn.quiz.entity.GameType;
-import org.rsinitsyn.quiz.page.CleverestGamePage;
 import org.rsinitsyn.quiz.page.QuizGamePlayPage;
+import org.rsinitsyn.quiz.page.cleverest.CleverestWaitingPage;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 
@@ -75,7 +75,7 @@ public class GameListGrid extends Grid<GameEntity> {
         button.addClickListener(event -> {
             event.getSource().getUI().ifPresent(ui -> {
                 if (gameType == GameType.CLEVEREST) {
-                    ui.navigate(CleverestGamePage.class, gameId);
+                    ui.navigate(CleverestWaitingPage.class, gameId);
                 } else if (gameType == GameType.QUIZ) {
                     ui.navigate(QuizGamePlayPage.class, gameId);
                 }

@@ -34,7 +34,7 @@ public class CleverestGameState {
 
     @Getter(AccessLevel.NONE)
     private final Map<String, UserGameState> users = new HashMap<>();
-    private final String createdBy;
+    private final String gameHostName;
     private final List<QuestionModel> firstQuestions;
     private final List<QuestionModel> secondQuestions;
     private final Map<String, List<QuestionModel>> thirdQuestions;
@@ -50,11 +50,11 @@ public class CleverestGameState {
     private Supplier<List<QuestionModel>> currRoundQuestionsSource;
 
     public CleverestGameState(
-            String createdBy,
+            String gameHostName,
             List<QuestionModel> firstRound,
             List<QuestionModel> secondRound,
             Map<String, List<QuestionModel>> thirdRound) {
-        this.createdBy = createdBy;
+        this.gameHostName = gameHostName;
         this.firstQuestions = firstRound;
         this.secondQuestions = secondRound;
         this.thirdQuestions = thirdRound;

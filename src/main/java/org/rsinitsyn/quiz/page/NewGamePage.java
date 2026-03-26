@@ -10,6 +10,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import jakarta.annotation.security.PermitAll;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.custom.GameListGrid;
+import org.rsinitsyn.quiz.page.cleverest.CleverestSetupPage;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 
@@ -48,7 +49,7 @@ public class NewGamePage extends VerticalLayout {
         layout.setDefaultHorizontalComponentAlignment(Alignment.CENTER);
         layout.add(
                 createPlayGameButton("Викторина", ui -> ui.navigate(QuizGameConfigurePage.class)),
-                createPlayGameButton("Самый умный", ui -> ui.navigate(CleverestGamePage.class))
+                createPlayGameButton("Самый умный", ui -> ui.navigate(CleverestSetupPage.class))
         );
         return layout;
     }

@@ -23,6 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -30,6 +32,10 @@ public class CleverestBroadcaster {
 
     private final Map<String, CleverestGameState> gameStateMap = new ConcurrentHashMap<>();
     private final Map<String, ComponentEventBus> eventBuses = new ConcurrentHashMap<>();
+
+    public boolean stateExists(String gameId) {
+        return gameStateMap.containsKey(gameId);
+    }
 
     public CleverestGameState getState(String gameId) {
         return gameStateMap.get(gameId);
@@ -46,19 +52,17 @@ public class CleverestBroadcaster {
                             List<QuestionModel> secondRound,
                             List<QuestionModel> thirdRound) {
         log.info("Create game state: {}", gameId);
-        Map<String, List<QuestionModel>> categoriesAndQuestions = thirdRound.stream()
+        final var categoriesAndQuestions = thirdRound.stream()
                 .collect(Collectors.groupingBy(QuestionModel::getCategoryName,
                         Collectors.collectingAndThen(
                                 Collectors.toList(),
                                 questionModels -> {
-                                    AtomicInteger questionPoints = new AtomicInteger(1);
+                                    final var questionPoints = new AtomicInteger(1);
                                     return questionModels.stream()
                                             .peek(q -> q.setPoints(questionPoints.getAndIncrement()))
                                             .toList();
                                 }
                         )));
-        Collections.shuffle(firstRound);
-        Collections.shuffle(secondRound);
         gameStateMap.put(gameId,
                 new CleverestGameState(
                         createdBy,
@@ -77,7 +81,7 @@ public class CleverestBroadcaster {
                                   String loserBet) {
         CleverestGameState gameState = getState(gameId);
         gameState.addOrUpdateUser(gameId, username, userColor, photo, winnerBet, loserBet);
-        eventBuses.get(gameId).fireEvent(new UserJoinedEvent(gameId, username));
+        eventBuses.get(gameId).fireEvent(new UserJoinedEvent(gameId, username, gameState.getAllUserStates()));
     }
 
 
@@ -88,7 +92,7 @@ public class CleverestBroadcaster {
     }
 
     //    AllPlayersReadyEvent
-    public void sendPlayersReadyEvent(String gameId) {
+    public void sendUsersReadyEvent(String gameId) {
         log.info("Players ready, start game: {}", gameId);
         eventBuses.get(gameId).fireEvent(new AllUsersReadyEvent(gameId, getState(gameId).getAllUsernames()));
     }
@@ -268,11 +272,21 @@ public class CleverestBroadcaster {
     @ToString(of = "username", callSuper = true)
     public static class UserJoinedEvent extends CleverestGameEvent {
         private final String username;
+        private List<UserGameState> allUsers;
 
         public UserJoinedEvent(String gameId,
                                String username) {
             super(gameId);
             this.username = username;
+            this.allUsers = List.of();
+        }
+
+        public UserJoinedEvent(String gameId,
+                               String username,
+                               List<UserGameState> allUsers) {
+            super(gameId);
+            this.username = username;
+            this.allUsers = allUsers;
         }
     }
 
@@ -462,10 +476,23 @@ public class CleverestBroadcaster {
     }
 
     public <T extends CleverestGameEvent> Registration subscribe(String gameId,
-                                                                Class<T> eventType,
-                                                                ComponentEventListener<T> listener) {
-        ComponentEventBus eventBus = eventBuses.computeIfAbsent(gameId, bus -> new ComponentEventBus(new Div()));
-        return eventBus.addListener(eventType, listener);
+                                                                 Class<T> eventType,
+                                                                 ComponentEventListener<T> listener) {
+        final var eventBus = eventBuses.computeIfAbsent(gameId, bus -> new ComponentEventBus(new Div()));
+        Registration[] regHolder = new Registration[1];
+        regHolder[0] = eventBus.addListener(eventType, event -> {
+            log.info("[FIX][Broadcaster={}] Execute [{}] reg=[{}], User [{}], UI [{}], EventBus size[{}]",
+                    this.hashCode(), eventType.getSimpleName(),
+                    regHolder[0].hashCode(),
+                    getLoggedUser(),
+                    event.getSource().getUI().map(Objects::hashCode).orElse(-1),
+                    eventBuses.get(gameId).getListeners(CleverestGameEvent.class).size());
+            listener.onComponentEvent(event);
+        });
+        Registration reg = regHolder[0];
+        log.info("[FIX][Broadcaster={}] Registered [{}], User [{}], Registration [{}], EventBus size[{}]",
+                this.hashCode(), eventType.getSimpleName(), getLoggedUser(), reg.hashCode(), eventBuses.get(gameId).getListeners(CleverestGameEvent.class).size());
+        return reg;
     }
 
     void registerEventBus(String gameId, ComponentEventBus bus) {

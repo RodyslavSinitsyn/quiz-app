@@ -24,7 +24,7 @@ import org.rsinitsyn.quiz.entity.QuestionType;
 import java.io.InputStream;
 import java.util.function.BiConsumer;
 
-import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.horizontalLayoutBetween;
+import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.horizontalLayoutBetween;
 import static org.rsinitsyn.quiz.utils.QuizUtils.createStreamResourceForPhoto;
 
 public final class QuizComponents {

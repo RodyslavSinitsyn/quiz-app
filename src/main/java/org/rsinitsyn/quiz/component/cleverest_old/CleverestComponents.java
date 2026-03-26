@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.component.cleverest;
+package org.rsinitsyn.quiz.component.cleverest_old;
 
 import com.flowingcode.vaadin.addons.carousel.Carousel;
 import com.flowingcode.vaadin.addons.carousel.Slide;

@@ -4,6 +4,7 @@ import io.micrometer.observation.annotation.Observed;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.rsinitsyn.quiz.dao.GameDao;
 import org.rsinitsyn.quiz.dao.GameQuestionUserDao;
 import org.rsinitsyn.quiz.entity.*;
@@ -32,8 +33,23 @@ public class GameService {
     private final UserService userService;
     private final EntityManager entityManager;
 
+    public boolean exist(String id) {
+        return gameDao.existsById(UUID.fromString(id));
+    }
+
+    @Transactional(readOnly = true)
     public GameEntity findById(String id) {
-        return gameDao.findByIdJoinQuestions(UUID.fromString(id))
+        return gameDao.findByIdJoinQuestions(UUID.fromString(id)).stream()
+                .peek(gq -> {
+                    gq.getGameQuestions().stream()
+                            .map(GameQuestionUserEntity::getQuestion)
+                            .forEach(q -> {
+                                Hibernate.initialize(q.getAnswers());
+                                Hibernate.initialize(q.getGrades());
+                                Hibernate.initialize(q.getHints());
+                            });
+                })
+                .findFirst()
                 .orElse(null);
     }
 

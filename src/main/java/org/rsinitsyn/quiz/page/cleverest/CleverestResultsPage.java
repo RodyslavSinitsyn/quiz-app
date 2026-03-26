@@ -8,7 +8,7 @@ import com.vaadin.flow.router.*;
 import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
-import org.rsinitsyn.quiz.component.cleverest.CleverestResultComponent;
+import org.rsinitsyn.quiz.component.cleverest_old.CleverestResultComponent;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.GameService;

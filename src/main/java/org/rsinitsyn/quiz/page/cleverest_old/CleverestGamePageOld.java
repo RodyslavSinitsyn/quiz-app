@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.page;
+package org.rsinitsyn.quiz.page.cleverest_old;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
@@ -8,12 +8,13 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.shared.Registration;
 import jakarta.annotation.security.PermitAll;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.MainLayout;
-import org.rsinitsyn.quiz.component.cleverest.CleverestGamePlayBoardComponent;
-import org.rsinitsyn.quiz.component.cleverest.CleverestGameSettingsComponent;
-import org.rsinitsyn.quiz.component.cleverest.CleverestResultComponent;
-import org.rsinitsyn.quiz.component.cleverest.CleverestWaitingRoomComponent;
+import org.rsinitsyn.quiz.component.cleverest_old.CleverestGamePlayBoardComponent;
+import org.rsinitsyn.quiz.component.cleverest_old.CleverestGameSettingsComponent;
+import org.rsinitsyn.quiz.component.cleverest_old.CleverestResultComponent;
+import org.rsinitsyn.quiz.component.cleverest_old.CleverestWaitingRoomComponentOld;
 import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.entity.GameType;
@@ -47,11 +48,13 @@ import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
     beforeLeave
     onDetach
  */
-@Route(value = "/cleverest", layout = MainLayout.class)
+@Route(value = "/cleverest-old", layout = MainLayout.class)
 @PageTitle("Cleverest")
 @PreserveOnRefresh // do not call constructor when refresh page
 @PermitAll
-public class CleverestGamePage extends VerticalLayout implements HasUrlParameter<String>,
+@Slf4j
+@Deprecated
+public class CleverestGamePageOld extends VerticalLayout implements HasUrlParameter<String>,
         BeforeEnterObserver,
         BeforeLeaveObserver,
         AfterNavigationObserver,
@@ -63,8 +66,10 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
     private List<Registration> subs = new ArrayList<>();
 
     private CleverestGameSettingsComponent gameSettingsComponent = new CleverestGameSettingsComponent(new ArrayList<>());
-    private CleverestGamePlayBoardComponent playBoardComponent = new CleverestGamePlayBoardComponent();
-    private CleverestWaitingRoomComponent waitingRoomComponent;
+    // NOTE: playBoardComponent is NOT a field anymore — a fresh instance is created
+    // in configureAndAddPlayBoardComponent() each time. This avoids stale state and
+    // double-attach issues caused by @PreserveOnRefresh reusing the same component tree.
+    private CleverestWaitingRoomComponentOld waitingRoomComponent;
     private CleverestResultComponent resultComponent = new CleverestResultComponent();
 
     private QuestionService questionService;
@@ -73,18 +78,20 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
     private String originalLocation;
 
     // Each time on navigate from outside
-    public CleverestGamePage(QuestionService questionService,
-                             GameService gameService,
-                             CleverestBroadcaster broadcaster) {
+    public CleverestGamePageOld(QuestionService questionService,
+                                GameService gameService,
+                                CleverestBroadcaster broadcaster) {
         this.questionService = questionService;
         this.gameService = gameService;
         this.broadcaster = broadcaster;
+        logState("Constructor", false);
     }
 
     @Override
     // Each time on refresh and navigate
     public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
         this.gameId = parameter;
+        logState("SetParameter", false);
     }
 
     private void renderSettings() {
@@ -99,41 +106,46 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
                     event.getSecondRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList()),
                     event.getThirdRound().stream().map(e -> questionService.toQuizQuestionModel(e)).collect(Collectors.toList())
             );
-            getUI().ifPresent(ui -> {
-                ui.navigate(this.getClass(), newGameId);
-            });
+            getUI().ifPresent(ui -> ui.navigate(this.getClass(), newGameId));
         });
         add(gameSettingsComponent);
         subs.add(settingsCompleteEvent);
     }
 
     /*
-        When page refresh happens restore page state
+     * When page refresh happens, restore page state based on what's in DB + broadcaster.
      */
-    private void renderComponents(GameEntity gameEntity,
-                                  AfterNavigationEvent event) {
+    private void renderComponents(GameEntity gameEntity, AfterNavigationEvent event, UI ui) {
         GameStatus status = gameEntity.getStatus();
 
         if (status.equals(GameStatus.NOT_STARTED)) {
-            waitingRoomComponent = new CleverestWaitingRoomComponent(
+            waitingRoomComponent = new CleverestWaitingRoomComponentOld(
                     gameId,
                     broadcaster,
-                    gameHost);
+                    gameHost,
+                    getUI());
             add(waitingRoomComponent);
         } else if (status.equals(GameStatus.STARTED)) {
-            configureAndAddPlayBoardComponent(event.isRefreshEvent());
+            configureAndAddPlayBoardComponent(event.isRefreshEvent(), ui);
         } else if (status.equals(GameStatus.FINISHED)) {
             CleverestGameState state = broadcaster.getState(gameId);
             configureAndAddResultComponent(state);
         }
     }
 
-    private void configureAndAddPlayBoardComponent(boolean refreshEvent) {
+    /**
+     * Creates a fresh PlayBoardComponent every time.
+     * Passing UI explicitly avoids relying on getUI() inside the component
+     * before it is attached to the layout.
+     */
+    private void configureAndAddPlayBoardComponent(boolean refreshEvent, UI ui) {
         if (notInGameOrCreator(gameId)) {
-            navigateToNewGamePage("Игра уже началась, вы там не учавствуете", getUI().orElseThrow());
+            navigateToNewGamePage("Игра уже началась, вы там не учавствуете", ui);
             return;
         }
-        playBoardComponent.setState(gameId, broadcaster, gameHost, refreshEvent);
+        // Always create a new instance — never reuse a detached/stale component
+        CleverestGamePlayBoardComponent playBoardComponent = new CleverestGamePlayBoardComponent();
+        playBoardComponent.setState(gameId, broadcaster, gameHost, refreshEvent, ui);
         add(playBoardComponent);
     }
 
@@ -147,23 +159,27 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
         add(resultComponent);
     }
 
-
     @Override
     // Each time on refresh and navigate
     public void beforeEnter(BeforeEnterEvent event) {
+        logState("BeforeEnter", false);
     }
 
     // Each time on refresh and navigate from outside
     @Override
     protected void onAttach(AttachEvent attachEvent) {
+        logState("OnAttach", false);
     }
 
     @Override
     // Each time on refresh and navigate
     public void afterNavigation(AfterNavigationEvent event) {
+        logState("AfterNavigation", true);
         removeAll();
+        clearSubs();
         originalLocation = event.getLocation().getPathWithQueryParameters();
         UI ui = getUI().orElseThrow(() -> new IllegalStateException("No UI"));
+
         if (StringUtils.isBlank(gameId)) {
             renderSettings();
             return;
@@ -178,14 +194,15 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
             return;
         }
         this.gameHost = gameEntity.getCreatedBy().equals(getLoggedUser());
-        // sub on events here because self reload does not trigger onAttach again
         subOnEvents(ui);
-        renderComponents(gameEntity, event);
+        renderComponents(gameEntity, event, ui);
+        logState("AfterNavigation", false);
     }
 
     @Override
     // Each time on navigate outside
     public void beforeLeave(BeforeLeaveEvent event) {
+        logState("BeforeLeave", true);
         if (StringUtils.isBlank(gameId) ||
                 broadcaster.getState(gameId) == null
                 || notInGameOrCreator(gameId)) {
@@ -196,19 +213,20 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
             Dialog confirmDialog = new Dialog();
             confirmDialog.setHeaderTitle("Нельзя покинуть игру!");
             confirmDialog.setCloseOnOutsideClick(true);
-            confirmDialog.addDialogCloseActionListener(e -> {
-                confirmDialog.close();
-            });
+            confirmDialog.addDialogCloseActionListener(e -> confirmDialog.close());
             confirmDialog.open();
             event.postpone();
             event.getUI().getPage().getHistory().replaceState(null, originalLocation);
         }
+        logState("BeforeLeave", false);
     }
 
     // Each time on refresh and navigate outside
     @Override
     protected void onDetach(DetachEvent detachEvent) {
+        logState("OnDetach", true);
         clearSubs();
+        logState("OnDetach", false);
     }
 
     private void subOnEvents(UI ui) {
@@ -217,7 +235,8 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
         }
         subs.add(broadcaster.subscribe(
                 gameId,
-                AllUsersReadyEvent.class, event -> {
+                AllUsersReadyEvent.class,
+                event -> {
                     if (gameHost) {
                         gameService.updateStatus(gameId, GameStatus.STARTED);
                         gameService.linkQuestionsAndUsersWithGame(
@@ -228,12 +247,15 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
                                                 broadcaster.getState(gameId).getSecondQuestions().stream())
                                         .toList());
                     }
+                    // removeAll() causes onDetach on any existing PlayBoardComponent,
+                    // which safely clears its own subs via its onDetach safety-net.
+                    // Then configureAndAddPlayBoardComponent creates a fresh one.
                     QuizUtils.runActionInUi(Optional.ofNullable(ui), () -> {
                         removeAll();
-                        configureAndAddPlayBoardComponent(false);
+                        configureAndAddPlayBoardComponent(false, ui);
                     });
-                })
-        );
+                }));
+
         if (gameHost) {
             subs.add(broadcaster.subscribe(gameId,
                     SaveUsersAnswersEvent.class,
@@ -244,25 +266,21 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
             subs.add(broadcaster.subscribe(
                     gameId,
                     GameFinishedEvent.class,
-                    event -> gameService.finishGame(gameId)
-            ));
+                    event -> gameService.finishGame(gameId)));
             subs.add(broadcaster.subscribe(
                     gameId,
                     QuestionGradedEvent.class,
-                    event -> {
-                        questionService.updateQuestionGrade(
-                                event.getQuestion().getId(),
-                                event.getUsername(),
-                                event.getGrade());
-                    }
-            ));
+                    event -> questionService.updateQuestionGrade(
+                            event.getQuestion().getId(),
+                            event.getUsername(),
+                            event.getGrade())));
         }
     }
 
     private boolean notInGameOrCreator(String gameId) {
         CleverestGameState state = broadcaster.getState(gameId);
         return !state.userPresent(getLoggedUser())
-                && !state.getCreatedBy().equals(getLoggedUser());
+                && !state.getGameHostName().equals(getLoggedUser());
     }
 
     private void navigateToNewGamePage(String notificationText, UI ui) {
@@ -273,5 +291,10 @@ public class CleverestGamePage extends VerticalLayout implements HasUrlParameter
     private void clearSubs() {
         subs.forEach(Registration::remove);
         subs.clear();
+    }
+
+    private void logState(String action, boolean start) {
+        log.info("[FIX][GamePage={}] {} [{}], User [{}], UI [{}], Subs size=[{}], items[{}]",
+                this.hashCode(), start ? "Start" : "End", action, getLoggedUser(), getUI().map(Object::hashCode).orElse(-1), subs.size(), subs);
     }
 }

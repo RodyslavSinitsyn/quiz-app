@@ -1,9 +1,11 @@
 package org.rsinitsyn.quiz.utils;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.server.Command;
 import com.vaadin.flow.server.StreamResource;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -18,10 +20,14 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
+
+@Slf4j
 public final class QuizUtils {
 
     public static final String DATE_FORMAT_VALUE = "dd-MM-yyyy HH:mm:ss";
@@ -112,6 +118,26 @@ public final class QuizUtils {
 
     public static void runActionInUi(Optional<UI> maybeUi, Command action) {
         runActionInUi(maybeUi.orElseThrow(() -> new RuntimeException("UI not exists!")), action);
+    }
+
+    public static void logState(Component component,
+                                UI ui,
+                                String action,
+                                boolean start,
+                                Collection<?> subs) {
+        logState(component, Optional.ofNullable(ui), action, start, subs);
+    }
+
+    public static void logState(Component component,
+                                Optional<UI> ui,
+                                String action,
+                                boolean start,
+                                Collection<?> subs) {
+        log.info("[FIX][{}={}] {} [{}], User [{}], UI [{}], Subs size=[{}], items[{}]",
+                component.getClass().getSimpleName(), component.hashCode(),
+                start ? "Start" : "End", action, getLoggedUser(),
+                ui.map(Object::hashCode).orElse(-1), subs.size(),
+                subs);
     }
 
 //

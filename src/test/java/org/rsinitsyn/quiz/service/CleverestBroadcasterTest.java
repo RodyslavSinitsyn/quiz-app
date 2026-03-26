@@ -82,7 +82,7 @@ class CleverestBroadcasterTest {
         addUser("Bob");
 
         // when
-        broadcaster.sendPlayersReadyEvent(gameId);
+        broadcaster.sendUsersReadyEvent(gameId);
 
         // then
         baseAssertions();

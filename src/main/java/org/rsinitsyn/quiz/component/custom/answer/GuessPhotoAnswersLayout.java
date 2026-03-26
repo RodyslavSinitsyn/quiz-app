@@ -12,7 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
-import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
+import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
 
 public class GuessPhotoAnswersLayout extends AbstractAnswersLayout {
 

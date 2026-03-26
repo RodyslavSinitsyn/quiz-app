@@ -11,16 +11,18 @@ import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.cleverest.CleverestWaitingRoomComponent;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.AllUsersReadyEvent;
+import org.rsinitsyn.quiz.service.CleverestBroadcaster.UserJoinedEvent;
 import org.rsinitsyn.quiz.service.GameService;
+import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
-import org.rsinitsyn.quiz.utils.QuizUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 
-import static org.rsinitsyn.quiz.entity.GameStatus.*;
+import static org.rsinitsyn.quiz.entity.GameStatus.FINISHED;
+import static org.rsinitsyn.quiz.entity.GameStatus.STARTED;
+import static org.rsinitsyn.quiz.utils.QuizComponents.infoNotification;
 import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
 import static org.rsinitsyn.quiz.utils.QuizUtils.runActionInUi;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
@@ -29,9 +31,11 @@ import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 @PageTitle("Cleverest - Ожидание")
 @PermitAll
 @Slf4j
+//@PreserveOnRefresh
 public class CleverestWaitingPage extends VerticalLayout
-        implements HasUrlParameter<String>, BeforeEnterObserver {
+        implements HasUrlParameter<String>, BeforeEnterObserver, AfterNavigationObserver {
 
+    private final QuestionService questionService;
     private final GameService gameService;
     private final CleverestBroadcaster broadcaster;
 
@@ -39,8 +43,12 @@ public class CleverestWaitingPage extends VerticalLayout
     private boolean gameHost;
     private final List<Registration> subscriptions = new ArrayList<>();
 
-    public CleverestWaitingPage(GameService gameService,
+    private CleverestWaitingRoomComponent waitingRoom;
+
+    public CleverestWaitingPage(final QuestionService questionService,
+                                GameService gameService,
                                 CleverestBroadcaster broadcaster) {
+        this.questionService = questionService;
         this.gameService = gameService;
         this.broadcaster = broadcaster;
     }
@@ -69,6 +77,23 @@ public class CleverestWaitingPage extends VerticalLayout
             return;
         }
         this.gameHost = gameEntity.getCreatedBy().equals(getLoggedUser());
+
+        if (!broadcaster.stateExists(gameId)) {
+            broadcaster.createState(gameId,
+                    gameEntity.getCreatedBy(),
+                    gameEntity.getGameQuestions().stream()
+                            .map(gq -> gq.getQuestion())
+                            .map(questionService::toQuizQuestionModel)
+                            .toList(),
+                    List.of(),
+                    List.of());
+        }
+
+        if (waitingRoom == null) {
+            waitingRoom = new CleverestWaitingRoomComponent(gameHost, broadcaster.getState(gameId).getAllUserStates());
+            add(waitingRoom);
+        }
+
         logState(this, event.getUI(), "beforeEnter", false, subscriptions);
     }
 
@@ -78,11 +103,6 @@ public class CleverestWaitingPage extends VerticalLayout
         if (gameId == null) return;
         final var ui = attachEvent.getUI();
 
-        final var waitingRoom =
-                new CleverestWaitingRoomComponent(gameId, broadcaster, gameHost, ui);
-        add(waitingRoom);
-
-        // Когда все игроки готовы — хост нажимает старт, все идут на /game
         subscriptions.add(broadcaster.subscribe(gameId, AllUsersReadyEvent.class, event -> {
             if (gameHost) {
                 gameService.updateStatus(gameId, STARTED);
@@ -94,9 +114,23 @@ public class CleverestWaitingPage extends VerticalLayout
                                 broadcaster.getState(gameId).getSecondQuestions().stream()
                         ).toList());
             }
-            runActionInUi(Optional.of(ui),
+            runActionInUi(ui,
                     () -> ui.navigate(CleverestGamePage.class, gameId));
         }));
+
+        subscriptions.add(broadcaster.subscribe(gameId, UserJoinedEvent.class, event -> {
+            runActionInUi(ui, () -> waitingRoom.updateTable(event.getUsername(), event.getAllUsers()));
+        }));
+
+        // waiting room events
+        waitingRoom.addUserSubmitDataEventListener(event -> broadcaster.sendJoinUserEvent(
+                gameId, event.username(), event.color(), null, null, null
+        ));
+        waitingRoom.addUserUpdateDataEventListener(event -> broadcaster.sendJoinUserEvent(
+                gameId, event.username(), event.color(), null, null, null
+        ));
+        waitingRoom.addStartGameEventListener(event -> broadcaster.sendUsersReadyEvent(gameId));
+
         logState(this, attachEvent.getUI(), "onAttach", false, subscriptions);
     }
 
@@ -109,16 +143,20 @@ public class CleverestWaitingPage extends VerticalLayout
     }
 
     private boolean validateGame(BeforeEnterEvent event) {
-        if (gameService.findById(gameId) == null) {
-            QuizComponents.infoNotification("Игра не существует");
+        if (!gameService.exist(gameId)) {
+            runActionInUi(event.getUI(), () -> infoNotification("Игра не существует"));
             event.forwardTo("");
             return false;
         }
-        if (broadcaster.getState(gameId) == null) {
-            QuizComponents.infoNotification("Состояние игры не найдено");
-            event.forwardTo("");
-            return false;
-        }
+//        if (broadcaster.getState(gameId) == null) {
+//            runActionInUi(event.getUI(), () -> infoNotification("Состояние игры не найдено"));
+//            event.forwardTo("");
+//            return false;
+//        }
         return true;
+    }
+
+    @Override
+    public void afterNavigation(final AfterNavigationEvent event) {
     }
 }

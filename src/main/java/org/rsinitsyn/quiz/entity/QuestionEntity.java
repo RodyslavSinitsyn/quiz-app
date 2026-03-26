@@ -46,7 +46,7 @@ public class QuestionEntity {
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    private Set<QuestionGrade> grades = new HashSet<>();
+    private List<QuestionGrade> grades = new ArrayList<>();
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("number")

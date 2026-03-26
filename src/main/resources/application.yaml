@@ -22,7 +22,7 @@ spring:
       ddl-auto: validate
       naming:
         implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy # underscore
-    show-sql: true
+    show-sql: false
     open-in-view: false
 
   liquibase:
@@ -59,4 +59,4 @@ management:
 
 logging:
   level:
-    org.rsinitsyn.quiz: DEBUG
+    org.rsinitsyn.quiz: INFO

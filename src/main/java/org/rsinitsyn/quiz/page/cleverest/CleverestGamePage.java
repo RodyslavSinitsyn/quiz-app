@@ -9,7 +9,7 @@ import com.vaadin.flow.shared.Registration;
 import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
-import org.rsinitsyn.quiz.component.cleverest.CleverestGamePlayBoardComponent;
+import org.rsinitsyn.quiz.component.cleverest_old.CleverestGamePlayBoardComponent;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.GameService;
@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.rsinitsyn.quiz.utils.QuizComponents.infoNotification;
 import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
@@ -74,7 +75,7 @@ public class CleverestGamePage extends VerticalLayout
         final var state = broadcaster.getState(gameId);
 
         if (!gameHost && !state.userPresent(getLoggedUser())) {
-            QuizComponents.infoNotification("Игра уже началась, вы там не участвуете");
+            infoNotification("Игра уже началась, вы там не участвуете");
             event.forwardTo("");
             return;
         }
@@ -153,13 +154,13 @@ public class CleverestGamePage extends VerticalLayout
     }
 
     private boolean validateGame(BeforeEnterEvent event) {
-        if (gameService.findById(gameId) == null) {
-            QuizComponents.infoNotification("Игра не существует");
+        if (!gameService.exist(gameId)) {
+            infoNotification("Игра не существует");
             event.forwardTo("");
             return false;
         }
         if (broadcaster.getState(gameId) == null) {
-            QuizComponents.infoNotification("Состояние игры не найдено");
+            infoNotification("Состояние игры не найдено");
             event.forwardTo("");
             return false;
         }
