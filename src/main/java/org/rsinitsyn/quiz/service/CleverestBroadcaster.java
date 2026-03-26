@@ -80,15 +80,14 @@ public class CleverestBroadcaster {
                                   String winnerBet,
                                   String loserBet) {
         CleverestGameState gameState = getState(gameId);
-        gameState.addOrUpdateUser(gameId, username, userColor, photo, winnerBet, loserBet);
-        eventBuses.get(gameId).fireEvent(new UserJoinedEvent(gameId, username, gameState.getAllUserStates()));
+        final var userState = gameState.addOrUpdateUser(gameId, username, userColor, photo, winnerBet, loserBet);
+        eventBuses.get(gameId).fireEvent(new UserJoinedEvent(gameId, userState, gameState.getAllUserStates()));
     }
 
-
-    public void sendBetEvent(String gameId, String username, String userBet, boolean winner) {
+    public void sendUserBetEvent(String gameId, String username, String userBet, boolean winner) {
         UserGameState userGameState = getState(gameId).getUserState(username);
         userGameState.updateBet(userBet, winner, false);
-        eventBuses.get(gameId).fireEvent(new UserBetEvent(gameId, username, userBet));
+        eventBuses.get(gameId).fireEvent(new UserBetEvent(gameId, userGameState, userBet, getState(gameId).getAllUserStates()));
     }
 
     //    AllPlayersReadyEvent
@@ -268,39 +267,37 @@ public class CleverestBroadcaster {
     }
 
     @Getter
-    @EqualsAndHashCode(of = "username", callSuper = true)
-    @ToString(of = "username", callSuper = true)
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
     public static class UserJoinedEvent extends CleverestGameEvent {
-        private final String username;
+        private final UserGameState user;
         private List<UserGameState> allUsers;
 
         public UserJoinedEvent(String gameId,
-                               String username) {
-            super(gameId);
-            this.username = username;
-            this.allUsers = List.of();
-        }
-
-        public UserJoinedEvent(String gameId,
-                               String username,
+                               UserGameState user,
                                List<UserGameState> allUsers) {
             super(gameId);
-            this.username = username;
+            this.user = user;
             this.allUsers = allUsers;
         }
     }
 
     @Getter
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
     public static class UserBetEvent extends CleverestGameEvent {
-        private String username;
-        private String userToBet;
+        private final UserGameState user;
+        private final String userToBet;
+        private List<UserGameState> allUsers;
 
         public UserBetEvent(String gameId,
-                            String username,
-                            String userToBet) {
+                            UserGameState user,
+                            String userToBet,
+                            List<UserGameState> allUsers) {
             super(gameId);
-            this.username = username;
+            this.user = user;
             this.userToBet = userToBet;
+            this.allUsers = allUsers;
         }
     }
 

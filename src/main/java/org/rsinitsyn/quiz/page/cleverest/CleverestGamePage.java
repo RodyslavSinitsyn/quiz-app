@@ -10,11 +10,11 @@ import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.cleverest_old.CleverestGamePlayBoardComponent;
+import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
-import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 
 import java.util.ArrayList;
@@ -23,12 +23,14 @@ import java.util.Optional;
 
 import static org.rsinitsyn.quiz.utils.QuizComponents.infoNotification;
 import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
+import static org.rsinitsyn.quiz.utils.QuizUtils.runActionInUi;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
 @Route(value = "cleverest/game", layout = MainLayout.class)
 @PageTitle("Cleverest - Игра")
 @PermitAll
 @Slf4j
+@PreserveOnRefresh
 public class CleverestGamePage extends VerticalLayout
         implements HasUrlParameter<String>, BeforeEnterObserver, BeforeLeaveObserver {
 
@@ -71,6 +73,28 @@ public class CleverestGamePage extends VerticalLayout
             return;
         }
 
+        if (!broadcaster.stateExists(gameId)) {
+            broadcaster.createState(gameId,
+                    gameEntity.getCreatedBy(),
+                    gameEntity.getGameQuestions().stream()
+                            .map(gq -> gq.getQuestion())
+                            .map(questionService::toQuizQuestionModel)
+                            .toList(),
+                    List.of(),
+                    List.of());
+            gameEntity.getGameQuestions().stream()
+                    .map(GameQuestionUserEntity::getUser)
+                    .filter(u -> !u.getUsername().equals(gameEntity.getCreatedBy()))
+                    .forEach(u -> broadcaster.sendJoinUserEvent(
+                            gameId,
+                            u.getUsername(),
+                            "#000000",
+                            null,
+                            null,
+                            null
+                    ));
+        }
+
         this.gameHost = gameEntity.getCreatedBy().equals(getLoggedUser());
         final var state = broadcaster.getState(gameId);
 
@@ -87,7 +111,9 @@ public class CleverestGamePage extends VerticalLayout
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         logState(this, attachEvent.getUI(), "onAttach", true, subscriptions);
-        if (gameId == null) return;
+        if (gameId == null) {
+            return;
+        }
         final var ui = attachEvent.getUI();
 
         // При рефреше страница уже содержит children от предыдущего attach
@@ -155,15 +181,15 @@ public class CleverestGamePage extends VerticalLayout
 
     private boolean validateGame(BeforeEnterEvent event) {
         if (!gameService.exist(gameId)) {
-            infoNotification("Игра не существует");
+            runActionInUi(event.getUI(), () -> infoNotification("Игра не существует"));
             event.forwardTo("");
             return false;
         }
-        if (broadcaster.getState(gameId) == null) {
-            infoNotification("Состояние игры не найдено");
-            event.forwardTo("");
-            return false;
-        }
+//        if (broadcaster.getState(gameId) == null) {
+//            infoNotification("Состояние игры не найдено");
+//            event.forwardTo("");
+//            return false;
+//        }
         return true;
     }
 }

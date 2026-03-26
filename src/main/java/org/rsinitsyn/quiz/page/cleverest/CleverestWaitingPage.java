@@ -11,10 +11,10 @@ import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.cleverest.CleverestWaitingRoomComponent;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.AllUsersReadyEvent;
+import org.rsinitsyn.quiz.service.CleverestBroadcaster.UserBetEvent;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.UserJoinedEvent;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
-import org.rsinitsyn.quiz.utils.QuizComponents;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +31,6 @@ import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 @PageTitle("Cleverest - Ожидание")
 @PermitAll
 @Slf4j
-//@PreserveOnRefresh
 public class CleverestWaitingPage extends VerticalLayout
         implements HasUrlParameter<String>, BeforeEnterObserver, AfterNavigationObserver {
 
@@ -118,18 +117,33 @@ public class CleverestWaitingPage extends VerticalLayout
                     () -> ui.navigate(CleverestGamePage.class, gameId));
         }));
 
-        subscriptions.add(broadcaster.subscribe(gameId, UserJoinedEvent.class, event -> {
-            runActionInUi(ui, () -> waitingRoom.updateTable(event.getUsername(), event.getAllUsers()));
+        subscriptions.add(broadcaster.subscribe(gameId, UserJoinedEvent.class, event ->
+                runActionInUi(ui, () -> {
+                    if (getLoggedUser().equals(event.getUser().getUsername())) {
+                        waitingRoom.updateUserState(event.getUser());
+                    }
+                    waitingRoom.updateTableAndBets(event.getAllUsers());
+                })));
+        subscriptions.add(broadcaster.subscribe(gameId, UserBetEvent.class, event -> {
+            runActionInUi(ui, () -> {
+                if (getLoggedUser().equals(event.getUser().getUsername())) {
+                    waitingRoom.updateUserState(event.getUser());
+                }
+                waitingRoom.updateTableAndBets(event.getAllUsers());
+            });
         }));
 
         // waiting room events
-        waitingRoom.addUserSubmitDataEventListener(event -> broadcaster.sendJoinUserEvent(
+        subscriptions.add(waitingRoom.addUserSubmitDataEventListener(event -> broadcaster.sendJoinUserEvent(
                 gameId, event.username(), event.color(), null, null, null
-        ));
-        waitingRoom.addUserUpdateDataEventListener(event -> broadcaster.sendJoinUserEvent(
-                gameId, event.username(), event.color(), null, null, null
-        ));
-        waitingRoom.addStartGameEventListener(event -> broadcaster.sendUsersReadyEvent(gameId));
+        )));
+        subscriptions.add(waitingRoom.addStartGameEventListener(event ->
+                broadcaster.sendUsersReadyEvent(gameId)));
+        subscriptions.add(waitingRoom.addUserBetEventListener(event -> {
+            if (broadcaster.getState(gameId).userPresent(event.username())) {
+                broadcaster.sendUserBetEvent(gameId, event.username(), event.betOn(), event.winner());
+            }
+        }));
 
         logState(this, attachEvent.getUI(), "onAttach", false, subscriptions);
     }
@@ -148,11 +162,6 @@ public class CleverestWaitingPage extends VerticalLayout
             event.forwardTo("");
             return false;
         }
-//        if (broadcaster.getState(gameId) == null) {
-//            runActionInUi(event.getUI(), () -> infoNotification("Состояние игры не найдено"));
-//            event.forwardTo("");
-//            return false;
-//        }
         return true;
     }
 

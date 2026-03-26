@@ -85,10 +85,10 @@ public class CleverestWaitingRoomComponentOld extends VerticalLayout {
     private void subscribeOnEvents(UI ui) {
         subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.UserJoinedEvent.class, event ->
                 runActionInUi(ui, () -> {
-                    updatePlayersGrid(event.getUsername());
-                    if (!gameHost && getLoggedUser().equals(event.getUsername())) {
+                    updatePlayersGrid(event.getUser().getUsername());
+                    if (!gameHost && getLoggedUser().equals(event.getUser().getUsername())) {
                         joinButton.setText(
-                                broadcaster.getState(gameId).userPresent(event.getUsername())
+                                broadcaster.getState(gameId).userPresent(event.getUser().getUsername())
                                         ? "Поменять настройки"
                                         : "Играть");
                     }
@@ -100,7 +100,7 @@ public class CleverestWaitingRoomComponentOld extends VerticalLayout {
                 })));
 
         subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.UserBetEvent.class, event ->
-                runActionInUi(ui, () -> updatePlayersGrid(event.getUsername()))));
+                runActionInUi(ui, () -> updatePlayersGrid(event.getUser().getUsername()))));
 
         log.trace("subscribeOnEvents. subscriptions count: {}", subscriptions.size());
     }
@@ -224,7 +224,7 @@ public class CleverestWaitingRoomComponentOld extends VerticalLayout {
         select.setItems(broadcaster.getState(gameId).getAllUsernames());
         select.addValueChangeListener(event -> {
             if (event.isFromClient()) {
-                broadcaster.sendBetEvent(gameId, getLoggedUser(), event.getValue(), winner);
+                broadcaster.sendUserBetEvent(gameId, getLoggedUser(), event.getValue(), winner);
             }
         });
         return select;

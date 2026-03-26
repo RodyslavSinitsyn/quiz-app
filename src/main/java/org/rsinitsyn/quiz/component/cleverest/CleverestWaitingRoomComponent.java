@@ -1,9 +1,7 @@
 package org.rsinitsyn.quiz.component.cleverest;
 
-import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
-import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
@@ -24,18 +22,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents;
 import org.rsinitsyn.quiz.component.custom.ColorPicker;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.primaryButton;
-import static org.rsinitsyn.quiz.model.cleverest.UserGameState.userGameState;
+import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
 import static org.rsinitsyn.quiz.utils.QuizComponents.uploadComponent;
 import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
@@ -43,76 +38,32 @@ import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 @Slf4j
 public class CleverestWaitingRoomComponent extends VerticalLayout {
 
-    private final boolean gameHost;
+    private final boolean hostPage;
     private final AtomicReference<InputStream> photoHolder = new AtomicReference<>();
     private final AtomicReference<UserGameState> userGameState = new AtomicReference<>();
 
-    private Grid<UserGameState> usersGrid = new Grid<>(UserGameState.class, false);
+    private final Grid<UserGameState> usersGrid = new Grid<>(UserGameState.class, false);
     private Select<String> winnerBet = new Select<>();
     private Select<String> loserBet = new Select<>();
     private Button joinButton;
     private Button startGameButton;
 
-    private final List<Registration> subscriptions = new ArrayList<>();
-
-    /**
-     * UI is passed explicitly so subscriptions can be registered immediately
-     * in the constructor, without waiting for onAttach.
-     * This mirrors the pattern used in CleverestGamePlayBoardComponent.setState().
-     */
-    public CleverestWaitingRoomComponent(boolean gameHost,
+    public CleverestWaitingRoomComponent(boolean hostPage,
                                          List<UserGameState> users) {
-        logState(this, getUI(), "Constructor", true, subscriptions);
-        this.gameHost = gameHost;
-//        this.winnerBet = betSelect(true);
-//        this.loserBet = betSelect(false);
+        logState(this, getUI(), "Constructor", true, List.of());
+        this.hostPage = hostPage;
+        this.winnerBet = createBetComponent(true, users.stream().map(UserGameState::getUsername).toList());
+        this.loserBet = createBetComponent(false, users.stream().map(UserGameState::getUsername).toList());
         configurePlayersList(users);
         users.stream().filter(u -> u.getUsername().equals(getLoggedUser())).findFirst().ifPresent(userGameState::set);
         add(usersGrid);
-        if (gameHost) {
+        if (hostPage) {
             configureHostComponents(users.size());
         } else {
             configurePlayerComponents();
         }
         addProgressBar();
-        logState(this, getUI(), "Constructor", true, subscriptions);
-    }
-
-//    private void subscribeOnEvents(UI ui) {
-////        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.UserJoinedEvent.class, event ->
-////                runActionInUi(ui, () -> {
-////                    //        if (!gameHost && getLoggedUser().equals(username)) {
-////            joinButton.setText(
-////                    broadcaster.getState(gameId).userPresent(event.getUsername())
-////                            ? "Поменять настройки"
-////                            : "Играть");
-////        }
-////        winnerBet.setItems(broadcaster.getState(gameId).getAllUsernames());
-////        loserBet.setItems(broadcaster.getState(gameId).getAllUsernames());
-////        if (gameHost) {
-////            startGameButton.setEnabled(broadcaster.getState(gameId).usersPresent());
-////        }
-////                })));
-//
-
-    /// /        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.UserBetEvent.class, event ->
-    /// /                runActionInUi(ui, () -> updatePlayersGrid(event.getUsername()))));
-//
-//        log.trace("subscribeOnEvents. subscriptions count: {}", subscriptions.size());
-//    }
-
-    // onAttach is intentionally empty — subscriptions are in subscribeOnEvents()
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-//        subscribeOnEvents(attachEvent.getUI());
-    }
-
-    // onDetach cleans up subscriptions as a safety net
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        log.trace("onDetach. unsubscribe {}", subscriptions.size());
-        subscriptions.forEach(Registration::remove);
-        subscriptions.clear();
+        logState(this, getUI(), "Constructor", true, List.of());
     }
 
     private void configurePlayerComponents() {
@@ -159,15 +110,15 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
             photoHolder.set(buffer.getInputStream(event.getFileName()));
         }, null, 1);
 
-        dialogLayout.add(playerName, chooseColor, colorPicker, upload, winnerBet, loserBet);
+        dialogLayout.add(playerName, chooseColor, colorPicker, upload);
+//        TODO: Bets disabled for now
+//        dialog.add(winnerBet, loserBet);
 
         dialog.addConfirmListener(event -> {
-            if (userGameState.get() == null) {
-                fireEvent(new UserSubmitDataEvent(getLoggedUser(), colorPicker.getValue()));
-            } else {
-                fireEvent(new UserUpdatedDataEvent(userGameState.get().getUsername(), colorPicker.getValue()));
-            }
-            this.userGameState.set(userGameState(getLoggedUser(), colorPicker.getValue()));
+            fireEvent(new UserSubmitDataEvent(getLoggedUser(),
+                    colorPicker.getValue(),
+                    winnerBet.getValue(),
+                    loserBet.getValue()));
         });
 
         return dialogLayout;
@@ -187,7 +138,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
 //                        avatar(userGameState.getPhoto(), AvatarVariant.LUMO_XLARGE)))
 //                .setHeader("Фото");
         usersGrid.addColumn(new ComponentRenderer<>(userGameState ->
-                CleverestComponents.userNameSpan(
+                userNameSpan(
                         userGameState.getUsername(),
                         userGameState.getColor(),
                         LumoUtility.FontWeight.LIGHT))).setHeader("Имя игрока");
@@ -200,11 +151,11 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         })).setHeader("Цвет");
         usersGrid.addColumn(new ComponentRenderer<>(userGameState -> new Span(
                 userGameState.winnerBet().getKey().isEmpty()
-                        ? CleverestComponents.cancelIcon()
-                        : CleverestComponents.doneIcon(),
+                        ? cancelIcon()
+                        : doneIcon(),
                 userGameState.loserBet().getKey().isEmpty()
-                        ? CleverestComponents.cancelIcon()
-                        : CleverestComponents.doneIcon()
+                        ? cancelIcon()
+                        : doneIcon()
         ))).setHeader("Ставки");
         usersGrid.addThemeVariants();
         usersGrid.setAllRowsVisible(true);
@@ -212,16 +163,17 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
     }
 
     @Deprecated
-    private Select<String> betSelect(boolean winner) {
-        Select<String> select = new Select<>();
+    private Select<String> createBetComponent(boolean winner,
+                                              List<String> usernames) {
+        final var select = new Select<String>();
         select.setWidthFull();
         select.setLabel("Сделайте ставку на " + (winner ? "победителя" : "проигравшего"));
-//        select.setItems(broadcaster.getState(gameId).getAllUsernames());
-//        select.addValueChangeListener(event -> {
-//            if (event.isFromClient()) {
-//                broadcaster.sendBetEvent(gameId, getLoggedUser(), event.getValue(), winner);
-//            }
-//        });
+        select.setItems(usernames);
+        select.addValueChangeListener(event -> {
+            if (event.isFromClient()) {
+                fireEvent(new UserBetEvent(getLoggedUser(), event.getValue(), winner));
+            }
+        });
         return select;
     }
 
@@ -231,19 +183,21 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         add(startGameButton);
     }
 
-    public void updateTable(final String whoJoined,
-                            final List<UserGameState> users) {
+    public void updateUserState(UserGameState userGameState) {
+        this.userGameState.set(userGameState);
+        joinButton.setText(userGameState.getUsername().equals(getLoggedUser())
+                ? "Поменять настройки"
+                : "Играть");
+    }
+
+    public void updateTableAndBets(final List<UserGameState> users) {
         usersGrid.setItems(users);
-        if (gameHost) {
+        usersGrid.getDataProvider().refreshAll();
+        if (hostPage) {
             startGameButton.setEnabled(!users.isEmpty());
-        } else {
-            joinButton.setText(whoJoined.equals(getLoggedUser()) ? "Поменять настройки" : "Играть");
         }
-//        winnerBet.setItems(broadcaster.getState(gameId).getAllUsernames());
-//        loserBet.setItems(broadcaster.getState(gameId).getAllUsernames());
-//        if (gameHost) {
-//            startGameButton.setEnabled(broadcaster.getState(gameId).usersPresent());
-//        }
+        winnerBet.setItems(users.stream().map(UserGameState::getUsername).toList());
+        loserBet.setItems(users.stream().map(UserGameState::getUsername).toList());
     }
 
     @Getter
@@ -258,9 +212,21 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
     @Getter
     @RequiredArgsConstructor
     @Accessors(fluent = true)
-    @EqualsAndHashCode(of = {"username", "color"}, callSuper = false)
-    @ToString(of = {"username", "color"})
+    @EqualsAndHashCode(callSuper = false)
+    @ToString
     public class UserSubmitDataEvent extends WaitingRoomEvent {
+        private final String username;
+        private final String color;
+        private final String userWinner;
+        private final String userLoser;
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    @Accessors(fluent = true)
+    @EqualsAndHashCode(callSuper = false)
+    @ToString
+    public class UserUpdatedDataEvent extends WaitingRoomEvent {
         private final String username;
         private final String color;
     }
@@ -268,11 +234,12 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
     @Getter
     @RequiredArgsConstructor
     @Accessors(fluent = true)
-    @EqualsAndHashCode(of = "color", callSuper = false)
-    @ToString(of = "color")
-    public class UserUpdatedDataEvent extends WaitingRoomEvent {
+    @EqualsAndHashCode(callSuper = false)
+    @ToString
+    public class UserBetEvent extends WaitingRoomEvent {
         private final String username;
-        private final String color;
+        private final String betOn;
+        private final boolean winner;
     }
 
     public class StartGameEvent extends WaitingRoomEvent {
@@ -288,5 +255,9 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
 
     public Registration addStartGameEventListener(ComponentEventListener<StartGameEvent> listener) {
         return addListener(StartGameEvent.class, listener);
+    }
+
+    public Registration addUserBetEventListener(ComponentEventListener<UserBetEvent> listener) {
+        return addListener(UserBetEvent.class, listener);
     }
 }
