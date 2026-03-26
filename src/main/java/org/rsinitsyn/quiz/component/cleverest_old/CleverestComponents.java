@@ -3,11 +3,11 @@ package org.rsinitsyn.quiz.component.cleverest_old;
 import com.flowingcode.vaadin.addons.carousel.Carousel;
 import com.flowingcode.vaadin.addons.carousel.Slide;
 import com.vaadin.flow.component.*;
+import com.vaadin.flow.component.avatar.AvatarVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -24,15 +24,15 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
-import org.rsinitsyn.quiz.model.UserStateSnapshot;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
+import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 
-import static org.rsinitsyn.quiz.utils.QuizComponents.appendTextBorder;
-import static org.rsinitsyn.quiz.utils.QuizComponents.largeAvatar;
+import static org.rsinitsyn.quiz.utils.QuizComponents.*;
 import static org.rsinitsyn.quiz.utils.QuizUtils.createStreamResourceForPhoto;
 
 public final class CleverestComponents {
@@ -65,19 +65,14 @@ public final class CleverestComponents {
     public static Span questionTextSpan(String text, String... classes) {
         Span span = new Span();
         span.setText(text);
-        span.addClassNames(
-                LumoUtility.FontWeight.SEMIBOLD,
-                LumoUtility.LineHeight.XSMALL,
-                LumoUtility.TextAlignment.CENTER,
-                LumoUtility.Whitespace.PRE_LINE);
         span.addClassNames(classes);
-        span.setWidthFull();
+        span.addClassName("question-text");
         return span;
     }
 
     public static Span smallTextSpan(String text) {
         Span span = new Span(text);
-        span.addClassNames(LumoUtility.FontWeight.LIGHT, CleverestComponents.MOBILE_SMALL_FONT);
+        span.addClassNames(LumoUtility.FontWeight.LIGHT, MOBILE_SMALL_FONT);
         return span;
     }
 
@@ -98,28 +93,38 @@ public final class CleverestComponents {
         return layout;
     }
 
-    public static Span userAnswerSpan(UserStateSnapshot userStateSnapshot, QuestionType questionType, String... classes) {
-        Span userAnswer = new Span();
+    public static HorizontalLayout userProfileWithAnswer(UserStateSnapshot userStateSnapshot, QuestionType questionType, String... classes) {
+        final var userAnswer = new Span();
         if (questionType.equals(QuestionType.PHOTO)) {
             userAnswer.add(largeAvatar(userStateSnapshot.answerText()));
         } else {
-            userAnswer.add(String.valueOf(userStateSnapshot.answerText()));
+            userAnswer.add(" = [%s]".formatted(userStateSnapshot.answerText()));
         }
-        userAnswer.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
         userAnswer.addClassNames(classes);
-
-        return new Span(
-                userNameSpan(userStateSnapshot.username(), userStateSnapshot.color(), classes),
-                delimiterSpan(classes),
-                userAnswer);
+        final var userProfile = userProfile(userStateSnapshot, classes);
+        userProfile.add(userAnswer);
+        return userProfile;
     }
 
-    public static Span userNameSpan(String username, String textColor, String... classes) {
-        return appendTextBorder(new Span() {{
-            setText(username);
-            getStyle().set("color", textColor);
-            addClassNames(classes);
-        }});
+    public static HorizontalLayout userProfileWithScore(UserStateSnapshot snapshot, String... classes) {
+        final var userScore = new Span("[%s]".formatted(snapshot.score()));
+        userScore.addClassNames(classes);
+        userScore.getStyle().set("color", snapshot.color());
+        final var userProfile = userProfile(snapshot, classes);
+        userProfile.add(appendTextBorder(userScore));
+        return userProfile;
+    }
+
+    public static HorizontalLayout userProfile(UserStateSnapshot userStateSnapshot, String... classes) {
+        return horizontalLayoutCenter(
+                Optional.ofNullable(userStateSnapshot.avatar())
+                        .map(data -> (Component) avatar(data, AvatarVariant.LUMO_XLARGE))
+                        .orElseGet(VaadinIcon.USER::create),
+                appendTextBorder(new Span() {{
+                    setText(userStateSnapshot.username());
+                    getStyle().set("color", userStateSnapshot.color());
+                    addClassNames(classes);
+                }}));
     }
 
     public static Span correctAnswerSpan(QuestionModel questionModel, String... classes) {
@@ -142,11 +147,7 @@ public final class CleverestComponents {
     public static Span answerDescriptionSpan(String answerDescription, String... classes) {
         Span span = new Span();
         span.addClassNames(classes);
-        span.addClassNames(LumoUtility.TextAlignment.CENTER,
-                LumoUtility.Border.ALL,
-                LumoUtility.BorderColor.PRIMARY);
-        span.setWidthFull();
-        span.getStyle().set("white-space", "pre-line");
+        span.addClassName("answer-description");
         span.setText(answerDescription);
         return span;
     }
@@ -157,14 +158,6 @@ public final class CleverestComponents {
         span.addClassNames(
                 LumoUtility.FontWeight.LIGHT,
                 LumoUtility.TextAlignment.CENTER);
-        span.addClassNames(classes);
-        return span;
-    }
-
-
-    private static Span delimiterSpan(String... classes) {
-        Span span = new Span();
-        span.setText(": ");
         span.addClassNames(classes);
         return span;
     }
@@ -184,8 +177,8 @@ public final class CleverestComponents {
         option.setText(text);
         option.addClassNames(
                 text.length() > maxLength
-                        ? CleverestComponents.MOBILE_MEDIUM_FONT
-                        : CleverestComponents.MOBILE_LARGE_FONT,
+                        ? MOBILE_MEDIUM_FONT
+                        : MOBILE_LARGE_FONT,
                 LumoUtility.TextAlignment.CENTER,
                 LumoUtility.TextColor.PRIMARY,
                 LumoUtility.FontWeight.BOLD,
@@ -216,14 +209,6 @@ public final class CleverestComponents {
     public static Button primaryButton(String text, ComponentEventListener<ClickEvent<Button>> clickAction) {
         Button button = new Button(text);
         button.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
-        button.addClickListener(clickAction);
-        button.addClassNames(MOBILE_MEDIUM_FONT);
-        return button;
-    }
-
-    public static Button secondaryButton(String text, ComponentEventListener<ClickEvent<Button>> clickAction) {
-        Button button = new Button(text);
-        button.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
         button.addClickListener(clickAction);
         button.addClassNames(MOBILE_MEDIUM_FONT);
         return button;
@@ -295,24 +280,11 @@ public final class CleverestComponents {
             }
             row.add(positionSpan);
 
-            row.add(CleverestComponents.userScoreLayout(username,
-                    userGameState.getColor(),
-                    userGameState.getScore(),
-                    LumoUtility.FontSize.XXXLARGE));
+            row.add(userProfileWithScore(userGameState.snapshot(), LumoUtility.FontSize.XXXLARGE));
 
             layout.add(row);
         });
         return layout;
-    }
-
-    public static HorizontalLayout userScoreLayout(String username, String ustTxtColor, int score, String... classes) {
-        Span userScore = new Span(String.valueOf(score));
-        userScore.addClassNames(classes);
-        userScore.getStyle().set("color", ustTxtColor);
-        return horizontalLayoutBetween(
-                userNameSpan(username, ustTxtColor, classes),
-                appendTextBorder(userScore),
-                new Hr());
     }
 
     public static VerticalLayout questionGradeLayout(Consumer<Integer> eventHandler) {

@@ -10,6 +10,11 @@ spring:
       quiet-period: 1s
       enabled: true
 
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
   # DB properties
   datasource:
     username: qa-user

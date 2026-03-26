@@ -15,15 +15,17 @@ import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
 import org.rsinitsyn.quiz.model.QuestionModel.HintModel;
+import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.service.QuestionService;
 
-import java.util.LinkedList;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 import static com.vaadin.flow.component.notification.NotificationVariant.LUMO_CONTRAST;
+import static com.vaadin.flow.theme.lumo.LumoUtility.FontSize.XLARGE;
 import static java.util.UUID.randomUUID;
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.notification;
+import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
 import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory.createQuestionLayout;
 import static org.rsinitsyn.quiz.entity.QuestionHintType.PHOTO;
 
@@ -35,23 +37,38 @@ public class LabsPage extends VerticalLayout {
 
     private final QuestionService questionService;
 
-    public LabsPage(final QuestionService questionService) {
+    public LabsPage(final QuestionService questionService) throws IOException {
         this.questionService = questionService;
 
-        final var fontSizes = new LinkedList<String>();
-        fontSizes.add(LumoUtility.FontSize.XLARGE);
-        fontSizes.add(LumoUtility.FontSize.XXLARGE);
+        final var userGameState = UserGameState.userGameState("Rodyslav",
+                "F54927",
+                new FileInputStream("src/main/resources/image/dev/4704b5fb-a349-4f96-8fc0-240a30d10cca.jpg").readAllBytes());
+
+        add(userProfile(userGameState.snapshot()));
+        add(new Hr());
+
+        add(userProfile(userGameState.snapshot(), LumoUtility.FontWeight.LIGHT));
+        add(new Hr());
+
+        add(userProfile(userGameState.snapshot(), LumoUtility.FontWeight.SEMIBOLD));
+        add(new Hr());
+
+        add(userProfileWithScore(userGameState.snapshot(), LumoUtility.FontSize.XXXLARGE));
+        add(new Hr());
+
+        add(userProfileWithAnswer(userGameState.snapshot(), QuestionType.TEXT));
+        add(new Hr());
 
         final var questions = questionService.findAllByCurrentUserAsModel();
         if (questions.isEmpty()) {
-            renderMockQuestions(fontSizes);
+            renderMockQuestions();
             return;
         }
 
         for (final var question : questions) {
             final var sequenceQuestion = createQuestionLayout(new QuestionLayoutRequest()
                     .host(false)
-                    .textClasses(List.of(LumoUtility.FontSize.XLARGE))
+                    .textClasses(List.of(XLARGE))
                     .question(question));
             add(sequenceQuestion);
             add(new Hr());
@@ -67,7 +84,7 @@ public class LabsPage extends VerticalLayout {
         }
     }
 
-    private void renderMockQuestions(final LinkedList<String> fontSizes) {
+    private void renderMockQuestions() {
         for (final var questionType : QuestionType.values()) {
 
             if (questionType == QuestionType.PHOTO) {
@@ -76,8 +93,7 @@ public class LabsPage extends VerticalLayout {
 
             final var sequenceQuestion = createQuestionLayout(new QuestionLayoutRequest()
                     .host(true)
-                    .textClasses(List.of(Optional.ofNullable(fontSizes.poll())
-                            .orElse(LumoUtility.FontSize.MEDIUM)))
+                    .textClasses(List.of(XLARGE))
                     .question(QuestionModel.builder()
                             .id(randomUUID())
                             .categoryName(questionType + " = " + randomText(2))

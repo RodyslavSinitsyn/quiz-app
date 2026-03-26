@@ -22,7 +22,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import org.apache.commons.collections4.MapUtils;
 import org.rsinitsyn.quiz.model.QuestionModel;
-import org.rsinitsyn.quiz.model.UserStateSnapshot;
 
 import static java.util.Map.Entry.comparingByValue;
 import static java.util.stream.Collectors.toMap;
@@ -71,12 +70,12 @@ public class CleverestGameState {
     public UserGameState addOrUpdateUser(String gameId,
                                          String username,
                                          String userColor,
-                                         InputStream photo,
+                                         byte[] photo,
                                          String winnerBet,
                                          String loserBet) {
-        users.computeIfAbsent(username, key -> userGameState(username, userColor));
+        users.computeIfAbsent(username, key -> userGameState(username, userColor, photo));
         return users.computeIfPresent(username, (key, userGameState) -> {
-            userGameState.updateColor(userColor);
+            userGameState.updateColorAndPhoto(userColor, photo);
             userGameState.updateBet(defaultIfEmpty(winnerBet, ""), true, false);
             userGameState.updateBet(defaultIfEmpty(loserBet, ""), false, false);
             return userGameState;

@@ -17,6 +17,25 @@ vaadin-item[selected] {
     width: 100%;
 }
 
+.question-text {
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    white-space: pre-line;
+    width: 100%;
+}
+
+.answer-description {
+    text-align: center;
+    border: 1px solid var(--lumo-primary-color);
+    white-space: pre-line;
+    width: 100%;
+    display: block;
+    word-break: break-word;
+    padding: var(--lumo-space-s);
+    border-radius: var(--lumo-border-radius-m);
+}
+
 /*Less than 700*/
 @media (max-width: 700px) {
 

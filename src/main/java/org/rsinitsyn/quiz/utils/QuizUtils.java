@@ -9,11 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.rsinitsyn.quiz.component.UserEvent;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DateFormat;
@@ -81,8 +79,8 @@ public final class QuizUtils {
         });
     }
 
-    public static StreamResource createStreamResourceForPhoto(String filename, InputStream inputStream) {
-        return new StreamResource(filename, () -> inputStream);
+    public static StreamResource createStreamResourceForPhoto(String filename, byte[] photoData) {
+        return new StreamResource(filename, () -> new ByteArrayInputStream(photoData));
     }
 
     public static String generateFilename(String urlPath) {
@@ -118,6 +116,10 @@ public final class QuizUtils {
 
     public static void runActionInUi(Optional<UI> maybeUi, Command action) {
         runActionInUi(maybeUi.orElseThrow(() -> new RuntimeException("UI not exists!")), action);
+    }
+
+    public static boolean doneByAuthenticated(UserEvent userEvent) {
+        return getLoggedUser().equals(userEvent.username());
     }
 
     public static void logState(Component component,

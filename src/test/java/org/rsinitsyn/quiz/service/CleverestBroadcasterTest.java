@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
-import org.rsinitsyn.quiz.model.UserStateSnapshot;
+import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.*;
 
@@ -71,7 +71,9 @@ class CleverestBroadcasterTest {
             softly.assertThat(alice.getBets()).hasSize(2);
         });
 
-        then(eventBus).should().fireEvent(new UserJoinedEvent(gameId, "Alice"));
+        then(eventBus).should().fireEvent(new UserJoinedEvent(gameId,
+                broadcaster.getState(gameId).getUserState("Alice"),
+                broadcaster.getState(gameId).getAllUserStates()));
     }
 
     @Test
@@ -231,7 +233,7 @@ class CleverestBroadcasterTest {
 
         then(eventBus).should().fireEvent(new SaveUsersAnswersEvent(gameId,
                 q,
-                List.of(new UserStateSnapshot("Alice", color, "4", false, true, 0, 0))));
+                List.of(new UserStateSnapshot("Alice", color, null, "4", false, true, 0, 0))));
     }
 
     @Test
@@ -295,7 +297,7 @@ class CleverestBroadcasterTest {
         assertThat(broadcaster.getState(gameId))
                 .as("State should be created")
                 .isNotNull()
-                .extracting("createdBy").isEqualTo(createdBy);
+                .extracting("gameHostName").isEqualTo(createdBy);
     }
 
     private void createEmptyState() {

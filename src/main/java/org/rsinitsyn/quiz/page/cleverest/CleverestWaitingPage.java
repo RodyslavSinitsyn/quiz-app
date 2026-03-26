@@ -135,7 +135,7 @@ public class CleverestWaitingPage extends VerticalLayout
 
         // waiting room events
         subscriptions.add(waitingRoom.addUserSubmitDataEventListener(event -> broadcaster.sendJoinUserEvent(
-                gameId, event.username(), event.color(), null, null, null
+                gameId, event.username(), event.color(), event.photo(), event.userWinner(), event.userLoser()
         )));
         subscriptions.add(waitingRoom.addStartGameEventListener(event ->
                 broadcaster.sendUsersReadyEvent(gameId)));

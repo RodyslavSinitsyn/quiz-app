@@ -21,7 +21,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 
-import java.io.InputStream;
 import java.util.function.BiConsumer;
 
 import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.horizontalLayoutBetween;
@@ -149,7 +148,7 @@ public final class QuizComponents {
         return avatar;
     }
 
-    public static Avatar avatar(InputStream photoData, AvatarVariant... variant) {
+    public static Avatar avatar(byte[] photoData, AvatarVariant... variant) {
         Avatar avatar = new Avatar();
         avatar.addThemeVariants(variant);
         avatar.setImageResource(createStreamResourceForPhoto("name", photoData));

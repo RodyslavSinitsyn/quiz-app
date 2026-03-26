@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.primaryButton;
+import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.userProfile;
 import static org.rsinitsyn.quiz.utils.QuizComponents.avatar;
 import static org.rsinitsyn.quiz.utils.QuizComponents.uploadComponent;
 import static org.rsinitsyn.quiz.utils.QuizUtils.runActionInUi;
@@ -192,10 +193,7 @@ public class CleverestWaitingRoomComponentOld extends VerticalLayout {
                         avatar(userGameState.getPhoto(), AvatarVariant.LUMO_XLARGE)))
                 .setHeader("Фото");
         usersGrid.addColumn(new ComponentRenderer<>(userGameState ->
-                CleverestComponents.userNameSpan(
-                        userGameState.getUsername(),
-                        userGameState.getColor(),
-                        LumoUtility.FontWeight.LIGHT))).setHeader("Имя игрока");
+                userProfile(userGameState.snapshot()))).setHeader("Имя игрока");
         usersGrid.addColumn(new ComponentRenderer<>(userGameState -> {
             Div color = new Div();
             color.setWidth("2em");

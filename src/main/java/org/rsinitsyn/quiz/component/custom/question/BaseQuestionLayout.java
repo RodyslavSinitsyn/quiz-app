@@ -58,7 +58,9 @@ public class BaseQuestionLayout extends VerticalLayout {
     }
 
     private void renderComponents(QuestionLayoutRequest request) {
-        renderCategory();
+        if (request.renderCategory()) {
+            renderCategory();
+        }
         renderQuestionText();
         renderImage();
         renderAudio();

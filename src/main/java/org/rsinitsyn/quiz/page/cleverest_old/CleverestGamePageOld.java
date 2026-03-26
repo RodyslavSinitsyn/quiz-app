@@ -11,7 +11,7 @@ import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.MainLayout;
-import org.rsinitsyn.quiz.component.cleverest_old.CleverestGamePlayBoardComponent;
+import org.rsinitsyn.quiz.component.cleverest_old.CleverestGamePlayBoardComponentOld;
 import org.rsinitsyn.quiz.component.cleverest_old.CleverestGameSettingsComponent;
 import org.rsinitsyn.quiz.component.cleverest_old.CleverestResultComponent;
 import org.rsinitsyn.quiz.component.cleverest_old.CleverestWaitingRoomComponentOld;
@@ -144,7 +144,7 @@ public class CleverestGamePageOld extends VerticalLayout implements HasUrlParame
             return;
         }
         // Always create a new instance — never reuse a detached/stale component
-        CleverestGamePlayBoardComponent playBoardComponent = new CleverestGamePlayBoardComponent();
+        CleverestGamePlayBoardComponentOld playBoardComponent = new CleverestGamePlayBoardComponentOld();
         playBoardComponent.setState(gameId, broadcaster, gameHost, refreshEvent, ui);
         add(playBoardComponent);
     }

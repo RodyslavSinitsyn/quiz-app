@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.component.cleverest_old;
+package org.rsinitsyn.quiz.component.cleverest;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
@@ -6,6 +6,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -14,15 +15,16 @@ import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents;
+import org.rsinitsyn.quiz.component.cleverest_old.CleverestResultComponent;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
-import org.rsinitsyn.quiz.model.UserStateSnapshot;
 import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
+import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.UpdatePersonalScoreEvent;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.UserAnsweredEvent;
-import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
 import java.util.*;
@@ -33,6 +35,8 @@ import static com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyConte
 import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
 import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory.createQuestionLayout;
 import static org.rsinitsyn.quiz.utils.AudioUtils.playStaticSoundAsync;
+import static org.rsinitsyn.quiz.utils.QuizComponents.appendTextBorder;
+import static org.rsinitsyn.quiz.utils.QuizUtils.doneByAuthenticated;
 import static org.rsinitsyn.quiz.utils.QuizUtils.runActionInUi;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
@@ -139,7 +143,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     if (gameHost) {
                         updateUserAnswerGiven(event.getUsername(), event.getLastResponseTimeSec());
                     }
-                    if (event.getUsername().equals(getLoggedUser())) {
+                    if (doneByAuthenticated(event)) {
                         midContainer.setEnabled(false);
                     }
                     if (event.getRoundNumber() == 3) {
@@ -209,7 +213,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 playStaticSoundAsync(StaticValuesHolder.SUBMIT_ANSWER_SHORT_AUDIOS.next()).thenRun(() -> {
                     log.debug("Submit audio finished, run action in ui: {}, {}", ui, gameId);
                     runActionInUi(ui, () -> {
-                        boolean approveManually = event.getCurrentRound() == 2;
+                        boolean approveManually = event.getCurrentRound() == 2;  // todo instead of manual approve use logic, only approve for TOP type?
                         showCorrectAnswer(
                                 event.getQuestion(),
                                 broadcaster.getState(gameId).userSnapshotsSortedByResponseTime().values(),
@@ -258,24 +262,20 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             return;
         }
         topContainer.removeAll();
-        userGameStates.forEach(uState -> {
-            Div userDiv = new Div();
-            userDiv.getStyle().set("color", uState.getColor());
-            userDiv.add(CleverestComponents.userNameSpan(uState.getUsername(), uState.getColor()));
-            userDiv.setId("top-container-user-" + uState.getUsername());
-            userDiv.setWidthFull();
-            userDiv.addClassNames(LumoUtility.Border.BOTTOM, LumoUtility.FontWeight.SEMIBOLD, LumoUtility.FontSize.XXLARGE);
-            topContainer.add(userDiv);
+        userGameStates.forEach(userState -> {
+            final var userProfile = userProfile(userState.snapshot());
+            userProfile.setId("top-container-user-" + userState.getUsername());
+            topContainer.add(userProfile);
         });
     }
 
     private void updateUserAnswerGiven(String username, String lastResponseTimeSec) {
-        var component = (Div) topContainer.getChildren()
+        var component = (HorizontalLayout) topContainer.getChildren()
                 .filter(c -> c.getId().orElseThrow().equals("top-container-user-" + username))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Cant update topContainer. Username not found: " + username));
-        component.addComponentAsFirst(CleverestComponents.userCheckIcon());
-        component.addComponentAsFirst(QuizComponents.appendTextBorder(new Span(lastResponseTimeSec)));
+        component.addComponentAsFirst(userCheckIcon());
+        component.addComponentAsFirst(appendTextBorder(new Span(lastResponseTimeSec)));
     }
 
     private void showRoundRules(int roundNumber, String rulesText) {
@@ -304,21 +304,17 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         midContainer.removeAll();
         midContainer.setEnabled(true);
 
-        Span questionNumberSpan = new Span();
-        questionNumberSpan.setText(String.format("Раунд %d. Вопрос %d/%d", roundNumber, questionNumber, totalQuestions));
-        questionNumberSpan.addClassNames(
-                LumoUtility.FontSize.MEDIUM,
-                LumoUtility.FontWeight.SEMIBOLD,
-                LumoUtility.Margin.Bottom.MEDIUM,
-                LumoUtility.AlignSelf.START);
-
-        midContainer.add(questionNumberSpan);
+        midContainer.add(horizontalLayoutCenter(
+                new Span("Раунд %d. Вопрос %d/%d".formatted(roundNumber, questionNumber, totalQuestions))
+        ));
+        midContainer.add(new Hr());
 
         List<String> questionClasses = gameHost ? List.of(LumoUtility.FontSize.XXXLARGE) : List.of(CleverestComponents.MOBILE_LARGE_FONT);
         String imageHeight = gameHost ? CleverestComponents.LARGE_IMAGE_HEIGHT : CleverestComponents.MEDIUM_IMAGE_HEIGHT;
         var questionLayout = createQuestionLayout(new QuestionLayoutRequest()
                 .question(questionModel)
                 .host(gameHost)
+                .renderCategory(false)
                 .imageHeight(imageHeight)
                 .textClasses(questionClasses));
         questionLayout.addAnsweredListener(event -> {
@@ -368,6 +364,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     createQuestionLayout(new QuestionLayoutRequest()
                             .question(question)
                             .host(gameHost)
+                            .renderCategory(false)
                             .imageHeight("25em")
                             .textClasses(List.of(LumoUtility.FontSize.XXXLARGE))),
                     "Вопрос",
@@ -410,13 +407,14 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     }
 
     private void renderUserPersonalScore() {
-        UserGameState userState = broadcaster.getState(gameId).getUserState(getLoggedUser());
+        final var userState = broadcaster.getState(gameId).getUserState(getLoggedUser());
         if (userState == null) {
             log.warn("Not joined user is accessing started Cleverest game");
             return;
         }
         topContainer.removeAll();
-        topContainer.add(userScoreLayout(getLoggedUser(), userState.getColor(), userState.getScore(), CleverestComponents.MOBILE_LARGE_FONT));
+        topContainer.add(userProfileWithScore(userState.snapshot(), CleverestComponents.MOBILE_LARGE_FONT));
+        topContainer.add(new Hr());
     }
 
     private void showUsersScore(boolean roundOver, int revealScoreAfter, Runnable onCloseAction) {
@@ -464,18 +462,15 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                         LumoUtility.FontWeight.LIGHT)));
 
         users.forEach(userGameState -> {
-            final var row = horizontalLayout(START);
-            row.setDefaultVerticalComponentAlignment(Alignment.START);
-            if (userGameState.correct()) {
-                row.addClassNames(LumoUtility.Background.PRIMARY_10, LumoUtility.Border.ALL, LumoUtility.BorderColor.PRIMARY);
-            }
-            if (!approveManually) {
-                row.add(userGameState.correct() ? doneIcon() : cancelIcon());
-            }
-            Span userAnswerSpan = userAnswerSpan(userGameState,
+            final var userProfileWithAnswer = userProfileWithAnswer(userGameState,
                     question.getType(),
                     LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.SEMIBOLD);
-            row.add(userAnswerSpan);
+            if (userGameState.correct()) {
+                userProfileWithAnswer.addClassNames(LumoUtility.Background.PRIMARY_10, LumoUtility.Border.ALL, LumoUtility.BorderColor.PRIMARY);
+            }
+            if (!approveManually) {
+                userProfileWithAnswer.add(userGameState.correct() ? doneIcon() : cancelIcon());
+            }
             if (approveManually) {
                 int countLimit;
                 switch (question.getType()) {
@@ -486,9 +481,9 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 Button approveButton = approveButton(
                         () -> approveAction.accept(userGameState.username()),
                         countLimit);
-                row.add(approveButton);
+                userProfileWithAnswer.add(approveButton);
             }
-            answersLayout.add(row);
+            answersLayout.add(userProfileWithAnswer);
         });
 
         openDialog(answersLayout, "Ответы", () -> {

@@ -1,14 +1,12 @@
 package org.rsinitsyn.quiz.model.cleverest;
 
-import java.io.InputStream;
+import lombok.*;
+import org.apache.commons.lang3.tuple.MutablePair;
+
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-
-import lombok.*;
-import org.apache.commons.lang3.tuple.MutablePair;
-import org.rsinitsyn.quiz.model.UserStateSnapshot;
 
 import static java.time.LocalDateTime.now;
 import static java.time.temporal.ChronoUnit.MILLIS;
@@ -22,7 +20,7 @@ import static org.rsinitsyn.quiz.utils.QuizUtils.divide;
 public class UserGameState implements Comparable<UserGameState> {
     private String username;
     private String color;
-    private InputStream photo;
+    private byte[] photo;
 
     private boolean lastWasCorrect;
     private String lastAnswerText;
@@ -37,15 +35,19 @@ public class UserGameState implements Comparable<UserGameState> {
     @Setter
     private Double avgResponseTime;
 
-    public static UserGameState userGameState(String username, String color) {
+    public static UserGameState userGameState(String username,
+                                              String color,
+                                              byte[] photo) {
         final var userGameState = new UserGameState();
         userGameState.username = username;
         userGameState.color = color;
+        userGameState.photo = photo;
         return userGameState;
     }
 
-    public void updateColor(String color) {
+    public void updateColorAndPhoto(String color, byte[] photo) {
         this.color = color;
+        this.photo = photo;
     }
 
     public void submitLatestAnswer(String answerText, LocalDateTime questionRenderTime) {
@@ -114,6 +116,6 @@ public class UserGameState implements Comparable<UserGameState> {
     }
 
     public UserStateSnapshot snapshot() {
-        return new UserStateSnapshot(username, color, lastAnswerText, lastWasCorrect, answerGiven, lastResponseTimeMs, score);
+        return new UserStateSnapshot(username, color, photo, lastAnswerText, lastWasCorrect, answerGiven, lastResponseTimeMs, score);
     }
 }

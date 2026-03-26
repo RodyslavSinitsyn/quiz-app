@@ -10,12 +10,14 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.rsinitsyn.quiz.component.UserEvent;
 import org.rsinitsyn.quiz.model.QuestionModel;
-import org.rsinitsyn.quiz.model.UserStateSnapshot;
 import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
+import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static java.util.Optional.ofNullable;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
 @Component
@@ -80,7 +83,14 @@ public class CleverestBroadcaster {
                                   String winnerBet,
                                   String loserBet) {
         CleverestGameState gameState = getState(gameId);
-        final var userState = gameState.addOrUpdateUser(gameId, username, userColor, photo, winnerBet, loserBet);
+        final var userState = gameState.addOrUpdateUser(gameId, username, userColor,
+                ofNullable(photo).map(s -> {
+                    try {
+                        return s.readAllBytes();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }).orElse(null), winnerBet, loserBet);
         eventBuses.get(gameId).fireEvent(new UserJoinedEvent(gameId, userState, gameState.getAllUserStates()));
     }
 
@@ -323,9 +333,9 @@ public class CleverestBroadcaster {
     }
 
     @Getter
-    @EqualsAndHashCode(of = {"username", "lastResponseTimeSec", "roundNumber"}, callSuper = true)
-    @ToString(of = {"username", "lastResponseTimeSec", "roundNumber"})
-    public static class UserAnsweredEvent extends CleverestGameEvent {
+    @EqualsAndHashCode(callSuper = true)
+    @ToString
+    public static class UserAnsweredEvent extends CleverestGameEvent implements UserEvent {
         private final String username;
         private final String lastResponseTimeSec;
         private final int roundNumber;
@@ -339,10 +349,16 @@ public class CleverestBroadcaster {
             this.lastResponseTimeSec = lastResponseTimeSec;
             this.roundNumber = roundNumber;
         }
+
+        @Override
+        public String username() {
+            return username;
+        }
     }
 
     @Getter
-    @EqualsAndHashCode(of = {"question", "roundOver", "roundsOver", "currentRound", "revealScoreAfter"}, callSuper = true)
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
     public static class AllUsersAnsweredEvent extends CleverestGameEvent {
         private final QuestionModel question;
         private final boolean roundOver;
@@ -366,8 +382,8 @@ public class CleverestBroadcaster {
     }
 
     @Getter
-    @EqualsAndHashCode(of = {"roundNumber", "rules"}, callSuper = true)
-    @ToString(of = {"roundNumber", "rules"}, callSuper = true)
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
     public static class RoundInfoEvent extends CleverestGameEvent {
         private final int roundNumber;
         private final String rules;
@@ -380,8 +396,8 @@ public class CleverestBroadcaster {
     }
 
     @Getter
-    @EqualsAndHashCode(of = {"question", "questionNumber", "totalQuestionsInRound", "roundNumber"}, callSuper = true)
-    @ToString(of = {"question", "questionNumber", "totalQuestionsInRound", "roundNumber"}, callSuper = true)
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
     public static class GetQuestionEvent extends CleverestGameEvent {
         private final QuestionModel question;
         private final int questionNumber;

@@ -18,4 +18,5 @@ public class QuestionLayoutRequest {
    private String imageHeight = "25em";
    private List<String> textClasses = Collections.emptyList();
    private HintsState hintsState = disabledHintsState();
+   private boolean renderCategory = true;
 }

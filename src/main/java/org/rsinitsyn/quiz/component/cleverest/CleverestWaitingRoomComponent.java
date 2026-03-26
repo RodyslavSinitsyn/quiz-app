@@ -27,9 +27,9 @@ import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 
 import java.io.InputStream;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.util.Optional.ofNullable;
 import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
 import static org.rsinitsyn.quiz.utils.QuizComponents.uploadComponent;
 import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
@@ -99,7 +99,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         Span chooseColor = new Span("Выберите цвет");
         ColorPicker colorPicker = new ColorPicker();
 
-        Optional.ofNullable(userGameState.get())
+        ofNullable(userGameState.get())
                 .ifPresent(state -> {
                     colorPicker.setValue(state.getColor());
                     winnerBet.setValue(state.winnerBet().getKey());
@@ -117,6 +117,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         dialog.addConfirmListener(event -> {
             fireEvent(new UserSubmitDataEvent(getLoggedUser(),
                     colorPicker.getValue(),
+                    photoHolder.get(),
                     winnerBet.getValue(),
                     loserBet.getValue()));
         });
@@ -134,29 +135,16 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
 
     private void configurePlayersList(List<UserGameState> users) {
         usersGrid.setItems(users);
-//        usersGrid.addColumn(new ComponentRenderer<>(userGameState ->
-//                        avatar(userGameState.getPhoto(), AvatarVariant.LUMO_XLARGE)))
-//                .setHeader("Фото");
         usersGrid.addColumn(new ComponentRenderer<>(userGameState ->
-                userNameSpan(
-                        userGameState.getUsername(),
-                        userGameState.getColor(),
-                        LumoUtility.FontWeight.LIGHT))).setHeader("Имя игрока");
-        usersGrid.addColumn(new ComponentRenderer<>(userGameState -> {
-            Div color = new Div();
-            color.setWidth("2em");
-            color.setHeight("2em");
-            color.getStyle().set("background-color", userGameState.getColor());
-            return color;
-        })).setHeader("Цвет");
-        usersGrid.addColumn(new ComponentRenderer<>(userGameState -> new Span(
-                userGameState.winnerBet().getKey().isEmpty()
-                        ? cancelIcon()
-                        : doneIcon(),
-                userGameState.loserBet().getKey().isEmpty()
-                        ? cancelIcon()
-                        : doneIcon()
-        ))).setHeader("Ставки");
+                userProfile(userGameState.snapshot()))).setHeader("Имя игрока");
+//        usersGrid.addColumn(new ComponentRenderer<>(userGameState -> new Span(
+//                userGameState.winnerBet().getKey().isEmpty()
+//                        ? cancelIcon()
+//                        : doneIcon(),
+//                userGameState.loserBet().getKey().isEmpty()
+//                        ? cancelIcon()
+//                        : doneIcon()
+//        ))).setHeader("Ставки");
         usersGrid.addThemeVariants();
         usersGrid.setAllRowsVisible(true);
         usersGrid.addClassNames(LumoUtility.FontSize.XLARGE);
@@ -217,6 +205,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
     public class UserSubmitDataEvent extends WaitingRoomEvent {
         private final String username;
         private final String color;
+        private final InputStream photo;
         private final String userWinner;
         private final String userLoser;
     }
