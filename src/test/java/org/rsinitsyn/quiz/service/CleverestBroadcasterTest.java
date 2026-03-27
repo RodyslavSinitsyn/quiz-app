@@ -309,7 +309,7 @@ class CleverestBroadcasterTest {
 
         // then
         baseAssertions();
-        then(eventBus).should().fireEvent(new QuestionGradedEvent(gameId, q, "Alice", 5));
+        then(eventBus).should().fireEvent(new QuestionGradedEvent(gameId, q, "Alice", 5, ));
     }
 
     private void baseAssertions() {

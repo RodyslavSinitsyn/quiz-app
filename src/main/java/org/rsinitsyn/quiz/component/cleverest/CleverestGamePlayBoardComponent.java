@@ -1,8 +1,6 @@
 package org.rsinitsyn.quiz.component.cleverest;
 
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.DetachEvent;
-import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
@@ -13,10 +11,14 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents;
 import org.rsinitsyn.quiz.component.cleverest_old.CleverestResultComponent;
+import org.rsinitsyn.quiz.component.custom.Emoji;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
@@ -25,6 +27,7 @@ import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.*;
+import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
 import java.util.*;
@@ -32,6 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
+import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.emoji;
 import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory.createQuestionLayout;
 import static org.rsinitsyn.quiz.utils.AudioUtils.playStaticSoundAsync;
 import static org.rsinitsyn.quiz.utils.QuizComponents.appendTextBorder;
@@ -228,6 +232,13 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                 () -> broadcaster.sendGetQuestionEvent(gameId));
                     });
                 })));
+        subscriptions.add(broadcaster.subscribe(gameId, QuestionGradedEvent.class, event -> {
+            runActionInUi(ui, () -> {
+                if (gameHost) {
+                    updateUserGrade(event.username(), event.getEmoji());
+                }
+            });
+        }));
     }
 
     // -------------------------------------------------------------------------
@@ -262,19 +273,29 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         }
         topContainer.removeAll();
         userGameStates.forEach(profile -> {
-            final var userProfile = userProfile(profile);
+            final var userProfile = userProfile(profile, CleverestComponents.MOBILE_LARGE_FONT);
             userProfile.setId("top-container-user-" + profile.username());
             topContainer.add(userProfile);
         });
     }
 
     private void updateUserAnswerGiven(String username, String lastResponseTimeSec) {
-        var component = (HorizontalLayout) topContainer.getChildren()
-                .filter(c -> c.getId().orElseThrow().equals("top-container-user-" + username))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Cant update topContainer. Username not found: " + username));
-        component.addComponentAsFirst(userCheckIcon());
-        component.addComponentAsFirst(appendTextBorder(new Span(lastResponseTimeSec)));
+        topContainerUserComponent(username).ifPresent(component -> {
+            component.addComponentAsFirst(userCheckIcon());
+            component.addComponentAsFirst(appendTextBorder(new Span(lastResponseTimeSec)));
+        });
+    }
+
+    private void updateUserGrade(String username, Emoji emoji) {
+        topContainerUserComponent(username).ifPresent(component ->
+                component.addComponentAsFirst(emoji(emoji.value)));
+    }
+
+    private Optional<HorizontalLayout> topContainerUserComponent(String username) {
+        return topContainer.getChildren()
+                .filter(c -> c.getId().map(id -> id.equals("top-container-user-" + username)).orElse(false))
+                .map(c -> (HorizontalLayout) c)
+                .findAny();
     }
 
     private void showRoundRules(int roundNumber, String rulesText) {
@@ -320,8 +341,31 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     questionModel,
                     String.join(", ", event.getAnswerGivenEvent().getAnswers()),
                     () -> event.getAnswerGivenEvent().isCorrect());
+
+            QuizUtils.wait(1).thenRun(() ->
+                    runActionInUi(getUI(), () -> openQuestionGradeDialog(questionModel)));
         });
         midContainer.add(questionLayout);
+    }
+
+    private void openQuestionGradeDialog(QuestionModel question) {
+        final var layout = horizontalLayoutCenter();
+        final var dialog = openDialog(layout, "Как тебе вопрос?", () -> {
+        });
+        List.of(Emoji.randomBad(), Emoji.randomGood(), Emoji.randomGreat())
+                .forEach(e -> {
+                    final var emoji = emoji(e.value);
+                    emoji.addClickListener(event -> {
+                        fireEvent(new UpdateQuestionGradeEvent(
+                                question,
+                                getLoggedUser(),
+                                e.rating
+                        ));
+                        broadcaster.sendQuestionGradedEvent(gameId, question, getLoggedUser(), e);
+                        dialog.close();
+                    });
+                    layout.add(emoji);
+                });
     }
 
     private void renderCategoriesTable(UserGameState userToAnswer, Map<String, List<QuestionModel>> data) {
@@ -513,5 +557,24 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     private void logState(String action, boolean start) {
         log.info("[FIX][PlayBoardComponent={}] {} [{}], User [{}], UI [{}], Subs size=[{}], items[{}]",
                 this.hashCode(), start ? "Start" : "End", action, getLoggedUser(), getUI().map(Object::hashCode).orElse(-1), subscriptions.size(), subscriptions);
+    }
+
+    public class GamePlayboardEvent extends ComponentEvent<CleverestGamePlayBoardComponent> {
+        public GamePlayboardEvent() {
+            super(CleverestGamePlayBoardComponent.this, true);
+        }
+    }
+
+    @RequiredArgsConstructor
+    @Getter
+    @Accessors(fluent = true)
+    public class UpdateQuestionGradeEvent extends GamePlayboardEvent {
+        private final QuestionModel question;
+        private final String username;
+        private final int grade;
+    }
+
+    public Registration addUpdateQuestionGradeEventListener(final ComponentEventListener<UpdateQuestionGradeEvent> listener) {
+        return addListener(UpdateQuestionGradeEvent.class, listener);
     }
 }

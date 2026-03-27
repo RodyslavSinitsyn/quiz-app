@@ -11,7 +11,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.rsinitsyn.quiz.component.UserEvent;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DateFormat;
@@ -22,7 +25,11 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
+import static java.util.concurrent.CompletableFuture.delayedExecutor;
+import static java.util.concurrent.CompletableFuture.runAsync;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
 @Slf4j
@@ -140,6 +147,13 @@ public final class QuizUtils {
                 start ? "Start" : "End", action, getLoggedUser(),
                 ui.map(Object::hashCode).orElse(-1), subs.size(),
                 subs);
+    }
+
+    public static CompletableFuture<Void> wait(int seconds) {
+        return runAsync(
+                () -> {},
+                delayedExecutor(seconds, SECONDS)
+        );
     }
 
 //

@@ -54,6 +54,14 @@ vaadin-item[selected] {
     border-radius: var(--lumo-border-radius-m);
 }
 
+.emoji {
+    font-size: 3em;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /*Less than 700*/
 @media (max-width: 700px) {
 

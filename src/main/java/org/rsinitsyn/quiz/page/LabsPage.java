@@ -5,11 +5,11 @@ import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.theme.lumo.LumoUtility;
 import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.RandomStringGenerator;
 import org.rsinitsyn.quiz.component.MainLayout;
+import org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
@@ -46,17 +46,16 @@ public class LabsPage extends VerticalLayout {
         add(userProfile(userGameState.profile()));
         add(new Hr());
 
-        add(userProfile(userGameState.profile(), LumoUtility.FontWeight.LIGHT));
-        add(new Hr());
 
-        add(userProfile(userGameState.profile(), LumoUtility.FontWeight.SEMIBOLD));
-        add(new Hr());
-
-        add(userProfileWithScore(userGameState.snapshot(), LumoUtility.FontSize.XXXLARGE));
+        add(userProfileWithScore(userGameState.snapshot()));
         add(new Hr());
 
         add(userProfileWithAnswer(userGameState.snapshot(), QuestionType.TEXT));
         add(new Hr());
+
+        List.of("", "😕", "😐", "🙂", "🤩").stream()
+                .map(e -> CleverestComponents.emoji(e))
+                .forEach(e -> add(e));
 
         final var questions = questionService.findAllByCurrentUserAsModel();
         if (questions.isEmpty()) {

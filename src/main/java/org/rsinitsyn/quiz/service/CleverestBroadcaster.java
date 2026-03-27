@@ -12,6 +12,7 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.UserEvent;
+import org.rsinitsyn.quiz.component.custom.Emoji;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
@@ -247,13 +248,14 @@ public class CleverestBroadcaster {
     public void sendQuestionGradedEvent(String gameId,
                                         QuestionModel questionModel,
                                         String username,
-                                        int grade) {
+                                        Emoji emoji) {
         eventBuses.get(gameId)
                 .fireEvent(new QuestionGradedEvent(
                         gameId,
                         questionModel,
                         username,
-                        grade
+                        emoji.rating,
+                        emoji
                 ));
     }
 
@@ -463,18 +465,26 @@ public class CleverestBroadcaster {
     }
 
     @Getter
-    @EqualsAndHashCode(of = {"question", "username", "grade"}, callSuper = true)
-    @ToString(of = {"question", "username", "grade"}, callSuper = true)
-    public static class QuestionGradedEvent extends CleverestGameEvent {
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
+    public static class QuestionGradedEvent extends CleverestGameEvent implements UserEvent {
         private final QuestionModel question;
         private final String username;
         private final int grade;
+        private final Emoji emoji;
 
-        public QuestionGradedEvent(String gameId, QuestionModel question, String username, int grade) {
+        public QuestionGradedEvent(String gameId, QuestionModel question,
+                                   String username, int grade, final Emoji emoji) {
             super(gameId);
             this.question = question;
             this.username = username;
             this.grade = grade;
+            this.emoji = emoji;
+        }
+
+        @Override
+        public String username() {
+            return username;
         }
     }
 

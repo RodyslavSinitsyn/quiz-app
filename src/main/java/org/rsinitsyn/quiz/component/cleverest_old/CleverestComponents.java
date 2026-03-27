@@ -30,7 +30,6 @@ import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 import static org.rsinitsyn.quiz.utils.QuizComponents.*;
@@ -61,6 +60,13 @@ public final class CleverestComponents {
         });
         dialog.open();
         return dialog;
+    }
+
+    public static Button emoji(String emoji) {
+        final var button = new Button(emoji);
+        button.addThemeVariants(ButtonVariant.LUMO_LARGE);
+        button.addClassName("emoji");
+        return button;
     }
 
     public static Span questionTextSpan(String text) {

@@ -143,12 +143,11 @@ public class CleverestGamePage extends VerticalLayout
                                 () -> ui.navigate(CleverestResultsPage.class, gameId));
                     }));
 
-            subscriptions.add(broadcaster.subscribe(gameId,
-                    CleverestBroadcaster.QuestionGradedEvent.class,
-                    event -> questionService.updateQuestionGrade(
-                            event.getQuestion().getId(),
-                            event.getUsername(),
-                            event.getGrade())));
+            playBoard.addUpdateQuestionGradeEventListener(event ->
+                    questionService.updateQuestionGrade(
+                            event.question().getId(),
+                            event.username(),
+                            event.grade()));
         } else {
             subscriptions.add(broadcaster.subscribe(gameId,
                     CleverestBroadcaster.GameFinishedEvent.class,
