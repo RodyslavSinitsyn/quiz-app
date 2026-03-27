@@ -309,14 +309,12 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         ));
         midContainer.add(new Hr());
 
-        List<String> questionClasses = gameHost ? List.of(LumoUtility.FontSize.XXXLARGE) : List.of(CleverestComponents.MOBILE_LARGE_FONT);
         String imageHeight = gameHost ? CleverestComponents.LARGE_IMAGE_HEIGHT : CleverestComponents.MEDIUM_IMAGE_HEIGHT;
         var questionLayout = createQuestionLayout(new QuestionLayoutRequest()
                 .question(questionModel)
                 .host(gameHost)
                 .renderCategory(false)
-                .imageHeight(imageHeight)
-                .textClasses(questionClasses));
+                .imageHeight(imageHeight));
         questionLayout.addAnsweredListener(event -> {
             broadcaster.sendSubmitAnswerEventAndCheckScore(gameId,
                     getLoggedUser(),
@@ -365,8 +363,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                             .question(question)
                             .host(gameHost)
                             .renderCategory(false)
-                            .imageHeight("25em")
-                            .textClasses(List.of(LumoUtility.FontSize.XXXLARGE))),
+                            .imageHeight("25em")),
                     "Вопрос",
                     () -> {
                     }

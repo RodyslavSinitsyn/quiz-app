@@ -34,7 +34,6 @@ public class BaseQuestionLayout extends VerticalLayout {
     protected final QuestionModel questionModel;
     protected final boolean host;
     protected final String imageHeight;
-    protected final List<String> textContentClasses;
 
     @Getter
     private AbstractAnswersLayout answersLayout;
@@ -45,7 +44,6 @@ public class BaseQuestionLayout extends VerticalLayout {
         this.questionModel = request.question();
         this.host = request.host();
         this.imageHeight = request.imageHeight();
-        this.textContentClasses = request.textClasses();
         configureStyling();
         renderComponents(request);
     }
@@ -81,7 +79,7 @@ public class BaseQuestionLayout extends VerticalLayout {
     }
 
     protected Span getQuestionTextElement() {
-        return questionTextSpan(questionModel.getText(), textContentClasses.toArray(new String[]{}));
+        return questionTextSpan(questionModel.getText());
     }
 
     protected void renderAudio() {

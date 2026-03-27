@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.util.List;
 
 import static com.vaadin.flow.component.notification.NotificationVariant.LUMO_CONTRAST;
-import static com.vaadin.flow.theme.lumo.LumoUtility.FontSize.XLARGE;
 import static java.util.UUID.randomUUID;
 import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
 import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory.createQuestionLayout;
@@ -68,7 +67,6 @@ public class LabsPage extends VerticalLayout {
         for (final var question : questions) {
             final var sequenceQuestion = createQuestionLayout(new QuestionLayoutRequest()
                     .host(false)
-                    .textClasses(List.of(XLARGE))
                     .question(question));
             add(sequenceQuestion);
             add(new Hr());
@@ -93,7 +91,6 @@ public class LabsPage extends VerticalLayout {
 
             final var sequenceQuestion = createQuestionLayout(new QuestionLayoutRequest()
                     .host(true)
-                    .textClasses(List.of(XLARGE))
                     .question(QuestionModel.builder()
                             .id(randomUUID())
                             .categoryName(questionType + " = " + randomText(2))

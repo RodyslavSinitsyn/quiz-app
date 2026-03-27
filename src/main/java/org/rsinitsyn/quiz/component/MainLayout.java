@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.page.*;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
+import org.rsinitsyn.quiz.utils.ThemeUtils;
 import org.springframework.core.env.Environment;
 
 import java.util.Arrays;
@@ -84,7 +85,7 @@ public class MainLayout extends AppLayout implements
         themeToggle.setIcon(VaadinIcon.MOON.create());
         themeToggle.addClickListener(event -> {
             darkTheme = !darkTheme;
-            SessionWrapper.setTheme(darkTheme ? Lumo.DARK : Lumo.LIGHT);
+            ThemeUtils.setThemeMode(darkTheme ? Lumo.DARK : Lumo.LIGHT);
             updateTheme();
         });
     }
@@ -186,7 +187,8 @@ public class MainLayout extends AppLayout implements
 
     private void updateTheme() {
         var js = "document.documentElement.setAttribute('theme', $0)";
-        getElement().executeJs(js, SessionWrapper.getTheme());
+        getElement().executeJs(js, ThemeUtils.getThemeMode());
+        ThemeUtils.restoreTheme();
     }
 
     @Override

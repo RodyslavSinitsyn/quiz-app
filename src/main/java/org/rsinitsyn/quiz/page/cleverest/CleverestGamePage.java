@@ -17,6 +17,7 @@ import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.QuizUtils;
+import org.rsinitsyn.quiz.utils.ThemeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,8 @@ import static org.rsinitsyn.quiz.utils.QuizComponents.infoNotification;
 import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
 import static org.rsinitsyn.quiz.utils.QuizUtils.runActionInUi;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
+import static org.rsinitsyn.quiz.utils.ThemeUtils.BLACK_COLOR;
+import static org.rsinitsyn.quiz.utils.ThemeUtils.restoreTheme;
 
 @Route(value = "cleverest/game", layout = MainLayout.class)
 @PageTitle("Cleverest - Игра")
@@ -63,6 +66,7 @@ public class CleverestGamePage extends VerticalLayout
         if (!validateGame(event)) {
             return;
         }
+        restoreTheme();
         final var gameEntity = gameService.findById(gameId);
 
         if (gameEntity.getStatus() == GameStatus.NOT_STARTED) {
@@ -89,7 +93,7 @@ public class CleverestGamePage extends VerticalLayout
                     .forEach(u -> broadcaster.sendJoinUserEvent(
                             gameId,
                             u.getUsername(),
-                            "#000000",
+                            BLACK_COLOR,
                             null,
                             null,
                             null

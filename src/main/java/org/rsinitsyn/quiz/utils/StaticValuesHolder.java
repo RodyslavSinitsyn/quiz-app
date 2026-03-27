@@ -1,27 +1,30 @@
 package org.rsinitsyn.quiz.utils;
 
-import com.google.common.collect.Iterables;
 import com.vaadin.flow.theme.lumo.Lumo;
+
 import java.util.Iterator;
+
+import static com.google.common.collect.Iterables.cycle;
+import static org.rsinitsyn.quiz.utils.ThemeUtils.getThemeMode;
 
 public class StaticValuesHolder {
 
-    public static final Iterator<String> SUBMIT_ANSWER_SHORT_AUDIOS = Iterables.cycle(
+    public static final Iterator<String> SUBMIT_ANSWER_SHORT_AUDIOS = cycle(
                     "submit-answer-short-1.mp3",
                     "submit-answer-short-2.mp3",
                     "submit-answer-short-3.mp3")
             .iterator();
 
-    public static final Iterator<String> REVEAL_ANSWER_AUDIOS = Iterables.cycle(
+    public static final Iterator<String> REVEAL_ANSWER_AUDIOS = cycle(
             "reveal-answer-1.mp3", "reveal-answer-2.mp3").iterator();
 
-    public static final Iterator<String> SUBMIT_ANSWER_AUDIOS = Iterables.cycle(
+    public static final Iterator<String> SUBMIT_ANSWER_AUDIOS = cycle(
                     "submit-answer-1.mp3",
                     "submit-answer-2.mp3",
                     "submit-answer-3.mp3")
             .iterator();
 
-    public static final Iterator<String> CORRECT_ANSWER_AUDIOS = Iterables.cycle(
+    public static final Iterator<String> CORRECT_ANSWER_AUDIOS = cycle(
                     "correct-answer-1.mp3",
                     "correct-answer-2.mp3",
                     "correct-answer-3.mp3",
@@ -30,13 +33,13 @@ public class StaticValuesHolder {
                     "correct-answer-6.mp3")
             .iterator();
 
-    public static final Iterator<String> WRONG_ANSWER_AUDIOS = Iterables.cycle(
+    public static final Iterator<String> WRONG_ANSWER_AUDIOS = cycle(
                     "wrong-answer-1.mp3",
                     "wrong-answer-2.mp3",
                     "wrong-answer-3.mp3")
             .iterator();
 
-    public static final Iterator<String> THINK_AUDIOS = Iterables.cycle(
+    public static final Iterator<String> THINK_AUDIOS = cycle(
                     "think-1.mp3",
                     "think-2.mp3",
                     "think-3.mp3")
@@ -44,6 +47,6 @@ public class StaticValuesHolder {
 
     public static String getFontBorder() {
         return "1px 1px 1px " +
-                (SessionWrapper.getTheme().equals(Lumo.LIGHT) ? "black" : "white");
+                (getThemeMode().equals(Lumo.LIGHT) ? "black" : "white");
     }
 }

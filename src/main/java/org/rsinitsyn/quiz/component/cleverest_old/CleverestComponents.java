@@ -62,10 +62,9 @@ public final class CleverestComponents {
         return dialog;
     }
 
-    public static Span questionTextSpan(String text, String... classes) {
+    public static Span questionTextSpan(String text) {
         Span span = new Span();
         span.setText(text);
-        span.addClassNames(classes);
         span.addClassName("question-text");
         return span;
     }
@@ -175,16 +174,7 @@ public final class CleverestComponents {
         var option = new Div();
         option.setWidthFull();
         option.setText(text);
-        option.addClassNames(
-                text.length() > maxLength
-                        ? MOBILE_MEDIUM_FONT
-                        : MOBILE_LARGE_FONT,
-                LumoUtility.TextAlignment.CENTER,
-                LumoUtility.TextColor.PRIMARY,
-                LumoUtility.FontWeight.BOLD,
-                LumoUtility.Border.ALL,
-                LumoUtility.BorderColor.PRIMARY,
-                LumoUtility.BorderRadius.MEDIUM);
+        option.addClassNames("quiz-option");
         option.addClickListener(eventHandler);
         return option;
     }

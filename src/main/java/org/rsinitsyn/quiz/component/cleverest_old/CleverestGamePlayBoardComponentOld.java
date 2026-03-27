@@ -321,8 +321,7 @@ public class CleverestGamePlayBoardComponentOld extends VerticalLayout {
         var questionLayout = createQuestionLayout(new QuestionLayoutRequest()
                 .question(questionModel)
                 .host(gameHost)
-                .imageHeight(imageHeight)
-                .textClasses(questionClasses));
+                .imageHeight(imageHeight));
         questionLayout.addAnsweredListener(event -> {
             broadcaster.sendSubmitAnswerEventAndCheckScore(gameId,
                     getLoggedUser(),
@@ -370,8 +369,7 @@ public class CleverestGamePlayBoardComponentOld extends VerticalLayout {
                     createQuestionLayout(new QuestionLayoutRequest()
                             .question(question)
                             .host(gameHost)
-                            .imageHeight("25em")
-                            .textClasses(List.of(LumoUtility.FontSize.XXXLARGE))),
+                            .imageHeight("25em")),
                     "Вопрос",
                     () -> {
                     }

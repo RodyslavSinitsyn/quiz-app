@@ -2,8 +2,10 @@ package org.rsinitsyn.quiz.component.cleverest;
 
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
@@ -22,8 +24,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.rsinitsyn.quiz.component.custom.ColorPicker;
+import org.rsinitsyn.quiz.component.theme.ThemePreset;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
+import org.rsinitsyn.quiz.utils.SessionWrapper;
+import org.rsinitsyn.quiz.utils.ThemeUtils;
 
 import java.io.InputStream;
 import java.util.List;
@@ -34,6 +38,8 @@ import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
 import static org.rsinitsyn.quiz.utils.QuizComponents.uploadComponent;
 import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
+import static org.rsinitsyn.quiz.utils.ThemeUtils.BLACK_COLOR;
+import static org.rsinitsyn.quiz.utils.ThemeUtils.THEME_PRESETS;
 
 @Slf4j
 public class CleverestWaitingRoomComponent extends VerticalLayout {
@@ -84,6 +90,8 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         add(joinButton);
     }
 
+
+
     private VerticalLayout userDialogContent(ConfirmDialog dialog) {
         VerticalLayout dialogLayout = new VerticalLayout();
         dialogLayout.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -97,11 +105,28 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         playerName.addClassNames(LumoUtility.FontSize.LARGE);
 
         Span chooseColor = new Span("Выберите цвет");
-        ColorPicker colorPicker = new ColorPicker();
+        final var themes = new ComboBox<ThemePreset>("Theme");
+        themes.setItems(THEME_PRESETS);
+        themes.setItemLabelGenerator(ThemePreset::name);
+        themes.setRenderer(new ComponentRenderer<>(preset -> {
+            final var circle = new Div();
+            circle.setWidth("10px");
+            circle.setHeight("10px");
+            circle.getStyle()
+                    .set("border-radius", "50%")
+                    .set("background-color", preset.color())
+                    .set("border", "1px solid var(--lumo-contrast-20pct)");
+            final var label = new Span(preset.name());
+            return horizontalLayout(JustifyContentMode.START, circle, label);
+        }));
+
+        themes.addValueChangeListener(event -> {
+            final var preset = event.getValue();
+            ThemeUtils.applyTheme(UI.getCurrent(), preset.color());
+        });
 
         ofNullable(userGameState.get())
                 .ifPresent(state -> {
-                    colorPicker.setValue(state.getColor());
                     winnerBet.setValue(state.winnerBet().getKey());
                     loserBet.setValue(state.loserBet().getKey());
                 });
@@ -110,13 +135,13 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
             photoHolder.set(buffer.getInputStream(event.getFileName()));
         }, null, 1);
 
-        dialogLayout.add(playerName, chooseColor, colorPicker, upload);
+        dialogLayout.add(playerName, chooseColor, themes, upload);
 //        TODO: Bets disabled for now
 //        dialog.add(winnerBet, loserBet);
 
         dialog.addConfirmListener(event -> {
             fireEvent(new UserSubmitDataEvent(getLoggedUser(),
-                    colorPicker.getValue(),
+                    ofNullable(themes.getValue()).map(ThemePreset::color).orElse(BLACK_COLOR),
                     photoHolder.get(),
                     winnerBet.getValue(),
                     loserBet.getValue()));

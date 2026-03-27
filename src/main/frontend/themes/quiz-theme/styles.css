@@ -3,14 +3,15 @@
 }
 
 vaadin-item[selected] {
-    background-color: rgba(173, 215, 255, 0.25);
+    background-color: var(--lumo-primary-color-10pct);
 }
 
 .quiz-photo {
     width: 100%;
     object-fit: contain;
     object-position: center center;
-    border: 5px solid black;
+    border: 1px solid var(--lumo-primary-color);
+    border-radius: 25px;
 }
 
 .quiz-carousel {
@@ -18,11 +19,28 @@ vaadin-item[selected] {
 }
 
 .question-text {
-    font-weight: 600;
+    font-size: var(--lumo-font-size-xxl);
+    color: var(--lumo-primary-text-color);
+    font-weight: 700;
     line-height: 1.2;
     text-align: center;
     white-space: pre-line;
     width: 100%;
+}
+
+.quiz-option {
+    text-align: center;
+    font-size: var(--lumo-font-size-xxl);
+    color: var(--lumo-primary-text-color);
+    font-weight: 700;
+    border: 1px solid var(--lumo-primary-color);
+    border-radius: var(--lumo-border-radius-m);
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.15s ease,
+        box-shadow 0.2s ease;
 }
 
 .answer-description {
