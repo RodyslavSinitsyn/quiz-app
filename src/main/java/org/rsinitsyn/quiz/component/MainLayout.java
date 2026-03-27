@@ -52,7 +52,6 @@ public class MainLayout extends AppLayout implements
         this.environment = environment;
         this.authenticationContext = authenticationContext;
 
-        updateTheme();
         configureToggleTheme();
         configureAuthComponents();
 
@@ -194,6 +193,7 @@ public class MainLayout extends AppLayout implements
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
         log.trace("afterNavigation");
+        updateTheme();
     }
 
     @Override

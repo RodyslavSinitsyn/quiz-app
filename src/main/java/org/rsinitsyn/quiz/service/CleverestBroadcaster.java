@@ -9,11 +9,13 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.UserEvent;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
+import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 import org.springframework.stereotype.Component;
 
@@ -91,7 +93,7 @@ public class CleverestBroadcaster {
                         throw new RuntimeException(e);
                     }
                 }).orElse(null), winnerBet, loserBet);
-        eventBuses.get(gameId).fireEvent(new UserJoinedEvent(gameId, userState, gameState.getAllUserStates()));
+        eventBuses.get(gameId).fireEvent(new UserJoinedEvent(gameId, userState.profile(), gameState.getAllUserProfiles()));
     }
 
     public void sendUserBetEvent(String gameId, String username, String userBet, boolean winner) {
@@ -279,16 +281,21 @@ public class CleverestBroadcaster {
     @Getter
     @EqualsAndHashCode(callSuper = true)
     @ToString(callSuper = true)
-    public static class UserJoinedEvent extends CleverestGameEvent {
-        private final UserGameState user;
-        private List<UserGameState> allUsers;
+    public static class UserJoinedEvent extends CleverestGameEvent implements UserEvent {
+        private final UserProfile user;
+        private final List<UserProfile> allUsers;
 
         public UserJoinedEvent(String gameId,
-                               UserGameState user,
-                               List<UserGameState> allUsers) {
+                               UserProfile user,
+                               List<UserProfile> allUsers) {
             super(gameId);
             this.user = user;
             this.allUsers = allUsers;
+        }
+
+        @Override
+        public String username() {
+            return user.username();
         }
     }
 
@@ -333,6 +340,7 @@ public class CleverestBroadcaster {
     }
 
     @Getter
+    @Accessors(fluent = true)
     @EqualsAndHashCode(callSuper = true)
     @ToString
     public static class UserAnsweredEvent extends CleverestGameEvent implements UserEvent {
@@ -418,16 +426,23 @@ public class CleverestBroadcaster {
     }
 
     @Getter
-    public static class RenderCategoriesEvent extends CleverestGameEvent {
-        private UserGameState userToAnswer;
-        private Map<String, List<QuestionModel>> data;
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
+    public static class RenderCategoriesEvent extends CleverestGameEvent implements UserEvent {
+        private final UserGameState user;
+        private final Map<String, List<QuestionModel>> data;
 
         public RenderCategoriesEvent(String gameId,
-                                     UserGameState userToAnswer,
+                                     UserGameState user,
                                      Map<String, List<QuestionModel>> data) {
             super(gameId);
-            this.userToAnswer = userToAnswer;
+            this.user = user;
             this.data = data;
+        }
+
+        @Override
+        public String username() {
+            return user.getUsername();
         }
     }
 

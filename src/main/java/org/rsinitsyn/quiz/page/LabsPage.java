@@ -43,13 +43,13 @@ public class LabsPage extends VerticalLayout {
                 "F54927",
                 new FileInputStream("src/main/resources/image/dev/4704b5fb-a349-4f96-8fc0-240a30d10cca.jpg").readAllBytes());
 
-        add(userProfile(userGameState.snapshot()));
+        add(userProfile(userGameState.profile()));
         add(new Hr());
 
-        add(userProfile(userGameState.snapshot(), LumoUtility.FontWeight.LIGHT));
+        add(userProfile(userGameState.profile(), LumoUtility.FontWeight.LIGHT));
         add(new Hr());
 
-        add(userProfile(userGameState.snapshot(), LumoUtility.FontWeight.SEMIBOLD));
+        add(userProfile(userGameState.profile(), LumoUtility.FontWeight.SEMIBOLD));
         add(new Hr());
 
         add(userProfileWithScore(userGameState.snapshot(), LumoUtility.FontSize.XXXLARGE));

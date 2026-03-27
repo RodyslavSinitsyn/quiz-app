@@ -16,6 +16,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.upload.SucceededEvent;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
+import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
@@ -148,10 +149,10 @@ public final class QuizComponents {
         return avatar;
     }
 
-    public static Avatar avatar(byte[] photoData, AvatarVariant... variant) {
+    public static Avatar avatar(StreamResource streamResource, AvatarVariant... variant) {
         Avatar avatar = new Avatar();
         avatar.addThemeVariants(variant);
-        avatar.setImageResource(createStreamResourceForPhoto("name", photoData));
+        avatar.setImageResource(streamResource);
         return avatar;
     }
 }

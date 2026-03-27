@@ -24,9 +24,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents;
 import org.rsinitsyn.quiz.component.theme.ThemePreset;
-import org.rsinitsyn.quiz.model.cleverest.UserGameState;
-import org.rsinitsyn.quiz.utils.SessionWrapper;
+import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.utils.ThemeUtils;
 
 import java.io.InputStream;
@@ -34,7 +34,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Optional.ofNullable;
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
+import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.horizontalLayout;
+import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.primaryButton;
 import static org.rsinitsyn.quiz.utils.QuizComponents.uploadComponent;
 import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
@@ -46,22 +47,22 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
 
     private final boolean hostPage;
     private final AtomicReference<InputStream> photoHolder = new AtomicReference<>();
-    private final AtomicReference<UserGameState> userGameState = new AtomicReference<>();
+    private final AtomicReference<UserProfile> userGameState = new AtomicReference<>();
 
-    private final Grid<UserGameState> usersGrid = new Grid<>(UserGameState.class, false);
+    private final Grid<UserProfile> usersGrid = new Grid<>(UserProfile.class, false);
     private Select<String> winnerBet = new Select<>();
     private Select<String> loserBet = new Select<>();
     private Button joinButton;
     private Button startGameButton;
 
     public CleverestWaitingRoomComponent(boolean hostPage,
-                                         List<UserGameState> users) {
+                                         List<UserProfile> users) {
         logState(this, getUI(), "Constructor", true, List.of());
         this.hostPage = hostPage;
-        this.winnerBet = createBetComponent(true, users.stream().map(UserGameState::getUsername).toList());
-        this.loserBet = createBetComponent(false, users.stream().map(UserGameState::getUsername).toList());
+        this.winnerBet = createBetComponent(true, users.stream().map(UserProfile::username).toList());
+        this.loserBet = createBetComponent(false, users.stream().map(UserProfile::username).toList());
         configurePlayersList(users);
-        users.stream().filter(u -> u.getUsername().equals(getLoggedUser())).findFirst().ifPresent(userGameState::set);
+        users.stream().filter(u -> u.username().equals(getLoggedUser())).findFirst().ifPresent(userGameState::set);
         add(usersGrid);
         if (hostPage) {
             configureHostComponents(users.size());
@@ -125,11 +126,11 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
             ThemeUtils.applyTheme(UI.getCurrent(), preset.color());
         });
 
-        ofNullable(userGameState.get())
-                .ifPresent(state -> {
-                    winnerBet.setValue(state.winnerBet().getKey());
-                    loserBet.setValue(state.loserBet().getKey());
-                });
+//        ofNullable(userGameState.get())
+//                .ifPresent(state -> {
+//                    winnerBet.setValue(state.winnerBet().getKey());
+//                    loserBet.setValue(state.loserBet().getKey());
+//                });
 
         final var upload = uploadComponent("Фото", (buffer, event) -> {
             photoHolder.set(buffer.getInputStream(event.getFileName()));
@@ -158,10 +159,10 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         add(progressBarLabel, progressBar);
     }
 
-    private void configurePlayersList(List<UserGameState> users) {
+    private void configurePlayersList(List<UserProfile> users) {
         usersGrid.setItems(users);
-        usersGrid.addColumn(new ComponentRenderer<>(userGameState ->
-                userProfile(userGameState.snapshot()))).setHeader("Имя игрока");
+        usersGrid.addColumn(new ComponentRenderer<>(CleverestComponents::userProfile))
+                .setHeader("Имя игрока");
 //        usersGrid.addColumn(new ComponentRenderer<>(userGameState -> new Span(
 //                userGameState.winnerBet().getKey().isEmpty()
 //                        ? cancelIcon()
@@ -196,21 +197,21 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         add(startGameButton);
     }
 
-    public void updateUserState(UserGameState userGameState) {
-        this.userGameState.set(userGameState);
-        joinButton.setText(userGameState.getUsername().equals(getLoggedUser())
+    public void updateUserState(UserProfile userProfile) {
+        this.userGameState.set(userProfile);
+        joinButton.setText(userProfile.username().equals(getLoggedUser())
                 ? "Поменять настройки"
                 : "Играть");
     }
 
-    public void updateTableAndBets(final List<UserGameState> users) {
+    public void updateTableAndBets(final List<UserProfile> users) {
         usersGrid.setItems(users);
         usersGrid.getDataProvider().refreshAll();
         if (hostPage) {
             startGameButton.setEnabled(!users.isEmpty());
         }
-        winnerBet.setItems(users.stream().map(UserGameState::getUsername).toList());
-        loserBet.setItems(users.stream().map(UserGameState::getUsername).toList());
+        winnerBet.setItems(users.stream().map(UserProfile::username).toList());
+        loserBet.setItems(users.stream().map(UserProfile::username).toList());
     }
 
     @Getter

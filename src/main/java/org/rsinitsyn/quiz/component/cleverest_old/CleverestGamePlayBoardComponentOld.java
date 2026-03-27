@@ -138,17 +138,17 @@ public class CleverestGamePlayBoardComponentOld extends VerticalLayout {
     private void subscribeOnEvents(UI ui) {
         subscriptions.add(broadcaster.subscribe(gameId, UserAnsweredEvent.class, event ->
                 runActionInUi(ui, () -> {
-                    if (gameHost) {
-                        updateUserAnswerGiven(event.getUsername(), event.getLastResponseTimeSec());
-                    }
-                    if (doneByAuthenticated(event)) {
-                        midContainer.setEnabled(false);
-                    }
-                    if (event.getRoundNumber() == 3) {
-                        runHostAction();
-                    } else {
-                        notification(event.getUsername() + " ответил", NotificationVariant.LUMO_CONTRAST);
-                    }
+//                    if (gameHost) {
+//                        updateUserAnswerGiven(event.getUsername(), event.getLastResponseTimeSec());
+//                    }
+//                    if (doneByAuthenticated(event)) {
+//                        midContainer.setEnabled(false);
+//                    }
+//                    if (event.getRoundNumber() == 3) {
+//                        runHostAction();
+//                    } else {
+//                        notification(event.getUsername() + " ответил", NotificationVariant.LUMO_CONTRAST);
+//                    }
                 })));
 
         subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.GetQuestionEvent.class, event ->
@@ -163,10 +163,10 @@ public class CleverestGamePlayBoardComponentOld extends VerticalLayout {
                 runActionInUi(ui, () -> {
                     midContainer.removeAll();
                     if (gameHost) {
-                        renderTopContainerForHost(Collections.singletonList(event.getUserToAnswer()));
-                        renderCategoriesTable(event.getUserToAnswer(), event.getData());
+//                        renderTopContainerForHost(Collections.singletonList(event.getUser()));
+//                        renderCategoriesTable(event.getUser(), event.getData());
                     } else {
-                        if (getLoggedUser().equals(event.getUserToAnswer().getUsername())) {
+                        if (doneByAuthenticated(event)) {
                             midContainer.add(userInfoLightSpan("Время отвечать!", LumoUtility.TextColor.PRIMARY, CleverestComponents.MOBILE_LARGE_FONT));
                         } else {
                             midContainer.add(userInfoLightSpan("В ожидании вопроса", LumoUtility.TextColor.SECONDARY, CleverestComponents.MOBILE_LARGE_FONT));
@@ -263,7 +263,7 @@ public class CleverestGamePlayBoardComponentOld extends VerticalLayout {
         userGameStates.forEach(userState -> {
             Div userDiv = new Div();
             userDiv.getStyle().set("color", userState.getColor());
-            userDiv.add(userProfile(userState.snapshot()));
+//            userDiv.add(userProfile(userState.snapshot()));
             userDiv.setId("top-container-user-" + userState.getUsername());
             userDiv.setWidthFull();
             userDiv.addClassNames(LumoUtility.Border.BOTTOM, LumoUtility.FontWeight.SEMIBOLD, LumoUtility.FontSize.XXLARGE);
@@ -332,7 +332,8 @@ public class CleverestGamePlayBoardComponentOld extends VerticalLayout {
         midContainer.add(questionLayout);
     }
 
-    private void renderCategoriesTable(UserGameState userToAnswer, Map<String, List<QuestionModel>> data) {
+    private void renderCategoriesTable(UserGameState userToAnswer,
+                                       Map<String, List<QuestionModel>> data) {
         var categoriesLayout = new VerticalLayout();
         categoriesLayout.setAlignItems(Alignment.START);
         categoriesLayout.setPadding(false);

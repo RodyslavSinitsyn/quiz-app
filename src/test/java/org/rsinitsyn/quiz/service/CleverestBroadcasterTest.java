@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
+import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.*;
@@ -55,7 +56,7 @@ class CleverestBroadcasterTest {
     }
 
     @Test
-    void sends_join_user_event() {
+    void sends_join_user_event_and_updates_state() {
         // given
         createEmptyState();
 
@@ -68,12 +69,30 @@ class CleverestBroadcasterTest {
             final var alice = broadcaster.getState(gameId).getUserState("Alice");
             softly.assertThat(alice).isNotNull();
             softly.assertThat(alice.getColor()).isEqualTo(color);
+            softly.assertThat(alice.getPhoto()).isNull();
             softly.assertThat(alice.getBets()).hasSize(2);
         });
 
         then(eventBus).should().fireEvent(new UserJoinedEvent(gameId,
-                broadcaster.getState(gameId).getUserState("Alice"),
-                broadcaster.getState(gameId).getAllUserStates()));
+                new UserProfile("Alice", color, null),
+                List.of(new UserProfile("Alice", color, null))));
+
+        // and-when
+        broadcaster.sendJoinUserEvent(gameId, "Alice", "color-upd", null, "Bob", "Charlie");
+
+        // then
+        baseAssertions();
+        assertSoftly(softly -> {
+            final var alice = broadcaster.getState(gameId).getUserState("Alice");
+            softly.assertThat(alice).isNotNull();
+            softly.assertThat(alice.getColor()).isEqualTo("color-upd");
+            softly.assertThat(alice.getPhoto()).isNull();
+            softly.assertThat(alice.getBets()).hasSize(2);
+        });
+
+        then(eventBus).should().fireEvent(new UserJoinedEvent(gameId,
+                new UserProfile("Alice", "color-upd", null),
+                List.of(new UserProfile("Alice", "color-upd", null))));
     }
 
     @Test
@@ -233,7 +252,7 @@ class CleverestBroadcasterTest {
 
         then(eventBus).should().fireEvent(new SaveUsersAnswersEvent(gameId,
                 q,
-                List.of(new UserStateSnapshot("Alice", color, null, "4", false, true, 0, 0))));
+                List.of(new UserStateSnapshot(new UserProfile("Alice", color, null), "4", false, true, 0, 0))));
     }
 
     @Test

@@ -11,7 +11,6 @@ import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.cleverest.CleverestWaitingRoomComponent;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.AllUsersReadyEvent;
-import org.rsinitsyn.quiz.service.CleverestBroadcaster.UserBetEvent;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.UserJoinedEvent;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
@@ -23,8 +22,7 @@ import java.util.stream.Stream;
 import static org.rsinitsyn.quiz.entity.GameStatus.FINISHED;
 import static org.rsinitsyn.quiz.entity.GameStatus.STARTED;
 import static org.rsinitsyn.quiz.utils.QuizComponents.infoNotification;
-import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
-import static org.rsinitsyn.quiz.utils.QuizUtils.runActionInUi;
+import static org.rsinitsyn.quiz.utils.QuizUtils.*;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
 @Route(value = "cleverest/waiting", layout = MainLayout.class)
@@ -89,7 +87,7 @@ public class CleverestWaitingPage extends VerticalLayout
         }
 
         if (waitingRoom == null) {
-            waitingRoom = new CleverestWaitingRoomComponent(gameHost, broadcaster.getState(gameId).getAllUserStates());
+            waitingRoom = new CleverestWaitingRoomComponent(gameHost, broadcaster.getState(gameId).getAllUserProfiles());
             add(waitingRoom);
         }
 
@@ -119,19 +117,11 @@ public class CleverestWaitingPage extends VerticalLayout
 
         subscriptions.add(broadcaster.subscribe(gameId, UserJoinedEvent.class, event ->
                 runActionInUi(ui, () -> {
-                    if (getLoggedUser().equals(event.getUser().getUsername())) {
+                    if (doneByAuthenticated(event)) {
                         waitingRoom.updateUserState(event.getUser());
                     }
                     waitingRoom.updateTableAndBets(event.getAllUsers());
                 })));
-        subscriptions.add(broadcaster.subscribe(gameId, UserBetEvent.class, event -> {
-            runActionInUi(ui, () -> {
-                if (getLoggedUser().equals(event.getUser().getUsername())) {
-                    waitingRoom.updateUserState(event.getUser());
-                }
-                waitingRoom.updateTableAndBets(event.getAllUsers());
-            });
-        }));
 
         // waiting room events
         subscriptions.add(waitingRoom.addUserSubmitDataEventListener(event -> broadcaster.sendJoinUserEvent(
@@ -139,11 +129,6 @@ public class CleverestWaitingPage extends VerticalLayout
         )));
         subscriptions.add(waitingRoom.addStartGameEventListener(event ->
                 broadcaster.sendUsersReadyEvent(gameId)));
-        subscriptions.add(waitingRoom.addUserBetEventListener(event -> {
-            if (broadcaster.getState(gameId).userPresent(event.username())) {
-                broadcaster.sendUserBetEvent(gameId, event.username(), event.betOn(), event.winner());
-            }
-        }));
 
         logState(this, attachEvent.getUI(), "onAttach", false, subscriptions);
     }

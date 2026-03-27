@@ -1,27 +1,17 @@
 package org.rsinitsyn.quiz.model.cleverest;
 
 import com.google.common.collect.Iterables;
-
-import java.io.InputStream;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.apache.commons.collections4.MapUtils;
 import org.rsinitsyn.quiz.model.QuestionModel;
+
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static java.util.Map.Entry.comparingByValue;
 import static java.util.stream.Collectors.toMap;
@@ -100,6 +90,10 @@ public class CleverestGameState {
 
     public List<UserGameState> getAllUserStates() {
         return new ArrayList<>(users.values());
+    }
+
+    public List<UserProfile> getAllUserProfiles() {
+        return users.values().stream().map(UserGameState::profile).toList();
     }
 
     public void putUserStateToHistory(QuestionModel key, UserGameState currUserState) {

@@ -3,7 +3,6 @@ package org.rsinitsyn.quiz.component.cleverest_old;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.avatar.AvatarVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
@@ -32,10 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.primaryButton;
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.userProfile;
-import static org.rsinitsyn.quiz.utils.QuizComponents.avatar;
 import static org.rsinitsyn.quiz.utils.QuizComponents.uploadComponent;
-import static org.rsinitsyn.quiz.utils.QuizUtils.runActionInUi;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
 @Deprecated
@@ -80,36 +76,36 @@ public class CleverestWaitingRoomComponentOld extends VerticalLayout {
 
         // Register subscriptions here with the known-good UI reference,
         // not in onAttach where the UI reference may shift during a refresh cycle.
-        ui.ifPresent(this::subscribeOnEvents);
+//        ui.ifPresent(this::subscribeOnEvents);
     }
 
-    private void subscribeOnEvents(UI ui) {
-        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.UserJoinedEvent.class, event ->
-                runActionInUi(ui, () -> {
-                    updatePlayersGrid(event.getUser().getUsername());
-                    if (!gameHost && getLoggedUser().equals(event.getUser().getUsername())) {
-                        joinButton.setText(
-                                broadcaster.getState(gameId).userPresent(event.getUser().getUsername())
-                                        ? "Поменять настройки"
-                                        : "Играть");
-                    }
-                    winnerBet.setItems(broadcaster.getState(gameId).getAllUsernames());
-                    loserBet.setItems(broadcaster.getState(gameId).getAllUsernames());
-                    if (gameHost) {
-                        startGameButton.setEnabled(broadcaster.getState(gameId).usersPresent());
-                    }
-                })));
-
-        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.UserBetEvent.class, event ->
-                runActionInUi(ui, () -> updatePlayersGrid(event.getUser().getUsername()))));
-
-        log.trace("subscribeOnEvents. subscriptions count: {}", subscriptions.size());
-    }
+//    private void subscribeOnEvents(UI ui) {
+//        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.UserJoinedEvent.class, event ->
+//                runActionInUi(ui, () -> {
+//                    updatePlayersGrid(event.getUser().getUsername());
+//                    if (!gameHost && getLoggedUser().equals(event.getUser().getUsername())) {
+//                        joinButton.setText(
+//                                broadcaster.getState(gameId).userPresent(event.getUser().getUsername())
+//                                        ? "Поменять настройки"
+//                                        : "Играть");
+//                    }
+//                    winnerBet.setItems(broadcaster.getState(gameId).getAllUsernames());
+//                    loserBet.setItems(broadcaster.getState(gameId).getAllUsernames());
+//                    if (gameHost) {
+//                        startGameButton.setEnabled(broadcaster.getState(gameId).usersPresent());
+//                    }
+//                })));
+//
+//        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.UserBetEvent.class, event ->
+//                runActionInUi(ui, () -> updatePlayersGrid(event.getUser().getUsername()))));
+//
+//        log.trace("subscribeOnEvents. subscriptions count: {}", subscriptions.size());
+//    }
 
     // onAttach is intentionally empty — subscriptions are in subscribeOnEvents()
     @Override
     protected void onAttach(AttachEvent attachEvent) {
-        subscribeOnEvents(attachEvent.getUI());
+//        subscribeOnEvents(attachEvent.getUI());
     }
 
     // onDetach cleans up subscriptions as a safety net
@@ -189,11 +185,8 @@ public class CleverestWaitingRoomComponentOld extends VerticalLayout {
     }
 
     private void configurePlayersList() {
-        usersGrid.addColumn(new ComponentRenderer<>(userGameState ->
-                        avatar(userGameState.getPhoto(), AvatarVariant.LUMO_XLARGE)))
-                .setHeader("Фото");
-        usersGrid.addColumn(new ComponentRenderer<>(userGameState ->
-                userProfile(userGameState.snapshot()))).setHeader("Имя игрока");
+//        usersGrid.addColumn(new ComponentRenderer<>(userGameState ->
+//                userProfile(userGameState.snapshot()))).setHeader("Имя игрока");
         usersGrid.addColumn(new ComponentRenderer<>(userGameState -> {
             Div color = new Div();
             color.setWidth("2em");

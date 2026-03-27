@@ -15,12 +15,11 @@ import static org.rsinitsyn.quiz.utils.QuizUtils.divide;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(of = {"username", "color", "lastWasCorrect", "lastAnswerText", "score", "correctAnswersCount", "answerGiven"})
+@EqualsAndHashCode(of = {"profile", "lastWasCorrect", "lastAnswerText", "score", "correctAnswersCount", "answerGiven"})
 @ToString(exclude = "bets")
 public class UserGameState implements Comparable<UserGameState> {
-    private String username;
-    private String color;
-    private byte[] photo;
+    @Getter(AccessLevel.NONE)
+    private UserProfile profile;
 
     private boolean lastWasCorrect;
     private String lastAnswerText;
@@ -39,15 +38,24 @@ public class UserGameState implements Comparable<UserGameState> {
                                               String color,
                                               byte[] photo) {
         final var userGameState = new UserGameState();
-        userGameState.username = username;
-        userGameState.color = color;
-        userGameState.photo = photo;
+        userGameState.profile = new UserProfile(username, color, photo);
         return userGameState;
     }
 
+    public String getUsername() {
+        return profile.username();
+    }
+
+    public String getColor() {
+        return profile.color();
+    }
+
+    public byte[] getPhoto() {
+        return profile.avatar();
+    }
+
     public void updateColorAndPhoto(String color, byte[] photo) {
-        this.color = color;
-        this.photo = photo;
+        this.profile = this.profile.withColorAndAvatar(color, photo);
     }
 
     public void submitLatestAnswer(String answerText, LocalDateTime questionRenderTime) {
@@ -115,7 +123,11 @@ public class UserGameState implements Comparable<UserGameState> {
                 .compare(this, other);
     }
 
+    public UserProfile profile() {
+        return profile;
+    }
+
     public UserStateSnapshot snapshot() {
-        return new UserStateSnapshot(username, color, photo, lastAnswerText, lastWasCorrect, answerGiven, lastResponseTimeMs, score);
+        return new UserStateSnapshot(profile, lastAnswerText, lastWasCorrect, answerGiven, lastResponseTimeMs, score);
     }
 }

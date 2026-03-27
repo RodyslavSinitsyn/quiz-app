@@ -25,6 +25,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
+import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 
 import java.util.List;
@@ -100,7 +101,7 @@ public final class CleverestComponents {
             userAnswer.add(" = [%s]".formatted(userStateSnapshot.answerText()));
         }
         userAnswer.addClassNames(classes);
-        final var userProfile = userProfile(userStateSnapshot, classes);
+        final var userProfile = userProfile(userStateSnapshot.profile(), classes);
         userProfile.add(userAnswer);
         return userProfile;
     }
@@ -109,19 +110,19 @@ public final class CleverestComponents {
         final var userScore = new Span("[%s]".formatted(snapshot.score()));
         userScore.addClassNames(classes);
         userScore.getStyle().set("color", snapshot.color());
-        final var userProfile = userProfile(snapshot, classes);
+        final var userProfile = userProfile(snapshot.profile(), classes);
         userProfile.add(appendTextBorder(userScore));
         return userProfile;
     }
 
-    public static HorizontalLayout userProfile(UserStateSnapshot userStateSnapshot, String... classes) {
+    public static HorizontalLayout userProfile(UserProfile profile, String... classes) {
         return horizontalLayoutCenter(
-                Optional.ofNullable(userStateSnapshot.avatar())
+                profile.avatarResource()
                         .map(data -> (Component) avatar(data, AvatarVariant.LUMO_XLARGE))
                         .orElseGet(VaadinIcon.USER::create),
                 appendTextBorder(new Span() {{
-                    setText(userStateSnapshot.username());
-                    getStyle().set("color", userStateSnapshot.color());
+                    setText(profile.username());
+                    getStyle().set("color", profile.color());
                     addClassNames(classes);
                 }}));
     }
