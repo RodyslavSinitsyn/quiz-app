@@ -62,13 +62,13 @@ public class SequenceAnswersLayout extends AbstractAnswersLayout {
 
     @Override
     protected AnswerGivenEvent createAnswerGivenEvent() {
-        final var correct = range(0, answers.size())
-                .allMatch(i -> answers.get(i).number() == i);
-
+        final var correctCount = (int) range(0, answers.size())
+                .filter(i -> answers.get(i).number() == i)
+                .count();
+        final var correct = correctCount == answers.size();
         final var selected = answers.stream()
                 .map(AnswerModel::text)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
-
-        return new AnswerGivenEvent(selected, correct);
+        return new AnswerGivenEvent(selected, correct, correctCount, false);
     }
 }

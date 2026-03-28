@@ -4,12 +4,13 @@ import com.vaadin.flow.component.ComponentEventBus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.rsinitsyn.quiz.component.custom.Emoji;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
+import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
-import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.*;
 
 import java.time.LocalDateTime;
@@ -18,7 +19,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import static java.util.Optional.of;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.LIST;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
@@ -184,7 +187,7 @@ class CleverestBroadcasterTest {
         baseAssertions();
         then(eventBus).should().fireEvent(new RoundInfoEvent(gameId,
                 1,
-                "В первом раунде будут вопросы на разные темы и 4 варианта ответов."));
+                "Раунд 1"));
     }
 
     @Test
@@ -217,20 +220,30 @@ class CleverestBroadcasterTest {
     }
 
     @Test
-    void sends_save_user_answers_event() {
+    void sends_save_user_answers_event_and_calculates_positions() {
         // given
         final var q = aQuestionModel().build();
         createStateWithQuestions(List.of(q));
-        addUser("Alice", "4");
+        addUser("Alice", "4", true);
+        addUser("Bob", "22", false);
 
         // pre-condition
         assertSoftly(softly -> {
             final var alice = broadcaster.getState(gameId).getUserState("Alice");
-            softly.assertThat(alice.getScore()).isEqualTo(0);
+            softly.assertThat(alice.getScore()).isEqualTo(1);
+            softly.assertThat(alice.getCorrectAnswersCount()).isEqualTo(1);
             softly.assertThat(alice.isAnswerGiven()).isTrue();
-            softly.assertThat(alice.isLastWasCorrect()).isFalse();
+            softly.assertThat(alice.isLastWasCorrect()).isTrue();
             softly.assertThat(alice.getLastAnswerText()).isEqualTo("4");
             softly.assertThat(alice.getLastResponseTimeMs()).isNotNegative();
+
+            final var bob = broadcaster.getState(gameId).getUserState("Bob");
+            softly.assertThat(bob.getScore()).isEqualTo(0);
+            softly.assertThat(bob.getCorrectAnswersCount()).isEqualTo(0);
+            softly.assertThat(bob.isAnswerGiven()).isTrue();
+            softly.assertThat(bob.isLastWasCorrect()).isFalse();
+            softly.assertThat(bob.getLastAnswerText()).isEqualTo("22");
+            softly.assertThat(bob.getLastResponseTimeMs()).isNotNegative();
 
             softly.assertThat(broadcaster.getState(gameId).getHistory()).isEmpty();
         });
@@ -242,17 +255,40 @@ class CleverestBroadcasterTest {
         baseAssertions();
 
         final var alice = broadcaster.getState(gameId).getUserState("Alice");
+        final var bob = broadcaster.getState(gameId).getUserState("Bob");
+
+        // verify state cleaned after a flush to db
         assertSoftly(softly -> {
-            softly.assertThat(alice.getScore()).isEqualTo(0);
+            softly.assertThat(alice.getScore()).isEqualTo(1);
+            softly.assertThat(alice.getCorrectAnswersCount()).isEqualTo(1);
             softly.assertThat(alice.isAnswerGiven()).isFalse();
             softly.assertThat(alice.isLastWasCorrect()).isFalse();
             softly.assertThat(alice.getLastAnswerText()).isEmpty();
             softly.assertThat(alice.getLastResponseTimeMs()).isEqualTo(0);
+
+            softly.assertThat(bob.getScore()).isEqualTo(0);
+            softly.assertThat(bob.getCorrectAnswersCount()).isEqualTo(0);
+            softly.assertThat(bob.isAnswerGiven()).isFalse();
+            softly.assertThat(bob.isLastWasCorrect()).isFalse();
+            softly.assertThat(bob.getLastAnswerText()).isEmpty();
+            softly.assertThat(bob.getLastResponseTimeMs()).isEqualTo(0);
         });
+        final var history = broadcaster.getState(gameId).getHistory();
+        assertThat(history)
+                .hasSize(1)
+                .containsKey(q)
+                .extractingByKey(q)
+                .asInstanceOf(LIST)
+                .hasSize(2);
 
         then(eventBus).should().fireEvent(new SaveUsersAnswersEvent(gameId,
                 q,
-                List.of(new UserStateSnapshot(new UserProfile("Alice", color, null), "4", false, true, 0, 0))));
+                List.of(new UserStateSnapshot(
+                                new UserProfile("Alice", color, null),
+                                "4", true, true, 0, 1, 1, of(q.getId())),
+                        new UserStateSnapshot(
+                                new UserProfile("Bob", color, null),
+                                "22", false, true, 0, 0, 2, of(q.getId())))));
     }
 
     @Test
@@ -305,11 +341,11 @@ class CleverestBroadcasterTest {
         addUser("Alice");
 
         // when
-        broadcaster.sendQuestionGradedEvent(gameId, q, "Alice", 5);
+        broadcaster.sendQuestionGradedEvent(gameId, q, "Alice", Emoji.GOOD);
 
         // then
         baseAssertions();
-        then(eventBus).should().fireEvent(new QuestionGradedEvent(gameId, q, "Alice", 5, ));
+        then(eventBus).should().fireEvent(new QuestionGradedEvent(gameId, q, "Alice", 4, Emoji.GOOD));
     }
 
     private void baseAssertions() {
@@ -333,9 +369,9 @@ class CleverestBroadcasterTest {
         return broadcaster.getState(gameId).addOrUpdateUser(gameId, username, color, null, "", "");
     }
 
-    private UserGameState addUser(String username, String answer) {
+    private UserGameState addUser(String username, String answer, boolean correct) {
         final var userGameState = addUser(username);
-        userGameState.submitLatestAnswer(answer, LocalDateTime.now());
+        userGameState.submitAnswer(answer, LocalDateTime.now(), () -> correct);
         return userGameState;
     }
 

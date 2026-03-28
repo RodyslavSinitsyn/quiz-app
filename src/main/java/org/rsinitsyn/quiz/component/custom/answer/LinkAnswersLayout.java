@@ -23,16 +23,17 @@ public class LinkAnswersLayout extends AbstractAnswersLayout {
     @Override
     protected AnswerGivenEvent createAnswerGivenEvent() {
         var pairs = component.getPairs(); // TODO: For now true if get all the matches
-        boolean areCorrect = true;
+        var correctCount = 0;
         for (var pair : pairs) {
-            if (pair.getLeft().number() != pair.getRight().number()) {
-                areCorrect = false;
+            if (pair.getLeft().number() == pair.getRight().number()) {
+                correctCount++;
                 break;
             }
         }
+        var areCorrect = correctCount == pairs.size();
         var userAnswers = pairs.stream()
                 .map(pair -> pair.getLeft().text() + " = " + pair.getRight().text())
                 .collect(Collectors.toSet());
-        return new AnswerGivenEvent(userAnswers, areCorrect);
+        return new AnswerGivenEvent(userAnswers, areCorrect, correctCount, false);
     }
 }

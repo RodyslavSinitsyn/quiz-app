@@ -114,6 +114,7 @@ public class CleverestBroadcaster {
         CleverestGameState state = getState(gameId);
         var usersWhoAnswered = state.usersWhoAnswered();
 
+        state.updateUserPositions();
         usersWhoAnswered.forEach(userState -> state.putUserStateToHistory(question, userState));
         log.info("History updated. Users gave answers count: {}. Save answers to DB: {}", usersWhoAnswered.size(), gameId);
         eventBuses.get(gameId).fireEvent(new SaveUsersAnswersEvent(
@@ -133,8 +134,9 @@ public class CleverestBroadcaster {
                                                    String answerAsText,
                                                    Supplier<Boolean> isCorrect) {
         log.info("User gave answer: {} = {}", username, answerAsText);
-        getState(gameId).submitAnswer(username, answerAsText, isCorrect);
+        final var state = getState(gameId);
         final var userGameState = getState(gameId).getUserState(username);
+        userGameState.submitAnswer(answerAsText, state.getQuestionRenderedTime(), isCorrect);
         eventBuses.get(gameId).fireEvent(
                 new UserAnsweredEvent(gameId,
                         userGameState.getUsername(),
@@ -220,7 +222,6 @@ public class CleverestBroadcaster {
 
     // UpdatePersonalScoreEvent
     public void sendUpdatePersonalScoreEvent(String gameId) {
-        log.info("Updating personal score: {}", gameId);
         eventBuses.get(gameId).fireEvent(new UpdatePersonalScoreEvent(gameId));
     }
 
@@ -312,7 +313,7 @@ public class CleverestBroadcaster {
     public static class UserBetEvent extends CleverestGameEvent {
         private final UserGameState user;
         private final String userToBet;
-        private List<UserGameState> allUsers;
+        private final List<UserGameState> allUsers;
 
         public UserBetEvent(String gameId,
                             UserGameState user,

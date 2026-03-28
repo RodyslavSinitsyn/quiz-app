@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.RandomStringGenerator;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents;
+import org.rsinitsyn.quiz.component.custom.Emoji;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
@@ -20,8 +21,8 @@ import org.rsinitsyn.quiz.service.QuestionService;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static com.vaadin.flow.component.notification.NotificationVariant.LUMO_CONTRAST;
 import static java.util.UUID.randomUUID;
@@ -54,7 +55,7 @@ public class LabsPage extends VerticalLayout {
         add(userProfileWithAnswer(userGameState.snapshot(), QuestionType.TEXT));
         add(new Hr());
 
-        Stream.of("", "😕", "😐", "🙂", "🤩")
+        Arrays.stream(Emoji.values()).map(e -> e.value).toList().stream()
                 .map(CleverestComponents::emoji)
                 .forEach(this::add);
 

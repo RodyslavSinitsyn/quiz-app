@@ -13,7 +13,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static java.util.Comparator.comparingInt;
 import static java.util.Map.Entry.comparingByValue;
+import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.rsinitsyn.quiz.model.cleverest.UserGameState.userGameState;
@@ -106,9 +108,10 @@ public class CleverestGameState {
                 userState.isAnswerGiven());
     }
 
-    public void putUserStateToHistory(QuestionModel key, UserGameState currUserState) {
-        history.computeIfAbsent(key, ignored -> new ArrayList<>(5))
-                .add(currUserState.snapshot());
+    public void putUserStateToHistory(QuestionModel question, UserGameState currUserState) {
+        final var snapshots = history.computeIfAbsent(question, ignored -> new ArrayList<>(5));
+        snapshots.add(currUserState.snapshot(ofNullable(question.getId())));
+        snapshots.sort(comparingInt(UserStateSnapshot::position));
     }
 
     public List<UserGameState> usersWhoAnswered() {
@@ -122,12 +125,11 @@ public class CleverestGameState {
         users.values().forEach(UserGameState::prepareForNext);
     }
 
-    public Map<String, UserGameState> usersSortedByScore() {
-        return users.entrySet().stream()
-                .sorted(comparingByValue())
-                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue,
-                        (e1, e2) -> e2,
-                        LinkedHashMap::new));
+    // TODO: Reduce to Snapshot not full sate
+    public List<UserGameState> usersSortedByScore() {
+        return users.values().stream()
+                .sorted(Comparator.comparingInt(UserGameState::totalScore).reversed())
+                .toList();
     }
 
     public Map<String, UserStateSnapshot> userSnapshotsSortedByResponseTime() {
@@ -163,7 +165,7 @@ public class CleverestGameState {
     }
 
     public void prepareUsersToAnswerOrder() {
-        usersToAnswerOrder = Iterables.cycle(usersSortedByScore().values()).iterator();
+        usersToAnswerOrder = Iterables.cycle(usersSortedByScore()).iterator();
     }
 
     public boolean prepareNextQuestionAndCheckIsLast() {
@@ -171,28 +173,15 @@ public class CleverestGameState {
         return questionNumber == currRoundQuestionsSource.get().size();
     }
 
-    public void submitAnswer(String username,
-                             String answerAsText,
-                             Supplier<Boolean> isCorrect) {
-        UserGameState userGameState = users.get(username);
-        if (userGameState.isAnswerGiven()) {
-            return;
-        }
-        userGameState.submitLatestAnswer(answerAsText, questionRenderedTime);
-        if (isCorrect.get()) {
-            userGameState.increaseScore();
-        }
-    }
-
     public boolean areAllUsersAnswered() {
         return users.values().stream().allMatch(UserGameState::isAnswerGiven);
     }
 
     public void updateUserPositions() {
-        Map<String, UserGameState> sortedByScore = usersSortedByScore();
+        final var sortedByScore = usersSortedByScore();
         AtomicInteger pos = new AtomicInteger(1);
         AtomicInteger prevScoreHolder = new AtomicInteger(0);
-        sortedByScore.forEach((username, userGameState) -> {
+        sortedByScore.forEach(userGameState -> {
             if (userGameState.totalScore() < prevScoreHolder.get()) {
                 pos.incrementAndGet();
             }

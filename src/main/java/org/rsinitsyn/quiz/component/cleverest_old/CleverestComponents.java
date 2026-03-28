@@ -24,12 +24,10 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
-import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.rsinitsyn.quiz.utils.QuizComponents.*;
@@ -264,24 +262,24 @@ public final class CleverestComponents {
     }
 
     // Big Business Layouts
-    public static VerticalLayout usersScoreTableLayout(Map<String, UserGameState> users) {
+    public static VerticalLayout usersScoreTableLayout(List<UserStateSnapshot> users) {
         var layout = new VerticalLayout();
-        users.forEach((username, userGameState) -> {
+        users.forEach(userStateSnapshot -> {
             HorizontalLayout row = new HorizontalLayout();
 
             Span positionSpan = new Span();
             positionSpan.addClassNames(LumoUtility.FontSize.XXXLARGE,
                     LumoUtility.FontWeight.SEMIBOLD);
-            if (userGameState.getLastPosition() == 1) {
+            if (userStateSnapshot.position() == 1) {
                 positionSpan.add(VaadinIcon.ACADEMY_CAP.create());
-            } else if (userGameState.getLastPosition() == users.size()) {
+            } else if (userStateSnapshot.position() == users.size()) {
                 positionSpan.add(VaadinIcon.GLASS.create());
             } else {
-                positionSpan.setText(userGameState.getLastPosition() + ".");
+                positionSpan.setText(userStateSnapshot.position() + ".");
             }
             row.add(positionSpan);
 
-            row.add(userProfileWithScore(userGameState.snapshot(), LumoUtility.FontSize.XXXLARGE));
+            row.add(userProfileWithScore(userStateSnapshot, LumoUtility.FontSize.XXXLARGE));
 
             layout.add(row);
         });

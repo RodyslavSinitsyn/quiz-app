@@ -31,6 +31,10 @@ public class OrAnswersLayout extends AbstractAnswersLayout {
     @Override
     protected AnswerGivenEvent createAnswerGivenEvent() {
         var userAnswer = radioButtonGroup.getValue();
-        return new AnswerGivenEvent(Collections.singleton(userAnswer.text()), userAnswer.correct());
+        return AnswerGivenEvent.builder()
+                .answers(Collections.singleton(userAnswer.text()))
+                .isCorrect(userAnswer.correct())
+                .points(1)
+                .build();
     }
 }

@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 
 import java.util.Collections;
+import java.util.Set;
 
 public class PrecisionAnswersLayout extends AbstractAnswersLayout {
 
@@ -30,6 +31,10 @@ public class PrecisionAnswersLayout extends AbstractAnswersLayout {
             int validAnswerNumeric = Integer.parseInt(question.getAnswers().stream().findFirst().orElseThrow().text());
             isCorrect = Math.abs(validAnswerNumeric - userAnswerNumeric) <= question.getValidRange();
         }
-        return new AnswerGivenEvent(Collections.singleton(answerText), isCorrect);
+        return AnswerGivenEvent.builder()
+                .answers(Set.of(answerText))
+                .isCorrect(isCorrect)
+                .points(1)
+                .build();
     }
 }

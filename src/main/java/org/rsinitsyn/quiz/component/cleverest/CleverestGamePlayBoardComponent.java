@@ -401,6 +401,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 questionTextDialog.close();
                 AtomicBoolean approved = new AtomicBoolean(false);
                 question.setAlreadyAnswered(true);
+                // 3rd round
                 showCorrectAnswer(question, List.of(userToAnswer.snapshot()), false, 0, true, uName -> {
                     userToAnswer.increaseScore(question.getPoints());
                     approved.set(true);
@@ -446,9 +447,11 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         topContainer.add(new Hr());
     }
 
-    private void showUsersScore(boolean roundOver, int revealScoreAfter, Runnable onCloseAction) {
+    private void showUsersPositionsTable(boolean roundOver, int revealScoreAfter, Runnable onCloseAction) {
         var usersScoreLayout = revealScoreAfter == 0
-                ? usersScoreTableLayout(broadcaster.getState(gameId).usersSortedByScore())
+                ? usersScoreTableLayout(broadcaster.getState(gameId).usersSortedByScore().stream()
+                .map(UserGameState::snapshot)
+                .toList())
                 : new VerticalLayout(userInfoLightSpan(
                 "Вопросов до таблицы результатов: " + revealScoreAfter, LumoUtility.FontSize.XXXLARGE));
 
@@ -490,15 +493,15 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                         LumoUtility.FontSize.XXLARGE,
                         LumoUtility.FontWeight.LIGHT)));
 
-        users.forEach(userGameState -> {
-            final var userProfileWithAnswer = userProfileWithAnswer(userGameState,
+        users.forEach(userStateSnapshot -> {
+            final var userProfileWithAnswer = userProfileWithAnswer(userStateSnapshot,
                     question.getType(),
                     LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.SEMIBOLD);
-            if (userGameState.correct()) {
+            if (userStateSnapshot.correct()) {
                 userProfileWithAnswer.addClassNames(LumoUtility.Background.PRIMARY_10, LumoUtility.Border.ALL, LumoUtility.BorderColor.PRIMARY);
             }
             if (!approveManually) {
-                userProfileWithAnswer.add(userGameState.correct() ? doneIcon() : cancelIcon());
+                userProfileWithAnswer.add(userStateSnapshot.correct() ? doneIcon() : cancelIcon());
             }
             if (approveManually) {
                 int countLimit;
@@ -508,7 +511,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     default -> countLimit = 0;
                 }
                 Button approveButton = approveButton(
-                        () -> approveAction.accept(userGameState.username()),
+                        () -> approveAction.accept(userStateSnapshot.username()),
                         countLimit);
                 userProfileWithAnswer.add(approveButton);
             }
@@ -517,10 +520,9 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
         openDialog(answersLayout, "Ответы", () -> {
             onCloseAction.run();
-            broadcaster.getState(gameId).updateUserPositions();
             broadcaster.sendUpdatePersonalScoreEvent(gameId);
             broadcaster.sendSaveUsersAnswersEvent(gameId, question);
-            showUsersScore(roundOver, revealScoreAfter, usersScoreCloseAction);
+            showUsersPositionsTable(roundOver, revealScoreAfter, usersScoreCloseAction);
         });
     }
 
@@ -529,11 +531,11 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         midContainer.removeAll();
         CleverestGameState gameState = broadcaster.getState(gameId);
         if (gameHost) {
-            resultComponent.setState(gameState.usersSortedByScore().values(), gameState.getHistory(), "");
+            resultComponent.setState(gameState.usersSortedByScore(), gameState.getHistory(), "");
         } else {
             renderUserPersonalScore();
             midContainer.add(userInfoLightSpan("Итоговое место: " + gameState.getUserState(getLoggedUser()).getLastPosition(), CleverestComponents.MOBILE_LARGE_FONT));
-            resultComponent.setState(gameState.usersSortedByScore().values(), gameState.getHistory(), getLoggedUser());
+            resultComponent.setState(gameState.usersSortedByScore(), gameState.getHistory(), getLoggedUser());
         }
         midContainer.add(resultComponent);
     }

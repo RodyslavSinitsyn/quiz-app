@@ -1,10 +1,13 @@
 package org.rsinitsyn.quiz.component.custom.answer;
 
-import com.vaadin.flow.component.*;
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.shared.Registration;
+import lombok.Builder;
 import lombok.Getter;
 import org.rsinitsyn.quiz.component.custom.event.StubEvent;
 import org.rsinitsyn.quiz.model.AnswerHint;
@@ -83,24 +86,13 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
     }
 
     @Getter
+    @Builder
     public static class AnswerGivenEvent extends StubEvent {
         private final Set<String> answers;
         private final boolean isCorrect;
+        private final int points;
+        @Builder.Default
         private boolean manuallyApprove = false;
-
-        public AnswerGivenEvent(Set<String> answers,
-                                boolean isCorrect) {
-            this.answers = answers;
-            this.isCorrect = isCorrect;
-        }
-
-        public AnswerGivenEvent(Set<String> answers,
-                                boolean isCorrect,
-                                boolean manuallyApprove) {
-            this.answers = answers;
-            this.isCorrect = isCorrect;
-            this.manuallyApprove = manuallyApprove;
-        }
     }
 
     @Getter

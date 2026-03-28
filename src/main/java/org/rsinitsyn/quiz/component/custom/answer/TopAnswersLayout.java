@@ -61,6 +61,6 @@ public class TopAnswersLayout extends AbstractAnswersLayout {
         Set<String> answerModels = topListLayout.getChildren()
                 .map(component -> component.getElement().getText())
                 .collect(Collectors.toSet());
-        return new AnswerGivenEvent(answerModels, false, true);
+        return new AnswerGivenEvent(answerModels, false, 0, true);
     }
 }

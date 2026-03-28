@@ -38,14 +38,17 @@ public class MultiAnswersLayout extends AbstractAnswersLayout {
     protected AnswerGivenEvent createAnswerGivenEvent() {
         var userAnswers = multiAnswerListBox.getSelectedItems();
         long correctAnswersCount = question.getAnswers().stream().filter(QuestionModel.AnswerModel::correct).count();
-        long userCorrectAnswersCount = userAnswers.stream().filter(QuestionModel.AnswerModel::correct).count();
+        int userCorrectAnswersCount = (int) userAnswers.stream().filter(QuestionModel.AnswerModel::correct).count();
         boolean userHasOnlyCorrectAnswers = userCorrectAnswersCount == userAnswers.size();
         boolean isCorrect = userHasOnlyCorrectAnswers && correctAnswersCount == userCorrectAnswersCount;
 
-        return new AnswerGivenEvent(multiAnswerListBox.getSelectedItems().stream()
-                .map(QuestionModel.AnswerModel::text)
-                .collect(Collectors.toSet()),
-                isCorrect);
+        return AnswerGivenEvent.builder()
+                .answers(multiAnswerListBox.getSelectedItems().stream()
+                        .map(QuestionModel.AnswerModel::text)
+                        .collect(Collectors.toSet()))
+                .isCorrect(isCorrect)
+                .points(userCorrectAnswersCount)
+                .build();
     }
 
     @Override

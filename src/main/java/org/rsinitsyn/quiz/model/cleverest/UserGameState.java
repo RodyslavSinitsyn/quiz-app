@@ -4,12 +4,12 @@ import lombok.*;
 import org.apache.commons.lang3.tuple.MutablePair;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Supplier;
 
 import static java.time.LocalDateTime.now;
 import static java.time.temporal.ChronoUnit.MILLIS;
+import static java.util.Optional.empty;
 import static org.rsinitsyn.quiz.utils.QuizUtils.divide;
 
 @Getter
@@ -58,10 +58,18 @@ public class UserGameState implements Comparable<UserGameState> {
         this.profile = this.profile.withColorAndAvatar(color, photo);
     }
 
-    public void submitLatestAnswer(String answerText, LocalDateTime questionRenderTime) {
+    public void submitAnswer(String answerText,
+                             LocalDateTime questionRenderTime,
+                             Supplier<Boolean> isCorrect) {
+        if (answerGiven) {
+            return;
+        }
         lastAnswerText = answerText;
         answerGiven = true;
         lastResponseTimeMs = MILLIS.between(questionRenderTime, now());
+        if (isCorrect.get()) {
+            increaseScore();
+        }
     }
 
     public String getLastResponseTimeSec() {
@@ -80,9 +88,9 @@ public class UserGameState implements Comparable<UserGameState> {
     }
 
     public void increaseScore() {
-        score++;
-        correctAnswersCount++;
-        lastWasCorrect = true;
+        this.score++;
+        this.correctAnswersCount++;
+        this.lastWasCorrect = true;
     }
 
     public void increaseScore(int score) {
@@ -127,7 +135,12 @@ public class UserGameState implements Comparable<UserGameState> {
         return profile;
     }
 
+    public UserStateSnapshot snapshot(Optional<UUID> questionId) {
+        return new UserStateSnapshot(profile, lastAnswerText, lastWasCorrect,
+                answerGiven, lastResponseTimeMs, score, lastPosition, questionId);
+    }
+
     public UserStateSnapshot snapshot() {
-        return new UserStateSnapshot(profile, lastAnswerText, lastWasCorrect, answerGiven, lastResponseTimeMs, score);
+        return snapshot(empty());
     }
 }

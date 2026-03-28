@@ -7,6 +7,8 @@ import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
 
@@ -31,6 +33,10 @@ public class PhotoAnswersLayout extends AbstractAnswersLayout {
     @Override
     protected AnswerGivenEvent createAnswerGivenEvent() {
         var userAnswer = options.getValue();
-        return new AnswerGivenEvent(Collections.singleton(userAnswer.text()), userAnswer.correct());
+        return AnswerGivenEvent.builder()
+                .answers(Set.of(userAnswer.text()))
+                .isCorrect(userAnswer.correct())
+                .points(1)
+                .build();
     }
 }
