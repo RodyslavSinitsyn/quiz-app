@@ -18,6 +18,7 @@ import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
+import org.rsinitsyn.quiz.model.sound.GameSound;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -268,6 +269,10 @@ public class CleverestBroadcaster {
         ));
     }
 
+    public void sendPlaySoundEvent(String gameId, GameSound sound) {
+        eventBuses.get(gameId).fireEvent(new PlaySoundEvent(gameId, sound));
+    }
+
     @Getter
     @EqualsAndHashCode(of = "gameId", callSuper = false)
     @ToString(of = "gameId", callSuper = false)
@@ -510,6 +515,18 @@ public class CleverestBroadcaster {
             super(gameId);
             this.question = question;
             this.username = username;
+        }
+    }
+
+    @Getter
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
+    public static class PlaySoundEvent extends CleverestGameEvent {
+        private final GameSound sound;
+
+        public PlaySoundEvent(final String gameId, final GameSound sound) {
+            super(gameId);
+            this.sound = sound;
         }
     }
 

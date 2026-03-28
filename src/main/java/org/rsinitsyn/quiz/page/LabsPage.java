@@ -21,6 +21,7 @@ import org.rsinitsyn.quiz.service.QuestionService;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static com.vaadin.flow.component.notification.NotificationVariant.LUMO_CONTRAST;
 import static java.util.UUID.randomUUID;
@@ -53,9 +54,9 @@ public class LabsPage extends VerticalLayout {
         add(userProfileWithAnswer(userGameState.snapshot(), QuestionType.TEXT));
         add(new Hr());
 
-        List.of("", "😕", "😐", "🙂", "🤩").stream()
-                .map(e -> CleverestComponents.emoji(e))
-                .forEach(e -> add(e));
+        Stream.of("", "😕", "😐", "🙂", "🤩")
+                .map(CleverestComponents::emoji)
+                .forEach(this::add);
 
         final var questions = questionService.findAllByCurrentUserAsModel();
         if (questions.isEmpty()) {

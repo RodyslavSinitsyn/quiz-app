@@ -52,9 +52,9 @@ public class CleverestGameState {
     }
 
     private void initRoundRules() {
-        roundRules.put(1, "В первом раунде будут вопросы на разные темы и 4 варианта ответов.");
-        roundRules.put(2, "Во втором раунде будут вопросы на разные темы, без вариантов ответов.");
-        roundRules.put(3, "В третьем раунде по очереди нужно выбрать тему и ответить на вопрос. За верный ответ дают баллы, за неверный забирают. Количество баллов зависит от сложности вопроса.");
+        roundRules.put(1, "Раунд 1");
+        roundRules.put(2, "Раунд 2");
+        roundRules.put(3, "Раунд 3");
     }
 
     public UserGameState addOrUpdateUser(String gameId,
@@ -94,6 +94,16 @@ public class CleverestGameState {
 
     public List<UserProfile> getAllUserProfiles() {
         return users.values().stream().map(UserGameState::profile).toList();
+    }
+
+    public UserRefreshState getUserRefreshState(String username) {
+        final var userState = getUserState(username);
+        final var currentQuestion = getCurrentQuestion();
+        final var questionNumber = getQuestionNumber() + 1;
+        return new UserRefreshState(currentQuestion,
+                questionNumber,
+                currRoundQuestionsSource.get().size(),
+                userState.isAnswerGiven());
     }
 
     public void putUserStateToHistory(QuestionModel key, UserGameState currUserState) {

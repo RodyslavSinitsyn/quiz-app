@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.runAsync;
+import static org.rsinitsyn.quiz.utils.QuizUtils.readAudioFile;
 
 @Slf4j
 public final class AudioUtils {
@@ -57,7 +58,7 @@ public final class AudioUtils {
     private static Pair<Player, BufferedInputStream> createPlayerAndBuffer(String pathToAudioFile) {
         try {
             BufferedInputStream buffer = new BufferedInputStream(
-                    new FileInputStream(QuizUtils.readAudioFile(pathToAudioFile)));
+                    new FileInputStream(readAudioFile(pathToAudioFile)));
             Player player = new Player(buffer);
             return Pair.of(player, buffer);
         } catch (IOException | JavaLayerException e) {

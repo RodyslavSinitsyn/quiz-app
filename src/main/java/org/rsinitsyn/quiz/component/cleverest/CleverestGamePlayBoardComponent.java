@@ -25,6 +25,7 @@ import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
+import org.rsinitsyn.quiz.model.sound.GameSound;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.*;
 import org.rsinitsyn.quiz.utils.QuizUtils;
@@ -35,7 +36,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.emoji;
 import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory.createQuestionLayout;
 import static org.rsinitsyn.quiz.utils.AudioUtils.playStaticSoundAsync;
 import static org.rsinitsyn.quiz.utils.QuizComponents.appendTextBorder;
@@ -84,18 +84,14 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         if (gameHost) {
             int currRound = broadcaster.getState(gameId).getRoundNumber();
             if (refreshEvent) {
-                // Restore question in midContainer first, then show the "refresh" dialog on top.
-                // When host closes the dialog the question is already visible behind it.
-                restoreCurrentQuestion(currRound);
-                showRoundRules(currRound, "Рефреш страницы.");
+                renderCurrentQuestion();
             } else {
                 showRoundRules(currRound, broadcaster.getState(gameId).getRoundRules().get(currRound));
             }
         } else {
             renderUserPersonalScore();
             if (refreshEvent) {
-                // Re-render the current question so the player doesn't see a blank screen.
-                restoreCurrentQuestion(broadcaster.getState(gameId).getRoundNumber());
+                restoreCurrentQuestion();
             }
         }
         topContainer.setWidthFull();
@@ -110,8 +106,9 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
      * questionRenderedTime — reads the question list directly by index instead.
      * For round 3 (categories), renders the categories table instead of a question.
      */
-    private void restoreCurrentQuestion(int roundNumber) {
+    private void restoreCurrentQuestion() {
         CleverestGameState state = broadcaster.getState(gameId);
+        final var roundNumber = state.getRoundNumber();
         if (roundNumber == 3) {
             // Round 3 is categories-based — nothing to restore here,
             // the RenderCategoriesEvent will re-render on next action.
@@ -121,19 +118,12 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             }
             return;
         }
-        List<QuestionModel> questions = state.getCurrRoundQuestionsSource().get();
-        int idx = state.getQuestionNumber();
-        if (idx >= questions.size()) {
-            log.warn("restoreCurrentQuestion: questionNumber={} out of bounds (size={}), skipping", idx, questions.size());
-            return;
-        }
-        // Read directly — no side effects on questionRenderedTime
-        QuestionModel question = questions.get(idx);
-        log.info("Restoring question on refresh: round={}, idx={}, question={}", roundNumber, idx, question.getText());
-        if (gameHost) {
-            renderTopContainerForHost(state.getAllUserProfiles());
-        }
-        renderQuestionLayout(question, idx + 1, questions.size(), roundNumber);
+        final var userRefreshState = state.getUserRefreshState(getLoggedUser());
+        renderQuestionLayout(userRefreshState.question(),
+                userRefreshState.questionNumber(),
+                userRefreshState.totalQuestionsSize(),
+                roundNumber);
+        midContainer.setEnabled(!userRefreshState.answerGiven());
     }
 
     // -------------------------------------------------------------------------
@@ -141,6 +131,15 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     // -------------------------------------------------------------------------
 
     private void subscribeOnEvents(UI ui) {
+        subscribeOnCommonEvents(ui);
+        if (gameHost) {
+            subscribeOnHostOnlyEvents(ui);
+        } else {
+            subscribeOnPlayerOnlyEvents(ui);
+        }
+    }
+
+    private void subscribeOnCommonEvents(final UI ui) {
         subscriptions.add(broadcaster.subscribe(gameId, UserAnsweredEvent.class, event ->
                 runActionInUi(ui, () -> {
                     if (gameHost) {
@@ -152,26 +151,32 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     if (event.roundNumber() == 3) {
                         runHostAction();
                     } else {
-                        notification(event.username() + " ответил", NotificationVariant.LUMO_CONTRAST);
+                        notification("%s ответил!".formatted(event.username()), NotificationVariant.LUMO_PRIMARY);
                     }
                 })));
-
         subscriptions.add(broadcaster.subscribe(gameId, GetQuestionEvent.class, event ->
-                runActionInUi(ui, () ->
-                        renderQuestion(
-                                event.getQuestion(),
-                                event.getQuestionNumber(),
-                                event.getTotalQuestionsInRound(),
-                                event.getRoundNumber()))));
+                runActionInUi(ui, () -> {
+                            // workaround
+                            final var userState = broadcaster.getState(gameId).getUserState(getLoggedUser());
+                            if (!gameHost && userState.isAnswerGiven()) {
+                                return;
+                            }
+                            renderQuestion(
+                                    event.getQuestion(),
+                                    event.getQuestionNumber(),
+                                    event.getTotalQuestionsInRound(),
+                                    event.getRoundNumber());
+                        }
+                )));
 
         subscriptions.add(broadcaster.subscribe(gameId, RenderCategoriesEvent.class, event ->
                 runActionInUi(ui, () -> {
                     midContainer.removeAll();
                     if (gameHost) {
-                        renderTopContainerForHost(List.of(event.getUser().profile())); // todo: fix 3rd round
+                        renderTopContainerForHost(List.of(event.getUser().profile()));
                         renderCategoriesTable(event.getUser(), event.getData());
                     } else {
-                        if (getLoggedUser().equals(event.getUser().getUsername())) {
+                        if (doneByAuthenticated(event)) {
                             midContainer.add(userInfoLightSpan("Время отвечать!", LumoUtility.TextColor.PRIMARY, CleverestComponents.MOBILE_LARGE_FONT));
                         } else {
                             midContainer.add(userInfoLightSpan("В ожидании вопроса", LumoUtility.TextColor.SECONDARY, CleverestComponents.MOBILE_LARGE_FONT));
@@ -184,22 +189,13 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
         subscriptions.add(broadcaster.subscribe(gameId, GameFinishedEvent.class, event ->
                 runActionInUi(ui, this::renderResults)));
-
-        if (gameHost) {
-            subscribeOnHostOnlyEvents(ui);
-        } else {
-            subscribeOnPlayerOnlyEvents(ui);
-        }
     }
 
     private void subscribeOnPlayerOnlyEvents(UI ui) {
         log.debug("Subscribed on player events: {}", getLoggedUser());
 
         subscriptions.add(broadcaster.subscribe(gameId, UpdatePersonalScoreEvent.class, event ->
-                runActionInUi(ui, () -> {
-                    log.debug("Updating score from event");
-                    renderUserPersonalScore();
-                })));
+                runActionInUi(ui, () -> renderUserPersonalScore())));
 
         subscriptions.add(broadcaster.subscribe(gameId, QuestionChoosenEvent.class, event ->
                 runActionInUi(ui, () -> {
@@ -232,40 +228,27 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                 () -> broadcaster.sendGetQuestionEvent(gameId));
                     });
                 })));
-        subscriptions.add(broadcaster.subscribe(gameId, QuestionGradedEvent.class, event -> {
-            runActionInUi(ui, () -> {
-                if (gameHost) {
-                    updateUserGrade(event.username(), event.getEmoji());
-                }
-            });
-        }));
+        subscriptions.add(broadcaster.subscribe(gameId, QuestionGradedEvent.class, event ->
+                runActionInUi(ui, () -> {
+                    if (gameHost) {
+                        updateUserGrade(event.username(), event.getEmoji());
+                    }
+                })));
+        subscriptions.add(broadcaster.subscribe(gameId, PlaySoundEvent.class, event ->
+                playStaticSoundAsync(event.getSound().path())));
     }
-
-    // -------------------------------------------------------------------------
-    // onAttach / onDetach — subscriptions are NOT managed here anymore.
-    // onDetach still clears subs as a safety net (e.g. if the component is
-    // removed from the layout without a new setState being called).
-    // -------------------------------------------------------------------------
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
-        // Intentionally empty — subscriptions are created in setState() with an
-        // explicit UI reference. Do NOT add subscriptions here.
-        logState("OnAttach (no-op)", true);
+        logState("OnAttach", false);
     }
 
     @Override
     protected void onDetach(DetachEvent detachEvent) {
         logState("OnDetach", true);
-        // Safety net: if this component is detached without a subsequent setState
-        // (e.g. navigating away), clean up to prevent ghost listeners.
         clearSubs();
         logState("OnDetach", false);
     }
-
-    // -------------------------------------------------------------------------
-    // Rendering helpers (unchanged from original)
-    // -------------------------------------------------------------------------
 
     private void renderTopContainerForHost(Collection<UserProfile> userGameStates) {
         if (!gameHost) {
@@ -301,17 +284,20 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     private void showRoundRules(int roundNumber, String rulesText) {
         Div rulesComponent = new Div();
         rulesComponent.setText(rulesText);
-        rulesComponent.addClassNames(LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.SEMIBOLD, LumoUtility.TextAlignment.CENTER);
-        rulesComponent.setWidth("25em");
-        Runnable hostAction = () -> {
-            if (roundNumber == 3) {
-                broadcaster.sendRenderCategoriesEvent(gameId, null, true);
-            } else {
-                broadcaster.sendGetQuestionEvent(gameId);
-            }
-        };
-        openDialog(rulesComponent, "Раунд " + roundNumber, gameHost ? hostAction : () -> {
+        rulesComponent.addClassNames(MOBILE_LARGE_FONT, LumoUtility.TextAlignment.CENTER);
+        openDialog(rulesComponent, "", gameHost ? this::renderCurrentQuestion : () -> {
         });
+    }
+
+    private void renderCurrentQuestion() {
+        if (!gameHost) {
+            return;
+        }
+        if (broadcaster.getState(gameId).getRoundNumber() == 3) {
+            broadcaster.sendRenderCategoriesEvent(gameId, null, true);
+        } else {
+            broadcaster.sendGetQuestionEvent(gameId);
+        }
     }
 
     private void renderQuestion(QuestionModel question, int questionNumber, int totalQuestions, int roundNumber) {
@@ -454,6 +440,9 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         }
         topContainer.removeAll();
         topContainer.add(userProfileWithScore(userState.snapshot(), CleverestComponents.MOBILE_LARGE_FONT));
+        final var emojiSound = emojiSmall(Emoji.SOUND.value);
+        emojiSound.addClickListener(event -> broadcaster.sendPlaySoundEvent(gameId, GameSound.next()));
+        topContainer.add(horizontalLayoutCenter(emojiSound));
         topContainer.add(new Hr());
     }
 

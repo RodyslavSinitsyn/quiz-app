@@ -62,6 +62,10 @@ public final class CleverestComponents {
         return dialog;
     }
 
+    public static Span emojiSmall(String emoji) {
+        return new Span(emoji);
+    }
+
     public static Button emoji(String emoji) {
         final var button = new Button(emoji);
         button.addThemeVariants(ButtonVariant.LUMO_LARGE);

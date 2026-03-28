@@ -10,14 +10,12 @@ import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.cleverest.CleverestGamePlayBoardComponent;
-import org.rsinitsyn.quiz.component.cleverest_old.CleverestGamePlayBoardComponentOld;
 import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.QuizUtils;
-import org.rsinitsyn.quiz.utils.ThemeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +26,6 @@ import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
 import static org.rsinitsyn.quiz.utils.QuizUtils.runActionInUi;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 import static org.rsinitsyn.quiz.utils.ThemeUtils.BLACK_COLOR;
-import static org.rsinitsyn.quiz.utils.ThemeUtils.restoreTheme;
 
 @Route(value = "cleverest/game", layout = MainLayout.class)
 @PageTitle("Cleverest - Игра")
@@ -45,6 +42,7 @@ public class CleverestGamePage extends VerticalLayout
     private String gameId;
     private boolean gameHost;
     private String originalLocation;
+    private boolean isRefresh = false;
     private final List<Registration> subscriptions = new ArrayList<>();
 
     public CleverestGamePage(GameService gameService,
@@ -63,10 +61,10 @@ public class CleverestGamePage extends VerticalLayout
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         logState(this, event.getUI(), "beforeEnter", true, subscriptions);
+        isRefresh = event.isRefreshEvent();
         if (!validateGame(event)) {
             return;
         }
-        restoreTheme();
         final var gameEntity = gameService.findById(gameId);
 
         if (gameEntity.getStatus() == GameStatus.NOT_STARTED) {
@@ -104,7 +102,7 @@ public class CleverestGamePage extends VerticalLayout
         final var state = broadcaster.getState(gameId);
 
         if (!gameHost && !state.userPresent(getLoggedUser())) {
-            infoNotification("Игра уже началась, вы там не участвуете");
+            runActionInUi(event.getUI(), () -> infoNotification("Игра уже началась, вы там не участвуете"));
             event.forwardTo("");
             return;
         }
@@ -121,8 +119,6 @@ public class CleverestGamePage extends VerticalLayout
         }
         final var ui = attachEvent.getUI();
 
-        // При рефреше страница уже содержит children от предыдущего attach
-        boolean isRefresh = !getChildren().findAny().isEmpty();
         removeAll();
 
         final var playBoard = new CleverestGamePlayBoardComponent();
@@ -143,11 +139,11 @@ public class CleverestGamePage extends VerticalLayout
                                 () -> ui.navigate(CleverestResultsPage.class, gameId));
                     }));
 
-            playBoard.addUpdateQuestionGradeEventListener(event ->
+            subscriptions.add(playBoard.addUpdateQuestionGradeEventListener(event ->
                     questionService.updateQuestionGrade(
                             event.question().getId(),
                             event.username(),
-                            event.grade()));
+                            event.grade())));
         } else {
             subscriptions.add(broadcaster.subscribe(gameId,
                     CleverestBroadcaster.GameFinishedEvent.class,

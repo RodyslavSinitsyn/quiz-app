@@ -18,10 +18,17 @@ public enum Emoji {
 
     PARTY("🥳", 4),
     LOVE("😍", 5),
-    AMAZING("🤩", 5);
+    AMAZING("🤩", 5),
+
+    SOUND("\uD83D\uDD0A "); // 🔊
 
     public final String value;
     public final int rating;
+
+    Emoji(final String value) {
+        this.value = value;
+        this.rating = -1;
+    }
 
     public static final List<Emoji> BAD_LIST = List.of(SKULL, DEVIL, SHIT);
     public static final List<Emoji> GOOD_LIST = List.of(POKER_FACE, SLEEPY, GOOD);
