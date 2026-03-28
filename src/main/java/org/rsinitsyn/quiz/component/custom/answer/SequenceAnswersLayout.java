@@ -5,6 +5,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
+import org.rsinitsyn.quiz.model.answer.AnswerResult;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
 import static java.util.stream.IntStream.range;
 import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.horizontalLayoutBetween;
 import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.optionComponent;
+import static org.rsinitsyn.quiz.entity.AnswerStatus.answerStatus;
 
 public class SequenceAnswersLayout extends AbstractAnswersLayout {
 
@@ -65,10 +67,12 @@ public class SequenceAnswersLayout extends AbstractAnswersLayout {
         final var correctCount = (int) range(0, answers.size())
                 .filter(i -> answers.get(i).number() == i)
                 .count();
-        final var correct = correctCount == answers.size();
-        final var selected = answers.stream()
+        final var answers = this.answers.stream()
                 .map(AnswerModel::text)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
-        return new AnswerGivenEvent(selected, correct, correctCount, false);
+       return AnswerGivenEvent.builder()
+                .answers(answers)
+                .result(new AnswerResult(answerStatus(correctCount, answers.size()), answers.size(), correctCount))
+                .build();
     }
 }

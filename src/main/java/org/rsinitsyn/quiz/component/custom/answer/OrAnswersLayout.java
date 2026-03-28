@@ -9,6 +9,8 @@ import org.rsinitsyn.quiz.model.QuestionModel;
 
 import java.util.Collections;
 
+import static org.rsinitsyn.quiz.model.answer.AnswerResult.oneOptionResult;
+
 public class OrAnswersLayout extends AbstractAnswersLayout {
 
     private final RadioButtonGroup<QuestionModel.AnswerModel> radioButtonGroup = new RadioButtonGroup<>();
@@ -33,8 +35,7 @@ public class OrAnswersLayout extends AbstractAnswersLayout {
         var userAnswer = radioButtonGroup.getValue();
         return AnswerGivenEvent.builder()
                 .answers(Collections.singleton(userAnswer.text()))
-                .isCorrect(userAnswer.correct())
-                .points(1)
+                .result(oneOptionResult(userAnswer.correct()))
                 .build();
     }
 }

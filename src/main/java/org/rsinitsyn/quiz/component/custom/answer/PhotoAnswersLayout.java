@@ -6,11 +6,10 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
+import static org.rsinitsyn.quiz.model.answer.AnswerResult.oneOptionResult;
 
 public class PhotoAnswersLayout extends AbstractAnswersLayout {
 
@@ -35,8 +34,7 @@ public class PhotoAnswersLayout extends AbstractAnswersLayout {
         var userAnswer = options.getValue();
         return AnswerGivenEvent.builder()
                 .answers(Set.of(userAnswer.text()))
-                .isCorrect(userAnswer.correct())
-                .points(1)
+                .result(oneOptionResult(userAnswer.correct()))
                 .build();
     }
 }

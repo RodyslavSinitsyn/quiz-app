@@ -1,7 +1,9 @@
 package org.rsinitsyn.quiz.component.custom.answer;
 
 import org.rsinitsyn.quiz.component.custom.LinkAnswersComponent;
+import org.rsinitsyn.quiz.entity.AnswerStatus;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
+import org.rsinitsyn.quiz.model.answer.AnswerResult;
 
 import java.util.stream.Collectors;
 
@@ -30,10 +32,12 @@ public class LinkAnswersLayout extends AbstractAnswersLayout {
                 break;
             }
         }
-        var areCorrect = correctCount == pairs.size();
-        var userAnswers = pairs.stream()
-                .map(pair -> pair.getLeft().text() + " = " + pair.getRight().text())
-                .collect(Collectors.toSet());
-        return new AnswerGivenEvent(userAnswers, areCorrect, correctCount, false);
+        var answerStatus = AnswerStatus.answerStatus(correctCount, pairs.size());
+        return AnswerGivenEvent.builder()
+                .answers(pairs.stream()
+                        .map(pair -> pair.getLeft().text() + " = " + pair.getRight().text())
+                        .collect(Collectors.toSet()))
+                .result(new AnswerResult(answerStatus, pairs.size(), correctCount))
+                .build();
     }
 }

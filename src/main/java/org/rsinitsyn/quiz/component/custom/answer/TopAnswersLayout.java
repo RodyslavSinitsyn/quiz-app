@@ -5,12 +5,15 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import org.rsinitsyn.quiz.entity.AnswerStatus;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
+import org.rsinitsyn.quiz.model.answer.AnswerResult;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
+import static org.rsinitsyn.quiz.entity.AnswerStatus.UNKNOWN;
 
 public class TopAnswersLayout extends AbstractAnswersLayout {
 
@@ -58,9 +61,13 @@ public class TopAnswersLayout extends AbstractAnswersLayout {
 
     @Override
     protected AnswerGivenEvent createAnswerGivenEvent() {
-        Set<String> answerModels = topListLayout.getChildren()
+        final var answers = topListLayout.getChildren()
                 .map(component -> component.getElement().getText())
                 .collect(Collectors.toSet());
-        return new AnswerGivenEvent(answerModels, false, 0, true);
+        return AnswerGivenEvent.builder()
+                .answers(answers)
+                .result(new AnswerResult(UNKNOWN, answers.size() / 2, 0))
+                .manuallyApprove(true)
+                .build();
     }
 }

@@ -5,10 +5,10 @@ public enum AnswerHistory {
     ANSWERED_WRONG,
     NOT_ANSWERED;
 
-    public static AnswerHistory ofAnswerResult(Boolean answerResult) {
-        if (answerResult == null) {
+    public static AnswerHistory ofAnswerResult(Boolean status) {
+        if (status == null) {
             return NOT_ANSWERED;
         }
-        return answerResult ? ANSWERED_CORRECT : ANSWERED_WRONG;
+        return status ? ANSWERED_CORRECT : ANSWERED_WRONG;
     }
 }

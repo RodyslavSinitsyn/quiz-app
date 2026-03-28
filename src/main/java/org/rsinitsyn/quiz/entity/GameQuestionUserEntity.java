@@ -1,17 +1,7 @@
 package org.rsinitsyn.quiz.entity;
 
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MapsId;
-import jakarta.persistence.Table;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "games_questions")
@@ -42,10 +32,12 @@ public class GameQuestionUserEntity {
     @ToString.Exclude
     private UserEntity user;
 
-    // Null - not answered yet
-    // True - correct answer
-    // False - incorrect answer
-    private Boolean answered;
+    @Enumerated(EnumType.STRING)
+    private AnswerStatus answerStatus;
     private String answerText;
     private int orderNumber;
+
+    public Boolean getAnswered() {
+        return this.answerStatus.boolVal;
+    }
 }

@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.custom.question.BaseQuestionLayout;
 import org.rsinitsyn.quiz.component.custom.question.BaseQuestionLayout.QuestionAnsweredEvent;
 import org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory;
+import org.rsinitsyn.quiz.entity.AnswerStatus;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.model.AnswerHint;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
@@ -271,6 +272,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         private final QuestionModel question;
         private final Set<String> answers;
         private final boolean correct;
+        private final AnswerStatus answerStatus;
 
         public SubmitUserAnswer(QuizGamePlayBoardComponent source,
                                 QuestionModel question,
@@ -280,6 +282,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
             this.question = question;
             this.answers = answers;
             this.correct = correct;
+            this.answerStatus = AnswerStatus.answerStatus(correct);
         }
     }
 

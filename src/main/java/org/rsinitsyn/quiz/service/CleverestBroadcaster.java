@@ -13,7 +13,9 @@ import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.UserEvent;
 import org.rsinitsyn.quiz.component.custom.Emoji;
+import org.rsinitsyn.quiz.entity.AnswerStatus;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.answer.AnswerResult;
 import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.model.cleverest.UserProfile;
@@ -132,11 +134,11 @@ public class CleverestBroadcaster {
                                                    String username,
                                                    QuestionModel questionModel,
                                                    String answerAsText,
-                                                   Supplier<Boolean> isCorrect) {
+                                                   Supplier<AnswerResult> answerResultProvider) {
         log.info("User gave answer: {} = {}", username, answerAsText);
         final var state = getState(gameId);
         final var userGameState = getState(gameId).getUserState(username);
-        userGameState.submitAnswer(answerAsText, state.getQuestionRenderedTime(), isCorrect);
+        userGameState.submitAnswer(answerAsText, state.getQuestionRenderedTime(), answerResultProvider);
         eventBuses.get(gameId).fireEvent(
                 new UserAnsweredEvent(gameId,
                         userGameState.getUsername(),

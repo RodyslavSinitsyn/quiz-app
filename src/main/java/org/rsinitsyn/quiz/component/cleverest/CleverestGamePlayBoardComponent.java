@@ -220,7 +220,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                 event.getRevealScoreAfter(),
                                 approveManually,
                                 uName -> {
-                                    broadcaster.getState(gameId).getUserState(uName).increaseScore();
+                                    broadcaster.getState(gameId).getUserState(uName).increaseScoreAndMarkCorrect(1);
                                     broadcaster.sendUpdatePersonalScoreEvent(gameId);
                                 },
                                 () -> {
@@ -326,7 +326,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     getLoggedUser(),
                     questionModel,
                     String.join(", ", event.getAnswerGivenEvent().getAnswers()),
-                    () -> event.getAnswerGivenEvent().isCorrect());
+                    () -> event.getAnswerGivenEvent().getResult());
 
             QuizUtils.wait(1).thenRun(() ->
                     runActionInUi(getUI(), () -> openQuestionGradeDialog(questionModel)));
@@ -403,7 +403,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 question.setAlreadyAnswered(true);
                 // 3rd round
                 showCorrectAnswer(question, List.of(userToAnswer.snapshot()), false, 0, true, uName -> {
-                    userToAnswer.increaseScore(question.getPoints());
+                    userToAnswer.increaseScoreAndMarkCorrect(question.getPoints());
                     approved.set(true);
                     broadcaster.sendUpdatePersonalScoreEvent(gameId);
                 }, () -> {

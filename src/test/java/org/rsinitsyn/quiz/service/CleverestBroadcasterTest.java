@@ -8,6 +8,7 @@ import org.rsinitsyn.quiz.component.custom.Emoji;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
+import org.rsinitsyn.quiz.model.answer.AnswerResult;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
@@ -27,6 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.rsinitsyn.quiz.entity.AnswerStatus.*;
 
 class CleverestBroadcasterTest {
 
@@ -124,7 +126,7 @@ class CleverestBroadcasterTest {
         addUser("Alice");
 
         // when
-        broadcaster.sendSubmitAnswerEventAndCheckScore(gameId, "Alice", q, "4", () -> true);
+        broadcaster.sendSubmitAnswerEventAndCheckScore(gameId, "Alice", q, "4", () -> new AnswerResult(CORRECT, 3, 3));
 
         // then
         baseAssertions();
@@ -132,10 +134,9 @@ class CleverestBroadcasterTest {
         final var alice = state.getUserState("Alice");
 
         assertSoftly(softly -> {
-            softly.assertThat(alice.getScore()).isEqualTo(1);
+            softly.assertThat(alice.getScore()).isEqualTo(3);
             softly.assertThat(alice.getCorrectAnswersCount()).isEqualTo(1);
-            softly.assertThat(alice.isLastWasCorrect()).isTrue();
-
+            softly.assertThat(alice.getLastAnswerStatus()).isEqualTo(CORRECT);
             softly.assertThat(alice.getLastAnswerText()).isEqualTo("4");
             softly.assertThat(alice.isAnswerGiven()).isTrue();
             softly.assertThat(alice.getLastResponseTimeMs()).isGreaterThanOrEqualTo(0);
@@ -146,7 +147,7 @@ class CleverestBroadcasterTest {
     }
 
     @Test
-    void sends_user_answered_events_given_one_of_two_users_answered_wrong() {
+    void sends_user_answered_events_given_alice_wrong_bob_not_answered() {
         // given
         final var q = aQuestionModel().build();
         createStateWithQuestions(List.of(q));
@@ -154,21 +155,29 @@ class CleverestBroadcasterTest {
         addUser("Bob");
 
         // when
-        broadcaster.sendSubmitAnswerEventAndCheckScore(gameId, "Alice", q, "22", () -> false);
+        broadcaster.sendSubmitAnswerEventAndCheckScore(gameId, "Alice", q, "22", () -> new AnswerResult(WRONG, 1, 0));
 
         // then
         baseAssertions();
         final var state = broadcaster.getState(gameId);
         final var alice = state.getUserState("Alice");
+        final var bob = state.getUserState("Bob");
 
         assertSoftly(softly -> {
             softly.assertThat(alice.getScore()).isEqualTo(0);
             softly.assertThat(alice.getCorrectAnswersCount()).isEqualTo(0);
-            softly.assertThat(alice.isLastWasCorrect()).isFalse();
-
+            softly.assertThat(alice.getLastAnswerStatus()).isEqualTo(WRONG);
             softly.assertThat(alice.getLastAnswerText()).isEqualTo("22");
             softly.assertThat(alice.isAnswerGiven()).isTrue();
             softly.assertThat(alice.getLastResponseTimeMs()).isGreaterThanOrEqualTo(0);
+
+            softly.assertThat(bob.getScore()).isEqualTo(0);
+            softly.assertThat(bob.getCorrectAnswersCount()).isEqualTo(0);
+            softly.assertThat(bob.getLastAnswerStatus()).isEqualTo(UNKNOWN);
+            softly.assertThat(bob.getLastAnswerText()).isNull();
+            softly.assertThat(bob.isAnswerGiven()).isFalse();
+            softly.assertThat(bob.getLastResponseTimeMs()).isGreaterThanOrEqualTo(0);
+
         });
         // and
         then(eventBus).should().fireEvent(new UserAnsweredEvent(gameId, "Alice", "0.0 сек.", 1));
@@ -224,8 +233,8 @@ class CleverestBroadcasterTest {
         // given
         final var q = aQuestionModel().build();
         createStateWithQuestions(List.of(q));
-        addUser("Alice", "4", true);
-        addUser("Bob", "22", false);
+        addUser("Alice", "4", new AnswerResult(CORRECT, 1, 1));
+        addUser("Bob", "22", new AnswerResult(WRONG, 1, 1));
 
         // pre-condition
         assertSoftly(softly -> {
@@ -233,7 +242,7 @@ class CleverestBroadcasterTest {
             softly.assertThat(alice.getScore()).isEqualTo(1);
             softly.assertThat(alice.getCorrectAnswersCount()).isEqualTo(1);
             softly.assertThat(alice.isAnswerGiven()).isTrue();
-            softly.assertThat(alice.isLastWasCorrect()).isTrue();
+            softly.assertThat(alice.getLastAnswerStatus()).isEqualTo(CORRECT);
             softly.assertThat(alice.getLastAnswerText()).isEqualTo("4");
             softly.assertThat(alice.getLastResponseTimeMs()).isNotNegative();
 
@@ -241,7 +250,7 @@ class CleverestBroadcasterTest {
             softly.assertThat(bob.getScore()).isEqualTo(0);
             softly.assertThat(bob.getCorrectAnswersCount()).isEqualTo(0);
             softly.assertThat(bob.isAnswerGiven()).isTrue();
-            softly.assertThat(bob.isLastWasCorrect()).isFalse();
+            softly.assertThat(bob.getLastAnswerStatus()).isEqualTo(WRONG);
             softly.assertThat(bob.getLastAnswerText()).isEqualTo("22");
             softly.assertThat(bob.getLastResponseTimeMs()).isNotNegative();
 
@@ -262,14 +271,14 @@ class CleverestBroadcasterTest {
             softly.assertThat(alice.getScore()).isEqualTo(1);
             softly.assertThat(alice.getCorrectAnswersCount()).isEqualTo(1);
             softly.assertThat(alice.isAnswerGiven()).isFalse();
-            softly.assertThat(alice.isLastWasCorrect()).isFalse();
+            softly.assertThat(alice.getLastAnswerStatus()).isEqualTo(UNKNOWN);
             softly.assertThat(alice.getLastAnswerText()).isEmpty();
             softly.assertThat(alice.getLastResponseTimeMs()).isEqualTo(0);
 
             softly.assertThat(bob.getScore()).isEqualTo(0);
             softly.assertThat(bob.getCorrectAnswersCount()).isEqualTo(0);
             softly.assertThat(bob.isAnswerGiven()).isFalse();
-            softly.assertThat(bob.isLastWasCorrect()).isFalse();
+            softly.assertThat(bob.getLastAnswerStatus()).isEqualTo(UNKNOWN);
             softly.assertThat(bob.getLastAnswerText()).isEmpty();
             softly.assertThat(bob.getLastResponseTimeMs()).isEqualTo(0);
         });
@@ -285,10 +294,10 @@ class CleverestBroadcasterTest {
                 q,
                 List.of(new UserStateSnapshot(
                                 new UserProfile("Alice", color, null),
-                                "4", true, true, 0, 1, 1, of(q.getId())),
+                                "4", CORRECT, true, 0, 1, 1, of(q.getId())),
                         new UserStateSnapshot(
                                 new UserProfile("Bob", color, null),
-                                "22", false, true, 0, 0, 2, of(q.getId())))));
+                                "22", WRONG, true, 0, 0, 2, of(q.getId())))));
     }
 
     @Test
@@ -369,9 +378,9 @@ class CleverestBroadcasterTest {
         return broadcaster.getState(gameId).addOrUpdateUser(gameId, username, color, null, "", "");
     }
 
-    private UserGameState addUser(String username, String answer, boolean correct) {
+    private UserGameState addUser(String username, String answer, AnswerResult result) {
         final var userGameState = addUser(username);
-        userGameState.submitAnswer(answer, LocalDateTime.now(), () -> correct);
+        userGameState.submitAnswer(answer, LocalDateTime.now(), () -> result);
         return userGameState;
     }
 

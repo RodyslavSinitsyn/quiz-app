@@ -12,8 +12,10 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.optionComponent;
+import static org.rsinitsyn.quiz.entity.AnswerStatus.answerStatus;
 import static org.rsinitsyn.quiz.model.AnswerHint.HALF;
 import static org.rsinitsyn.quiz.model.AnswerHint.THREE;
+import static org.rsinitsyn.quiz.model.answer.AnswerResult.oneOptionResult;
 
 public class AnswersLayout extends AbstractAnswersLayout {
     private final ListBox<QuestionModel.AnswerModel> options = new ListBox<>();
@@ -37,7 +39,7 @@ public class AnswersLayout extends AbstractAnswersLayout {
     protected AnswerGivenEvent createAnswerGivenEvent() {
         return AnswerGivenEvent.builder()
                 .answers(Collections.singleton(options.getValue().text()))
-                .isCorrect(options.getValue().correct())
+                .result(oneOptionResult(options.getValue().correct()))
                 .build();
     }
 

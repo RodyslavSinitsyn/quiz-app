@@ -14,6 +14,7 @@ import org.rsinitsyn.quiz.model.AnswerHint;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.HintsState;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.answer.AnswerResult;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -89,10 +90,13 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
     @Builder
     public static class AnswerGivenEvent extends StubEvent {
         private final Set<String> answers;
-        private final boolean isCorrect;
-        private final int points;
+        protected final AnswerResult result;
         @Builder.Default
-        private boolean manuallyApprove = false;
+        private final boolean manuallyApprove = false;
+
+        public boolean isCorrect() {
+            return result.status().correct();
+        }
     }
 
     @Getter

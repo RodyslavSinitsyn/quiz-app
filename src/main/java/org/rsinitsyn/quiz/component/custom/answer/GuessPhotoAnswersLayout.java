@@ -73,6 +73,7 @@ public class GuessPhotoAnswersLayout extends AbstractAnswersLayout {
     @Override
     protected AnswerGivenEvent createAnswerGivenEvent() {
         final var points = photoHints.size() - currentHintIndex;
-        return new AnswerGivenEvent(Set.of(answerField.getValue()), false, points, true);
+        return null;
+//        return new AnswerGivenEvent(Set.of(answerField.getValue()), false, points, true);
     }
 }

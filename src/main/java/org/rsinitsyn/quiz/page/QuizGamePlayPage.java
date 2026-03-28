@@ -15,7 +15,6 @@ import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.quiz.QuizGamePlayBoardComponent;
-import org.rsinitsyn.quiz.component.quiz.QuizGamePlayBoardComponent.SubmitUserAnswer;
 import org.rsinitsyn.quiz.component.quiz.QuizGameResultComponent;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
@@ -107,7 +106,7 @@ public class QuizGamePlayPage extends VerticalLayout implements HasUrlParameter<
                         gameState.getPlayerName(),
                         event.getQuestion(),
                         event.getAnswers().stream().toList(),
-                        event::isCorrect)));
+                        event::getAnswerStatus)));
         log.trace("onAttach. subscribe {}", subscriptions.size());
     }
 

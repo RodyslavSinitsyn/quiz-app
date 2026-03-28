@@ -2,6 +2,8 @@ package org.rsinitsyn.quiz.model.cleverest;
 
 import lombok.*;
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.rsinitsyn.quiz.entity.AnswerStatus;
+import org.rsinitsyn.quiz.model.answer.AnswerResult;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -10,18 +12,18 @@ import java.util.function.Supplier;
 import static java.time.LocalDateTime.now;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.util.Optional.empty;
+import static org.rsinitsyn.quiz.entity.AnswerStatus.*;
 import static org.rsinitsyn.quiz.utils.QuizUtils.divide;
 
 @Getter
-@AllArgsConstructor
-@NoArgsConstructor
-@EqualsAndHashCode(of = {"profile", "lastWasCorrect", "lastAnswerText", "score", "correctAnswersCount", "answerGiven"})
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@EqualsAndHashCode(of = {"profile", "lastAnswerResult", "lastAnswerText", "score", "correctAnswersCount", "answerGiven"})
 @ToString(exclude = "bets")
 public class UserGameState implements Comparable<UserGameState> {
     @Getter(AccessLevel.NONE)
     private UserProfile profile;
 
-    private boolean lastWasCorrect;
+    private AnswerStatus lastAnswerStatus;
     private String lastAnswerText;
     @Setter
     private int lastPosition;
@@ -39,6 +41,7 @@ public class UserGameState implements Comparable<UserGameState> {
                                               byte[] photo) {
         final var userGameState = new UserGameState();
         userGameState.profile = new UserProfile(username, color, photo);
+        userGameState.lastAnswerStatus = UNKNOWN;
         return userGameState;
     }
 
@@ -60,15 +63,22 @@ public class UserGameState implements Comparable<UserGameState> {
 
     public void submitAnswer(String answerText,
                              LocalDateTime questionRenderTime,
-                             Supplier<Boolean> isCorrect) {
+                             Supplier<AnswerResult> answerResult) {
         if (answerGiven) {
             return;
         }
         lastAnswerText = answerText;
         answerGiven = true;
         lastResponseTimeMs = MILLIS.between(questionRenderTime, now());
-        if (isCorrect.get()) {
-            increaseScore();
+
+        final var result = answerResult.get();
+        if (result.status() == UNKNOWN) {
+            return;
+        }
+        if (result.status().correct()) {
+            increaseScoreAndMarkCorrect(result.correctCount());
+        } else {
+            this.lastAnswerStatus = WRONG;
         }
     }
 
@@ -77,7 +87,7 @@ public class UserGameState implements Comparable<UserGameState> {
     }
 
     public void prepareForNext() {
-        lastWasCorrect = false;
+        lastAnswerStatus = UNKNOWN;
         lastAnswerText = "";
         answerGiven = false;
         lastResponseTimeMs = 0;
@@ -87,21 +97,15 @@ public class UserGameState implements Comparable<UserGameState> {
         betScore++;
     }
 
-    public void increaseScore() {
-        this.score++;
-        this.correctAnswersCount++;
-        this.lastWasCorrect = true;
-    }
-
-    public void increaseScore(int score) {
+    public void increaseScoreAndMarkCorrect(int score) {
         this.score += score;
         this.correctAnswersCount++;
-        this.lastWasCorrect = true;
+        this.lastAnswerStatus = CORRECT; // todo: better logic to handle partial
     }
 
     public void decreaseScore(int score) {
         this.score -= score;
-        this.lastWasCorrect = false;
+        this.lastAnswerStatus = WRONG;
     }
 
     public int totalScore() {
@@ -136,7 +140,7 @@ public class UserGameState implements Comparable<UserGameState> {
     }
 
     public UserStateSnapshot snapshot(Optional<UUID> questionId) {
-        return new UserStateSnapshot(profile, lastAnswerText, lastWasCorrect,
+        return new UserStateSnapshot(profile, lastAnswerText, lastAnswerStatus,
                 answerGiven, lastResponseTimeMs, score, lastPosition, questionId);
     }
 

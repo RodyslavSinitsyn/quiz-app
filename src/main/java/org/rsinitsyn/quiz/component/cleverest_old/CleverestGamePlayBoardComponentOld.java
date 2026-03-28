@@ -7,7 +7,6 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.shared.Registration;
@@ -219,7 +218,7 @@ public class CleverestGamePlayBoardComponentOld extends VerticalLayout {
                                 event.getRevealScoreAfter(),
                                 approveManually,
                                 uName -> {
-                                    broadcaster.getState(gameId).getUserState(uName).increaseScore();
+//                                    broadcaster.getState(gameId).getUserState(uName).increaseScoreAndMarkCorrect();
                                     broadcaster.sendUpdatePersonalScoreEvent(gameId);
                                 },
                                 () -> {
@@ -323,11 +322,11 @@ public class CleverestGamePlayBoardComponentOld extends VerticalLayout {
                 .host(gameHost)
                 .imageHeight(imageHeight));
         questionLayout.addAnsweredListener(event -> {
-            broadcaster.sendSubmitAnswerEventAndCheckScore(gameId,
-                    getLoggedUser(),
-                    questionModel,
-                    String.join(", ", event.getAnswerGivenEvent().getAnswers()),
-                    () -> event.getAnswerGivenEvent().isCorrect());
+//            broadcaster.sendSubmitAnswerEventAndCheckScore(gameId,
+//                    getLoggedUser(),
+//                    questionModel,
+//                    String.join(", ", event.getAnswerGivenEvent().getAnswers()),
+//                    () -> event.getAnswerGivenEvent().isCorrect());
         });
         midContainer.add(questionLayout);
     }
@@ -380,7 +379,7 @@ public class CleverestGamePlayBoardComponentOld extends VerticalLayout {
                 AtomicBoolean approved = new AtomicBoolean(false);
                 question.setAlreadyAnswered(true);
                 showCorrectAnswer(question, List.of(userToAnswer.snapshot()), false, 0, true, uName -> {
-                    userToAnswer.increaseScore(question.getPoints());
+                    userToAnswer.increaseScoreAndMarkCorrect(question.getPoints());
                     approved.set(true);
                     broadcaster.sendUpdatePersonalScoreEvent(gameId);
                 }, () -> {

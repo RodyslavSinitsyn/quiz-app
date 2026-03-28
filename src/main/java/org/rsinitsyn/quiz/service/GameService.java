@@ -22,6 +22,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static org.rsinitsyn.quiz.entity.AnswerStatus.UNKNOWN;
+
 @Observed(name = "gameService")
 @Service
 @RequiredArgsConstructor
@@ -62,14 +64,16 @@ public class GameService {
     }
 
     @Transactional
-    public void submitAnswersBatch(String gameId, QuestionModel question, List<UserStateSnapshot> userAnswers) {
+    public void submitAnswersBatch(String gameId,
+                                   QuestionModel question,
+                                   List<UserStateSnapshot> userAnswers) {
         userAnswers.forEach(answerSnapshot -> {
             submitAnswers(
                     gameId,
                     answerSnapshot.username(),
                     question,
                     Collections.singletonList(answerSnapshot.answerText()),
-                    () -> answerSnapshot.answerGiven() ? answerSnapshot.correct() : null);
+                    answerSnapshot::answerStatus);
         });
     }
 
@@ -78,7 +82,7 @@ public class GameService {
                               String playerName,
                               QuestionModel questionModel,
                               List<String> answersList,
-                              Supplier<Boolean> correctAnswerProvider) {
+                              Supplier<AnswerStatus> answerStatusSupplier) {
         UserEntity user = userService.findByUsername(playerName);
         var primaryKey = new GameQuestionUserId(
                 UUID.fromString(gameId),
@@ -87,7 +91,7 @@ public class GameService {
         Optional<GameQuestionUserEntity> optEntity = gameQuestionUserDao.findById(primaryKey);
         if (optEntity.isPresent()) {
             GameQuestionUserEntity persistent = optEntity.get();
-            persistent.setAnswered(correctAnswerProvider.get());
+            persistent.setAnswerStatus(answerStatusSupplier.get());
             persistent.setAnswerText(String.join(",", answersList));
 
             gameQuestionUserDao.save(persistent);
@@ -97,7 +101,7 @@ public class GameService {
             newEntity.setQuestion(questionService.findByIdLazy(questionModel.getId()));
             newEntity.setUser(user);
             newEntity.setGame(findById(gameId));
-            newEntity.setAnswered(correctAnswerProvider.get());
+            newEntity.setAnswerStatus(answerStatusSupplier.get());
             newEntity.setAnswerText(String.join(",", answersList));
             newEntity.setOrderNumber(gameQuestionUserDao.getMaxOrderNumber(primaryKey.getGameId()) + 1);
             gameQuestionUserDao.save(newEntity);
@@ -142,7 +146,7 @@ public class GameService {
                     UUID.fromString(id),
                     questionModel.getId(),
                     user.getId()));
-            gameQuestionUserEntity.setAnswered(null);
+            gameQuestionUserEntity.setAnswerStatus(UNKNOWN);
             gameQuestionUserEntity.setOrderNumber(questionOrder.getAndIncrement());
             gameQuestionUserEntity.setGame(gameEntity);
             gameQuestionUserEntity.setUser(user);
@@ -176,7 +180,7 @@ public class GameService {
                 gameQuestionUserEntity.setUser(user);
                 gameQuestionUserEntity.setQuestion(questionService.findByIdLazy(questionModel.getId()));
                 gameQuestionUserEntity.setOrderNumber(qCounter.getAndIncrement());
-                gameQuestionUserEntity.setAnswered(null);
+                gameQuestionUserEntity.setAnswerStatus(UNKNOWN);
 
                 entities.add(gameQuestionUserEntity);
             });

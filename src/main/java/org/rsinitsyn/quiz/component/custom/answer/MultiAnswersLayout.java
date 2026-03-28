@@ -9,10 +9,13 @@ import org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents;
 import org.rsinitsyn.quiz.model.AnswerHint;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.answer.AnswerResult;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.rsinitsyn.quiz.entity.AnswerStatus.answerStatus;
 
 public class MultiAnswersLayout extends AbstractAnswersLayout {
 
@@ -37,17 +40,14 @@ public class MultiAnswersLayout extends AbstractAnswersLayout {
     @Override
     protected AnswerGivenEvent createAnswerGivenEvent() {
         var userAnswers = multiAnswerListBox.getSelectedItems();
-        long correctAnswersCount = question.getAnswers().stream().filter(QuestionModel.AnswerModel::correct).count();
-        int userCorrectAnswersCount = (int) userAnswers.stream().filter(QuestionModel.AnswerModel::correct).count();
-        boolean userHasOnlyCorrectAnswers = userCorrectAnswersCount == userAnswers.size();
-        boolean isCorrect = userHasOnlyCorrectAnswers && correctAnswersCount == userCorrectAnswersCount;
+        var maxCount = (int) question.getAnswers().stream().filter(QuestionModel.AnswerModel::correct).count();
+        var correctCount = (int) userAnswers.stream().filter(QuestionModel.AnswerModel::correct).count();
 
         return AnswerGivenEvent.builder()
-                .answers(multiAnswerListBox.getSelectedItems().stream()
+                .answers(userAnswers.stream()
                         .map(QuestionModel.AnswerModel::text)
                         .collect(Collectors.toSet()))
-                .isCorrect(isCorrect)
-                .points(userCorrectAnswersCount)
+                .result(new AnswerResult(answerStatus(correctCount, maxCount), maxCount, correctCount))
                 .build();
     }
 
