@@ -416,3 +416,33 @@ databaseChangeLog:
                     foreignKeyName: question_hints_question_id_fk
                     referencedTableName: questions
                     referencedColumnNames: id
+  - changeSet:
+      id: 2-games_questions-answer-result
+      author: rsinitsyn
+      comment: Migrate answered boolean column to answer_result enum
+      labels: games,questions
+      runAlways: false
+      runOnChange: false
+      changes:
+        - addColumn:
+            tableName: games_questions
+            columns:
+              - column:
+                  name: answer_result
+                  type: VARCHAR(50)
+        - sql:
+            sql: |
+              UPDATE games_questions
+              SET answer_result = CASE
+                  WHEN answered = TRUE THEN 'CORRECT'
+                  WHEN answered = FALSE THEN 'WRONG'
+                  ELSE 'UNKNOWN'
+              END;
+        - addNotNullConstraint:
+            tableName: games_questions
+            columnName: answer_result
+            columnDataType: VARCHAR(50)
+      rollback:
+        - dropColumn:
+            tableName: games_questions
+            columnName: answer_result

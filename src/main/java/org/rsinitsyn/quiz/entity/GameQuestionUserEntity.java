@@ -33,8 +33,11 @@ public class GameQuestionUserEntity {
     private UserEntity user;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "answer_result")
     private AnswerStatus answerStatus;
     private String answerText;
+    @Getter(AccessLevel.NONE)
+    private Boolean answered;
     private int orderNumber;
 
     public Boolean getAnswered() {
