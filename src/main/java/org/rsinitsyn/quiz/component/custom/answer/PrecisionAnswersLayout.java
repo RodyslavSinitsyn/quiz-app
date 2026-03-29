@@ -44,7 +44,7 @@ public class PrecisionAnswersLayout extends AbstractAnswersLayout {
         if (diff == 0) {
             result = new AnswerResult(CORRECT, 1, 1);
         } else if (diff <= question.getValidRange()) {
-            result = new AnswerResult(PARTIAL, 1, 0);
+            result = new AnswerResult(PARTIAL, 1, 1);
         }
 
         return AnswerGivenEvent.builder()

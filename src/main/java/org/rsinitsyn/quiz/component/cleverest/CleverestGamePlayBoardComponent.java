@@ -39,8 +39,7 @@ import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
 import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory.createQuestionLayout;
 import static org.rsinitsyn.quiz.utils.AudioUtils.playStaticSoundAsync;
 import static org.rsinitsyn.quiz.utils.QuizComponents.appendTextBorder;
-import static org.rsinitsyn.quiz.utils.QuizUtils.doneByAuthenticated;
-import static org.rsinitsyn.quiz.utils.QuizUtils.runActionInUi;
+import static org.rsinitsyn.quiz.utils.QuizUtils.*;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
 @Slf4j
@@ -70,7 +69,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                          boolean gameHost,
                          boolean refreshEvent,
                          UI ui) {
-        logState("SetState", true);
+        logState(this, ui, "SetState", true, subscriptions);
         // Always clear first — guards against double-attach during @PreserveOnRefresh refresh cycle
         clearSubs();
 
@@ -97,7 +96,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         topContainer.setWidthFull();
         midContainer.setWidthFull();
         add(topContainer, midContainer);
-        logState("SetState", false);
+        logState(this, ui, "SetState", false, subscriptions);
     }
 
     /**
@@ -240,14 +239,14 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
-        logState("OnAttach", false);
+        logState(this, attachEvent.getUI(), "onAttach", false, subscriptions);
     }
 
     @Override
     protected void onDetach(DetachEvent detachEvent) {
-        logState("OnDetach", true);
+        logState(this, detachEvent.getUI(), "OnDetach", true, subscriptions);
         clearSubs();
-        logState("OnDetach", false);
+        logState(this, detachEvent.getUI(), "OnDetach", false, subscriptions);
     }
 
     private void renderTopContainerForHost(Collection<UserProfile> userGameStates) {
@@ -543,11 +542,6 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     private void clearSubs() {
         subscriptions.forEach(Registration::remove);
         subscriptions.clear();
-    }
-
-    private void logState(String action, boolean start) {
-        log.info("[FIX][PlayBoardComponent={}] {} [{}], User [{}], UI [{}], Subs size=[{}], items[{}]",
-                this.hashCode(), start ? "Start" : "End", action, getLoggedUser(), getUI().map(Object::hashCode).orElse(-1), subscriptions.size(), subscriptions);
     }
 
     public class GamePlayboardEvent extends ComponentEvent<CleverestGamePlayBoardComponent> {

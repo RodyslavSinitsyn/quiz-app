@@ -6,7 +6,6 @@
         </encoder>
     </appender>
 
-    <logger name="org.rsinitsyn.quiz" level="DEBUG"/>
     <logger name="io.opentelemetry.exporter.zipkin" level="OFF"/>
 
     <root level="INFO">

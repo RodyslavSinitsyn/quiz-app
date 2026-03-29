@@ -142,7 +142,7 @@ public final class QuizUtils {
                                 String action,
                                 boolean start,
                                 Collection<?> subs) {
-        log.info("[FIX][{}={}] {} [{}], User [{}], UI [{}], Subs size=[{}], items[{}]",
+        log.debug("[DEEP][{}={}] {} [{}], User [{}], UI [{}], Subs size=[{}], items[{}]",
                 component.getClass().getSimpleName(), component.hashCode(),
                 start ? "Start" : "End", action, getLoggedUser(),
                 ui.map(Object::hashCode).orElse(-1), subs.size(),

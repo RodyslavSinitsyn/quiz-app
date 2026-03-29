@@ -74,9 +74,9 @@ public class LabsPage extends VerticalLayout {
 
             sequenceQuestion.addAnsweredListener(e -> {
                 final var event = e.getAnswerGivenEvent();
-                final var text = "%s, %b, %d".formatted(
+                final var text = "%s, %s, %d".formatted(
                         String.join(", ", event.getAnswers()),
-                        event.isCorrect(),
+                        event.getResult(),
                         0);
                 notification(text, LUMO_CONTRAST);
             });

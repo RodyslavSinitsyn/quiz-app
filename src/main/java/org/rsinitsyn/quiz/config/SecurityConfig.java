@@ -34,7 +34,8 @@ public class SecurityConfig extends VaadinWebSecurity {
         // Configure your static resources with public access before calling
         // super.configure(HttpSecurity) as it adds final anyRequest matcher
         http.authorizeHttpRequests(auth -> {
-            auth.requestMatchers(new AntPathRequestMatcher("/public/**")).permitAll();
+            auth.requestMatchers("/public/**").permitAll();
+            auth.requestMatchers("/actuator/**").permitAll();
             auth.requestMatchers("/login/**").anonymous();
         });
         super.configure(http);

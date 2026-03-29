@@ -25,13 +25,9 @@ public class LinkAnswersLayout extends AbstractAnswersLayout {
     @Override
     protected AnswerGivenEvent createAnswerGivenEvent() {
         var pairs = component.getPairs(); // TODO: For now true if get all the matches
-        var correctCount = 0;
-        for (var pair : pairs) {
-            if (pair.getLeft().number() == pair.getRight().number()) {
-                correctCount++;
-                break;
-            }
-        }
+        var correctCount = (int) pairs.stream()
+                .filter(pair -> pair.getLeft().correct() == pair.getRight().correct())
+                .count();
         var answerStatus = AnswerStatus.answerStatus(correctCount, pairs.size());
         return AnswerGivenEvent.builder()
                 .answers(pairs.stream()

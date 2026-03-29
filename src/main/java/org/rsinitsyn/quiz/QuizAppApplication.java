@@ -10,7 +10,6 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.lang.management.ManagementFactory;
-import java.util.List;
 
 @SpringBootApplication
 @EnableAspectJAutoProxy
