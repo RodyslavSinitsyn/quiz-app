@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.rsinitsyn.quiz.utils.QuizComponents.*;
-import static org.rsinitsyn.quiz.utils.QuizUtils.createStreamResourceForPhoto;
 
 public final class CleverestComponents {
 
@@ -314,7 +313,8 @@ public final class CleverestComponents {
 
     public static Image image(String filename, String height) {
         Image image = new Image();
-        image.setSrc(createStreamResourceForPhoto(filename));
+        image.setSrc("/quiz-images/%s".formatted(filename));
+//        image.setSrc(createStreamResourceForPhoto(filename));
         image.addClassName("quiz-photo");
         if (height != null) {
             image.setMaxHeight(height);
