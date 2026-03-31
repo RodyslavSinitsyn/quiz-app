@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.rsinitsyn.quiz.component.UserEvent;
+import org.rsinitsyn.quiz.component.custom.event.UserEvent;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;

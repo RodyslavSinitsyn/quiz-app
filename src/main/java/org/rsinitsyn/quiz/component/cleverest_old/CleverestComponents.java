@@ -22,12 +22,16 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import org.rsinitsyn.quiz.component.custom.Emoji;
+import org.rsinitsyn.quiz.entity.AnswerStatus;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.rsinitsyn.quiz.utils.QuizComponents.*;
@@ -80,7 +84,7 @@ public final class CleverestComponents {
 
     public static Span smallTextSpan(String text) {
         Span span = new Span(text);
-        span.addClassNames(LumoUtility.FontWeight.LIGHT, MOBILE_SMALL_FONT);
+        span.addClassNames(MOBILE_MEDIUM_FONT);
         return span;
     }
 
@@ -106,7 +110,7 @@ public final class CleverestComponents {
         if (questionType.equals(QuestionType.PHOTO)) {
             userAnswer.add(largeAvatar(userStateSnapshot.answerText()));
         } else {
-            userAnswer.add(" = [%s]".formatted(userStateSnapshot.answerText()));
+            userAnswer.add(userStateSnapshot.answerText());
         }
         userAnswer.addClassNames(classes);
         final var userProfile = userProfile(userStateSnapshot.profile(), classes);
@@ -246,14 +250,15 @@ public final class CleverestComponents {
 
     // Icons
     public static Icon doneIcon() {
-        Icon icon = VaadinIcon.CHECK.create();
-        icon.getElement().getThemeList().add("badge success");
-        return icon;
+        return iconWithBadge(VaadinIcon.CHECK.create(), "success");
     }
 
     public static Icon cancelIcon() {
-        Icon icon = VaadinIcon.CLOSE_SMALL.create();
-        icon.getElement().getThemeList().add("badge error");
+        return iconWithBadge(VaadinIcon.CLOSE_SMALL.create(), "error");
+    }
+
+    public static Icon iconWithBadge(Icon icon, String badge) {
+        icon.getElement().getThemeList().add("badge %s".formatted(badge));
         return icon;
     }
 
@@ -262,25 +267,26 @@ public final class CleverestComponents {
     }
 
     // Big Business Layouts
-    public static VerticalLayout usersScoreTableLayout(List<UserStateSnapshot> users) {
-        var layout = new VerticalLayout();
+    public static VerticalLayout usersScoreTableLayout(List<UserStateSnapshot> users,
+                                                       Map<String, List<AnswerStatus>> lastAnswers) {
+        var layout = new VerticalLayout(JustifyContentMode.START);
         users.forEach(userStateSnapshot -> {
-            HorizontalLayout row = new HorizontalLayout();
-
-            Span positionSpan = new Span();
-            positionSpan.addClassNames(LumoUtility.FontSize.XXXLARGE,
-                    LumoUtility.FontWeight.SEMIBOLD);
+            Span emojiSpan;
             if (userStateSnapshot.position() == 1) {
-                positionSpan.add(VaadinIcon.ACADEMY_CAP.create());
+                emojiSpan = emojiSmall(Emoji.randomGreat().value);
             } else if (userStateSnapshot.position() == users.size()) {
-                positionSpan.add(VaadinIcon.GLASS.create());
+                emojiSpan = emojiSmall(Emoji.randomBad().value);
             } else {
-                positionSpan.setText(userStateSnapshot.position() + ".");
+                emojiSpan = emojiSmall(Emoji.randomGood().value);
             }
-            row.add(positionSpan);
-
-            row.add(userProfileWithScore(userStateSnapshot, LumoUtility.FontSize.XXXLARGE));
-
+            final var icons = lastAnswers.get(userStateSnapshot.username()).stream()
+                    .map(CleverestComponents::getIconFromAnswer)
+                    .toArray(Icon[]::new);
+            final var row = horizontalLayoutBetween(emojiSpan,
+                    smallTextSpan(String.valueOf(userStateSnapshot.position())),
+                    userProfileWithScore(userStateSnapshot));
+            row.add(icons);
+            layout.addClassNames(MOBILE_MEDIUM_FONT);
             layout.add(row);
         });
         return layout;
@@ -331,5 +337,50 @@ public final class CleverestComponents {
         final var prev = iconButton(VaadinIcon.ARROW_CIRCLE_LEFT_O.create(), event -> carousel.movePrev());
         final var next = iconButton(VaadinIcon.ARROW_CIRCLE_RIGHT_O.create(), event -> carousel.moveNext());
         return new VerticalLayout(carousel, horizontalLayoutCenter(prev, next));
+    }
+
+    public static VerticalLayout userAnswersLayout(QuestionModel question,
+                                                   Collection<UserStateSnapshot> users,
+                                                   boolean approveManually,
+                                                   Consumer<String> approveAction) {
+        VerticalLayout answersLayout = new VerticalLayout();
+
+        answersLayout.add(correctAnswerSpan(question));
+        question.answerDescription().ifPresent(answerDescription ->
+                answersLayout.add(answerDescriptionSpan(answerDescription, MOBILE_SMALL_FONT)));
+        users.forEach(userStateSnapshot -> {
+            final var userProfileWithAnswer = userProfileWithAnswer(userStateSnapshot,
+                    question.getType());
+            if (userStateSnapshot.correct()) {
+                userProfileWithAnswer.addClassNames(LumoUtility.Background.PRIMARY_10, LumoUtility.Border.ALL, LumoUtility.BorderColor.PRIMARY);
+            }
+            if (!approveManually) {
+                userProfileWithAnswer.add(getIconFromAnswer(userStateSnapshot.answerStatus()));
+            }
+            if (approveManually) {
+                int countLimit;
+                switch (question.getType()) {
+                    case TOP -> countLimit = question.getAnswers().size();
+                    case LINK -> countLimit = question.getAnswers().size() / 2;
+                    default -> countLimit = 0;
+                }
+                Button approveButton = approveButton(
+                        () -> approveAction.accept(userStateSnapshot.username()),
+                        countLimit);
+                userProfileWithAnswer.add(approveButton);
+            }
+            answersLayout.add(userProfileWithAnswer);
+        });
+        answersLayout.addClassNames(MOBILE_MEDIUM_FONT);
+        return answersLayout;
+    }
+
+    public static Icon getIconFromAnswer(AnswerStatus status) {
+        return switch (status) {
+            case CORRECT -> doneIcon();
+            case WRONG -> cancelIcon();
+            case PARTIAL -> iconWithBadge(VaadinIcon.STAR_HALF_RIGHT_O.create(), "secondary");
+            case UNKNOWN -> iconWithBadge(VaadinIcon.QUESTION.create(), "warning");
+        };
     }
 }

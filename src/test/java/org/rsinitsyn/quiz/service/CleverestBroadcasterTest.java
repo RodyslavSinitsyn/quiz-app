@@ -4,6 +4,7 @@ import com.vaadin.flow.component.ComponentEventBus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.rsinitsyn.quiz.QuizTestFixture;
 import org.rsinitsyn.quiz.component.custom.Emoji;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
@@ -28,9 +29,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.rsinitsyn.quiz.QuizTestFixture.*;
 import static org.rsinitsyn.quiz.entity.AnswerStatus.*;
 
-class CleverestBroadcasterTest {
+class CleverestBroadcasterTest implements QuizTestFixture {
 
     private final ComponentEventBus eventBus = mock(ComponentEventBus.class);
     private final CleverestBroadcaster broadcaster = new CleverestBroadcaster();
@@ -384,23 +386,4 @@ class CleverestBroadcasterTest {
         return userGameState;
     }
 
-    private QuestionModel.QuestionModelBuilder aQuestionModel() {
-        return QuestionModel.builder()
-                .id(UUID.randomUUID())
-                .text("2 + 2 = ?")
-                .type(QuestionType.TEXT)
-                .categoryName("General")
-                .answers(List.of(
-                        AnswerModel.builder()
-                                .number(0)
-                                .text("4")
-                                .correct(true)
-                                .build(),
-                        AnswerModel.builder()
-                                .number(1)
-                                .text("22")
-                                .correct(false)
-                                .build()
-                ));
-    }
 }

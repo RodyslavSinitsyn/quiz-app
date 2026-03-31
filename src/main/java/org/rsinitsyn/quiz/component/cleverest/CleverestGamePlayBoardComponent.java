@@ -29,7 +29,6 @@ import org.rsinitsyn.quiz.model.sound.GameSound;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.*;
 import org.rsinitsyn.quiz.utils.QuizUtils;
-import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -41,6 +40,7 @@ import static org.rsinitsyn.quiz.utils.AudioUtils.playStaticSoundAsync;
 import static org.rsinitsyn.quiz.utils.QuizComponents.appendTextBorder;
 import static org.rsinitsyn.quiz.utils.QuizUtils.*;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
+import static org.rsinitsyn.quiz.utils.StaticValuesHolder.*;
 
 @Slf4j
 public class CleverestGamePlayBoardComponent extends VerticalLayout {
@@ -208,7 +208,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         log.debug("Subscribed on host events: {}", getLoggedUser());
 
         subscriptions.add(broadcaster.subscribe(gameId, AllUsersAnsweredEvent.class, event ->
-                playStaticSoundAsync(StaticValuesHolder.SUBMIT_ANSWER_SHORT_AUDIOS.next()).thenRun(() -> {
+                playStaticSoundAsync(SUBMIT_ANSWER_SHORT_AUDIOS.next()).thenRun(() -> {
                     log.debug("Submit audio finished, run action in ui: {}, {}", ui, gameId);
                     runActionInUi(ui, () -> {
                         boolean approveManually = event.getCurrentRound() == 2;  // todo instead of manual approve use logic, only approve for TOP type?
@@ -450,7 +450,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         var usersScoreLayout = revealScoreAfter == 0
                 ? usersScoreTableLayout(broadcaster.getState(gameId).usersSortedByScore().stream()
                 .map(UserGameState::snapshot)
-                .toList())
+                .toList(),
+                broadcaster.getState(gameId).getLastAnswers())
                 : new VerticalLayout(userInfoLightSpan(
                 "Вопросов до таблицы результатов: " + revealScoreAfter, LumoUtility.FontSize.XXXLARGE));
 
@@ -472,51 +473,13 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                    Runnable onCloseAction,
                                    Runnable usersScoreCloseAction) {
         if (users.stream().allMatch(UserStateSnapshot::correct)) {
-            playStaticSoundAsync(StaticValuesHolder.CORRECT_ANSWER_AUDIOS.next());
+            playStaticSoundAsync(CORRECT_ANSWER_AUDIOS.next());
         } else if (users.stream().noneMatch(UserStateSnapshot::correct) && !approveManually) {
-            playStaticSoundAsync(StaticValuesHolder.WRONG_ANSWER_AUDIOS.next());
+            playStaticSoundAsync(WRONG_ANSWER_AUDIOS.next());
         } else {
-            playStaticSoundAsync(StaticValuesHolder.REVEAL_ANSWER_AUDIOS.next());
+            playStaticSoundAsync(REVEAL_ANSWER_AUDIOS.next());
         }
-        VerticalLayout answersLayout = new VerticalLayout();
-        answersLayout.setSpacing(true);
-        answersLayout.setDefaultHorizontalComponentAlignment(Alignment.START);
-        answersLayout.setAlignItems(Alignment.START);
-        answersLayout.addClassNames(LumoUtility.FontSize.XXXLARGE);
-
-        answersLayout.add(correctAnswerSpan(question,
-                LumoUtility.FontSize.XXXLARGE,
-                LumoUtility.FontWeight.SEMIBOLD));
-        question.answerDescription().ifPresent(answerDescription ->
-                answersLayout.add(answerDescriptionSpan(answerDescription,
-                        LumoUtility.FontSize.XXLARGE,
-                        LumoUtility.FontWeight.LIGHT)));
-
-        users.forEach(userStateSnapshot -> {
-            final var userProfileWithAnswer = userProfileWithAnswer(userStateSnapshot,
-                    question.getType(),
-                    LumoUtility.FontSize.XXXLARGE, LumoUtility.FontWeight.SEMIBOLD);
-            if (userStateSnapshot.correct()) {
-                userProfileWithAnswer.addClassNames(LumoUtility.Background.PRIMARY_10, LumoUtility.Border.ALL, LumoUtility.BorderColor.PRIMARY);
-            }
-            if (!approveManually) {
-                userProfileWithAnswer.add(userStateSnapshot.correct() ? doneIcon() : cancelIcon());
-            }
-            if (approveManually) {
-                int countLimit;
-                switch (question.getType()) {
-                    case TOP -> countLimit = question.getAnswers().size();
-                    case LINK -> countLimit = question.getAnswers().size() / 2;
-                    default -> countLimit = 0;
-                }
-                Button approveButton = approveButton(
-                        () -> approveAction.accept(userStateSnapshot.username()),
-                        countLimit);
-                userProfileWithAnswer.add(approveButton);
-            }
-            answersLayout.add(userProfileWithAnswer);
-        });
-
+        final var answersLayout = userAnswersLayout(question, users, approveManually, approveAction);
         openDialog(answersLayout, "Ответы", () -> {
             onCloseAction.run();
             broadcaster.sendUpdatePersonalScoreEvent(gameId);

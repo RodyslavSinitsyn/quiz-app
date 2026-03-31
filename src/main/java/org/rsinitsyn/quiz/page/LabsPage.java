@@ -11,24 +11,34 @@ import org.apache.commons.text.RandomStringGenerator;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents;
 import org.rsinitsyn.quiz.component.custom.Emoji;
+import org.rsinitsyn.quiz.entity.AnswerStatus;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
 import org.rsinitsyn.quiz.model.QuestionModel.HintModel;
+import org.rsinitsyn.quiz.model.answer.AnswerResult;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
+import org.rsinitsyn.quiz.model.cleverest.UserProfile;
+import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 import org.rsinitsyn.quiz.service.QuestionService;
+import org.rsinitsyn.quiz.utils.ThemeUtils;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static com.vaadin.flow.component.notification.NotificationVariant.LUMO_CONTRAST;
+import static java.time.LocalDateTime.now;
 import static java.util.UUID.randomUUID;
 import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
 import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory.createQuestionLayout;
+import static org.rsinitsyn.quiz.entity.AnswerStatus.*;
 import static org.rsinitsyn.quiz.entity.QuestionHintType.PHOTO;
+import static org.rsinitsyn.quiz.entity.QuestionType.TEXT;
 
 @Route(value = "/labs", layout = MainLayout.class)
 @PageTitle("Labs")
@@ -44,6 +54,30 @@ public class LabsPage extends VerticalLayout {
         final var userGameState = UserGameState.userGameState("Rodyslav",
                 "F54927",
                 new FileInputStream("src/main/resources/image/dev/4704b5fb-a349-4f96-8fc0-240a30d10cca.jpg").readAllBytes());
+        userGameState.submitAnswer("Lionel Messi", now(), () -> AnswerResult.oneOptionResult(true));
+
+        final var users = List.of(userStateSnapshot("Alice", 1, CORRECT),
+                userStateSnapshot("Bob", 2, PARTIAL),
+                userStateSnapshot("Charlie", 3, WRONG));
+
+        final var userAnswersLayout = userAnswersLayout(aQuestionModel(TEXT)
+                .answerDescription("""
+                        Mount Everest is the highest mountain in the world above sea level, reaching an elevation of 8,848.86 meters (29,032 feet) in the Himalayas. Located on the Nepal-China border, it is often called the "roof of the world". However, Mauna Kea in Hawaii is taller when measured from base to peak, and Chimborazo is further from Earth's center.\s
+                        """)
+                .build(), users, false, s -> {
+        });
+        openDialog(userAnswersLayout, "Ответы", () -> {});
+
+
+        final var scoreTableLayout = usersScoreTableLayout(
+                users,
+                Map.of(
+                        "Alice", List.of(CORRECT, CORRECT, CORRECT, CORRECT, CORRECT, CORRECT, CORRECT, CORRECT, CORRECT, CORRECT),
+                        "Bob", List.of(CORRECT, CORRECT, WRONG, CORRECT, PARTIAL, CORRECT, UNKNOWN, CORRECT, CORRECT, CORRECT),
+                        "Charlie", List.of(CORRECT, WRONG, WRONG, CORRECT, PARTIAL, CORRECT, PARTIAL, CORRECT, PARTIAL, UNKNOWN))
+        );
+        openDialog(scoreTableLayout, "Таблица результатов", () -> {
+        });
 
         add(userProfile(userGameState.profile()));
         add(new Hr());
@@ -52,7 +86,7 @@ public class LabsPage extends VerticalLayout {
         add(userProfileWithScore(userGameState.snapshot()));
         add(new Hr());
 
-        add(userProfileWithAnswer(userGameState.snapshot(), QuestionType.TEXT));
+        add(userProfileWithAnswer(userGameState.snapshot(), TEXT));
         add(new Hr());
 
         Arrays.stream(Emoji.values()).map(e -> e.value).toList().stream()
@@ -83,6 +117,11 @@ public class LabsPage extends VerticalLayout {
         }
     }
 
+    private UserStateSnapshot userStateSnapshot(String username, int position, AnswerStatus status) {
+        return new UserStateSnapshot(new UserProfile(username, ThemeUtils.BLACK_COLOR, null, Optional.empty()),
+                randomText(1), status, true, 0, 0, position, Optional.empty());
+    }
+
     private void renderMockQuestions() {
         for (final var questionType : QuestionType.values()) {
 
@@ -92,17 +131,7 @@ public class LabsPage extends VerticalLayout {
 
             final var sequenceQuestion = createQuestionLayout(new QuestionLayoutRequest()
                     .host(true)
-                    .question(QuestionModel.builder()
-                            .id(randomUUID())
-                            .categoryName(questionType + " = " + randomText(2))
-                            .text(randomText(10))
-                            .type(questionType)
-                            .answers(List.of(
-                                    new AnswerModel(randomText(1), true, 1, null),
-                                    new AnswerModel(randomText(7), true, 2, null),
-                                    new AnswerModel(randomText(20), true, 3, null),
-                                    new AnswerModel(randomText(35), true, 4, null)
-                            ))
+                    .question(aQuestionModel(questionType)
                             .hints(List.of(
                                     HintModel.builder().number(0).type(PHOTO).photoFilename("dev/a788c959-0872-41af-a7e9-b610e44e0cb3.jpg").build(),
                                     HintModel.builder().number(1).type(PHOTO).photoFilename("dev/f784a157-5647-437a-a679-2db9192c3c52.jpg").build(),
@@ -116,6 +145,20 @@ public class LabsPage extends VerticalLayout {
             } catch (Exception e) {
             }
         }
+    }
+
+    private static QuestionModel.QuestionModelBuilder aQuestionModel(final QuestionType questionType) {
+        return QuestionModel.builder()
+                .id(randomUUID())
+                .categoryName(questionType + " = " + randomText(2))
+                .text(randomText(5))
+                .type(questionType)
+                .answers(List.of(
+                        new AnswerModel("Everest", true, 1, null),
+                        new AnswerModel(randomText(7), false, 2, null),
+                        new AnswerModel(randomText(20), false, 3, null),
+                        new AnswerModel(randomText(35), false, 4, null)
+                ));
     }
 
     public static String randomText(int wordCount) {

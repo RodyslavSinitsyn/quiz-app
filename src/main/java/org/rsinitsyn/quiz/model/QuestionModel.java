@@ -9,7 +9,8 @@ import org.rsinitsyn.quiz.entity.QuestionType;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.rsinitsyn.quiz.entity.QuestionHintType.*;
+import static org.rsinitsyn.quiz.entity.QuestionHintType.PHOTO;
+import static org.rsinitsyn.quiz.entity.QuestionHintType.TEXT;
 
 @Getter
 @Builder
@@ -49,7 +50,7 @@ public class QuestionModel {
     }
 
     public Optional<String> answerDescription() {
-        return Optional.ofNullable(audioFilename).filter(StringUtils::isNoneBlank);
+        return Optional.ofNullable(answerDescription).filter(StringUtils::isNoneBlank);
     }
 
     public AnswerModel getFirstCorrectAnswer() {

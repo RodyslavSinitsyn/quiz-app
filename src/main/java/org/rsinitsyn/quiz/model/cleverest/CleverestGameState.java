@@ -4,7 +4,9 @@ import com.google.common.collect.Iterables;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.apache.commons.collections4.MapUtils;
+import org.rsinitsyn.quiz.entity.AnswerStatus;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.answer.AnswerResult;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -16,6 +18,7 @@ import java.util.stream.Collectors;
 import static java.util.Comparator.comparingInt;
 import static java.util.Map.Entry.comparingByValue;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.rsinitsyn.quiz.model.cleverest.UserGameState.userGameState;
@@ -125,6 +128,21 @@ public class CleverestGameState {
         users.values().forEach(UserGameState::prepareForNext);
     }
 
+    public Map<String, List<AnswerStatus>> getLastAnswers() {
+        final var skipSize = Math.max(0, history.size() - getLastAnswersCount());
+
+        return history.entrySet().stream()
+                .skip(skipSize)
+                .flatMap(entry -> entry.getValue().stream())
+                .collect(Collectors.groupingBy(
+                        UserStateSnapshot::username,
+                        LinkedHashMap::new,
+                        Collectors.mapping(
+                                UserStateSnapshot::answerStatus,
+                                Collectors.toList())
+                ));
+    }
+
     // TODO: Reduce to Snapshot not full sate
     public List<UserGameState> usersSortedByScore() {
         return users.values().stream()
@@ -229,6 +247,22 @@ public class CleverestGameState {
                 .forEach((snapshot, avgTime) -> {
                     users.get(snapshot.username()).setAvgResponseTime(avgTime); // todo: remove setter
                 });
+    }
+
+    public int getLastAnswersCount() {
+        final int chunkSize = 3;
+        final var totalQuestions = currRoundQuestionsSource.get().size();
+
+        if (totalQuestions <= chunkSize) {
+            return questionNumber + 1;
+        }
+
+        final var chunk = totalQuestions / chunkSize;
+        final var currentChunkIndex = questionNumber / chunk;
+
+        final var chunkStart = currentChunkIndex * chunk;
+
+        return questionNumber - chunkStart + 1;
     }
 
     public int getQuestionsLeftToRevealScoreTable() {
