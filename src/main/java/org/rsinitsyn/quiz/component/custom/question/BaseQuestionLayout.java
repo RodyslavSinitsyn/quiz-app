@@ -20,13 +20,13 @@ import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.utils.AudioUtils;
-import org.rsinitsyn.quiz.utils.QuizUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
 import static org.rsinitsyn.quiz.component.custom.answer.AnswerLayoutsFactory.createAnswerLayout;
+import static org.rsinitsyn.quiz.utils.QuizUtils.createStreamResourceForAudio;
 
 @Slf4j
 public class BaseQuestionLayout extends VerticalLayout {
@@ -92,12 +92,10 @@ public class BaseQuestionLayout extends VerticalLayout {
             playAudioButton.addClickListener(event -> {
                 AudioUtils.playSoundAsync(filename);
             });
-
             add(playAudioButton);
 
-            //  TODO: Play audio on each device
-            AudioPlayer audioPlayer = new AudioPlayer(QuizUtils.createStreamResourceForAudio(filename));
-            add(audioPlayer);
+            // Native HTML to play audio on each device
+            add(new AudioPlayer(createStreamResourceForAudio(filename)));
         });
     }
 
@@ -119,6 +117,8 @@ public class BaseQuestionLayout extends VerticalLayout {
                                      final AnswerGivenEvent answerGivenEvent) {
             this.question = question;
             this.answerGivenEvent = answerGivenEvent;
+            // Workaround to set manualApprove flag
+            this.question.setManualApprove(answerGivenEvent.isManuallyApprove());
         }
     }
 

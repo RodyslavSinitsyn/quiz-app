@@ -24,6 +24,8 @@ import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
+import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.getIconFromAnswer;
+
 public class CleverestResultComponent extends VerticalLayout {
 
     private final Grid<UserGameState> grid = new Grid<>(UserGameState.class, false);
@@ -108,8 +110,7 @@ public class CleverestResultComponent extends VerticalLayout {
                             layout.add(VaadinIcon.MINUS_CIRCLE_O.create());
                             return layout;
                         }
-                        layout.add(state.correct()
-                                ? CleverestComponents.doneIcon() : CleverestComponents.cancelIcon());
+                        layout.add(getIconFromAnswer(state.answerStatus()));
                         layout.add(new Span("Баллы: " + state.score()));
 
                         String timeInSeconds = String.format("%.2f сек.", state.lastResponseTimeMs() / 1000.0);

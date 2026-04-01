@@ -25,7 +25,6 @@ public class UserGameState implements Comparable<UserGameState> {
 
     private AnswerStatus lastAnswerStatus;
     private String lastAnswerText;
-    @Setter
     private int lastPosition;
     private long lastResponseTimeMs;
     private int correctAnswersCount;
@@ -61,24 +60,26 @@ public class UserGameState implements Comparable<UserGameState> {
         this.profile = this.profile.withColorAndAvatar(color, photo);
     }
 
+    public void updateLastPosition(int position) {
+        this.lastPosition = position;
+    }
+
     public void submitAnswer(String answerText,
                              LocalDateTime questionRenderTime,
                              Supplier<AnswerResult> answerResult) {
         if (answerGiven) {
             return;
         }
+        final var result = answerResult.get();
+
         lastAnswerText = answerText;
         answerGiven = true;
         lastResponseTimeMs = MILLIS.between(questionRenderTime, now());
+        lastAnswerStatus = result.status();
 
-        final var result = answerResult.get();
-        if (result.status() == UNKNOWN) {
-            return;
-        }
         if (result.status().correct()) {
-            increaseScoreAndMarkCorrect(result.correctCount());
-        } else {
-            this.lastAnswerStatus = WRONG;
+            this.score += result.correctCount();
+            this.correctAnswersCount++;
         }
     }
 
@@ -100,10 +101,10 @@ public class UserGameState implements Comparable<UserGameState> {
     public void increaseScoreAndMarkCorrect(int score) {
         this.score += score;
         this.correctAnswersCount++;
-        this.lastAnswerStatus = CORRECT; // todo: better logic to handle partial
+        this.lastAnswerStatus = CORRECT;
     }
 
-    public void decreaseScore(int score) {
+    public void decreaseScoreAndMarkWrong(int score) {
         this.score -= score;
         this.lastAnswerStatus = WRONG;
     }

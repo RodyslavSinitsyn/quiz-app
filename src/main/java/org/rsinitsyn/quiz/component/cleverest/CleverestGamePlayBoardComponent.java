@@ -208,25 +208,21 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         log.debug("Subscribed on host events: {}", getLoggedUser());
 
         subscriptions.add(broadcaster.subscribe(gameId, AllUsersAnsweredEvent.class, event ->
-                playStaticSoundAsync(SUBMIT_ANSWER_SHORT_AUDIOS.next()).thenRun(() -> {
-                    log.debug("Submit audio finished, run action in ui: {}, {}", ui, gameId);
-                    runActionInUi(ui, () -> {
-                        boolean approveManually = event.getCurrentRound() == 2;  // todo instead of manual approve use logic, only approve for TOP type?
-                        showCorrectAnswer(
-                                event.getQuestion(),
-                                broadcaster.getState(gameId).userSnapshotsSortedByResponseTime().values(),
-                                event.isRoundOver(),
-                                event.getRevealScoreAfter(),
-                                approveManually,
-                                uName -> {
-                                    broadcaster.getState(gameId).getUserState(uName).increaseScoreAndMarkCorrect(1);
-                                    broadcaster.sendUpdatePersonalScoreEvent(gameId);
-                                },
-                                () -> {
-                                },
-                                () -> broadcaster.sendGetQuestionEvent(gameId));
-                    });
-                })));
+                playStaticSoundAsync(SUBMIT_ANSWER_SHORT_AUDIOS.next()).thenRun(() ->
+                        runActionInUi(ui, () ->
+                                showCorrectAnswer(
+                                        event.getQuestion(),
+                                        broadcaster.getState(gameId).userSnapshotsSortedByResponseTime().values(),
+                                        event.isRoundOver(),
+                                        event.getRevealScoreAfter(),
+                                        event.getQuestion().isManualApprove(),
+                                        uName -> {
+                                            broadcaster.getState(gameId).getUserState(uName).increaseScoreAndMarkCorrect(1);
+                                            broadcaster.sendUpdatePersonalScoreEvent(gameId);
+                                        },
+                                        () -> {
+                                        },
+                                        () -> broadcaster.sendGetQuestionEvent(gameId))))));
         subscriptions.add(broadcaster.subscribe(gameId, QuestionGradedEvent.class, event ->
                 runActionInUi(ui, () -> {
                     if (gameHost) {
@@ -407,7 +403,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     broadcaster.sendUpdatePersonalScoreEvent(gameId);
                 }, () -> {
                     if (!approved.get()) {
-                        userToAnswer.decreaseScore(question.getPoints());
+                        userToAnswer.decreaseScoreAndMarkWrong(question.getPoints());
                     }
                 }, () -> broadcaster.sendRenderCategoriesEvent(gameId, question, false));
             });
@@ -449,8 +445,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     private void showUsersPositionsTable(boolean roundOver, int revealScoreAfter, Runnable onCloseAction) {
         var usersScoreLayout = revealScoreAfter == 0
                 ? usersScoreTableLayout(broadcaster.getState(gameId).usersSortedByScore().stream()
-                .map(UserGameState::snapshot)
-                .toList(),
+                        .map(UserGameState::snapshot)
+                        .toList(),
                 broadcaster.getState(gameId).getLastAnswers())
                 : new VerticalLayout(userInfoLightSpan(
                 "Вопросов до таблицы результатов: " + revealScoreAfter, LumoUtility.FontSize.XXXLARGE));

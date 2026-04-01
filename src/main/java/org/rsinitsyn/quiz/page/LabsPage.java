@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.RandomStringGenerator;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents;
+import org.rsinitsyn.quiz.component.custom.AnimatedLeaderboardComponent;
 import org.rsinitsyn.quiz.component.custom.Emoji;
 import org.rsinitsyn.quiz.entity.AnswerStatus;
 import org.rsinitsyn.quiz.entity.QuestionType;
@@ -26,10 +27,8 @@ import org.rsinitsyn.quiz.utils.ThemeUtils;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.time.Duration;
+import java.util.*;
 
 import static com.vaadin.flow.component.notification.NotificationVariant.LUMO_CONTRAST;
 import static java.time.LocalDateTime.now;
@@ -60,13 +59,56 @@ public class LabsPage extends VerticalLayout {
                 userStateSnapshot("Bob", 2, PARTIAL),
                 userStateSnapshot("Charlie", 3, WRONG));
 
+
+        add(new AnimatedLeaderboardComponent(
+                List.of(
+                        userStateSnapshot("Alice", 0, CORRECT),
+                        userStateSnapshot("Bob", 0, CORRECT),
+                        userStateSnapshot("Charlie", 0, CORRECT)
+                ),
+                List.of(
+                        List.of(
+                                userStateSnapshot("Alice", 1, CORRECT),
+                                userStateSnapshot("Bob", 2, CORRECT),
+                                userStateSnapshot("Charlie", 3, CORRECT)
+                        ),
+                        List.of(
+                                userStateSnapshot("Alice", 1, CORRECT),
+                                userStateSnapshot("Bob", 3, CORRECT),
+                                userStateSnapshot("Charlie", 2, CORRECT)
+                        ),
+                        List.of(
+                                userStateSnapshot("Alice", 1, CORRECT),
+                                userStateSnapshot("Bob", 3, CORRECT),
+                                userStateSnapshot("Charlie", 2, CORRECT)
+                        ),
+                        List.of(
+                                userStateSnapshot("Alice", 2, CORRECT),
+                                userStateSnapshot("Bob", 3, CORRECT),
+                                userStateSnapshot("Charlie", 1, CORRECT)
+                        ),
+                        List.of(
+                                userStateSnapshot("Alice", 3, CORRECT),
+                                userStateSnapshot("Bob", 1, CORRECT),
+                                userStateSnapshot("Charlie", 2, CORRECT)
+                        ),
+                        List.of(
+                                userStateSnapshot("Alice", 1, CORRECT),
+                                userStateSnapshot("Bob", 3, CORRECT),
+                                userStateSnapshot("Charlie", 2, CORRECT)
+                        )
+                ),
+                Duration.ofSeconds(3)
+        ));
+
+
         final var userAnswersLayout = userAnswersLayout(aQuestionModel(TEXT)
                 .answerDescription("""
                         Mount Everest is the highest mountain in the world above sea level, reaching an elevation of 8,848.86 meters (29,032 feet) in the Himalayas. Located on the Nepal-China border, it is often called the "roof of the world". However, Mauna Kea in Hawaii is taller when measured from base to peak, and Chimborazo is further from Earth's center.\s
                         """)
                 .build(), users, false, s -> {
         });
-        openDialog(userAnswersLayout, "Ответы", () -> {});
+//        openDialog(userAnswersLayout, "Ответы", () -> {});
 
 
         final var scoreTableLayout = usersScoreTableLayout(
@@ -76,8 +118,8 @@ public class LabsPage extends VerticalLayout {
                         "Bob", List.of(CORRECT, CORRECT, WRONG, CORRECT, PARTIAL, CORRECT, UNKNOWN, CORRECT, CORRECT, CORRECT),
                         "Charlie", List.of(CORRECT, WRONG, WRONG, CORRECT, PARTIAL, CORRECT, PARTIAL, CORRECT, PARTIAL, UNKNOWN))
         );
-        openDialog(scoreTableLayout, "Таблица результатов", () -> {
-        });
+//        openDialog(scoreTableLayout, "Таблица результатов", () -> {
+//        });
 
         add(userProfile(userGameState.profile()));
         add(new Hr());
@@ -119,7 +161,7 @@ public class LabsPage extends VerticalLayout {
 
     private UserStateSnapshot userStateSnapshot(String username, int position, AnswerStatus status) {
         return new UserStateSnapshot(new UserProfile(username, ThemeUtils.BLACK_COLOR, null, Optional.empty()),
-                randomText(1), status, true, 0, 0, position, Optional.empty());
+                randomText(1), status, true, 0, randomInt(), position, Optional.empty());
     }
 
     private void renderMockQuestions() {
@@ -159,6 +201,10 @@ public class LabsPage extends VerticalLayout {
                         new AnswerModel(randomText(20), false, 3, null),
                         new AnswerModel(randomText(35), false, 4, null)
                 ));
+    }
+
+    public static int randomInt() {
+        return new Random().nextInt(20);
     }
 
     public static String randomText(int wordCount) {

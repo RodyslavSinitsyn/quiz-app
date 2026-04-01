@@ -6,7 +6,6 @@ import lombok.Getter;
 import org.apache.commons.collections4.MapUtils;
 import org.rsinitsyn.quiz.entity.AnswerStatus;
 import org.rsinitsyn.quiz.model.QuestionModel;
-import org.rsinitsyn.quiz.model.answer.AnswerResult;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -18,7 +17,6 @@ import java.util.stream.Collectors;
 import static java.util.Comparator.comparingInt;
 import static java.util.Map.Entry.comparingByValue;
 import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.rsinitsyn.quiz.model.cleverest.UserGameState.userGameState;
@@ -203,7 +201,7 @@ public class CleverestGameState {
             if (userGameState.totalScore() < prevScoreHolder.get()) {
                 pos.incrementAndGet();
             }
-            userGameState.setLastPosition(pos.get()); // todo: remove setter
+            userGameState.updateLastPosition(pos.get());
             prevScoreHolder.set(userGameState.totalScore());
         });
     }

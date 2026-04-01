@@ -17,14 +17,14 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.delayedExecutor;
@@ -156,25 +156,17 @@ public final class QuizUtils {
         );
     }
 
-//
-//    // todo temp
-//    private void exportCode() {
-//        String res = questionService.findAll().stream().
-//                map(entity -> {
-//                    List<AnswerEntity> answers = entity.getAnswers().stream()
-//                            .sorted(Comparator.comparing(AnswerEntity::isCorrect, Comparator.reverseOrder()))
-//                            .toList();
-//                    StringJoiner joiner = new StringJoiner("|")
-//                            .add(entity.getText())
-//                            .add(answers.get(0).isCorrect() ? "_" + answers.get(0).getText() : answers.get(0).getText())
-//                            .add(answers.get(1).isCorrect() ? "_" + answers.get(1).getText() : answers.get(1).getText())
-//                            .add(answers.get(2).isCorrect() ? "_" + answers.get(2).getText() : answers.get(2).getText())
-//                            .add(answers.get(3).isCorrect() ? "_" + answers.get(3).getText() : answers.get(3).getText());
-//                    if (StringUtils.isNotEmpty(entity.getOriginalPhotoUrl())) {
-//                        joiner.add(entity.getOriginalPhotoUrl());
-//                    }
-//                    return joiner.toString();
-//                })
-//                .collect(Collectors.joining("\n"));
-//    }
+    public static String resolveLocalIp() {
+        try {
+            return Collections.list(NetworkInterface.getNetworkInterfaces()).stream()
+                    .flatMap(iface -> Collections.list(iface.getInetAddresses()).stream())
+                    .filter(addr -> !addr.isLoopbackAddress())
+                    .filter(addr -> addr instanceof Inet4Address)
+                    .map(InetAddress::getHostAddress)
+                    .findFirst()
+                    .orElse("localhost");
+        } catch (Exception e) {
+            return "localhost";
+        }
+    }
 }

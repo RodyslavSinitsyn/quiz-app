@@ -121,14 +121,14 @@ class CleverestBroadcasterTest implements QuizTestFixture {
     }
 
     @Test
-    void sends_all_answered_events_given_one_user_answered_correctly() {
+    void sends_all_answered_events_given_one_user_answered_partially() {
         // given
         final var q = aQuestionModel().build();
         createStateWithQuestions(List.of(q));
         addUser("Alice");
 
         // when
-        broadcaster.sendSubmitAnswerEventAndCheckScore(gameId, "Alice", q, "4", () -> new AnswerResult(CORRECT, 3, 3));
+        broadcaster.sendSubmitAnswerEventAndCheckScore(gameId, "Alice", q, "4", () -> new AnswerResult(PARTIAL, 3, 2));
 
         // then
         baseAssertions();
@@ -136,9 +136,9 @@ class CleverestBroadcasterTest implements QuizTestFixture {
         final var alice = state.getUserState("Alice");
 
         assertSoftly(softly -> {
-            softly.assertThat(alice.getScore()).isEqualTo(3);
+            softly.assertThat(alice.getScore()).isEqualTo(2);
             softly.assertThat(alice.getCorrectAnswersCount()).isEqualTo(1);
-            softly.assertThat(alice.getLastAnswerStatus()).isEqualTo(CORRECT);
+            softly.assertThat(alice.getLastAnswerStatus()).isEqualTo(PARTIAL);
             softly.assertThat(alice.getLastAnswerText()).isEqualTo("4");
             softly.assertThat(alice.isAnswerGiven()).isTrue();
             softly.assertThat(alice.getLastResponseTimeMs()).isGreaterThanOrEqualTo(0);
@@ -305,8 +305,9 @@ class CleverestBroadcasterTest implements QuizTestFixture {
     @Test
     void sends_game_finished_event_and_updates_state() {
         // given
-        createStateWithQuestions(List.of(aQuestionModel().build()));
-        addUser("Alice");
+        final var questionModel = aQuestionModel().build();
+        createStateWithQuestions(List.of(questionModel));
+        addUser("Alice", "4", new AnswerResult(CORRECT, 1, 1));
 
         // when
         broadcaster.sendFinishGameEvent(gameId);
@@ -316,7 +317,7 @@ class CleverestBroadcasterTest implements QuizTestFixture {
 
         final var state = broadcaster.getState(gameId);
         assertThat(state.getUserState("Alice").getLastPosition()).isGreaterThan(0);
-//        assertThat(state.getUsers().get("Alice").getAvgResponseTime()).isNotNull(); // todo: check why null
+//        assertThat(state.getUserState("Alice").getAvgResponseTime()).isNotNull();
 
         then(eventBus).should().fireEvent(new GameFinishedEvent(gameId));
     }

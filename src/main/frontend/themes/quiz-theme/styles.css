@@ -62,6 +62,10 @@ vaadin-item[selected] {
     justify-content: center;
 }
 
+.leaderboard-row {
+    transition: transform 1s ease;
+}
+
 /*Less than 700*/
 @media (max-width: 700px) {
 

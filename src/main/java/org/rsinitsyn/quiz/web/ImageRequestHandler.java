@@ -16,8 +16,6 @@ public class ImageRequestHandler implements RequestHandler, VaadinServiceInitLis
 
     private final ImageCacheService imageCache;
 
-    // constructor injection
-
     @Override
     public void serviceInit(ServiceInitEvent event) {
         event.addRequestHandler(this);

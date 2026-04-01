@@ -384,7 +384,7 @@ public class CleverestGamePlayBoardComponentOld extends VerticalLayout {
                     broadcaster.sendUpdatePersonalScoreEvent(gameId);
                 }, () -> {
                     if (!approved.get()) {
-                        userToAnswer.decreaseScore(question.getPoints());
+                        userToAnswer.decreaseScoreAndMarkWrong(question.getPoints());
                     }
                 }, () -> broadcaster.sendRenderCategoriesEvent(gameId, question, false));
             });
@@ -504,11 +504,11 @@ public class CleverestGamePlayBoardComponentOld extends VerticalLayout {
         midContainer.removeAll();
         CleverestGameState gameState = broadcaster.getState(gameId);
         if (gameHost) {
-            resultComponent.setState(gameState.usersSortedByScore(), gameState.getHistory(), "");
+//            resultComponent.setState(gameState.usersSortedByScore(), gameState.getHistory(), "");
         } else {
             renderUserPersonalScore();
             midContainer.add(userInfoLightSpan("Итоговое место: " + gameState.getUserState(getLoggedUser()).getLastPosition(), CleverestComponents.MOBILE_LARGE_FONT));
-            resultComponent.setState(gameState.usersSortedByScore(), gameState.getHistory(), getLoggedUser());
+//            resultComponent.setState(gameState.usersSortedByScore(), gameState.getHistory(), getLoggedUser());
         }
         midContainer.add(resultComponent);
     }

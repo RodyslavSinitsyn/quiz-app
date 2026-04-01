@@ -23,6 +23,7 @@ import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.rsinitsyn.quiz.component.custom.Emoji;
+import org.rsinitsyn.quiz.component.theme.ThemePreset;
 import org.rsinitsyn.quiz.entity.AnswerStatus;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
@@ -120,6 +121,7 @@ public final class CleverestComponents {
     public static HorizontalLayout userProfileWithScore(UserStateSnapshot snapshot, String... classes) {
         final var userScore = new Span("[%s]".formatted(snapshot.score()));
         userScore.addClassNames(classes);
+        userScore.addClassName("score-label");
         userScore.getStyle().set("color", snapshot.color());
         final var userProfile = userProfile(snapshot.profile(), classes);
         userProfile.add(appendTextBorder(userScore));
@@ -291,22 +293,6 @@ public final class CleverestComponents {
         return layout;
     }
 
-    public static VerticalLayout questionGradeLayout(Consumer<Integer> eventHandler) {
-        VerticalLayout layout = new VerticalLayout();
-        layout.setSpacing(false);
-        layout.setPadding(false);
-        layout.setWidthFull();
-        layout.setAlignItems(Alignment.CENTER);
-        layout.add(userInfoLightSpan("Оцените сложность вопроса", MOBILE_SMALL_FONT));
-
-        // TODO: Not working with new Vaadin, find replacement
-//        StarsRating rating = new StarsRating(0, 5, true);
-//        rating.addValueChangeListener(event -> eventHandler.accept(event.getValue()));
-//        layout.add(rating);
-
-        return layout;
-    }
-
     public static Image image(String filename) {
         return image(filename, null);
     }
@@ -382,5 +368,17 @@ public final class CleverestComponents {
             case PARTIAL -> iconWithBadge(VaadinIcon.STAR_HALF_RIGHT_O.create(), "secondary");
             case UNKNOWN -> iconWithBadge(VaadinIcon.QUESTION.create(), "warning");
         };
+    }
+
+    public static HorizontalLayout themeColor(ThemePreset preset) {
+        final var circle = new Div();
+        circle.setWidth("10px");
+        circle.setHeight("10px");
+        circle.getStyle()
+                .set("border-radius", "50%")
+                .set("background-color", preset.color())
+                .set("border", "1px solid var(--lumo-contrast-20pct)");
+        final var label = new Span(preset.name());
+        return horizontalLayout(JustifyContentMode.START, circle, label);
     }
 }

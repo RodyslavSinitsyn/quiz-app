@@ -109,17 +109,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         final var themes = new ComboBox<ThemePreset>("Theme");
         themes.setItems(THEME_PRESETS);
         themes.setItemLabelGenerator(ThemePreset::name);
-        themes.setRenderer(new ComponentRenderer<>(preset -> {
-            final var circle = new Div();
-            circle.setWidth("10px");
-            circle.setHeight("10px");
-            circle.getStyle()
-                    .set("border-radius", "50%")
-                    .set("background-color", preset.color())
-                    .set("border", "1px solid var(--lumo-contrast-20pct)");
-            final var label = new Span(preset.name());
-            return horizontalLayout(JustifyContentMode.START, circle, label);
-        }));
+        themes.setRenderer(new ComponentRenderer<>(CleverestComponents::themeColor));
 
         themes.addValueChangeListener(event -> {
             final var preset = event.getValue();

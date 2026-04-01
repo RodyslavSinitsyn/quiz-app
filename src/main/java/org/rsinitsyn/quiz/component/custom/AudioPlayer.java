@@ -5,8 +5,11 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.server.StreamResource;
 
+import java.io.Serial;
+
 @Tag("audio")
 public class AudioPlayer extends Component {
+    @Serial
     private static final long serialVersionUID = 111222L;
 
     public AudioPlayer(StreamResource path) {

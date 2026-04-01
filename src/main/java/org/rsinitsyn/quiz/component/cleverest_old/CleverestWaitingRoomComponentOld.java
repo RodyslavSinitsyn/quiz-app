@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.primaryButton;
 import static org.rsinitsyn.quiz.utils.QuizComponents.uploadComponent;
+import static org.rsinitsyn.quiz.utils.QuizUtils.resolveLocalIp;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
 @Deprecated
@@ -228,12 +229,8 @@ public class CleverestWaitingRoomComponentOld extends VerticalLayout {
     }
 
     private void configureHostComponents(String gameId) {
-        Anchor link = new Anchor("http://localhost:8080/cleverest/" + gameId + "?player", "Invite link");
-        link.getElement().setAttribute("target", "_blank");
-        add(link);
-
-        // TODO PUBLIC HOST
-        Anchor prodLink = new Anchor("http://192.168.0.107:8080/cleverest/" + gameId + "?player", "Prod Invite link");
+        final var prodLink = new Anchor("http://%s:8080/cleverest/%s?player".formatted(resolveLocalIp(), gameId),
+                "Prod Invite link");
         prodLink.getElement().setAttribute("target", "_blank");
         add(prodLink);
 

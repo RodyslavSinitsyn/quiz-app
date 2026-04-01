@@ -1,6 +1,7 @@
 package org.rsinitsyn.quiz.utils;
 
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.page.WebStorage;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.Lumo;
 import org.apache.commons.lang3.StringUtils;
@@ -8,6 +9,12 @@ import org.rsinitsyn.quiz.component.theme.ThemePreset;
 
 import java.awt.*;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+import static com.vaadin.flow.component.page.WebStorage.Storage.LOCAL_STORAGE;
+import static java.util.Optional.ofNullable;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class ThemeUtils {
 
@@ -23,13 +30,13 @@ public class ThemeUtils {
             new ThemePreset("Graphite", "#263238"),
             new ThemePreset("Deep Blue", "#0d47a1")
     );
+    public static final String THEME_COLOR_KEY = "quiz-theme-color";
 
     public static void applyTheme(UI ui, String color) {
         if (StringUtils.isEmpty(color)) {
             return;
         }
         final var rgb = hexToRgb(color);
-
         ui.getElement().executeJs("""
                             document.documentElement.style.setProperty('--lumo-primary-color', $0);
                             document.documentElement.style.setProperty('--lumo-primary-color-50pct', $1);
@@ -40,7 +47,8 @@ public class ThemeUtils {
                 "rgba(%d,%d,%d,0.5)".formatted(rgb[0], rgb[1], rgb[2]),
                 "rgba(%d,%d,%d,0.1)".formatted(rgb[0], rgb[1], rgb[2])
         );
-        VaadinSession.getCurrent().setAttribute("custom-theme", color);
+        VaadinSession.getCurrent().setAttribute(THEME_COLOR_KEY, color);
+        WebStorage.setItem(ui, LOCAL_STORAGE, THEME_COLOR_KEY, color);
     }
 
     private static int[] hexToRgb(String hex) {
@@ -52,10 +60,16 @@ public class ThemeUtils {
         };
     }
 
-    public static void restoreTheme() {
-        applyTheme(UI.getCurrent(), (String) VaadinSession.getCurrent().getAttribute("custom-theme"));
-    }
+    public static void restoreTheme(UI ui) {
+        var js = "document.documentElement.setAttribute('theme', $0)";
+        ui.getElement().executeJs(js, ThemeUtils.getThemeMode());
 
+        ofNullable(VaadinSession.getCurrent().getAttribute(THEME_COLOR_KEY))
+                .map(String.class::cast)
+                .ifPresentOrElse(val -> applyTheme(ui, val),
+                        () -> WebStorage.getItem(ui, LOCAL_STORAGE, THEME_COLOR_KEY)
+                                .thenAccept(val -> applyTheme(ui, val)));
+    }
 
     public static void setThemeMode(String theme) {
         VaadinSession.getCurrent().setAttribute("theme", theme);

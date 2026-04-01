@@ -40,6 +40,8 @@ public class QuestionModel {
     private boolean alreadyAnswered;
     @Setter
     private int points;
+    @Setter
+    private boolean manualApprove;
 
     public Optional<String> photoFilename() {
         return Optional.ofNullable(photoFilename).filter(StringUtils::isNoneBlank);

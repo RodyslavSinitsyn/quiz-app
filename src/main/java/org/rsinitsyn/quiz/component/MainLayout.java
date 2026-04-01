@@ -1,10 +1,12 @@
 package org.rsinitsyn.quiz.component;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -26,7 +28,11 @@ import org.springframework.core.env.Environment;
 
 import java.util.Arrays;
 
+import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.iconWithBadge;
+import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.themeColor;
 import static org.rsinitsyn.quiz.utils.Profiles.DEV;
+import static org.rsinitsyn.quiz.utils.ThemeUtils.THEME_PRESETS;
+import static org.rsinitsyn.quiz.utils.ThemeUtils.applyTheme;
 
 @Slf4j
 public class MainLayout extends AppLayout implements
@@ -34,14 +40,15 @@ public class MainLayout extends AppLayout implements
         BeforeEnterObserver,
         BeforeLeaveObserver {
 
-    private HorizontalLayout header = new HorizontalLayout();
+    private final HorizontalLayout header = new HorizontalLayout();
 
     private Button loginButton = new Button();
     private Span warningMessageAboutLogin = new Span();
     private Span loggedUserNameSpan = new Span();
     private Button exitButton = new Button();
 
-    private Button themeToggle = new Button();
+    private Icon themeColorSelector = iconWithBadge(VaadinIcon.PALETTE  .create(), "primary");
+    private Icon themeToggle = iconWithBadge(VaadinIcon.MOON.create(), "primary");
     private boolean darkTheme = false;
 
     private final Environment environment;
@@ -81,11 +88,10 @@ public class MainLayout extends AppLayout implements
     }
 
     private void configureToggleTheme() {
-        themeToggle.setIcon(VaadinIcon.MOON.create());
         themeToggle.addClickListener(event -> {
             darkTheme = !darkTheme;
             ThemeUtils.setThemeMode(darkTheme ? Lumo.DARK : Lumo.LIGHT);
-            updateTheme();
+            event.getSource().getUI().ifPresent(ThemeUtils::restoreTheme);
         });
     }
 
@@ -98,7 +104,7 @@ public class MainLayout extends AppLayout implements
         logo.addClassNames(LumoUtility.FontSize.LARGE,
                 LumoUtility.Margin.Left.MEDIUM);
         logo.add(drawerToggle);
-        logo.add(VaadinIcon.ACADEMY_CAP.create());
+        logo.add(iconWithBadge(VaadinIcon.ACADEMY_CAP.create(), "primary"));
         return logo;
     }
 
@@ -130,7 +136,12 @@ public class MainLayout extends AppLayout implements
 
     private HorizontalLayout createAuthLayout() {
         HorizontalLayout authLayout = new HorizontalLayout();
-        authLayout.add(themeToggle, loggedUserNameSpan, warningMessageAboutLogin, loginButton, exitButton);
+        final var themeMenu = new ContextMenu(themeColorSelector);
+        themeMenu.setOpenOnClick(true);
+        for (final var themePreset : THEME_PRESETS) {
+            themeMenu.addItem(themeColor(themePreset), event -> applyTheme(UI.getCurrent(), themePreset.color()));
+        }
+        authLayout.add(themeColorSelector, themeToggle, loggedUserNameSpan, warningMessageAboutLogin, loginButton, exitButton);
         authLayout.setAlignItems(FlexComponent.Alignment.CENTER);
         return authLayout;
     }
@@ -160,7 +171,7 @@ public class MainLayout extends AppLayout implements
                     });
         });
 
-        if(SessionWrapper.isAuthenticated()) {
+        if (SessionWrapper.isAuthenticated()) {
             renderAuthorizedUser(SessionWrapper.getLoggedUser());
         } else {
             renderAnonymous();
@@ -184,16 +195,9 @@ public class MainLayout extends AppLayout implements
         exitButton.setVisible(false);
     }
 
-    private void updateTheme() {
-        var js = "document.documentElement.setAttribute('theme', $0)";
-        getElement().executeJs(js, ThemeUtils.getThemeMode());
-        ThemeUtils.restoreTheme();
-    }
-
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
-        log.trace("afterNavigation");
-        updateTheme();
+        ThemeUtils.restoreTheme(event.getLocationChangeEvent().getUI());
     }
 
     @Override

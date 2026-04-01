@@ -7,12 +7,14 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel.HintModel;
+import org.rsinitsyn.quiz.model.answer.AnswerResult;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
 import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
+import static org.rsinitsyn.quiz.entity.AnswerStatus.UNKNOWN;
 
 public class GuessPhotoAnswersLayout extends AbstractAnswersLayout {
 
@@ -73,7 +75,10 @@ public class GuessPhotoAnswersLayout extends AbstractAnswersLayout {
     @Override
     protected AnswerGivenEvent createAnswerGivenEvent() {
         final var points = photoHints.size() - currentHintIndex;
-        return null;
-//        return new AnswerGivenEvent(Set.of(answerField.getValue()), false, points, true);
+        return AnswerGivenEvent.builder()
+                .answers(Set.of(answerField.getValue()))
+                .result(new AnswerResult(UNKNOWN, photoHints.size(), points))
+                .manuallyApprove(true)
+                .build();
     }
 }

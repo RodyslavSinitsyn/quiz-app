@@ -56,7 +56,7 @@ public class QuestionListGrid extends Grid<QuestionEntity> {
                 .setHeader("Автор")
                 .setSortable(true);
         addMechanicColumn();
-//        addGradeColumn(); TODO: Not needed for now
+//        addGradeColumn();
         addColumn(new LocalDateTimeRenderer<>(QuestionEntity::getCreationDate, QuizUtils.DATE_FORMAT_VALUE))
                 .setHeader("Дата создания")
                 .setSortable(true)
