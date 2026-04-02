@@ -28,6 +28,7 @@ import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 import org.rsinitsyn.quiz.model.sound.GameSound;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.*;
+import org.rsinitsyn.quiz.utils.AudioUtils;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 
 import java.util.*;
@@ -436,9 +437,12 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         }
         topContainer.removeAll();
         topContainer.add(userProfileWithScore(userState.snapshot(), CleverestComponents.MOBILE_LARGE_FONT));
-        final var emojiSound = emojiSmall(Emoji.SOUND.value);
-        emojiSound.addClickListener(event -> broadcaster.sendPlaySoundEvent(gameId, GameSound.next()));
-        topContainer.add(horizontalLayoutCenter(emojiSound));
+        final var emojiSound = new Button(Emoji.SOUND.value);
+        emojiSound.addClickListener(event -> {
+            AudioUtils.playStaticSoundAsync(CORRECT_ANSWER_AUDIOS.next());
+            broadcaster.sendPlaySoundEvent(gameId, GameSound.next());
+        });
+        topContainer.add(emojiSound);
         topContainer.add(new Hr());
     }
 

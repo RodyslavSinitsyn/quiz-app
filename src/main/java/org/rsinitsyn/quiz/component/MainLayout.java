@@ -47,8 +47,8 @@ public class MainLayout extends AppLayout implements
     private Span loggedUserNameSpan = new Span();
     private Button exitButton = new Button();
 
-    private Icon themeColorSelector = iconWithBadge(VaadinIcon.PALETTE  .create(), "primary");
-    private Icon themeToggle = iconWithBadge(VaadinIcon.MOON.create(), "primary");
+    private Button themeColorSelector = new Button();
+    private Button themeToggle = new Button();
     private boolean darkTheme = false;
 
     private final Environment environment;
@@ -88,6 +88,7 @@ public class MainLayout extends AppLayout implements
     }
 
     private void configureToggleTheme() {
+        themeToggle.setIcon(VaadinIcon.MOON_O.create());
         themeToggle.addClickListener(event -> {
             darkTheme = !darkTheme;
             ThemeUtils.setThemeMode(darkTheme ? Lumo.DARK : Lumo.LIGHT);
@@ -136,12 +137,14 @@ public class MainLayout extends AppLayout implements
 
     private HorizontalLayout createAuthLayout() {
         HorizontalLayout authLayout = new HorizontalLayout();
+        themeColorSelector.setIcon(VaadinIcon.PALETTE.create());
         final var themeMenu = new ContextMenu(themeColorSelector);
         themeMenu.setOpenOnClick(true);
-        for (final var themePreset : THEME_PRESETS) {
+        for (final var themePreset : THEME_PRESETS.stream().limit(1).toList()) {
             themeMenu.addItem(themeColor(themePreset), event -> applyTheme(UI.getCurrent(), themePreset.color()));
         }
-        authLayout.add(themeColorSelector, themeToggle, loggedUserNameSpan, warningMessageAboutLogin, loginButton, exitButton);
+        authLayout.add(themeColorSelector, themeToggle);
+        authLayout.add(loggedUserNameSpan, warningMessageAboutLogin, loginButton, exitButton);
         authLayout.setAlignItems(FlexComponent.Alignment.CENTER);
         return authLayout;
     }
