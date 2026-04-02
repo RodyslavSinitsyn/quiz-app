@@ -98,7 +98,7 @@ public class LabsPage extends VerticalLayout {
                                 userStateSnapshot("Charlie", 2, CORRECT)
                         )
                 ),
-                Duration.ofSeconds(3)
+                Duration.ofSeconds(2)
         ));
 
 

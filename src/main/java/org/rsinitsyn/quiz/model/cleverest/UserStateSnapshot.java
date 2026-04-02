@@ -27,4 +27,11 @@ public record UserStateSnapshot(UserProfile profile,
     public boolean correct() {
         return answerStatus == CORRECT;
     }
+
+    public UserPosition userPosition() {
+        return new UserPosition(username(), position, score);
+    }
+
+    public record UserPosition(String username, int position, int score) {
+    }
 }
