@@ -14,14 +14,14 @@ import org.rsinitsyn.quiz.service.CleverestBroadcaster.AllUsersReadyEvent;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.UserJoinedEvent;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
+import org.rsinitsyn.quiz.utils.QuizComponents;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static org.rsinitsyn.quiz.entity.GameStatus.FINISHED;
+import static org.rsinitsyn.quiz.entity.GameStatus.NOT_STARTED;
 import static org.rsinitsyn.quiz.entity.GameStatus.STARTED;
-import static org.rsinitsyn.quiz.utils.QuizComponents.infoNotification;
 import static org.rsinitsyn.quiz.utils.QuizUtils.*;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
@@ -35,6 +35,7 @@ public class CleverestWaitingPage extends VerticalLayout
     private final QuestionService questionService;
     private final GameService gameService;
     private final CleverestBroadcaster broadcaster;
+    private final PageValidator pageValidator;
 
     private String gameId;
     private boolean gameHost;
@@ -43,11 +44,13 @@ public class CleverestWaitingPage extends VerticalLayout
     private CleverestWaitingRoomComponent waitingRoom;
 
     public CleverestWaitingPage(final QuestionService questionService,
-                                GameService gameService,
-                                CleverestBroadcaster broadcaster) {
+                                final GameService gameService,
+                                final CleverestBroadcaster broadcaster,
+                                final PageValidator pageValidator) {
         this.questionService = questionService;
         this.gameService = gameService;
         this.broadcaster = broadcaster;
+        this.pageValidator = pageValidator;
     }
 
     @Override
@@ -58,41 +61,20 @@ public class CleverestWaitingPage extends VerticalLayout
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         logState(this, event.getUI(), "beforeEnter", true, subscriptions);
-        // Проверяем что игра существует и state создан
-        if (!validateGame(event)) {
+        final var result = pageValidator.validate(event, gameId, NOT_STARTED);
+        if (result.navigationRequired()) {
+            result.navigateAction().ifPresent(a -> a.accept(event));
+            runActionInUi(event.getUI(), () -> result.notificationMessage().ifPresent(QuizComponents::infoNotification));
             return;
         }
-        final var gameEntity = gameService.findById(gameId);
-        // Если игра уже началась — редиректим на /game
-        if (gameEntity.getStatus() == STARTED) {
-            event.forwardTo(CleverestGamePage.class, gameId);
-            return;
-        }
-        // Если игра уже закончилась — редиректим на /results
-        if (gameEntity.getStatus() == FINISHED) {
-            event.forwardTo(CleverestResultsPage.class, gameId);
-            return;
-        }
+        final var gameEntity = result.game();
         this.gameHost = gameEntity.getCreatedBy().equals(getLoggedUser());
-
-        if (!broadcaster.stateExists(gameId)) {
-            broadcaster.createState(gameId,
-                    gameEntity.getCreatedBy(),
-                    gameEntity.getGameQuestions().stream()
-                            .map(gq -> gq.getQuestion())
-                            .map(questionService::toQuizQuestionModel)
-                            .toList(),
-                    List.of(),
-                    List.of());
-        }
-
         if (waitingRoom == null) {
             waitingRoom = new CleverestWaitingRoomComponent(gameHost,
                     broadcaster.getState(gameId).getAllUserProfiles(),
                     gameId);
             add(waitingRoom);
         }
-
         logState(this, event.getUI(), "beforeEnter", false, subscriptions);
     }
 
@@ -141,15 +123,6 @@ public class CleverestWaitingPage extends VerticalLayout
         subscriptions.forEach(Registration::remove);
         subscriptions.clear();
         logState(this, detachEvent.getUI(), "onDetach", false, subscriptions);
-    }
-
-    private boolean validateGame(BeforeEnterEvent event) {
-        if (!gameService.exist(gameId)) {
-            runActionInUi(event.getUI(), () -> infoNotification("Игра не существует"));
-            event.forwardTo("");
-            return false;
-        }
-        return true;
     }
 
     @Override

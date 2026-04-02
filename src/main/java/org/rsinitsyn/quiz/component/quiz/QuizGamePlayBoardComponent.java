@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.rsinitsyn.quiz.utils.QuizComponents.openConfirmDialog;
 import static org.rsinitsyn.quiz.utils.StaticValuesHolder.*;
 
 @Slf4j
@@ -245,7 +246,7 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         if (!GameStatus.FINISHED.equals(gameState.getStatus())) {
             BeforeLeaveEvent.ContinueNavigationAction leaveAction =
                     event.postpone();
-            QuizComponents.openConfirmDialog(
+            openConfirmDialog(
                     new Span("Можно будет продолжить позже"),
                     "Покинуть игру?",
                     leaveAction::proceed

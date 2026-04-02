@@ -2,7 +2,7 @@ package org.rsinitsyn.quiz.page.cleverest;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
-import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.shared.Registration;
@@ -10,22 +10,26 @@ import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.cleverest.CleverestGamePlayBoardComponent;
-import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
 import org.rsinitsyn.quiz.entity.GameStatus;
+import org.rsinitsyn.quiz.page.MainPage;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
+import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
+import static com.vaadin.flow.router.NavigationTrigger.*;
+import static org.rsinitsyn.quiz.entity.GameStatus.STARTED;
 import static org.rsinitsyn.quiz.utils.QuizComponents.infoNotification;
+import static org.rsinitsyn.quiz.utils.QuizComponents.openConfirmDialog;
 import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
 import static org.rsinitsyn.quiz.utils.QuizUtils.runActionInUi;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
-import static org.rsinitsyn.quiz.utils.ThemeUtils.BLACK_COLOR;
 
 @Route(value = "cleverest/game", layout = MainLayout.class)
 @PageTitle("Cleverest - Игра")
@@ -35,22 +39,28 @@ import static org.rsinitsyn.quiz.utils.ThemeUtils.BLACK_COLOR;
 public class CleverestGamePage extends VerticalLayout
         implements HasUrlParameter<String>, BeforeEnterObserver, BeforeLeaveObserver {
 
+    private static final Set<NavigationTrigger> TRIGGERS = Set.of(
+            REFRESH, PROGRAMMATIC, UI_NAVIGATE
+    );
+
     private final GameService gameService;
     private final CleverestBroadcaster broadcaster;
     private final QuestionService questionService;
+    private final PageValidator pageValidator;
 
     private String gameId;
     private boolean gameHost;
-    private String originalLocation;
     private boolean isRefresh = false;
     private final List<Registration> subscriptions = new ArrayList<>();
 
     public CleverestGamePage(GameService gameService,
                              CleverestBroadcaster broadcaster,
-                             QuestionService questionService) {
+                             QuestionService questionService,
+                             final PageValidator pageValidator) {
         this.gameService = gameService;
         this.broadcaster = broadcaster;
         this.questionService = questionService;
+        this.pageValidator = pageValidator;
     }
 
     @Override
@@ -62,52 +72,21 @@ public class CleverestGamePage extends VerticalLayout
     public void beforeEnter(BeforeEnterEvent event) {
         logState(this, event.getUI(), "beforeEnter", true, subscriptions);
         isRefresh = event.isRefreshEvent();
-        if (!validateGame(event)) {
+        final var result = pageValidator.validate(event, gameId, STARTED);
+        if (result.navigationRequired()) {
+            result.navigateAction().ifPresent(a -> a.accept(event));
+            runActionInUi(event.getUI(), () -> result.notificationMessage().ifPresent(QuizComponents::infoNotification));
             return;
         }
-        final var gameEntity = gameService.findById(gameId);
-
-        if (gameEntity.getStatus() == GameStatus.NOT_STARTED) {
-            event.forwardTo(CleverestWaitingPage.class, gameId);
-            return;
-        }
-        if (gameEntity.getStatus() == GameStatus.FINISHED) {
-            event.forwardTo(CleverestResultsPage.class, gameId);
-            return;
-        }
-
-        if (!broadcaster.stateExists(gameId)) {
-            broadcaster.createState(gameId,
-                    gameEntity.getCreatedBy(),
-                    gameEntity.getGameQuestions().stream()
-                            .map(gq -> gq.getQuestion())
-                            .map(questionService::toQuizQuestionModel)
-                            .toList(),
-                    List.of(),
-                    List.of());
-            gameEntity.getGameQuestions().stream()
-                    .map(GameQuestionUserEntity::getUser)
-                    .filter(u -> !u.getUsername().equals(gameEntity.getCreatedBy()))
-                    .forEach(u -> broadcaster.sendJoinUserEvent(
-                            gameId,
-                            u.getUsername(),
-                            BLACK_COLOR,
-                            null,
-                            null,
-                            null
-                    ));
-        }
-
+        final var gameEntity = result.game();
         this.gameHost = gameEntity.getCreatedBy().equals(getLoggedUser());
         final var state = broadcaster.getState(gameId);
 
         if (!gameHost && !state.userPresent(getLoggedUser())) {
+            event.forwardTo(MainPage.class);
             runActionInUi(event.getUI(), () -> infoNotification("Игра уже началась, вы там не участвуете"));
-            event.forwardTo("");
             return;
         }
-
-        originalLocation = event.getLocation().getPathWithQueryParameters();
         logState(this, event.getUI(), "beforeEnter", false, subscriptions);
     }
 
@@ -170,26 +149,13 @@ public class CleverestGamePage extends VerticalLayout
         if (gameEntity == null || gameEntity.getStatus() != GameStatus.STARTED) {
             return;
         }
-        final var confirmDialog = new Dialog();
-        confirmDialog.setHeaderTitle("Нельзя покинуть игру!");
-        confirmDialog.setCloseOnOutsideClick(true);
-        confirmDialog.addDialogCloseActionListener(e -> confirmDialog.close());
-        confirmDialog.open();
-        event.postpone();
-        event.getUI().getPage().getHistory().replaceState(null, originalLocation);
-    }
-
-    private boolean validateGame(BeforeEnterEvent event) {
-        if (!gameService.exist(gameId)) {
-            runActionInUi(event.getUI(), () -> infoNotification("Игра не существует"));
-            event.forwardTo("");
-            return false;
-        }
-//        if (broadcaster.getState(gameId) == null) {
-//            infoNotification("Состояние игры не найдено");
-//            event.forwardTo("");
-//            return false;
-//        }
-        return true;
+        logState(this, event.getUI(), "beforeLeave", true, subscriptions);
+        final var leaveAction = event.postpone();
+        openConfirmDialog(
+                new Span("Можно будет продолжить позже"),
+                "Покинуть игру?",
+                leaveAction::proceed
+        );
+        logState(this, event.getUI(), "beforeLeave", false, subscriptions);
     }
 }

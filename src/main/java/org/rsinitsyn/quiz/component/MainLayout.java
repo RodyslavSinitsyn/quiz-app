@@ -31,6 +31,7 @@ import java.util.Arrays;
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.iconWithBadge;
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.themeColor;
 import static org.rsinitsyn.quiz.utils.Profiles.DEV;
+import static org.rsinitsyn.quiz.utils.QuizComponents.openConfirmDialog;
 import static org.rsinitsyn.quiz.utils.ThemeUtils.THEME_PRESETS;
 import static org.rsinitsyn.quiz.utils.ThemeUtils.applyTheme;
 
@@ -114,7 +115,7 @@ public class MainLayout extends AppLayout implements
         tabs.setOrientation(orientation);
         tabs.addThemeVariants(TabsVariant.LUMO_CENTERED,
                 TabsVariant.LUMO_MINIMAL);
-        tabs.add(createTab("Играть", VaadinIcon.PLAY_CIRCLE_O.create(), NewGamePage.class));
+        tabs.add(createTab("Играть", VaadinIcon.PLAY_CIRCLE_O.create(), MainPage.class));
         tabs.add(createTab("Вопросы", VaadinIcon.QUESTION_CIRCLE_O.create(), QuestionsPage.class));
         tabs.add(createTab("Статистика", VaadinIcon.TRENDING_UP.create(), StatisticPage.class));
         if (Arrays.asList(environment.getActiveProfiles()).contains(DEV.value)) {
@@ -165,7 +166,7 @@ public class MainLayout extends AppLayout implements
         exitButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         exitButton.addClassNames(LumoUtility.Margin.MEDIUM);
         exitButton.addClickListener(event -> {
-            QuizComponents.openConfirmDialog(
+            openConfirmDialog(
                     new Span("Подтвердите действие"),
                     "Выйти из системы?",
                     () -> {

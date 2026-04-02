@@ -8,6 +8,8 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 
+import static org.rsinitsyn.quiz.utils.QuizComponents.openConfirmDialog;
+
 @Slf4j
 public class GlobalErrorHandler extends DefaultErrorHandler {
 
@@ -18,7 +20,7 @@ public class GlobalErrorHandler extends DefaultErrorHandler {
         Optional.ofNullable(UI.getCurrent())
                 .ifPresent(ui -> {
                     ui.access(() -> {
-                        QuizComponents.openConfirmDialog(
+                        openConfirmDialog(
                                 new Span(errMessage),
                                 "Произошла ошибка",
                                 () -> {

@@ -11,6 +11,8 @@ import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
 import org.rsinitsyn.quiz.entity.GameType;
 import org.rsinitsyn.quiz.page.QuizGamePlayPage;
+import org.rsinitsyn.quiz.page.cleverest.CleverestGamePage;
+import org.rsinitsyn.quiz.page.cleverest.CleverestResultsPage;
 import org.rsinitsyn.quiz.page.cleverest.CleverestWaitingPage;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
@@ -58,24 +60,29 @@ public class GameListGrid extends Grid<GameEntity> {
             return new Span("Закончена");
         } else if (gameEntity.getStatus().equals(STARTED)
                 && gameEntity.getPlayerNames().contains(SessionWrapper.getLoggedUser())) {
-            return joinGameButton("Вернуться", gameEntity.getId().toString(), gameEntity.getType());
+            return joinGameButton("Вернуться", gameEntity, gameEntity.getType());
         } else if (gameEntity.getStatus().equals(STARTED)) {
             return new Span("Начата");
         } else if (gameEntity.getStatus().equals(NOT_STARTED)) {
-            return joinGameButton("Зайти", gameEntity.getId().toString(), gameEntity.getType());
+            return joinGameButton("Зайти", gameEntity, gameEntity.getType());
         } else {
             return new Span("Не настроена");
         }
     }
 
-    private Button joinGameButton(String label, String gameId, GameType gameType) {
+    private Button joinGameButton(String label, GameEntity gameEntity, GameType gameType) {
+        final var gameId = gameEntity.getId().toString();
         var button = new Button(label);
         button.addThemeVariants(ButtonVariant.LUMO_SMALL,
                 ButtonVariant.LUMO_PRIMARY);
         button.addClickListener(event -> {
             event.getSource().getUI().ifPresent(ui -> {
                 if (gameType == GameType.CLEVEREST) {
-                    ui.navigate(CleverestWaitingPage.class, gameId);
+                    switch (gameEntity.getStatus()) {
+                        case NOT_STARTED -> ui.navigate(CleverestWaitingPage.class, gameId);
+                        case STARTED -> ui.navigate(CleverestGamePage.class, gameId);
+                        case FINISHED -> ui.navigate(CleverestResultsPage.class, gameId);
+                    }
                 } else if (gameType == GameType.QUIZ) {
                     ui.navigate(QuizGamePlayPage.class, gameId);
                 }

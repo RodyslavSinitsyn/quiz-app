@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 @Route(value = "/", layout = MainLayout.class)
 @PageTitle("Game")
 @PermitAll
-public class NewGamePage extends VerticalLayout {
+public class MainPage extends VerticalLayout {
 
     private static final String FONT_SIZE = LumoUtility.FontSize.XLARGE;
 
@@ -28,7 +28,7 @@ public class NewGamePage extends VerticalLayout {
 
     private GameListGrid gameListGrid = new GameListGrid(Collections.emptyList());
 
-    public NewGamePage(GameService gameService) {
+    public MainPage(GameService gameService) {
         this.gameService = gameService;
         setSizeFull();
         configureGameList();

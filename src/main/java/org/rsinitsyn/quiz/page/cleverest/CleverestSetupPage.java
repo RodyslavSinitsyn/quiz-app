@@ -79,8 +79,6 @@ public class CleverestSetupPage extends VerticalLayout {
         return questionModels;
     }
 
-
-
     @Override
     protected void onDetach(final DetachEvent detachEvent) {
         logState(this, detachEvent.getUI(), "onDetach", true, subscriptions);

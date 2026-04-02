@@ -17,7 +17,7 @@ import org.rsinitsyn.quiz.component.custom.GameResultsComponent;
 import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
-import org.rsinitsyn.quiz.page.NewGamePage;
+import org.rsinitsyn.quiz.page.MainPage;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 
@@ -78,7 +78,7 @@ public class QuizGameResultComponent extends VerticalLayout {
         reaction.setText(getResultReaction());
         newGameButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         newGameButton.addClickListener(event -> {
-            getUI().ifPresent(ui -> ui.navigate(NewGamePage.class));
+            getUI().ifPresent(ui -> ui.navigate(MainPage.class));
             QuizComponents.infoNotification(
                     "Результат игрока '" + gameState.getPlayerName() + "' добавлен в таблицу 'Недавние игры'");
         });
