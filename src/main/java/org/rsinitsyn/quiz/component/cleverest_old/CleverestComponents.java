@@ -6,6 +6,7 @@ import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.avatar.AvatarVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
@@ -18,6 +19,9 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.popover.Popover;
+import com.vaadin.flow.component.popover.PopoverPosition;
+import com.vaadin.flow.component.popover.PopoverVariant;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
@@ -29,11 +33,13 @@ import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
+import org.rsinitsyn.quiz.utils.AudioUtils;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static org.rsinitsyn.quiz.utils.QuizComponents.*;
 
@@ -380,5 +386,27 @@ public final class CleverestComponents {
                 .set("border", "1px solid var(--lumo-contrast-20pct)");
         final var label = new Span(preset.name());
         return horizontalLayout(JustifyContentMode.START, circle, label);
+    }
+
+
+    public static Button soundBar(Runnable task) {
+        final var emojiSound = new Button(Emoji.SOUND.value);
+        emojiSound.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+
+        final var contextMenu = new ContextMenu(emojiSound);
+        contextMenu.setOpenOnClick(true);
+        final var layout = horizontalLayoutCenter();
+        Stream.of(Emoji.GUITAR.value, Emoji.LAUGH.value, Emoji.EXPLODE.value)
+                .map(CleverestComponents::emoji)
+                .forEach(emoji -> {
+                    layout.add(emoji);
+                    emoji.addClickListener(e -> {
+                        task.run();
+                        contextMenu.close();
+                        layout.remove(e.getSource());
+                    });
+                });
+        contextMenu.add(layout);
+        return emojiSound;
     }
 }

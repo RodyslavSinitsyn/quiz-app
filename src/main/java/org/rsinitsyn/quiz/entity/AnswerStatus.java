@@ -12,7 +12,7 @@ public enum AnswerStatus {
     public final Boolean boolVal;
 
     public boolean correct() {
-        return boolVal;
+        return boolVal != null && boolVal;
     }
 
     public static AnswerStatus answerStatus(Boolean correct) {

@@ -87,7 +87,9 @@ public class CleverestWaitingPage extends VerticalLayout
         }
 
         if (waitingRoom == null) {
-            waitingRoom = new CleverestWaitingRoomComponent(gameHost, broadcaster.getState(gameId).getAllUserProfiles());
+            waitingRoom = new CleverestWaitingRoomComponent(gameHost,
+                    broadcaster.getState(gameId).getAllUserProfiles(),
+                    gameId);
             add(waitingRoom);
         }
 

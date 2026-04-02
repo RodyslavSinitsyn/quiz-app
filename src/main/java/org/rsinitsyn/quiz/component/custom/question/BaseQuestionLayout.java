@@ -88,11 +88,12 @@ public class BaseQuestionLayout extends VerticalLayout {
             playAudioButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST,
                     ButtonVariant.LUMO_PRIMARY,
                     ButtonVariant.LUMO_SMALL);
-            playAudioButton.setEnabled(host);
             playAudioButton.addClickListener(event -> {
                 AudioUtils.playSoundAsync(filename);
             });
-            add(playAudioButton);
+            if (host) {
+                add(playAudioButton);
+            }
 
             // Native HTML to play audio on each device
             add(new AudioPlayer(createStreamResourceForAudio(filename)));

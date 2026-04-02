@@ -8,6 +8,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -38,6 +39,7 @@ import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.hor
 import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.primaryButton;
 import static org.rsinitsyn.quiz.utils.QuizComponents.uploadComponent;
 import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
+import static org.rsinitsyn.quiz.utils.QuizUtils.resolveLocalIp;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 import static org.rsinitsyn.quiz.utils.ThemeUtils.BLACK_COLOR;
 import static org.rsinitsyn.quiz.utils.ThemeUtils.THEME_PRESETS;
@@ -56,7 +58,8 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
     private Button startGameButton;
 
     public CleverestWaitingRoomComponent(boolean hostPage,
-                                         List<UserProfile> users) {
+                                         List<UserProfile> users,
+                                         String gameId) {
         logState(this, getUI(), "Constructor", true, List.of());
         this.hostPage = hostPage;
         this.winnerBet = createBetComponent(true, users.stream().map(UserProfile::username).toList());
@@ -65,7 +68,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         users.stream().filter(u -> u.username().equals(getLoggedUser())).findFirst().ifPresent(userGameState::set);
         add(usersGrid);
         if (hostPage) {
-            configureHostComponents(users.size());
+            configureHostComponents(users.size(), gameId);
         } else {
             configurePlayerComponents();
         }
@@ -181,10 +184,16 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         return select;
     }
 
-    private void configureHostComponents(int usersCount) {
+    private void configureHostComponents(int usersCount, String gameId) {
         startGameButton = primaryButton("Начать игру", e -> fireEvent(new StartGameEvent()));
         startGameButton.setEnabled(usersCount > 0);
-        add(startGameButton);
+
+        final var prodLink = new Anchor("http://%s:8080/cleverest/%s?player".formatted(resolveLocalIp(), gameId),
+                "Prod Invite link");
+        prodLink.getElement().setAttribute("target", "_blank");
+        add(prodLink);
+
+        add(startGameButton, prodLink);
     }
 
     public void updateUserState(UserProfile userProfile) {

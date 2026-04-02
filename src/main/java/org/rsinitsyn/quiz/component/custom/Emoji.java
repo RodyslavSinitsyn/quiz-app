@@ -20,7 +20,10 @@ public enum Emoji {
     LOVE("😍", 5),
     AMAZING("🤩", 5),
 
-    SOUND("\uD83D\uDD0A "); // 🔊
+    SOUND("🔊"),
+    GUITAR("🎸"),
+    LAUGH("😂"),
+    EXPLODE("🤯");
 
     public final String value;
     public final int rating;
