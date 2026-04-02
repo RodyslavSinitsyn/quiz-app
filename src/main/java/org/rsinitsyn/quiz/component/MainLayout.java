@@ -140,7 +140,7 @@ public class MainLayout extends AppLayout implements
         themeColorSelector.setIcon(VaadinIcon.PALETTE.create());
         final var themeMenu = new ContextMenu(themeColorSelector);
         themeMenu.setOpenOnClick(true);
-        for (final var themePreset : THEME_PRESETS.stream().limit(1).toList()) {
+        for (final var themePreset : THEME_PRESETS) {
             themeMenu.addItem(themeColor(themePreset), event -> applyTheme(UI.getCurrent(), themePreset.color()));
         }
         authLayout.add(themeColorSelector, themeToggle);

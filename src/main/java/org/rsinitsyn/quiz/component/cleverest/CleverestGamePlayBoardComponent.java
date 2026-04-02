@@ -436,13 +436,11 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             return;
         }
         topContainer.removeAll();
-        topContainer.add(userProfileWithScore(userState.snapshot(), CleverestComponents.MOBILE_LARGE_FONT));
-        final var emojiSound = new Button(Emoji.SOUND.value);
-        emojiSound.addClickListener(event -> {
-            AudioUtils.playStaticSoundAsync(CORRECT_ANSWER_AUDIOS.next());
-            broadcaster.sendPlaySoundEvent(gameId, GameSound.next());
-        });
-        topContainer.add(emojiSound);
+        final var userRow = userProfileWithScore(userState.snapshot(), MOBILE_LARGE_FONT);
+        final var emojiSound = CleverestComponents.soundBar(() ->
+                broadcaster.sendPlaySoundEvent(gameId, GameSound.next()));
+        userRow.add(emojiSound);
+        topContainer.add(userRow);
         topContainer.add(new Hr());
     }
 
