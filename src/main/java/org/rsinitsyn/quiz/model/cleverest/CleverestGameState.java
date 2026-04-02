@@ -75,6 +75,10 @@ public class CleverestGameState {
         });
     }
 
+    public UserGameState removeUser(String username) {
+        return users.remove(username);
+    }
+
     public boolean usersPresent() {
         return MapUtils.isNotEmpty(users);
     }

@@ -177,7 +177,6 @@ public final class CleverestComponents {
         return span;
     }
 
-    // Form Elements
     public static Notification notification(String text, NotificationVariant variant) {
         Notification notification = Notification.show(text, 1_500, Notification.Position.TOP_STRETCH);
         notification.addThemeVariants(variant);

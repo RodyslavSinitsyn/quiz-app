@@ -37,6 +37,7 @@ public class RestoreStateService {
         log.info("Game {} [{}] restoring state", gameEntity.getType(), gameId);
         final var questionModels = gameEntity.getGameQuestions().stream()
                 .map(GameQuestionUserEntity::getQuestion)
+                .distinct()
                 .map(questionService::toQuizQuestionModel)
                 .toList();
         broadcaster.createState(gameId,

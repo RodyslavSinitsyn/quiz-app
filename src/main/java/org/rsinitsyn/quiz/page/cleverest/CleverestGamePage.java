@@ -72,7 +72,7 @@ public class CleverestGamePage extends VerticalLayout
     public void beforeEnter(BeforeEnterEvent event) {
         logState(this, event.getUI(), "beforeEnter", true, subscriptions);
         isRefresh = event.isRefreshEvent();
-        final var result = pageValidator.validate(event, gameId, STARTED);
+        final var result = pageValidator.validate(gameId, STARTED);
         if (result.navigationRequired()) {
             result.navigateAction().ifPresent(a -> a.accept(event));
             runActionInUi(event.getUI(), () -> result.notificationMessage().ifPresent(QuizComponents::infoNotification));

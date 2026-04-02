@@ -11,8 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.rsinitsyn.quiz.component.custom.event.UserEvent;
 import org.rsinitsyn.quiz.component.custom.Emoji;
+import org.rsinitsyn.quiz.component.custom.event.UserEvent;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.answer.AnswerResult;
 import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
@@ -59,7 +59,7 @@ public class CleverestBroadcaster {
                             List<QuestionModel> firstRound,
                             List<QuestionModel> secondRound,
                             List<QuestionModel> thirdRound) {
-        log.info("Create game state: {}", gameId);
+        log.info("Create game state: [{}]", gameId);
         final var categoriesAndQuestions = thirdRound.stream()
                 .collect(Collectors.groupingBy(QuestionModel::getCategoryName,
                         Collectors.collectingAndThen(
@@ -144,10 +144,7 @@ public class CleverestBroadcaster {
                         userGameState.getLastResponseTimeSec(),
                         getState(gameId).getRoundNumber()));
 
-        if (getState(gameId).areAllUsersAnswered()
-                && getState(gameId).getRoundNumber() != 3) {
-            sendEventWhenAllAnswered(gameId, questionModel);
-        }
+        sendEventIfAllAnswered(gameId, questionModel);
     }
 
     public void sendNewRoundEvent(String gameId) {
@@ -157,28 +154,31 @@ public class CleverestBroadcaster {
                 getState(gameId).getRoundRules().get(currRound)));
     }
 
-    private void sendEventWhenAllAnswered(String gameId, QuestionModel currQuestion) {
-        CleverestGameState gameState = getState(gameId);
-        int leftToRevealScore = gameState.getQuestionsLeftToRevealScoreTable();
-        boolean noMoreQuestionsInRound = gameState.prepareNextQuestionAndCheckIsLast();
-        boolean roundsOver = false;
-        int currRound = gameState.getRoundNumber();
-        if (noMoreQuestionsInRound) {
-            roundsOver = gameState.prepareNextRoundAndCheckIsLast();
+    private void sendEventIfAllAnswered(String gameId, QuestionModel currQuestion) {
+        if (getState(gameId).areAllUsersAnswered()
+                && getState(gameId).getRoundNumber() != 3) {
+            CleverestGameState gameState = getState(gameId);
+            int leftToRevealScore = gameState.getQuestionsLeftToRevealScoreTable();
+            boolean noMoreQuestionsInRound = gameState.prepareNextQuestionAndCheckIsLast();
+            boolean roundsOver = false;
+            int currRound = gameState.getRoundNumber();
+            if (noMoreQuestionsInRound) {
+                roundsOver = gameState.prepareNextRoundAndCheckIsLast();
+            }
+            log.info("All users answered. CurrQuestionNumber: {}. NextQuestionNumber: {}. TotalQuestons: {}, CurrRound: {}. RoundIsOver: {}. GameOver: {}",
+                    gameState.getQuestionNumber() - 1,
+                    gameState.getQuestionNumber(),
+                    gameState.getCurrRoundQuestionsSource().get().size(),
+                    currRound,
+                    noMoreQuestionsInRound,
+                    roundsOver);
+            eventBuses.get(gameId).fireEvent(new AllUsersAnsweredEvent(gameId,
+                    currQuestion,
+                    noMoreQuestionsInRound,
+                    roundsOver,
+                    currRound,
+                    leftToRevealScore));
         }
-        log.info("All users answered. CurrQuestionNumber: {}. NextQuestionNumber: {}. TotalQuestons: {}, CurrRound: {}. RoundIsOver: {}. GameOver: {}",
-                gameState.getQuestionNumber() - 1,
-                gameState.getQuestionNumber(),
-                gameState.getCurrRoundQuestionsSource().get().size(),
-                currRound,
-                noMoreQuestionsInRound,
-                roundsOver);
-        eventBuses.get(gameId).fireEvent(new AllUsersAnsweredEvent(gameId,
-                currQuestion,
-                noMoreQuestionsInRound,
-                roundsOver,
-                currRound,
-                leftToRevealScore));
     }
 
     // GameFinishedEvent
@@ -273,6 +273,12 @@ public class CleverestBroadcaster {
 
     public void sendPlaySoundEvent(String gameId, GameSound sound) {
         eventBuses.get(gameId).fireEvent(new PlaySoundEvent(gameId, sound));
+    }
+
+    public void sendDeleteUserEvent(String gameId, String username) {
+        final var state = getState(gameId);
+        eventBuses.get(gameId).fireEvent(new DeleteUserEvent(gameId, state.removeUser(username)));
+        sendEventIfAllAnswered(gameId, state.getCurrentQuestion());
     }
 
     @Getter
@@ -532,13 +538,26 @@ public class CleverestBroadcaster {
         }
     }
 
+    @Getter
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
+    public static class DeleteUserEvent extends CleverestGameEvent {
+
+        private final UserGameState deleted;
+
+        public DeleteUserEvent(final String gameId, final UserGameState deleted) {
+            super(gameId);
+            this.deleted = deleted;
+        }
+    }
+
     public <T extends CleverestGameEvent> Registration subscribe(String gameId,
                                                                  Class<T> eventType,
                                                                  ComponentEventListener<T> listener) {
         final var eventBus = eventBuses.computeIfAbsent(gameId, bus -> new ComponentEventBus(new Div()));
         Registration[] regHolder = new Registration[1];
         regHolder[0] = eventBus.addListener(eventType, event -> {
-            log.info("[FIX][Broadcaster={}] Execute [{}] reg=[{}], User [{}], UI [{}], EventBus size[{}]",
+            log.info("[DEEP][Broadcaster={}] Execute [{}] reg=[{}], User [{}], UI [{}], EventBus size[{}]",
                     this.hashCode(), eventType.getSimpleName(),
                     regHolder[0].hashCode(),
                     getLoggedUser(),
@@ -547,7 +566,7 @@ public class CleverestBroadcaster {
             listener.onComponentEvent(event);
         });
         Registration reg = regHolder[0];
-        log.info("[FIX][Broadcaster={}] Registered [{}], User [{}], Registration [{}], EventBus size[{}]",
+        log.info("[DEEP][Broadcaster={}] Registered [{}], User [{}], Registration [{}], EventBus size[{}]",
                 this.hashCode(), eventType.getSimpleName(), getLoggedUser(), reg.hashCode(), eventBuses.get(gameId).getListeners(CleverestGameEvent.class).size());
         return reg;
     }

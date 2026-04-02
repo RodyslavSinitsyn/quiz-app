@@ -36,6 +36,7 @@ import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
 import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory.createQuestionLayout;
 import static org.rsinitsyn.quiz.utils.AudioUtils.playStaticSoundAsync;
 import static org.rsinitsyn.quiz.utils.QuizComponents.appendTextBorder;
+import static org.rsinitsyn.quiz.utils.QuizComponents.openConfirmDialog;
 import static org.rsinitsyn.quiz.utils.QuizUtils.*;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 import static org.rsinitsyn.quiz.utils.StaticValuesHolder.*;
@@ -229,6 +230,9 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 })));
         subscriptions.add(broadcaster.subscribe(gameId, PlaySoundEvent.class, event ->
                 playStaticSoundAsync(event.getSound().path())));
+        subscriptions.add(broadcaster.subscribe(gameId, DeleteUserEvent.class, event -> {
+            renderTopContainerForHost(broadcaster.getState(gameId).getAllUserProfiles());
+        }));
     }
 
     @Override
@@ -251,6 +255,11 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         userGameStates.forEach(profile -> {
             final var userProfile = userProfile(profile, CleverestComponents.MOBILE_LARGE_FONT);
             userProfile.setId("top-container-user-" + profile.username());
+            userProfile.addDoubleClickListener(event ->
+                    openConfirmDialog(
+                            new Span("Удалить игрока [%s]".formatted(profile.username())),
+                            "",
+                            () -> broadcaster.sendDeleteUserEvent(gameId, profile.username())));
             topContainer.add(userProfile);
         });
     }

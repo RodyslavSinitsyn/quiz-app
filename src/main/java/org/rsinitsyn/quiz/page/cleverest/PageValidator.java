@@ -19,14 +19,13 @@ public class PageValidator {
 
     private final GameService gameService;
 
-    public CheckResult validate(BeforeEnterEvent event,
-                                String gameId,
-                                GameStatus gameStatus) {
+    public CheckResult validate(String gameId,
+                                GameStatus expectedStatus) {
         if (!validUuid(gameId) || !gameService.exist(gameId)) {
             return CheckResult.notExist();
         }
         final var game = gameService.findById(gameId);
-        if (game.getStatus() == gameStatus) {
+        if (game.getStatus() == expectedStatus) {
             return CheckResult.builder()
                     .game(game)
                     .navigationRequired(false)

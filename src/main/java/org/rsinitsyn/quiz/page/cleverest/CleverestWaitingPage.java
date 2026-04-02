@@ -61,7 +61,7 @@ public class CleverestWaitingPage extends VerticalLayout
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         logState(this, event.getUI(), "beforeEnter", true, subscriptions);
-        final var result = pageValidator.validate(event, gameId, NOT_STARTED);
+        final var result = pageValidator.validate(gameId, NOT_STARTED);
         if (result.navigationRequired()) {
             result.navigateAction().ifPresent(a -> a.accept(event));
             runActionInUi(event.getUI(), () -> result.notificationMessage().ifPresent(QuizComponents::infoNotification));
