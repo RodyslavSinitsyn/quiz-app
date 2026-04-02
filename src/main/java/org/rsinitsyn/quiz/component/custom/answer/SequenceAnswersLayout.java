@@ -12,8 +12,8 @@ import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 
 import static java.util.stream.IntStream.range;
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.horizontalLayoutBetween;
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.optionComponent;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.horizontalLayoutBetween;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.optionComponent;
 import static org.rsinitsyn.quiz.entity.AnswerStatus.answerStatus;
 
 public class SequenceAnswersLayout extends AbstractAnswersLayout {

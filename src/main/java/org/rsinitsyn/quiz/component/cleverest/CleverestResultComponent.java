@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.component.cleverest_old;
+package org.rsinitsyn.quiz.component.cleverest;
 
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
@@ -24,7 +24,7 @@ import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.rsinitsyn.quiz.utils.StaticValuesHolder;
 
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.getIconFromAnswer;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.getIconFromAnswer;
 
 public class CleverestResultComponent extends VerticalLayout {
 

@@ -11,7 +11,7 @@ import org.rsinitsyn.quiz.model.QuestionModel;
 import java.util.Collections;
 import java.util.List;
 
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.optionComponent;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.optionComponent;
 import static org.rsinitsyn.quiz.entity.AnswerStatus.answerStatus;
 import static org.rsinitsyn.quiz.model.AnswerHint.HALF;
 import static org.rsinitsyn.quiz.model.AnswerHint.THREE;

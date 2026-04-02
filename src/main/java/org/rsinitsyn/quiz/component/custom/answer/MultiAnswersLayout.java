@@ -5,7 +5,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.listbox.MultiSelectListBox;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
-import org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents;
+import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.model.AnswerHint;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;

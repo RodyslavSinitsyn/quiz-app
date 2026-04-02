@@ -25,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents;
 import org.rsinitsyn.quiz.component.theme.ThemePreset;
 import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.utils.ThemeUtils;
@@ -35,8 +34,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Optional.ofNullable;
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.horizontalLayout;
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.primaryButton;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.primaryButton;
 import static org.rsinitsyn.quiz.utils.QuizComponents.uploadComponent;
 import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
 import static org.rsinitsyn.quiz.utils.QuizUtils.resolveLocalIp;

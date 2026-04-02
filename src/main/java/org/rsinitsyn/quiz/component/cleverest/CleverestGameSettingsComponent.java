@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.component.cleverest_old;
+package org.rsinitsyn.quiz.component.cleverest;
 
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;

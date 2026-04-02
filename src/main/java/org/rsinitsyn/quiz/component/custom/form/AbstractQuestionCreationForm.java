@@ -24,7 +24,7 @@ import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.model.binding.AbstractQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
 
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.horizontalLayoutBetween;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.horizontalLayoutBetween;
 
 @Slf4j
 public abstract class AbstractQuestionCreationForm<T extends AbstractQuestionBindingModel> extends FormLayout {

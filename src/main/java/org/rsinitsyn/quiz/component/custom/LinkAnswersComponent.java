@@ -18,7 +18,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.tuple.MutablePair;
-import org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents;
+import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
 

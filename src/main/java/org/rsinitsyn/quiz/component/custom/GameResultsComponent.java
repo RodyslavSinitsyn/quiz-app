@@ -11,7 +11,7 @@ import org.rsinitsyn.quiz.entity.QuestionType;
 
 import java.util.Optional;
 
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.horizontalLayoutBetween;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.horizontalLayoutBetween;
 import static org.rsinitsyn.quiz.utils.QuizComponents.questionDescription;
 import static org.rsinitsyn.quiz.utils.QuizComponents.smallAvatar;
 

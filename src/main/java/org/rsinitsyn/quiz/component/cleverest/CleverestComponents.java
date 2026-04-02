@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.component.cleverest_old;
+package org.rsinitsyn.quiz.component.cleverest;
 
 import com.flowingcode.vaadin.addons.carousel.Carousel;
 import com.flowingcode.vaadin.addons.carousel.Slide;
@@ -19,9 +19,6 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.popover.Popover;
-import com.vaadin.flow.component.popover.PopoverPosition;
-import com.vaadin.flow.component.popover.PopoverVariant;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
@@ -33,7 +30,6 @@ import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
-import org.rsinitsyn.quiz.utils.AudioUtils;
 
 import java.util.Collection;
 import java.util.List;

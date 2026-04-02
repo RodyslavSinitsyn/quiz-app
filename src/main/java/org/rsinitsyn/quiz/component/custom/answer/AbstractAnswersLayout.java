@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.submitButton;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.submitButton;
 
 public abstract class AbstractAnswersLayout extends VerticalLayout {
 

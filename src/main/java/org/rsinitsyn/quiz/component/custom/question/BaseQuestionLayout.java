@@ -24,7 +24,7 @@ import org.rsinitsyn.quiz.utils.AudioUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
 import static org.rsinitsyn.quiz.component.custom.answer.AnswerLayoutsFactory.createAnswerLayout;
 import static org.rsinitsyn.quiz.utils.QuizUtils.createStreamResourceForAudio;
 

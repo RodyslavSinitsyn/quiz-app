@@ -10,7 +10,7 @@ import org.rsinitsyn.quiz.model.binding.LinkQuestionBindingModel;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.horizontalLayoutBetween;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.horizontalLayoutBetween;
 
 public class LinkQuestionForm extends AbstractQuestionCreationForm<LinkQuestionBindingModel> {
 

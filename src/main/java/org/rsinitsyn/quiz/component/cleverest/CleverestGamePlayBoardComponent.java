@@ -16,8 +16,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents;
-import org.rsinitsyn.quiz.component.cleverest_old.CleverestResultComponent;
 import org.rsinitsyn.quiz.component.custom.Emoji;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
@@ -28,14 +26,13 @@ import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 import org.rsinitsyn.quiz.model.sound.GameSound;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.*;
-import org.rsinitsyn.quiz.utils.AudioUtils;
 import org.rsinitsyn.quiz.utils.QuizUtils;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
 import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory.createQuestionLayout;
 import static org.rsinitsyn.quiz.utils.AudioUtils.playStaticSoundAsync;
 import static org.rsinitsyn.quiz.utils.QuizComponents.appendTextBorder;

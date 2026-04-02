@@ -4,15 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.theme.lumo.LumoUtility;
 import lombok.SneakyThrows;
-import org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 
 import java.time.Duration;
 import java.util.List;
 
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
 
 public class AnimatedLeaderboardComponent extends VerticalLayout {
 

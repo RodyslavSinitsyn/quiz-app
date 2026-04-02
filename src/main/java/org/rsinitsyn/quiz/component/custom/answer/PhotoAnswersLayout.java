@@ -8,7 +8,7 @@ import org.rsinitsyn.quiz.model.QuestionModel;
 
 import java.util.Set;
 
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.*;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
 import static org.rsinitsyn.quiz.model.answer.AnswerResult.oneOptionResult;
 
 public class PhotoAnswersLayout extends AbstractAnswersLayout {

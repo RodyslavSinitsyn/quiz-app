@@ -28,8 +28,8 @@ import org.springframework.core.env.Environment;
 
 import java.util.Arrays;
 
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.iconWithBadge;
-import static org.rsinitsyn.quiz.component.cleverest_old.CleverestComponents.themeColor;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.iconWithBadge;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.themeColor;
 import static org.rsinitsyn.quiz.utils.Profiles.DEV;
 import static org.rsinitsyn.quiz.utils.ThemeUtils.THEME_PRESETS;
 import static org.rsinitsyn.quiz.utils.ThemeUtils.applyTheme;

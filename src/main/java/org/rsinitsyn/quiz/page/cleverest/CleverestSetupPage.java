@@ -10,7 +10,7 @@ import com.vaadin.flow.shared.Registration;
 import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
-import org.rsinitsyn.quiz.component.cleverest_old.CleverestGameSettingsComponent;
+import org.rsinitsyn.quiz.component.cleverest.CleverestGameSettingsComponent;
 import org.rsinitsyn.quiz.entity.GameType;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.model.QuestionModel;
