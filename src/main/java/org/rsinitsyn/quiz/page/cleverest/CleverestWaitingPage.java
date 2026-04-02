@@ -12,6 +12,7 @@ import org.rsinitsyn.quiz.component.cleverest.CleverestWaitingRoomComponent;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.AllUsersReadyEvent;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.UserJoinedEvent;
+import org.rsinitsyn.quiz.service.CleverestBroadcaster.UserSentMessageEvent;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
@@ -72,6 +73,7 @@ public class CleverestWaitingPage extends VerticalLayout
         if (waitingRoom == null) {
             waitingRoom = new CleverestWaitingRoomComponent(gameHost,
                     broadcaster.getState(gameId).getAllUserProfiles(),
+                    broadcaster.getState(gameId).userMessagesDesc(),
                     gameId);
             add(waitingRoom);
         }
@@ -107,12 +109,17 @@ public class CleverestWaitingPage extends VerticalLayout
                     waitingRoom.updateTableAndBets(event.getAllUsers());
                 })));
 
+        subscriptions.add(broadcaster.subscribe(gameId, UserSentMessageEvent.class, event ->
+                runActionInUi(ui, () -> waitingRoom.updateMessageList(event.getMessages()))));
+
         // waiting room events
         subscriptions.add(waitingRoom.addUserSubmitDataEventListener(event -> broadcaster.sendJoinUserEvent(
                 gameId, event.username(), event.color(), event.photo(), event.userWinner(), event.userLoser()
         )));
         subscriptions.add(waitingRoom.addStartGameEventListener(event ->
                 broadcaster.sendUsersReadyEvent(gameId)));
+        subscriptions.add(waitingRoom.addUserTextedMessageEventListener(event ->
+                broadcaster.sendUserTextedEvent(gameId, event.username(), event.text())));
 
         logState(this, attachEvent.getUI(), "onAttach", false, subscriptions);
     }

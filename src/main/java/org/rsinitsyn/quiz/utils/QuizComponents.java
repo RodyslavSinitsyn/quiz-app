@@ -68,7 +68,7 @@ public final class QuizComponents {
     public static Notification infoNotification(String text) {
         return Notification.show(text,
                 2_000,
-                Notification.Position.TOP_STRETCH);
+                Notification.Position.TOP_END);
     }
 
     public static <T extends Component> T appendTextBorder(T component) {

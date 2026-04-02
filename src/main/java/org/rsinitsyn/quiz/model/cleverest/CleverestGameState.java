@@ -7,6 +7,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.rsinitsyn.quiz.entity.AnswerStatus;
 import org.rsinitsyn.quiz.model.QuestionModel;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,6 +34,8 @@ public class CleverestGameState {
 
     private final Map<Integer, String> roundRules = new HashMap<>();
     private final Map<QuestionModel, List<UserStateSnapshot>> history = new LinkedHashMap<>();
+    @Getter(AccessLevel.NONE)
+    private final List<UserMessage> userMessages = new ArrayList<>();
 
     // mutable
     private Iterator<UserGameState> usersToAnswerOrder = null;
@@ -117,6 +120,16 @@ public class CleverestGameState {
         final var snapshots = history.computeIfAbsent(question, ignored -> new ArrayList<>(5));
         snapshots.add(currUserState.snapshot(ofNullable(question.getId())));
         snapshots.sort(comparingInt(UserStateSnapshot::position));
+    }
+
+    public void putToMessages(String username, String text) {
+        userMessages.add(new UserMessage(username, text, Instant.now()));
+    }
+
+    public List<UserMessage> userMessagesDesc() {
+        return userMessages.stream()
+                .sorted(Comparator.comparing(UserMessage::date).reversed())
+                .toList();
     }
 
     public List<UserGameState> usersWhoAnswered() {

@@ -21,6 +21,7 @@ public enum Emoji {
     AMAZING("🤩", 5),
 
     SOUND("🔊"),
+    CHAT("💬"),
     GUITAR("🎸"),
     LAUGH("😂"),
     EXPLODE("🤯");

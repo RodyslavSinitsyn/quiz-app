@@ -6,6 +6,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.rsinitsyn.quiz.component.cleverest.CleverestWaitingRoomComponent.UserTextedMessageEvent;
 import org.rsinitsyn.quiz.component.custom.Emoji;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
@@ -33,6 +35,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.messageBar;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.soundBar;
 import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory.createQuestionLayout;
 import static org.rsinitsyn.quiz.utils.AudioUtils.playStaticSoundAsync;
 import static org.rsinitsyn.quiz.utils.QuizComponents.appendTextBorder;
@@ -87,7 +91,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 showRoundRules(currRound, broadcaster.getState(gameId).getRoundRules().get(currRound));
             }
         } else {
-            renderUserPersonalScore();
+            renderUserProfile();
             if (refreshEvent) {
                 restoreCurrentQuestion();
             }
@@ -149,7 +153,9 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     if (event.roundNumber() == 3) {
                         runHostAction();
                     } else {
-                        notification("%s ответил!".formatted(event.username()), NotificationVariant.LUMO_PRIMARY);
+                        notification("%s ответил!".formatted(event.username()),
+                                NotificationVariant.LUMO_PRIMARY,
+                                Notification.Position.TOP_START);
                     }
                 })));
         subscriptions.add(broadcaster.subscribe(gameId, GetQuestionEvent.class, event ->
@@ -187,13 +193,18 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
         subscriptions.add(broadcaster.subscribe(gameId, GameFinishedEvent.class, event ->
                 runActionInUi(ui, this::renderResults)));
+
+        subscriptions.add(broadcaster.subscribe(gameId, UserSentMessageEvent.class, event ->
+                runActionInUi(ui, () -> notification(event.getMessage(),
+                        NotificationVariant.LUMO_CONTRAST,
+                        Notification.Position.TOP_END))));
     }
 
     private void subscribeOnPlayerOnlyEvents(UI ui) {
         log.debug("Subscribed on player events: {}", getLoggedUser());
 
         subscriptions.add(broadcaster.subscribe(gameId, UpdatePersonalScoreEvent.class, event ->
-                runActionInUi(ui, () -> renderUserPersonalScore())));
+                runActionInUi(ui, () -> renderUserProfile())));
 
         subscriptions.add(broadcaster.subscribe(gameId, QuestionChoosenEvent.class, event ->
                 runActionInUi(ui, () -> {
@@ -435,7 +446,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         }
     }
 
-    private void renderUserPersonalScore() {
+    private void renderUserProfile() {
         final var userState = broadcaster.getState(gameId).getUserState(getLoggedUser());
         if (userState == null) {
             log.warn("Not joined user is accessing started Cleverest game");
@@ -443,9 +454,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         }
         topContainer.removeAll();
         final var userRow = userProfileWithScore(userState.snapshot(), MOBILE_LARGE_FONT);
-        final var emojiSound = CleverestComponents.soundBar(() ->
-                broadcaster.sendPlaySoundEvent(gameId, GameSound.next()));
-        userRow.add(emojiSound);
+        userRow.add(soundBar(() -> broadcaster.sendPlaySoundEvent(gameId, GameSound.next())));
+        userRow.add(messageBar(messageText -> broadcaster.sendUserTextedEvent(gameId, getLoggedUser(), messageText)));
         topContainer.add(userRow);
         topContainer.add(new Hr());
     }
@@ -499,7 +509,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         if (gameHost) {
             resultComponent.setState(gameState.usersSortedByScore(), gameState.getHistory(), "");
         } else {
-            renderUserPersonalScore();
+            renderUserProfile();
             midContainer.add(userInfoLightSpan("Итоговое место: " + gameState.getUserState(getLoggedUser()).getLastPosition(), CleverestComponents.MOBILE_LARGE_FONT));
             resultComponent.setState(gameState.usersSortedByScore(), gameState.getHistory(), getLoggedUser());
         }

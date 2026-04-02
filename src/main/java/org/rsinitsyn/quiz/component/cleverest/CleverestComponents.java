@@ -23,6 +23,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.custom.Emoji;
 import org.rsinitsyn.quiz.component.theme.ThemePreset;
 import org.rsinitsyn.quiz.entity.AnswerStatus;
@@ -177,8 +178,10 @@ public final class CleverestComponents {
         return span;
     }
 
-    public static Notification notification(String text, NotificationVariant variant) {
-        Notification notification = Notification.show(text, 1_500, Notification.Position.TOP_STRETCH);
+    public static Notification notification(String text,
+                                            NotificationVariant variant,
+                                            Notification.Position position) {
+        Notification notification = Notification.show(text, 1_500, position);
         notification.addThemeVariants(variant);
         return notification;
     }
@@ -385,10 +388,10 @@ public final class CleverestComponents {
 
 
     public static Button soundBar(Runnable task) {
-        final var emojiSound = new Button(Emoji.SOUND.value);
-        emojiSound.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        final var soundButton = new Button(Emoji.SOUND.value);
+        soundButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
-        final var contextMenu = new ContextMenu(emojiSound);
+        final var contextMenu = new ContextMenu(soundButton);
         contextMenu.setOpenOnClick(true);
         final var layout = horizontalLayoutCenter();
         Stream.of(Emoji.GUITAR.value, Emoji.LAUGH.value, Emoji.EXPLODE.value)
@@ -402,6 +405,28 @@ public final class CleverestComponents {
                     });
                 });
         contextMenu.add(layout);
-        return emojiSound;
+        return soundButton;
+    }
+
+
+    public static Button messageBar(final Consumer<String> messageAction) {
+        final var chatButton = new Button(Emoji.CHAT.value);
+        chatButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+
+        final var contextMenu = new ContextMenu(chatButton);
+        contextMenu.setOpenOnClick(true);
+        final var textField = new TextField();
+        textField.setWidthFull();
+        textField.setLabel("Отправь всем сообщение");
+        textField.addKeyPressListener(Key.ENTER, event -> {
+            if (StringUtils.isBlank(textField.getValue())) {
+                return;
+            }
+            messageAction.accept(textField.getValue());
+            textField.clear();
+            contextMenu.close();
+        });
+        contextMenu.add(textField);
+        return chatButton;
     }
 }

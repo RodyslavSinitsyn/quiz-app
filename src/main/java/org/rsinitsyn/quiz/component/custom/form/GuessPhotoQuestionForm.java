@@ -36,7 +36,7 @@ public class GuessPhotoQuestionForm extends AbstractQuestionCreationForm<GuessPh
             model.removePhotoStream(event.getFileName());
         });
         upload.addFileRejectedListener(event -> {
-            infoNotification("File upload rejected: " + event.getErrorMessage());
+            infoNotification("Ошибка загрузки файла " + event.getErrorMessage());
         });
 
         add(text);

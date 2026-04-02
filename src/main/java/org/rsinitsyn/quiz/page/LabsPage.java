@@ -2,6 +2,7 @@ package org.rsinitsyn.quiz.page;
 
 
 import com.vaadin.flow.component.html.Hr;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -154,7 +155,7 @@ public class LabsPage extends VerticalLayout {
                         String.join(", ", event.getAnswers()),
                         event.getResult(),
                         0);
-                notification(text, LUMO_CONTRAST);
+                notification(text, LUMO_CONTRAST, Notification.Position.TOP_STRETCH);
             });
         }
     }

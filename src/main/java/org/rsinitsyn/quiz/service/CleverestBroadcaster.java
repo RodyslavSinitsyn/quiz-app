@@ -15,10 +15,7 @@ import org.rsinitsyn.quiz.component.custom.Emoji;
 import org.rsinitsyn.quiz.component.custom.event.UserEvent;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.answer.AnswerResult;
-import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
-import org.rsinitsyn.quiz.model.cleverest.UserGameState;
-import org.rsinitsyn.quiz.model.cleverest.UserProfile;
-import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
+import org.rsinitsyn.quiz.model.cleverest.*;
 import org.rsinitsyn.quiz.model.sound.GameSound;
 import org.springframework.stereotype.Component;
 
@@ -279,6 +276,15 @@ public class CleverestBroadcaster {
         final var state = getState(gameId);
         eventBuses.get(gameId).fireEvent(new DeleteUserEvent(gameId, state.removeUser(username)));
         sendEventIfAllAnswered(gameId, state.getCurrentQuestion());
+    }
+
+    public void sendUserTextedEvent(String gameId, String username, String messageText) {
+        final var state = getState(gameId);
+        state.putToMessages(username, messageText);
+        eventBuses.get(gameId).fireEvent(new UserSentMessageEvent(
+                gameId,
+                messageText,
+                state.userMessagesDesc()));
     }
 
     @Getter
@@ -548,6 +554,22 @@ public class CleverestBroadcaster {
         public DeleteUserEvent(final String gameId, final UserGameState deleted) {
             super(gameId);
             this.deleted = deleted;
+        }
+    }
+
+    @Getter
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
+    public static class UserSentMessageEvent extends CleverestGameEvent {
+        private final String message;
+        private final List<UserMessage> messages;
+
+        public UserSentMessageEvent(final String gameId,
+                                    final String message,
+                                    final List<UserMessage> messages) {
+            super(gameId);
+            this.message = message;
+            this.messages = messages;
         }
     }
 

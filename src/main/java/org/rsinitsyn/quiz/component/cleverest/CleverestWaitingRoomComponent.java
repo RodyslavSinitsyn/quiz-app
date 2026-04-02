@@ -2,6 +2,7 @@ package org.rsinitsyn.quiz.component.cleverest;
 
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -11,6 +12,8 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.messages.MessageList;
+import com.vaadin.flow.component.messages.MessageListItem;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
@@ -25,8 +28,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.theme.ThemePreset;
+import org.rsinitsyn.quiz.model.cleverest.UserMessage;
 import org.rsinitsyn.quiz.model.cleverest.UserProfile;
+import org.rsinitsyn.quiz.service.ImageCacheService;
 import org.rsinitsyn.quiz.utils.ThemeUtils;
 
 import java.io.InputStream;
@@ -54,9 +60,11 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
     private Select<String> loserBet = new Select<>();
     private Button joinButton;
     private Button startGameButton;
+    private MessageList messageList = new MessageList();
 
     public CleverestWaitingRoomComponent(boolean hostPage,
                                          List<UserProfile> users,
+                                         List<UserMessage> messages,
                                          String gameId) {
         logState(this, getUI(), "Constructor", true, List.of());
         this.hostPage = hostPage;
@@ -70,7 +78,9 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         } else {
             configurePlayerComponents();
         }
+        add(messageList);
         addProgressBar();
+        updateMessageList(messages);
         logState(this, getUI(), "Constructor", true, List.of());
     }
 
@@ -90,8 +100,18 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
             dialog.open();
         });
         add(joinButton);
-    }
 
+        final var textField = new TextField();
+        textField.setWidthFull();
+        textField.addKeyPressListener(Key.ENTER, event -> {
+            if (StringUtils.isBlank(textField.getValue())) {
+                return;
+            }
+            fireEvent(new UserTextedMessageEvent(getLoggedUser(), textField.getValue()));
+            textField.clear();
+        });
+        add(textField);
+    }
 
 
     private VerticalLayout userDialogContent(ConfirmDialog dialog) {
@@ -211,6 +231,12 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         loserBet.setItems(users.stream().map(UserProfile::username).toList());
     }
 
+    public void updateMessageList(final List<UserMessage> messages) {
+        messageList.setItems(messages.stream()
+                .map(m -> new MessageListItem(m.message(), m.date(), m.username(), "/quiz-images/dev/54f62b6d-edfd-4cdf-897f-6ef10c101639.jpg"))
+                .toList());
+    }
+
     @Getter
     @Accessors(fluent = true)
     public class WaitingRoomEvent extends ComponentEvent<CleverestWaitingRoomComponent> {
@@ -254,6 +280,16 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         private final boolean winner;
     }
 
+    @Getter
+    @RequiredArgsConstructor
+    @Accessors(fluent = true)
+    @EqualsAndHashCode(callSuper = false)
+    @ToString
+    public class UserTextedMessageEvent extends WaitingRoomEvent {
+        private final String username;
+        private final String text;
+    }
+
     public class StartGameEvent extends WaitingRoomEvent {
     }
 
@@ -271,5 +307,9 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
 
     public Registration addUserBetEventListener(ComponentEventListener<UserBetEvent> listener) {
         return addListener(UserBetEvent.class, listener);
+    }
+
+    public Registration addUserTextedMessageEventListener(ComponentEventListener<UserTextedMessageEvent> listener) {
+        return addListener(UserTextedMessageEvent.class, listener);
     }
 }
