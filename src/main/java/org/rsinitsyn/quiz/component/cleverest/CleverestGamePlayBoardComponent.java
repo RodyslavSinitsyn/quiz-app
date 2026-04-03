@@ -369,7 +369,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         final var layout = horizontalLayoutCenter();
         final var dialog = openDialog(layout, "Как тебе вопрос?", () -> {
         });
-        List.of(Emoji.randomBad(), Emoji.randomGood(), Emoji.randomGreat())
+        List.of(Emoji.randomBad(), Emoji.randomMid(), Emoji.randomGood())
                 .forEach(e -> {
                     final var emoji = emojiBig(e.value);
                     emoji.addClickListener(event -> {

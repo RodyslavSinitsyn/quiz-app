@@ -301,11 +301,11 @@ public final class CleverestComponents {
         users.forEach(userStateSnapshot -> {
             Span emojiSpan;
             if (userStateSnapshot.position() == 1) {
-                emojiSpan = emojiSmall(Emoji.randomGreat().value);
+                emojiSpan = emojiSmall(Emoji.randomGood().value);
             } else if (userStateSnapshot.position() == users.size()) {
                 emojiSpan = emojiSmall(Emoji.randomBad().value);
             } else {
-                emojiSpan = emojiSmall(Emoji.randomGood().value);
+                emojiSpan = emojiSmall(Emoji.randomMid().value);
             }
             final var icons = lastAnswers.get(userStateSnapshot.username()).stream()
                     .map(CleverestComponents::getIconFromAnswer)
