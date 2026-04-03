@@ -31,12 +31,14 @@ import org.rsinitsyn.quiz.component.theme.ThemePreset;
 import org.rsinitsyn.quiz.entity.AnswerStatus;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.cleverest.ManualApprove;
 import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -154,6 +156,10 @@ public final class CleverestComponents {
     public static Span correctAnswerSpan(QuestionModel questionModel, String... classes) {
         Span span = new Span();
         span.addClassNames(classes);
+        span.addClassNames(LumoUtility.TextAlignment.CENTER,
+                LumoUtility.Border.ALL,
+                LumoUtility.Background.PRIMARY_10,
+                LumoUtility.BorderColor.PRIMARY);
         span.setWidthFull();
         span.getStyle().set("white-space", "pre-line");
         if (questionModel.getType().equals(QuestionType.PHOTO)) {
@@ -246,16 +252,17 @@ public final class CleverestComponents {
     }
 
     public static Button approveButton(Runnable clickAction,
-                                       int countLimit) {
+                                       int clicksLimit,
+                                       int pointsPerClick) {
         final var button = iconButton(VaadinIcon.CHECK.create(), event -> {
         });
         button.addClickListener(event -> {
-            if (countLimit > 0) {
+            if (clicksLimit > 0) {
                 String currText = event.getSource().getElement().getText();
                 var countValue = currText.isBlank()
-                        ? 1
-                        : Integer.parseInt(button.getText()) + 1;
-                if (countValue <= countLimit) {
+                        ? pointsPerClick
+                        : Integer.parseInt(button.getText()) + pointsPerClick;
+                if (countValue <= clicksLimit) {
                     button.setText(String.valueOf(countValue));
                     clickAction.run();
                 }
@@ -346,8 +353,7 @@ public final class CleverestComponents {
 
     public static VerticalLayout userAnswersLayout(QuestionModel question,
                                                    Collection<UserStateSnapshot> users,
-                                                   boolean approveManually,
-                                                   Consumer<String> approveAction) {
+                                                   Optional<ManualApprove> manualApprove) {
         VerticalLayout answersLayout = new VerticalLayout();
 
         answersLayout.add(correctAnswerSpan(question));
@@ -359,19 +365,15 @@ public final class CleverestComponents {
             if (userStateSnapshot.correct()) {
                 userProfileWithAnswer.addClassNames(LumoUtility.Background.PRIMARY_10, LumoUtility.Border.ALL, LumoUtility.BorderColor.PRIMARY);
             }
-            if (!approveManually) {
+            if (manualApprove.isEmpty()) {
                 userProfileWithAnswer.add(getIconFromAnswer(userStateSnapshot.answerStatus()));
             }
-            if (approveManually) {
-                int countLimit;
-                switch (question.getType()) {
-                    case TOP -> countLimit = question.getAnswers().size();
-                    case LINK -> countLimit = question.getAnswers().size() / 2;
-                    default -> countLimit = 0;
-                }
+            if (manualApprove.isPresent()) {
+                final var approve = manualApprove.orElseThrow();
                 Button approveButton = approveButton(
-                        () -> approveAction.accept(userStateSnapshot.username()),
-                        countLimit);
+                        () -> approve.action().accept(userStateSnapshot.username()),
+                        approve.clickLimit(),
+                        approve.pointsPerClick());
                 userProfileWithAnswer.add(approveButton);
             }
             answersLayout.add(userProfileWithAnswer);

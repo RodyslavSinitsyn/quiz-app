@@ -25,7 +25,7 @@ public record UserStateSnapshot(UserProfile profile,
     }
 
     public boolean correct() {
-        return answerStatus == CORRECT;
+        return answerStatus.correct();
     }
 
     public UserPosition userPosition() {

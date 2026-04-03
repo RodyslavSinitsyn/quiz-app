@@ -25,6 +25,8 @@ import static org.rsinitsyn.quiz.model.cleverest.UserGameState.userGameState;
 @Getter
 public class CleverestGameState {
 
+    private static final int REVEALS_COUNT = 3;
+
     @Getter(AccessLevel.NONE)
     private final Map<String, UserGameState> users = new HashMap<>();
     private final String gameHostName;
@@ -43,6 +45,7 @@ public class CleverestGameState {
     private int roundNumber = 1;
     private int questionNumber = 0;
     private Supplier<List<QuestionModel>> currRoundQuestionsSource;
+    private Map<Integer, Integer> roundsChunksMap = new HashMap<>();
 
     public CleverestGameState(
             String gameHostName,
@@ -55,12 +58,19 @@ public class CleverestGameState {
         this.thirdQuestions = thirdRound;
         currRoundQuestionsSource = () -> firstQuestions;
         initRoundRules();
+        initRoundsChunksMap();
     }
 
     private void initRoundRules() {
         roundRules.put(1, "Раунд 1");
         roundRules.put(2, "Раунд 2");
         roundRules.put(3, "Раунд 3");
+    }
+
+    private void initRoundsChunksMap() {
+        roundsChunksMap.put(1, getRoundChunksSize(firstQuestions.size()));
+        roundsChunksMap.put(2, getRoundChunksSize(secondQuestions.size()));
+        roundsChunksMap.put(3, getRoundChunksSize(thirdQuestions.size()));
     }
 
     public UserGameState addOrUpdateUser(String gameId,
@@ -147,7 +157,7 @@ public class CleverestGameState {
     }
 
     public Map<String, List<AnswerStatus>> getLastAnswers() {
-        final var skipSize = Math.max(0, history.size() - getLastAnswersCount());
+        final var skipSize = Math.max(0, history.size() - roundsChunksMap.get(roundNumber));
 
         return history.entrySet().stream()
                 .skip(skipSize)
@@ -267,31 +277,21 @@ public class CleverestGameState {
                 });
     }
 
-    public int getLastAnswersCount() {
-        final int chunkSize = 3;
-        final var totalQuestions = currRoundQuestionsSource.get().size();
-
-        if (totalQuestions <= chunkSize) {
-            return questionNumber + 1;
+    public int getRoundChunksSize(int listSize) {
+        if (listSize <= REVEALS_COUNT) {
+            return 0;
         }
-
-        final var chunk = totalQuestions / chunkSize;
-        final var currentChunkIndex = questionNumber / chunk;
-
-        final var chunkStart = currentChunkIndex * chunk;
-
-        return questionNumber - chunkStart + 1;
+        return listSize / REVEALS_COUNT;
     }
 
     public int getQuestionsLeftToRevealScoreTable() {
-        final int CHUNK_SIZE = 3;
-        if (currRoundQuestionsSource.get().size() <= CHUNK_SIZE) {
+        if (currRoundQuestionsSource.get().size() <= REVEALS_COUNT) {
             return 0;
         }
         if (currRoundQuestionsSource.get().size() == questionNumber + 1) {
             return 0;
         }
-        int currChunk = currRoundQuestionsSource.get().size() / CHUNK_SIZE;
+        int currChunk = currRoundQuestionsSource.get().size() / REVEALS_COUNT;
         int questionsAndChunkDiff = (questionNumber / currChunk) + 1;
         currChunk = currChunk * questionsAndChunkDiff;
         return currChunk - (questionNumber + 1);

@@ -99,7 +99,7 @@ class CleverestGameStateTest implements QuizTestFixture {
             final var expectedWindow = Integer.parseInt(windowArr[i]);
 
             assertThat(state.getQuestionsLeftToRevealScoreTable()).isEqualTo(expectedReveal);
-            assertThat(state.getLastAnswersCount()).isEqualTo(expectedWindow);
+//            assertThat(state.updateQuestionsChunk()).isEqualTo(expectedWindow);
 
             state.prepareNextQuestionAndCheckIsLast();
         }

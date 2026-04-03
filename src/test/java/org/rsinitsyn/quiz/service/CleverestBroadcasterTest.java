@@ -139,6 +139,12 @@ class CleverestBroadcasterTest implements QuizTestFixture {
             softly.assertThat(alice.isAnswerGiven()).isTrue();
             softly.assertThat(alice.getLastResponseTimeMs()).isGreaterThanOrEqualTo(0);
         });
+        assertSoftly(softly -> {
+            final var questions = state.getCurrRoundQuestionsSource().get();
+            assertThat(state.getRoundNumber()).isEqualTo(1);
+            assertThat(state.getQuestionNumber()).isEqualTo(1);
+            assertThat(questions).hasSize(1);
+        });
         // and
         then(eventBus).should().fireEvent(new UserAnsweredEvent(gameId, "Alice", "0.0 сек.", 1));
         then(eventBus).should().fireEvent(new AllUsersAnsweredEvent(gameId, q, true, false, 1, 0));

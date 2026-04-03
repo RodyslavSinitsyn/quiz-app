@@ -20,10 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.custom.Emoji;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
-import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
-import org.rsinitsyn.quiz.model.cleverest.UserGameState;
-import org.rsinitsyn.quiz.model.cleverest.UserProfile;
-import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
+import org.rsinitsyn.quiz.model.cleverest.*;
 import org.rsinitsyn.quiz.model.sound.GameSound;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.*;
@@ -31,7 +28,6 @@ import org.rsinitsyn.quiz.utils.QuizUtils;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
 import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory.createQuestionLayout;
@@ -213,21 +209,19 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         log.debug("Subscribed on host events: {}", getLoggedUser());
 
         subscriptions.add(broadcaster.subscribe(gameId, AllUsersAnsweredEvent.class, event ->
-                playStaticSoundAsync(SUBMIT_ANSWER_SHORT_AUDIOS.next()).thenRun(() ->
+//                playStaticSoundAsync(SUBMIT_ANSWER_SHORT_AUDIOS.next()).thenRun(() ->
                         runActionInUi(ui, () ->
                                 showCorrectAnswer(
                                         event.getQuestion(),
                                         broadcaster.getState(gameId).userSnapshotsSortedByResponseTime().values(),
                                         event.isRoundOver(),
                                         event.getRevealScoreAfter(),
-                                        event.getQuestion().isManualApprove(),
-                                        uName -> {
-                                            broadcaster.getState(gameId).getUserState(uName).increaseScoreAndMarkCorrect(1);
-                                            broadcaster.sendUpdatePersonalScoreEvent(gameId);
-                                        },
+                                        manualApprove(event.getQuestion()),
                                         () -> {
                                         },
-                                        () -> broadcaster.sendGetQuestionEvent(gameId))))));
+                                        () -> broadcaster.sendGetQuestionEvent(gameId))))
+//                )
+        );
         subscriptions.add(broadcaster.subscribe(gameId, QuestionGradedEvent.class, event ->
                 runActionInUi(ui, () -> {
                     if (gameHost) {
@@ -240,6 +234,31 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 renderTopContainerForHost(broadcaster.getState(gameId).getAllUserProfiles())));
         subscriptions.add(broadcaster.subscribe(gameId, LiveReactionEvent.class, event -> {
             runActionInUi(ui, () -> ui.getPage().executeJs("window.spawnReaction($0)", event.getEmoji().value));
+        }));
+    }
+
+    private Optional<ManualApprove> manualApprove(QuestionModel question) {
+        if (!question.isManualApprove()) {
+            return Optional.empty();
+        }
+        final var clicksLimit = broadcaster.getState(gameId).getRoundNumber() == 3
+                ? 1
+                : switch (question.getType()) {
+            case TOP -> question.getAnswers().size();
+            case LINK -> question.getAnswers().size() / 2;
+            case GUESS_PHOTO -> question.getHints().size();
+            default -> 1;
+        };
+        final var pointsPerClick = broadcaster.getState(gameId).getRoundNumber() == 3
+                ? question.getPoints()
+                : switch (question.getType()) {
+            case TOP -> 1;
+            case GUESS_PHOTO -> question.getPoints();
+            default -> 1;
+        };
+        return Optional.of(new ManualApprove(clicksLimit, pointsPerClick, uName -> {
+            broadcaster.getState(gameId).getUserState(uName).increaseScoreAndMarkCorrect(pointsPerClick);
+            broadcaster.sendUpdatePersonalScoreEvent(gameId);
         }));
     }
 
@@ -412,15 +431,20 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 AtomicBoolean approved = new AtomicBoolean(false);
                 question.setAlreadyAnswered(true);
                 // 3rd round
-                showCorrectAnswer(question, List.of(userToAnswer.snapshot()), false, 0, true, uName -> {
-                    userToAnswer.increaseScoreAndMarkCorrect(question.getPoints());
-                    approved.set(true);
-                    broadcaster.sendUpdatePersonalScoreEvent(gameId);
-                }, () -> {
-                    if (!approved.get()) {
-                        userToAnswer.decreaseScoreAndMarkWrong(question.getPoints());
-                    }
-                }, () -> broadcaster.sendRenderCategoriesEvent(gameId, question, false));
+                showCorrectAnswer(question, List.of(userToAnswer.snapshot()),
+                        false,
+                        0,
+                        Optional.of(new ManualApprove(1, question.getPoints(), uName -> {
+                            userToAnswer.increaseScoreAndMarkCorrect(question.getPoints());
+                            approved.set(true);
+                            broadcaster.sendUpdatePersonalScoreEvent(gameId);
+                        })),
+                        () -> {
+                            if (!approved.get()) {
+                                userToAnswer.decreaseScoreAndMarkWrong(question.getPoints());
+                            }
+                        },
+                        () -> broadcaster.sendRenderCategoriesEvent(gameId, question, false));
             });
         });
         button.setEnabled(!question.isAlreadyAnswered());
@@ -481,18 +505,17 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                    Collection<UserStateSnapshot> users,
                                    boolean roundOver,
                                    int revealScoreAfter,
-                                   boolean approveManually,
-                                   Consumer<String> approveAction,
+                                   Optional<ManualApprove> manualApprove,
                                    Runnable onCloseAction,
                                    Runnable usersScoreCloseAction) {
         if (users.stream().allMatch(UserStateSnapshot::correct)) {
             playStaticSoundAsync(CORRECT_ANSWER_AUDIOS.next());
-        } else if (users.stream().noneMatch(UserStateSnapshot::correct) && !approveManually) {
+        } else if (users.stream().noneMatch(UserStateSnapshot::correct) && manualApprove.isEmpty()) {
             playStaticSoundAsync(WRONG_ANSWER_AUDIOS.next());
         } else {
             playStaticSoundAsync(REVEAL_ANSWER_AUDIOS.next());
         }
-        final var answersLayout = userAnswersLayout(question, users, approveManually, approveAction);
+        final var answersLayout = userAnswersLayout(question, users, manualApprove);
         openDialog(answersLayout, "Ответы", () -> {
             onCloseAction.run();
             broadcaster.sendUpdatePersonalScoreEvent(gameId);

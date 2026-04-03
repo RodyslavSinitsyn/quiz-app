@@ -107,8 +107,7 @@ public class LabsPage extends VerticalLayout {
                 .answerDescription("""
                         Mount Everest is the highest mountain in the world above sea level, reaching an elevation of 8,848.86 meters (29,032 feet) in the Himalayas. Located on the Nepal-China border, it is often called the "roof of the world". However, Mauna Kea in Hawaii is taller when measured from base to peak, and Chimborazo is further from Earth's center.\s
                         """)
-                .build(), users, false, s -> {
-        });
+                .build(), users, Optional.empty());
 //        openDialog(userAnswersLayout, "Ответы", () -> {});
 
 

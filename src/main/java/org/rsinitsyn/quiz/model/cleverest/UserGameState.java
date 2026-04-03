@@ -62,6 +62,7 @@ public class UserGameState implements Comparable<UserGameState> {
         if (answerGiven) {
             return;
         }
+        // todo: need to keep how many points on the line for GuessPhoto per user
         final var result = answerResult.get();
 
         lastAnswerText = answerText;

@@ -33,7 +33,7 @@ public class PhotoAnswersLayout extends AbstractAnswersLayout {
     protected AnswerGivenEvent createAnswerGivenEvent() {
         var userAnswer = options.getValue();
         return AnswerGivenEvent.builder()
-                .answers(Set.of(userAnswer.text()))
+                .answers(Set.of(userAnswer.photoFilename()))
                 .result(oneOptionResult(userAnswer.correct()))
                 .build();
     }

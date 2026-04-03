@@ -24,7 +24,7 @@ public enum AnswerStatus {
 
     public static AnswerStatus answerStatus(int count, int maxCount) {
         if (count < 0 || maxCount <= 0) {
-            throw new IllegalArgumentException("count can't be 0 and maxCount must be positive");
+            throw new IllegalArgumentException("count can't be 0 and clickLimit must be positive");
         }
         if (count == 0) {
             return WRONG;

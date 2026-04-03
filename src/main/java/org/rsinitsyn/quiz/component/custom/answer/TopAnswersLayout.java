@@ -3,7 +3,6 @@ package org.rsinitsyn.quiz.component.custom.answer;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
@@ -68,7 +67,7 @@ public class TopAnswersLayout extends AbstractAnswersLayout {
                 .collect(Collectors.toSet());
         return AnswerGivenEvent.builder()
                 .answers(answers)
-                .result(new AnswerResult(UNKNOWN, answers.size() / 2, 0))
+                .result(new AnswerResult(UNKNOWN, answers.size(), 0))
                 .manuallyApprove(true)
                 .build();
     }

@@ -1,12 +1,11 @@
 package org.rsinitsyn.quiz.component.custom.answer;
 
 import com.vaadin.flow.component.textfield.NumberField;
-import org.apache.commons.lang3.StringUtils;
-import org.rsinitsyn.quiz.entity.AnswerStatus;
+import com.vaadin.flow.component.textfield.TextFieldVariant;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.answer.AnswerResult;
 
-import java.util.Collections;
 import java.util.Set;
 
 import static org.rsinitsyn.quiz.entity.AnswerStatus.*;
@@ -21,6 +20,8 @@ public class PrecisionAnswersLayout extends AbstractAnswersLayout {
 
     @Override
     protected void renderAnswers() {
+        numberField.addThemeVariants(TextFieldVariant.LUMO_ALIGN_CENTER);
+        numberField.setValueChangeMode(ValueChangeMode.EAGER);
         numberField.setLabel("Погрешность: +-" + question.getValidRange());
         numberField.addValueChangeListener(e -> submitButton.setEnabled(true));
         add(numberField);
