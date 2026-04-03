@@ -1,17 +1,7 @@
 package org.rsinitsyn.quiz.entity;
 
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MapsId;
-import jakarta.persistence.Table;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "games_questions")
@@ -26,26 +16,31 @@ public class GameQuestionUserEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("gameId")
-    @JoinColumn(name = "gameId")
+    @JoinColumn(name = "game_id")
     @ToString.Exclude
     private GameEntity game;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @MapsId("questionId")
-    @JoinColumn(name = "questionId")
+    @JoinColumn(name = "question_id")
     @ToString.Exclude
     private QuestionEntity question;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @MapsId("userId")
-    @JoinColumn(name = "userId")
+    @JoinColumn(name = "user_id")
     @ToString.Exclude
     private UserEntity user;
 
-    // Null - not answered yet
-    // True - correct answer
-    // False - incorrect answer
-    private Boolean answered;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "answer_result")
+    private AnswerStatus answerStatus;
     private String answerText;
+    @Getter(AccessLevel.NONE)
+    private Boolean answered;
     private int orderNumber;
+
+    public Boolean getAnswered() {
+        return this.answerStatus.boolVal;
+    }
 }

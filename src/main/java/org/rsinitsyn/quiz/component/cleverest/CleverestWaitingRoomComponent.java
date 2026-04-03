@@ -1,16 +1,15 @@
 package org.rsinitsyn.quiz.component.cleverest;
 
-import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
-import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.messages.MessageList;
+import com.vaadin.flow.component.messages.MessageListItem;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
@@ -19,47 +18,64 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import java.util.ArrayList;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
+import org.rsinitsyn.quiz.component.custom.event.UserEvent;
+import org.rsinitsyn.quiz.model.cleverest.UserMessage;
+import org.rsinitsyn.quiz.model.cleverest.UserProfile;
+
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
-import org.apache.commons.lang3.StringUtils;
-import org.rsinitsyn.quiz.component.сustom.ColorPicker;
-import org.rsinitsyn.quiz.model.cleverest.UserGameState;
-import org.rsinitsyn.quiz.service.CleverestBroadcaster;
-import org.rsinitsyn.quiz.utils.QuizUtils;
-import org.rsinitsyn.quiz.utils.SessionWrapper;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.chatInput;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.primaryButton;
+import static org.rsinitsyn.quiz.utils.QuizComponents.uploadComponent;
+import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
+import static org.rsinitsyn.quiz.utils.QuizUtils.resolveLocalIp;
+import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
+import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUserThemeColor;
+
+@Slf4j
 public class CleverestWaitingRoomComponent extends VerticalLayout {
 
-    private String gameId;
-    private boolean isAdmin;
-    private Grid<UserGameState> usersGrid = new Grid<>(UserGameState.class, false);
+    private final boolean hostPage;
+    private final AtomicReference<Pair<String, InputStream>> photoHolder = new AtomicReference<>();
+    private final AtomicReference<UserProfile> userGameState = new AtomicReference<>();
+
+    private final Grid<UserProfile> usersGrid = new Grid<>(UserProfile.class, false);
     private Select<String> winnerBet = new Select<>();
     private Select<String> loserBet = new Select<>();
-
     private Button joinButton;
     private Button startGameButton;
+    private MessageList messageList = new MessageList();
 
-    private CleverestBroadcaster broadcaster;
-
-    private List<Registration> subscriptions = new ArrayList<>();
-
-    public CleverestWaitingRoomComponent(String gameId,
-                                         CleverestBroadcaster broadcaster,
-                                         boolean isAdmin) {
-        this.gameId = gameId;
-        this.isAdmin = isAdmin;
-        this.broadcaster = broadcaster;
-        this.winnerBet = betSelect(true);
-        this.loserBet = betSelect(false);
-        configurePlayersList();
+    public CleverestWaitingRoomComponent(boolean hostPage,
+                                         List<UserProfile> users,
+                                         List<UserMessage> messages,
+                                         String gameId) {
+        logState(this, getUI(), "Constructor", true, List.of());
+        this.hostPage = hostPage;
+        this.winnerBet = createBetComponent(true, users.stream().map(UserProfile::username).toList());
+        this.loserBet = createBetComponent(false, users.stream().map(UserProfile::username).toList());
+        configurePlayersList(users);
+        users.stream().filter(u -> u.username().equals(getLoggedUser())).findFirst().ifPresent(userGameState::set);
         add(usersGrid);
-        if (isAdmin) {
-            configureAdminComponents(gameId);
+        if (hostPage) {
+            configureHostComponents(users.size(), gameId);
         } else {
             configurePlayerComponents();
         }
+        add(messageList);
         addProgressBar();
+        updateMessageList(messages);
+        logState(this, getUI(), "Constructor", true, List.of());
     }
 
     private void configurePlayerComponents() {
@@ -70,19 +86,19 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         dialog.setCancelText("Назад");
         dialog.setConfirmText("Сохранить");
 
-        joinButton = new Button("Играть");
+        joinButton = new Button(userGameState.get() != null ? "Поменять настройки" : "Играть");
         joinButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
         joinButton.addClickListener(event -> {
             dialog.removeAll();
-            dialog.add(userDialogContent(
-                    broadcaster.getState(gameId).getUsers().get(SessionWrapper.getLoggedUser()),
-                    dialog));
+            dialog.add(userDialogContent(dialog));
             dialog.open();
         });
         add(joinButton);
+        add(chatInput(message -> fireEvent(new UserTextedMessageEvent(getLoggedUser(), message))));
     }
 
-    private VerticalLayout userDialogContent(UserGameState userGameState, ConfirmDialog dialog) {
+
+    private VerticalLayout userDialogContent(ConfirmDialog dialog) {
         VerticalLayout dialogLayout = new VerticalLayout();
         dialogLayout.setAlignItems(FlexComponent.Alignment.CENTER);
         dialogLayout.setDefaultHorizontalComponentAlignment(Alignment.START);
@@ -90,33 +106,35 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         dialogLayout.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.FontWeight.LIGHT);
 
         TextField playerName = new TextField("Имя");
-        playerName.setValue(SessionWrapper.getLoggedUser());
+        playerName.setValue(getLoggedUser());
         playerName.setReadOnly(true);
         playerName.addClassNames(LumoUtility.FontSize.LARGE);
 
-        Span chooseColor = new Span("Выберите цвет");
-        ColorPicker colorPicker = new ColorPicker();
+//        ofNullable(userGameState.get())
+//                .ifPresent(state -> {
+//                    winnerBet.setValue(state.winnerBet().getKey());
+//                    loserBet.setValue(state.loserBet().getKey());
+//                });
 
-        Optional.ofNullable(userGameState)
-                .ifPresent(uState -> {
-                    colorPicker.setValue(uState.getColor());
-                    winnerBet.setValue(uState.winnerBet().getKey());
-                    loserBet.setValue(uState.loserBet().getKey());
-                });
+        final var upload = uploadComponent("Фото", (buffer, event) -> {
+            photoHolder.set(Pair.of(event.getFileName(), buffer.getInputStream(event.getFileName())));
+        }, null, 1);
 
-        dialogLayout.add(playerName, chooseColor, colorPicker, winnerBet, loserBet);
+        dialogLayout.add(playerName, upload);
+//        TODO: Bets disabled for now
+//        dialog.add(winnerBet, loserBet);
 
         dialog.addConfirmListener(event -> {
-            broadcaster.sendJoinUserEvent(gameId,
-                    SessionWrapper.getLoggedUser(),
-                    StringUtils.defaultIfEmpty(colorPicker.getValue(), "#000000"),
+            fireEvent(new UserSubmitDataEvent(getLoggedUser(),
+                    getLoggedUserThemeColor(),
+                    Optional.ofNullable(photoHolder.get()).map(Pair::getLeft).orElse(null),
+                    Optional.ofNullable(photoHolder.get()).map(Pair::getRight).orElse(null),
                     winnerBet.getValue(),
-                    loserBet.getValue());
+                    loserBet.getValue()));
         });
 
         return dialogLayout;
     }
-
 
     private void addProgressBar() {
         ProgressBar progressBar = new ProgressBar();
@@ -126,107 +144,155 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         add(progressBarLabel, progressBar);
     }
 
-    private void configurePlayersList() {
-        usersGrid.addColumn(new ComponentRenderer<>(userGameState ->
-                CleverestComponents.userNameSpan(
-                        userGameState.getUsername(),
-                        userGameState.getColor(),
-                        LumoUtility.FontWeight.LIGHT))).setHeader("Имя игрока");
-        usersGrid.addColumn(new ComponentRenderer<>(userGameState -> {
-            Div color = new Div();
-            color.setWidth("2em");
-            color.setHeight("2em");
-            color.getStyle().set("background-color", userGameState.getColor());
-            return color;
-        })).setHeader("Цвет");
-        usersGrid.addColumn(new ComponentRenderer<>(userGameState -> new Span(
-                userGameState.winnerBet().getKey().isEmpty()
-                        ? CleverestComponents.cancelIcon()
-                        : CleverestComponents.doneIcon(),
-                userGameState.loserBet().getKey().isEmpty()
-                        ? CleverestComponents.cancelIcon()
-                        : CleverestComponents.doneIcon()
-        ))).setHeader("Ставки");
+    private void configurePlayersList(List<UserProfile> users) {
+        usersGrid.setItems(users);
+        usersGrid.addColumn(new ComponentRenderer<>(CleverestComponents::userProfile))
+                .setHeader("Имя игрока");
+//        usersGrid.addColumn(new ComponentRenderer<>(userGameState -> new Span(
+//                userGameState.winnerBet().getKey().isEmpty()
+//                        ? cancelIcon()
+//                        : doneIcon(),
+//                userGameState.loserBet().getKey().isEmpty()
+//                        ? cancelIcon()
+//                        : doneIcon()
+//        ))).setHeader("Ставки");
         usersGrid.addThemeVariants();
         usersGrid.setAllRowsVisible(true);
         usersGrid.addClassNames(LumoUtility.FontSize.XLARGE);
-        updatePlayersGrid("");
     }
 
-    private Select<String> betSelect(boolean winner) {
-        Select<String> select = new Select<>();
+    @Deprecated
+    private Select<String> createBetComponent(boolean winner,
+                                              List<String> usernames) {
+        final var select = new Select<String>();
         select.setWidthFull();
         select.setLabel("Сделайте ставку на " + (winner ? "победителя" : "проигравшего"));
-        select.setItems(broadcaster.getState(gameId).getUsers().keySet());
+        select.setItems(usernames);
         select.addValueChangeListener(event -> {
             if (event.isFromClient()) {
-                broadcaster.sendBetEvent(gameId, SessionWrapper.getLoggedUser(), event.getValue(), winner);
+                fireEvent(new UserBetEvent(getLoggedUser(), event.getValue(), winner));
             }
         });
         return select;
     }
 
+    private void configureHostComponents(int usersCount, String gameId) {
+        startGameButton = primaryButton("Начать игру", e -> fireEvent(new StartGameEvent()));
+        startGameButton.setEnabled(usersCount > 0);
 
-    private void updatePlayersGrid(String userWhoMadeAction) {
-        if (broadcaster.getState(gameId).getUsers() != null
-                && !broadcaster.getState(gameId).getUsers().isEmpty()) {
-            usersGrid.setItems(broadcaster.getState(gameId).getUsers().values());
-        }
-    }
-
-    private void configureAdminComponents(String gameId) {
-        Anchor link = new Anchor("http://localhost:8080/cleverest/" + gameId + "?player", "Invite link");
-        link.getElement().setAttribute("target", "_blank");
-        add(link);
-
-        // TODO PUBLIC HOST
-        Anchor prodLink = new Anchor("http://192.168.0.107:8080/cleverest/" + gameId + "?player", "Prod Invite link");
+        final var prodLink = new Anchor("http://%s:8080/cleverest/%s?player".formatted(resolveLocalIp(), gameId),
+                "Prod Invite link");
         prodLink.getElement().setAttribute("target", "_blank");
         add(prodLink);
 
-        startGameButton = CleverestComponents.primaryButton("Начать игру", e -> broadcaster.sendPlayersReadyEvent(gameId));
-        startGameButton.setEnabled(!broadcaster.getState(gameId).getUsers().isEmpty());
-        add(startGameButton);
+        add(startGameButton, prodLink);
     }
 
-    public <T extends ComponentEvent<?>> Registration addListener(Class<T> eventType,
-                                                                  ComponentEventListener<T> listener) {
-        return getEventBus().addListener(eventType, listener);
+    public void updateUserState(UserProfile userProfile) {
+        this.userGameState.set(userProfile);
+        joinButton.setText(userProfile.username().equals(getLoggedUser())
+                ? "Поменять настройки"
+                : "Играть");
     }
 
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        subscriptions.add(
-                broadcaster.subscribe(gameId, CleverestBroadcaster.UserJoinedEvent.class, event -> {
-                    QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
-                        updatePlayersGrid(event.getUsername());
-                        if (SessionWrapper.getLoggedUser().equals(event.getUsername())) {
-                            joinButton.setText(
-                                    !broadcaster.getState(gameId).getUsers().containsKey(event.getUsername())
-                                            ? "Играть"
-                                            : "Поменять настройки");
-                        }
-                        winnerBet.setItems(broadcaster.getState(gameId).getUsers().keySet());
-                        loserBet.setItems(broadcaster.getState(gameId).getUsers().keySet());
-                        if (isAdmin) {
-                            startGameButton.setEnabled(!broadcaster.getState(gameId).getUsers().isEmpty());
-                        }
-                    });
-                }));
-
-        subscriptions.add(
-                broadcaster.subscribe(gameId,
-                        CleverestBroadcaster.UserBetEvent.class,
-                        event -> {
-                            QuizUtils.runActionInUi(attachEvent.getUI().getUI(), () -> {
-                                updatePlayersGrid(event.getUsername());
-                            });
-                        }));
+    public void clearPhotoRef() {
+        photoHolder.set(null);
     }
 
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        subscriptions.forEach(Registration::remove);
-        subscriptions.clear();
+    public void updateTableAndBets(final List<UserProfile> users) {
+        usersGrid.setItems(users);
+        usersGrid.getDataProvider().refreshAll();
+        if (hostPage) {
+            startGameButton.setEnabled(!users.isEmpty());
+        }
+        winnerBet.setItems(users.stream().map(UserProfile::username).toList());
+        loserBet.setItems(users.stream().map(UserProfile::username).toList());
+    }
+
+    public void updateMessageList(final List<UserMessage> messages) {
+        messageList.setItems(messages.stream()
+                .map(userMessage -> {
+                    return userMessage.photoUrl()
+                            .map(photoUrl -> new MessageListItem(userMessage.message(), userMessage.date(), userMessage.username(), "/quiz-images/%s".formatted(photoUrl)))
+                            .orElseGet(() -> new MessageListItem(userMessage.message(), userMessage.date(), userMessage.username()));
+                })
+                .toList());
+    }
+
+    @Getter
+    @Accessors(fluent = true)
+    public class WaitingRoomEvent extends ComponentEvent<CleverestWaitingRoomComponent> {
+
+        public WaitingRoomEvent() {
+            super(CleverestWaitingRoomComponent.this, true);
+        }
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    @Accessors(fluent = true)
+    @EqualsAndHashCode(callSuper = false)
+    @ToString
+    public class UserSubmitDataEvent extends WaitingRoomEvent implements UserEvent {
+        private final String username;
+        private final String color;
+        private final String photoFilename;
+        private final InputStream photoData;
+        private final String userWinner;
+        private final String userLoser;
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    @Accessors(fluent = true)
+    @EqualsAndHashCode(callSuper = false)
+    @ToString
+    public class UserUpdatedDataEvent extends WaitingRoomEvent {
+        private final String username;
+        private final String color;
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    @Accessors(fluent = true)
+    @EqualsAndHashCode(callSuper = false)
+    @ToString
+    public class UserBetEvent extends WaitingRoomEvent {
+        private final String username;
+        private final String betOn;
+        private final boolean winner;
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    @Accessors(fluent = true)
+    @EqualsAndHashCode(callSuper = false)
+    @ToString
+    public class UserTextedMessageEvent extends WaitingRoomEvent {
+        private final String username;
+        private final String text;
+    }
+
+    public class StartGameEvent extends WaitingRoomEvent {
+    }
+
+    public Registration addUserSubmitDataEventListener(ComponentEventListener<UserSubmitDataEvent> listener) {
+        return addListener(UserSubmitDataEvent.class, listener);
+    }
+
+    public Registration addUserUpdateDataEventListener(ComponentEventListener<UserUpdatedDataEvent> listener) {
+        return addListener(UserUpdatedDataEvent.class, listener);
+    }
+
+    public Registration addStartGameEventListener(ComponentEventListener<StartGameEvent> listener) {
+        return addListener(StartGameEvent.class, listener);
+    }
+
+    public Registration addUserBetEventListener(ComponentEventListener<UserBetEvent> listener) {
+        return addListener(UserBetEvent.class, listener);
+    }
+
+    public Registration addUserTextedMessageEventListener(ComponentEventListener<UserTextedMessageEvent> listener) {
+        return addListener(UserTextedMessageEvent.class, listener);
     }
 }

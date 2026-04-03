@@ -1,28 +1,39 @@
 package org.rsinitsyn.quiz.utils;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.server.Command;
 import com.vaadin.flow.server.StreamResource;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.rsinitsyn.quiz.component.custom.event.UserEvent;
+
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Date;
-import java.util.Optional;
-import java.util.UUID;
-import lombok.SneakyThrows;
-import lombok.experimental.UtilityClass;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
-@UtilityClass
-public class QuizUtils {
+import static java.util.concurrent.CompletableFuture.delayedExecutor;
+import static java.util.concurrent.CompletableFuture.runAsync;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
+
+@Slf4j
+public final class QuizUtils {
 
     public static final String DATE_FORMAT_VALUE = "dd-MM-yyyy HH:mm:ss";
     public static final DateFormat DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_VALUE);
@@ -31,100 +42,131 @@ public class QuizUtils {
     public static final String IMAGE_FOLDER = "image/";
     public static final String AUDIO_FOLDER = "audio/";
 
+    private QuizUtils() {
+        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
+
     // Date
-    public String formatDate(LocalDateTime dateTime) {
+    public static String formatDate(LocalDateTime dateTime) {
         return DATE_FORMAT.format(
                 Date.from(dateTime.atZone(ZoneId.systemDefault()).toInstant())
         );
     }
 
-    public double divide(double val, double divideOn, int afterDigit) {
+    public static double divide(double val, double divideOn, int afterDigit) {
         return BigDecimal.valueOf(val)
                 .divide(BigDecimal.valueOf(NumberUtils.max(divideOn, 1)), afterDigit, RoundingMode.HALF_UP)
                 .doubleValue();
     }
 
-    public double divide(double val, double divideOn) {
+    public static double divide(double val, double divideOn) {
         return divide(val, divideOn, 2);
     }
 
-    public StreamResource createStreamResourceForAudio(String audioFilename) {
-        return new StreamResource(audioFilename.split("/")[1], () -> {
+    public static StreamResource createStreamResourceForAudio(String filename) {
+        return new StreamResource(filename.split("/")[1], () -> {
             try {
-                return new FileInputStream(readAudioFile(audioFilename));
+                return new FileInputStream(readAudioFile(filename));
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }
         });
     }
 
-    public StreamResource createStreamResourceForPhoto(String audioFilename) {
-        if (audioFilename.split("/").length != 2) {
+    public static StreamResource createStreamResourceForPhoto(String filename) {
+        if (filename.split("/").length != 2) {
             return null;
         }
-        return new StreamResource(audioFilename.split("/")[1], () -> {
+        return new StreamResource(filename.split("/")[1], () -> {
             try {
-                return new FileInputStream(readImageFile(audioFilename));
+                return new FileInputStream(readImageFile(filename));
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }
         });
     }
 
-    public String generateFilename(String urlPath) {
+    public static StreamResource createStreamResourceForPhoto(String filename, byte[] photoData) {
+        return new StreamResource(filename, () -> new ByteArrayInputStream(photoData));
+    }
+
+    public static String generateFilename(String urlPath) {
         String extension = StringUtils.defaultIfBlank(FilenameUtils.getExtension(urlPath), "jpg");
         extension = '.' + extension;
         return UUID.randomUUID() + extension;
     }
 
-    public String generateFilenameWithExt(String extension) {
-        return UUID.randomUUID() + extension;
+    public static String generateFilenameWithExt(String extension) {
+        return "%s.%s".formatted(UUID.randomUUID(), extension);
     }
 
     @SneakyThrows
-    public File readFileFromResources(String pathToFile) {
+    public static File readFileFromResources(String pathToFile) {
         return org.springframework.util.ResourceUtils.getFile(RESOURCES_PATH + pathToFile);
     }
 
 
     @SneakyThrows
-    public File readImageFile(String pathToFile) {
+    public static File readImageFile(String pathToFile) {
         return readFileFromResources(IMAGE_FOLDER + pathToFile);
     }
 
     @SneakyThrows
-    public File readAudioFile(String pathToFile) {
+    public static File readAudioFile(String pathToFile) {
         return readFileFromResources(AUDIO_FOLDER + pathToFile);
     }
 
 
-    public void runActionInUi(UI ui, Command action) {
+    public static void runActionInUi(UI ui, Command action) {
         ui.access(action);
     }
 
-    public void runActionInUi(Optional<UI> optUi, Command action) {
-        runActionInUi(optUi.orElseThrow(() -> new RuntimeException("UI not exists!")), action);
+    public static void runActionInUi(Optional<UI> maybeUi, Command action) {
+        runActionInUi(maybeUi.orElseThrow(() -> new RuntimeException("UI not exists!")), action);
     }
 
-//
-//    // todo temp
-//    private void exportCode() {
-//        String res = questionService.findAll().stream().
-//                map(entity -> {
-//                    List<AnswerEntity> answers = entity.getAnswers().stream()
-//                            .sorted(Comparator.comparing(AnswerEntity::isCorrect, Comparator.reverseOrder()))
-//                            .toList();
-//                    StringJoiner joiner = new StringJoiner("|")
-//                            .add(entity.getText())
-//                            .add(answers.get(0).isCorrect() ? "_" + answers.get(0).getText() : answers.get(0).getText())
-//                            .add(answers.get(1).isCorrect() ? "_" + answers.get(1).getText() : answers.get(1).getText())
-//                            .add(answers.get(2).isCorrect() ? "_" + answers.get(2).getText() : answers.get(2).getText())
-//                            .add(answers.get(3).isCorrect() ? "_" + answers.get(3).getText() : answers.get(3).getText());
-//                    if (StringUtils.isNotEmpty(entity.getOriginalPhotoUrl())) {
-//                        joiner.add(entity.getOriginalPhotoUrl());
-//                    }
-//                    return joiner.toString();
-//                })
-//                .collect(Collectors.joining("\n"));
-//    }
+    public static boolean doneByAuthenticated(UserEvent userEvent) {
+        return getLoggedUser().equals(userEvent.username());
+    }
+
+    public static void logState(Component component,
+                                UI ui,
+                                String action,
+                                boolean start,
+                                Collection<?> subs) {
+        logState(component, Optional.ofNullable(ui), action, start, subs);
+    }
+
+    public static void logState(Component component,
+                                Optional<UI> ui,
+                                String action,
+                                boolean start,
+                                Collection<?> subs) {
+        log.debug("[DEEP][{}={}] {} [{}], User [{}], UI [{}], Subs size=[{}], items[{}]",
+                component.getClass().getSimpleName(), component.hashCode(),
+                start ? "Start" : "End", action, getLoggedUser(),
+                ui.map(Object::hashCode).orElse(-1), subs.size(),
+                subs);
+    }
+
+    public static CompletableFuture<Void> wait(int seconds) {
+        return runAsync(
+                () -> {},
+                delayedExecutor(seconds, SECONDS)
+        );
+    }
+
+    public static String resolveLocalIp() {
+        try {
+            return Collections.list(NetworkInterface.getNetworkInterfaces()).stream()
+                    .flatMap(iface -> Collections.list(iface.getInetAddresses()).stream())
+                    .filter(addr -> !addr.isLoopbackAddress())
+                    .filter(addr -> addr instanceof Inet4Address)
+                    .map(InetAddress::getHostAddress)
+                    .findFirst()
+                    .orElse("localhost");
+        } catch (Exception e) {
+            return "localhost";
+        }
+    }
 }

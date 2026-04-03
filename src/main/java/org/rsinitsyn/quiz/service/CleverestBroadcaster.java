@@ -5,32 +5,47 @@ import com.vaadin.flow.component.ComponentEventBus;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.shared.Registration;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
+import org.rsinitsyn.quiz.component.custom.Emoji;
+import org.rsinitsyn.quiz.component.custom.event.UserEvent;
+import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.answer.AnswerResult;
+import org.rsinitsyn.quiz.model.cleverest.*;
+import org.rsinitsyn.quiz.model.sound.GameSound;
+import org.springframework.stereotype.Component;
+
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.rsinitsyn.quiz.model.QuestionModel;
-import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
-import org.rsinitsyn.quiz.model.cleverest.UserGameState;
-import org.springframework.stereotype.Component;
+
+import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
 @Component
+@RequiredArgsConstructor
 @Slf4j
 public class CleverestBroadcaster {
 
     private final Map<String, CleverestGameState> gameStateMap = new ConcurrentHashMap<>();
     private final Map<String, ComponentEventBus> eventBuses = new ConcurrentHashMap<>();
 
+    public boolean stateExists(String gameId) {
+        return gameStateMap.containsKey(gameId);
+    }
+
     public CleverestGameState getState(String gameId) {
         return gameStateMap.get(gameId);
+    }
+
+    public void cleanState(String gameId) {
+        gameStateMap.remove(gameId);
+        eventBuses.remove(gameId);
     }
 
     public void createState(String gameId,
@@ -38,20 +53,18 @@ public class CleverestBroadcaster {
                             List<QuestionModel> firstRound,
                             List<QuestionModel> secondRound,
                             List<QuestionModel> thirdRound) {
-        log.info("Create game state: {}", gameId);
-        Map<String, List<QuestionModel>> categoriesAndQuestions = thirdRound.stream()
+        log.info("Create game state: [{}]", gameId);
+        final var categoriesAndQuestions = thirdRound.stream()
                 .collect(Collectors.groupingBy(QuestionModel::getCategoryName,
                         Collectors.collectingAndThen(
                                 Collectors.toList(),
                                 questionModels -> {
-                                    AtomicInteger questionPoints = new AtomicInteger(1);
+                                    final var questionPoints = new AtomicInteger(1);
                                     return questionModels.stream()
                                             .peek(q -> q.setPoints(questionPoints.getAndIncrement()))
                                             .toList();
                                 }
                         )));
-        Collections.shuffle(firstRound);
-        Collections.shuffle(secondRound);
         gameStateMap.put(gameId,
                 new CleverestGameState(
                         createdBy,
@@ -64,56 +77,40 @@ public class CleverestBroadcaster {
     // UserJoinedEvent
     public void sendJoinUserEvent(String gameId,
                                   String username,
-                                  String userColor,
+                                  String color,
+                                  String photoUrl,
                                   String winnerBet,
                                   String loserBet) {
         CleverestGameState gameState = getState(gameId);
-
-        gameState.getUsers().computeIfAbsent(username, s -> {
-            var state = new UserGameState();
-            state.setUsername(username);
-            state.setColor(userColor);
-            return state;
-        });
-
-        gameState.getUsers().computeIfPresent(username, (key, userGameState) -> {
-            userGameState.setColor(userColor);
-            userGameState.updateBet(StringUtils.defaultIfEmpty(winnerBet, ""), true, false);
-            userGameState.updateBet(StringUtils.defaultIfEmpty(loserBet, ""), false, false);
-            return userGameState;
-        });
-
-        eventBuses.get(gameId).fireEvent(new UserJoinedEvent(gameId, username));
+        final var userState = gameState.addOrUpdateUser(gameId, username, color, photoUrl, winnerBet, loserBet);
+        eventBuses.get(gameId).fireEvent(new UserJoinedEvent(gameId, userState.profile(), gameState.getAllUserProfiles()));
     }
 
-
-    public void sendBetEvent(String gameId, String username, String userBet, boolean winner) {
-        UserGameState userGameState = getState(gameId).getUsers().get(username);
+    public void sendUserBetEvent(String gameId, String username, String userBet, boolean winner) {
+        UserGameState userGameState = getState(gameId).getUserState(username);
         userGameState.updateBet(userBet, winner, false);
-        eventBuses.get(gameId).fireEvent(new UserBetEvent(gameId, username, userBet));
+        eventBuses.get(gameId).fireEvent(new UserBetEvent(gameId, userGameState, userBet, getState(gameId).getAllUserStates()));
     }
 
     //    AllPlayersReadyEvent
-    public void sendPlayersReadyEvent(String gameId) {
+    public void sendUsersReadyEvent(String gameId) {
         log.info("Players ready, start game: {}", gameId);
-        eventBuses.get(gameId).fireEvent(new AllUsersReadyEvent(gameId, getState(gameId).getUsers().keySet()));
+        eventBuses.get(gameId).fireEvent(new AllUsersReadyEvent(gameId, getState(gameId).getAllUsernames()));
     }
 
-    public void sendSaveUserAnswersEvent(String gameId, QuestionModel question) {
+    public void sendSaveUsersAnswersEvent(String gameId, QuestionModel question) {
         CleverestGameState state = getState(gameId);
-        var usersWhoAnswered = state.getUsers().entrySet()
-                .stream()
-                .filter(e -> e.getValue().isAnswerGiven())
-                .toList();
+        var usersWhoAnswered = state.usersWhoAnswered();
 
-        usersWhoAnswered.forEach(entry -> state.putUserStateToHistory(question, entry.getValue()));
+        state.updateUserPositions();
+        usersWhoAnswered.forEach(userState -> state.putUserStateToHistory(question, userState));
         log.info("History updated. Users gave answers count: {}. Save answers to DB: {}", usersWhoAnswered.size(), gameId);
-        eventBuses.get(gameId).fireEvent(new SaveUserAnswersEvent(
+        eventBuses.get(gameId).fireEvent(new SaveUsersAnswersEvent(
                 gameId,
                 question,
                 getState(gameId).getHistory().get(question)));
 
-        state.getUsers().values().forEach(UserGameState::prepareForNext);
+        state.usersCleanState();
         log.info("All users prepared for question.");
     }
 
@@ -123,47 +120,49 @@ public class CleverestBroadcaster {
                                                    String username,
                                                    QuestionModel questionModel,
                                                    String answerAsText,
-                                                   Supplier<Boolean> isCorrect) {
+                                                   Supplier<AnswerResult> answerResultProvider) {
         log.info("User gave answer: {} = {}", username, answerAsText);
-        getState(gameId).submitAnswer(username, answerAsText, isCorrect);
+        final var state = getState(gameId);
+        final var userGameState = getState(gameId).getUserState(username);
+        userGameState.submitAnswer(answerAsText, state.getQuestionRenderedTime(), answerResultProvider);
         eventBuses.get(gameId).fireEvent(
-                new UserAnsweredEvent(gameId, getState(gameId).getUsers().get(username), getState(gameId).getRoundNumber()));
+                new UserAnsweredEvent(gameId,
+                        userGameState.getUsername(),
+                        userGameState.getLastResponseTimeSec(),
+                        getState(gameId).getRoundNumber()));
 
+        sendEventIfAllAnswered(gameId, questionModel);
+    }
+
+    public void sendNextRoundEvent(String gameId) {
+        final var state = getState(gameId);
+        final var gameOver = state.prepareNextRoundAndCheckIsGameOver();
+        if (gameOver) {
+            sendFinishGameEvent(gameId);
+            return;
+        }
+        final var roundNumber = state.getRoundNumber();
+        log.info("Send next round {}", roundNumber);
+        eventBuses.get(gameId).fireEvent(new RoundInfoEvent(gameId, roundNumber, state.getRoundRules().get(roundNumber)));
+    }
+
+    private void sendEventIfAllAnswered(String gameId, QuestionModel currQuestion) {
         if (getState(gameId).areAllUsersAnswered()
                 && getState(gameId).getRoundNumber() != 3) {
-            sendEventWhenAllAnswered(gameId, questionModel);
+            final var state = getState(gameId);
+            boolean roundOver = state.lastQuestionInRound();
+            log.info("All users answered. CurrQuestionNumber: {}. NextQuestionNumber: {}. TotalQuestons: {}, CurrRound: {}. RoundIsOver: {}.",
+                    state.getQuestionNumber() - 1,
+                    state.getQuestionNumber(),
+                    state.getCurrRoundQuestionsSource().get().size(),
+                    state.getRoundNumber(),
+                    roundOver);
+            eventBuses.get(gameId).fireEvent(new AllUsersAnsweredEvent(gameId,
+                    currQuestion,
+                    roundOver,
+                    state.getRoundNumber(),
+                    state.getCountToRevealScoreTable()));
         }
-    }
-
-    public void sendNewRoundEvent(String gameId) {
-        int currRound = getState(gameId).getRoundNumber();
-        eventBuses.get(gameId).fireEvent(new GetRoundEvent(gameId,
-                currRound,
-                getState(gameId).getRoundRules().get(currRound)));
-    }
-
-    private void sendEventWhenAllAnswered(String gameId, QuestionModel currQuestion) {
-        CleverestGameState gameState = getState(gameId);
-        int leftToRevealScore = gameState.getQuestionsLeftToRevealScoreTable();
-        boolean noMoreQuestionsInRound = gameState.prepareNextQuestionAndCheckIsLast();
-        boolean roundsOver = false;
-        int currRound = gameState.getRoundNumber();
-        if (noMoreQuestionsInRound) {
-            roundsOver = gameState.prepareNextRoundAndCheckIsLast();
-        }
-        log.info("All users answered. CurrQuestionNumber: {}. NextQuestionNumber: {}. TotalQuestons: {}, CurrRound: {}. RoundIsOver: {}. GameOver: {}",
-                gameState.getQuestionNumber() - 1,
-                gameState.getQuestionNumber(),
-                gameState.getCurrRoundQuestionsSource().get().size(),
-                currRound,
-                noMoreQuestionsInRound,
-                roundsOver);
-        eventBuses.get(gameId).fireEvent(new AllUsersAnsweredEvent(gameId,
-                currQuestion,
-                noMoreQuestionsInRound,
-                roundsOver,
-                currRound,
-                leftToRevealScore));
     }
 
     // GameFinishedEvent
@@ -175,40 +174,41 @@ public class CleverestBroadcaster {
     }
 
     // GetQuestionEvent
-    public void sendGetQuestionEvent(String gameId) {
-        CleverestGameState gameState = getState(gameId);
-        QuestionModel question = gameState.getCurrentQuestion();
+    public void sendCurrentQuestionEvent(String gameId) {
+        final var state = getState(gameId);
+        final var question = state.getCurrentQuestion();
 
-        // In case smth went wrong
         if (question == null) {
-            log.debug("Get question returns null, the cause could be refreshes. Try to finish game or render next round");
-            if (gameState.prepareNextRoundAndCheckIsLast()) {
-                eventBuses.get(gameId).fireEvent(
-                        new GameFinishedEvent(gameId)
-                );
-            } else {
-                eventBuses.get(gameId).fireEvent(
-                        new GetRoundEvent(
-                                gameId,
-                                gameState.getRoundNumber(),
-                                gameState.getRoundRules().get(gameState.getRoundNumber())
-                        ));
-            }
+            log.debug("Get question returns null, perhaps round just empty, render next");
+            sendNextRoundEvent(gameId);
             return;
         }
 
-        log.info("Sending question for render: {}", question.getText() + " - " + question.getCategoryName());
+        log.info("Sending current question for render: #{} {}", state.getQuestionNumber(), question.getText());
         eventBuses.get(gameId).fireEvent(new GetQuestionEvent(
                 gameId,
                 question,
-                gameState.getQuestionNumber() + 1,
-                gameState.getCurrRoundQuestionsSource().get().size(),
-                gameState.getRoundNumber()));
+                state.getQuestionNumber() + 1,
+                state.getCurrRoundQuestionsSource().get().size(),
+                state.getRoundNumber()));
+    }
+
+    public void sendNextQuestionEvent(String gameId) {
+        final var state = getState(gameId);
+        state.increaseQuestionNumber();
+        final var question = state.getCurrentQuestion();
+        log.info("Sending next question for render: #{} {}", state.getQuestionNumber(), question.getText());
+        eventBuses.get(gameId).fireEvent(new GetQuestionEvent(
+                gameId,
+                question,
+                state.getQuestionNumber() + 1,
+                state.getCurrRoundQuestionsSource().get().size(),
+                state.getRoundNumber()
+        ));
     }
 
     // UpdatePersonalScoreEvent
     public void sendUpdatePersonalScoreEvent(String gameId) {
-        log.info("Updating personal score: {}", gameId);
         eventBuses.get(gameId).fireEvent(new UpdatePersonalScoreEvent(gameId));
     }
 
@@ -237,13 +237,14 @@ public class CleverestBroadcaster {
     public void sendQuestionGradedEvent(String gameId,
                                         QuestionModel questionModel,
                                         String username,
-                                        int grade) {
+                                        Emoji emoji) {
         eventBuses.get(gameId)
                 .fireEvent(new QuestionGradedEvent(
                         gameId,
                         questionModel,
                         username,
-                        grade
+                        emoji.rating,
+                        emoji
                 ));
     }
 
@@ -252,11 +253,39 @@ public class CleverestBroadcaster {
         eventBuses.get(gameId).fireEvent(new QuestionChoosenEvent(
                 gameId,
                 question,
-                userToAnswer
+                userToAnswer.getUsername()
         ));
     }
 
+    public void sendPlaySoundEvent(String gameId, GameSound sound) {
+        eventBuses.get(gameId).fireEvent(new PlaySoundEvent(gameId, sound));
+    }
+
+    public void sendDeleteUserEvent(String gameId, String username) {
+        final var state = getState(gameId);
+        eventBuses.get(gameId).fireEvent(new DeleteUserEvent(gameId, state.removeUser(username)));
+        sendEventIfAllAnswered(gameId, state.getCurrentQuestion());
+    }
+
+    public void sendUserTextedEvent(String gameId, String username, String messageText) {
+        final var state = getState(gameId);
+        state.putToMessages(username, messageText);
+        eventBuses.get(gameId).fireEvent(new UserSentMessageEvent(
+                gameId,
+                messageText,
+                state.userMessagesDesc(),
+                Optional.ofNullable(state.getUserState(username)).map(UserGameState::profile)));
+    }
+
+    public void sendLiveReactionEvent(String gameId, final String user, final Emoji emoji) {
+        final var state = getState(gameId);
+        eventBuses.get(gameId).fireEvent(
+                new LiveReactionEvent(gameId, state.getUserState(user).profile(), emoji));
+    }
+
     @Getter
+    @EqualsAndHashCode(of = "gameId", callSuper = false)
+    @ToString(of = "gameId", callSuper = false)
     public abstract static class CleverestGameEvent extends ComponentEvent<Div> {
         private final String gameId;
 
@@ -267,31 +296,48 @@ public class CleverestBroadcaster {
     }
 
     @Getter
-    public static class UserJoinedEvent extends CleverestGameEvent {
-        private String username;
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
+    public static class UserJoinedEvent extends CleverestGameEvent implements UserEvent {
+        private final UserProfile user;
+        private final List<UserProfile> allUsers;
 
         public UserJoinedEvent(String gameId,
-                               String username) {
+                               UserProfile user,
+                               List<UserProfile> allUsers) {
             super(gameId);
-            this.username = username;
+            this.user = user;
+            this.allUsers = allUsers;
+        }
+
+        @Override
+        public String username() {
+            return user.username();
         }
     }
 
     @Getter
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
     public static class UserBetEvent extends CleverestGameEvent {
-        private String username;
-        private String userToBet;
+        private final UserGameState user;
+        private final String userToBet;
+        private final List<UserGameState> allUsers;
 
         public UserBetEvent(String gameId,
-                            String username,
-                            String userToBet) {
+                            UserGameState user,
+                            String userToBet,
+                            List<UserGameState> allUsers) {
             super(gameId);
-            this.username = username;
+            this.user = user;
             this.userToBet = userToBet;
+            this.allUsers = allUsers;
         }
     }
 
     @Getter
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
     public static class UpdatePersonalScoreEvent extends CleverestGameEvent {
         public UpdatePersonalScoreEvent(String gameId) {
             super(gameId);
@@ -299,8 +345,10 @@ public class CleverestBroadcaster {
     }
 
     @Getter
+    @EqualsAndHashCode(of = "usernames", callSuper = false)
+    @ToString(of = "usernames", callSuper = true)
     public static class AllUsersReadyEvent extends CleverestGameEvent {
-        private Set<String> usernames;
+        private final Set<String> usernames;
 
         public AllUsersReadyEvent(String gameId, Set<String> usernames) {
             super(gameId);
@@ -309,46 +357,60 @@ public class CleverestBroadcaster {
     }
 
     @Getter
-    public static class UserAnsweredEvent extends CleverestGameEvent {
-        private UserGameState userGameState;
-        private int roundNumber;
+    @Accessors(fluent = true)
+    @EqualsAndHashCode(callSuper = true)
+    @ToString
+    public static class UserAnsweredEvent extends CleverestGameEvent implements UserEvent {
+        private final String username;
+        private final String lastResponseTimeSec;
+        private final int roundNumber;
 
-        public UserAnsweredEvent(String gameId, UserGameState userGameState, int roundNumber) {
+        public UserAnsweredEvent(final String gameId,
+                                 final String username,
+                                 final String lastResponseTimeSec,
+                                 final int roundNumber) {
             super(gameId);
-            this.userGameState = userGameState;
+            this.username = username;
+            this.lastResponseTimeSec = lastResponseTimeSec;
             this.roundNumber = roundNumber;
+        }
+
+        @Override
+        public String username() {
+            return username;
         }
     }
 
     @Getter
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
     public static class AllUsersAnsweredEvent extends CleverestGameEvent {
-        private QuestionModel question;
-        private boolean roundOver;
-        private boolean roundsOver;
-        private int currentRound;
-        private int revealScoreAfter;
+        private final QuestionModel question;
+        private final boolean roundOver;
+        private final int currentRound;
+        private final int revealScoreAfter;
 
         public AllUsersAnsweredEvent(String gameId,
                                      QuestionModel question,
                                      boolean roundOver,
-                                     boolean roundsOver,
                                      int currentRound,
                                      int revealScoreAfter) {
             super(gameId);
             this.question = question;
             this.roundOver = roundOver;
-            this.roundsOver = roundsOver;
             this.currentRound = currentRound;
             this.revealScoreAfter = revealScoreAfter;
         }
     }
 
     @Getter
-    public static class GetRoundEvent extends CleverestGameEvent {
-        private int roundNumber;
-        private String rules;
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
+    public static class RoundInfoEvent extends CleverestGameEvent {
+        private final int roundNumber;
+        private final String rules;
 
-        public GetRoundEvent(String gameId, int roundNumber, String rules) {
+        public RoundInfoEvent(String gameId, int roundNumber, String rules) {
             super(gameId);
             this.roundNumber = roundNumber;
             this.rules = rules;
@@ -356,11 +418,13 @@ public class CleverestBroadcaster {
     }
 
     @Getter
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
     public static class GetQuestionEvent extends CleverestGameEvent {
-        private QuestionModel question;
-        private int questionNumber;
-        private int totalQuestionsInRound;
-        private int roundNumber;
+        private final QuestionModel question;
+        private final int questionNumber;
+        private final int totalQuestionsInRound;
+        private final int roundNumber;
 
         public GetQuestionEvent(String gameId,
                                 QuestionModel question,
@@ -376,48 +440,69 @@ public class CleverestBroadcaster {
     }
 
     @Getter
-    public static class RenderCategoriesEvent extends CleverestGameEvent {
-        private UserGameState userToAnswer;
-        private Map<String, List<QuestionModel>> data;
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
+    public static class RenderCategoriesEvent extends CleverestGameEvent implements UserEvent {
+        private final UserGameState user;
+        private final Map<String, List<QuestionModel>> data;
 
         public RenderCategoriesEvent(String gameId,
-                                     UserGameState userToAnswer,
+                                     UserGameState user,
                                      Map<String, List<QuestionModel>> data) {
             super(gameId);
-            this.userToAnswer = userToAnswer;
+            this.user = user;
             this.data = data;
         }
-    }
 
-    @Getter
-    public static class SaveUserAnswersEvent extends CleverestGameEvent {
-        private QuestionModel question;
-        private List<UserGameState> userStates;
-
-        public SaveUserAnswersEvent(String gameId,
-                                    QuestionModel question,
-                                    List<UserGameState> userStates) {
-            super(gameId);
-            this.question = question;
-            this.userStates = userStates;
+        @Override
+        public String username() {
+            return user.getUsername();
         }
     }
 
     @Getter
-    public static class QuestionGradedEvent extends CleverestGameEvent {
-        private QuestionModel question;
-        private String username;
-        private int grade;
+    @EqualsAndHashCode(of = {"question", "userStateSnapshots"}, callSuper = true)
+    @ToString(of = {"question", "userStateSnapshots"}, callSuper = true)
+    public static class SaveUsersAnswersEvent extends CleverestGameEvent {
+        private final QuestionModel question;
+        private final List<UserStateSnapshot> userStateSnapshots;
 
-        public QuestionGradedEvent(String gameId, QuestionModel question, String username, int grade) {
+        public SaveUsersAnswersEvent(String gameId,
+                                     QuestionModel question,
+                                     List<UserStateSnapshot> userStateSnapshots) {
+            super(gameId);
+            this.question = question;
+            this.userStateSnapshots = userStateSnapshots;
+        }
+    }
+
+    @Getter
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
+    public static class QuestionGradedEvent extends CleverestGameEvent implements UserEvent {
+        private final QuestionModel question;
+        private final String username;
+        private final int grade;
+        private final Emoji emoji;
+
+        public QuestionGradedEvent(String gameId, QuestionModel question,
+                                   String username, int grade, final Emoji emoji) {
             super(gameId);
             this.question = question;
             this.username = username;
             this.grade = grade;
+            this.emoji = emoji;
+        }
+
+        @Override
+        public String username() {
+            return username;
         }
     }
 
     @Getter
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
     public static class GameFinishedEvent extends CleverestGameEvent {
         public GameFinishedEvent(String gameId) {
             super(gameId);
@@ -425,23 +510,100 @@ public class CleverestBroadcaster {
     }
 
     @Getter
+    @EqualsAndHashCode(of = {"question", "username"}, callSuper = true)
+    @ToString(of = {"question", "username"}, callSuper = true)
     public static class QuestionChoosenEvent extends CleverestGameEvent {
-        private QuestionModel question;
-        private UserGameState userToAnswer;
+        private final QuestionModel question;
+        private final String username;
 
         public QuestionChoosenEvent(String gameId,
                                     QuestionModel question,
-                                    UserGameState userToAnswer) {
+                                    String username) {
             super(gameId);
             this.question = question;
-            this.userToAnswer = userToAnswer;
+            this.username = username;
         }
     }
 
-    public <T extends ComponentEvent<?>> Registration subscribe(String gameId,
-                                                                Class<T> eventType,
-                                                                ComponentEventListener<T> listener) {
-        ComponentEventBus eventBus = eventBuses.computeIfAbsent(gameId, bus -> new ComponentEventBus(new Div()));
-        return eventBus.addListener(eventType, listener);
+    @Getter
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
+    public static class PlaySoundEvent extends CleverestGameEvent {
+        private final GameSound sound;
+
+        public PlaySoundEvent(final String gameId, final GameSound sound) {
+            super(gameId);
+            this.sound = sound;
+        }
+    }
+
+    @Getter
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
+    public static class DeleteUserEvent extends CleverestGameEvent {
+
+        private final UserGameState deleted;
+
+        public DeleteUserEvent(final String gameId, final UserGameState deleted) {
+            super(gameId);
+            this.deleted = deleted;
+        }
+    }
+
+    @Getter
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
+    public static class UserSentMessageEvent extends CleverestGameEvent {
+        private final String message;
+        private final List<UserMessage> messages;
+        private final Optional<UserProfile> userProfile;
+
+        public UserSentMessageEvent(final String gameId,
+                                    final String message,
+                                    final List<UserMessage> messages,
+                                    final Optional<UserProfile> userProfile) {
+            super(gameId);
+            this.message = message;
+            this.messages = messages;
+            this.userProfile = userProfile;
+        }
+    }
+
+    @Getter
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
+    public static class LiveReactionEvent extends CleverestGameEvent {
+        private final UserProfile userProfile;
+        private final Emoji emoji;
+
+        public LiveReactionEvent(final String gameId, final UserProfile userProfile, final Emoji emoji) {
+            super(gameId);
+            this.userProfile = userProfile;
+            this.emoji = emoji;
+        }
+    }
+
+    public <T extends CleverestGameEvent> Registration subscribe(String gameId,
+                                                                 Class<T> eventType,
+                                                                 ComponentEventListener<T> listener) {
+        final var eventBus = eventBuses.computeIfAbsent(gameId, bus -> new ComponentEventBus(new Div()));
+        Registration[] regHolder = new Registration[1];
+        regHolder[0] = eventBus.addListener(eventType, event -> {
+            log.info("[DEEP][Broadcaster={}] Execute [{}] reg=[{}], User [{}], UI [{}], EventBus size[{}]",
+                    this.hashCode(), eventType.getSimpleName(),
+                    regHolder[0].hashCode(),
+                    getLoggedUser(),
+                    event.getSource().getUI().map(Objects::hashCode).orElse(-1),
+                    eventBuses.get(gameId).getListeners(CleverestGameEvent.class).size());
+            listener.onComponentEvent(event);
+        });
+        Registration reg = regHolder[0];
+        log.info("[DEEP][Broadcaster={}] Registered [{}], User [{}], Registration [{}], EventBus size[{}]",
+                this.hashCode(), eventType.getSimpleName(), getLoggedUser(), reg.hashCode(), eventBuses.get(gameId).getListeners(CleverestGameEvent.class).size());
+        return reg;
+    }
+
+    void registerEventBus(String gameId, ComponentEventBus bus) {
+        eventBuses.put(gameId, bus);
     }
 }

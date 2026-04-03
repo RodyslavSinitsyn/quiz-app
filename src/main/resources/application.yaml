@@ -1,35 +1,43 @@
 spring:
   application:
     name: quiz-app
-  #  devtools:
-  #    livereload:
-  #      enabled: true
-  #      port: 35730
-  #    restart:
-  #      poll-interval: 2s
-  #      quiet-period: 1s
-  #      enabled: true
+  devtools:
+    livereload:
+      enabled: true
+      port: 35730
+    restart:
+      poll-interval: 2s
+      quiet-period: 1s
+      enabled: true
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
 
   # DB properties
   datasource:
-    url: jdbc:h2:file:./db/quiz-db-dev;AUTO_SERVER=TRUE
-    username: sa
-    password:
-    driverClassName: org.h2.Driver
+    username: qa-user
+    password: qa-password
+    url: jdbc:postgresql://localhost:5433/qa-db
+
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      # TODO none
-      ddl-auto: update
+      ddl-auto: validate
       naming:
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-    show-sql: ${quiz.profiling}
+        implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy # underscore
+    show-sql: false
     open-in-view: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
+
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+    enabled: true
+    contexts: ${spring.profiles.active}
 
 quiz:
   openai:
+    enabled: false
     apiKey: TODO_MOVE_TO_ENV_VARIABLES
     model: gpt-3.5-turbo
     url: https://api.openai.com/v1/chat/completions
@@ -37,7 +45,7 @@ quiz:
   profiling: false
   monitoring: false
   job:
-    cleanupCleverestGames: true
+    cleanupCleverestGames: false
     uCarNumberGeneratorJob: false
 
 management:
@@ -55,7 +63,5 @@ management:
         include: [ 'health', 'info', 'metrics', 'prometheus' ]
 
 logging:
-  #  pattern:
-  #    level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
   level:
     org.rsinitsyn.quiz: DEBUG

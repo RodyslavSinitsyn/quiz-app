@@ -9,9 +9,18 @@ import lombok.NoArgsConstructor;
 public class TopQuestionBindingModel extends AbstractQuestionBindingModel {
     @NotBlank
     private String topListText;
+    private boolean sequence;
 
-    public TopQuestionBindingModel(String id, String text, String topListText, String originalPhotoUrl, String answerDescriptionText) {
-        super(id, text, answerDescriptionText, originalPhotoUrl);
+    public TopQuestionBindingModel(String id,
+                                   String text,
+                                   String topListText,
+                                   boolean sequence,
+                                   String originalPhotoUrl,
+                                   String category,
+                                   String answerDescriptionText,
+                                   String hintsText) {
+        super(id, text, answerDescriptionText, originalPhotoUrl, category, hintsText);
         this.topListText = topListText;
+        this.sequence = sequence;
     }
 }

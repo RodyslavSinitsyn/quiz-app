@@ -5,15 +5,18 @@ import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import java.util.List;
+import jakarta.annotation.security.PermitAll;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.model.UserStatsModel;
 import org.rsinitsyn.quiz.service.StatisticService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 
+import java.util.List;
+
 @Route(value = "/statistic", layout = MainLayout.class)
 @PageTitle("Statistic")
+@PermitAll
 public class StatisticPage extends VerticalLayout {
 
     private StatisticService statisticService;

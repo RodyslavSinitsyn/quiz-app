@@ -1,82 +1,105 @@
 package org.rsinitsyn.quiz.model.cleverest;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.apache.commons.lang3.tuple.MutablePair;
-import org.rsinitsyn.quiz.utils.QuizUtils;
+import org.rsinitsyn.quiz.entity.AnswerStatus;
+import org.rsinitsyn.quiz.model.answer.AnswerResult;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@EqualsAndHashCode(exclude = {"bets"})
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.function.Supplier;
+
+import static java.time.LocalDateTime.now;
+import static java.time.temporal.ChronoUnit.MILLIS;
+import static java.util.Optional.empty;
+import static org.rsinitsyn.quiz.entity.AnswerStatus.*;
+import static org.rsinitsyn.quiz.utils.QuizUtils.divide;
+
+@Getter
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@EqualsAndHashCode(of = {"profile", "lastAnswerResult", "lastAnswerText", "score", "correctAnswersCount", "answerGiven"})
+@ToString(exclude = "bets")
 public class UserGameState implements Comparable<UserGameState> {
-    private String username;
-    private String color;
+    @Getter(AccessLevel.NONE)
+    private UserProfile profile;
 
-    private boolean lastWasCorrect;
-//    @Setter(AccessLevel.NONE)
+    private AnswerStatus lastAnswerStatus;
     private String lastAnswerText;
     private int lastPosition;
-    private long lastResponseTime;
-    @Setter(AccessLevel.NONE)
+    private long lastResponseTimeMs;
     private int correctAnswersCount;
-    @Setter(AccessLevel.NONE)
     private int score = 0;
-    @Setter(AccessLevel.NONE)
     private boolean answerGiven;
     private Map<String, MutablePair<String, Boolean>> bets = new HashMap<>();
     private int betScore;
+    @Setter
     private Double avgResponseTime;
 
-    public void submitLatestAnswer(String answerText, LocalDateTime questionRenderTime) {
-        lastAnswerText = answerText;
-        answerGiven = true;
-        lastResponseTime = ChronoUnit.MILLIS.between(
-                questionRenderTime,
-                LocalDateTime.now());
+    public static UserGameState userGameState(String username,
+                                              String color,
+                                              String photoFilename) {
+        final var userGameState = new UserGameState();
+        userGameState.profile = new UserProfile(username, color, Optional.ofNullable(photoFilename));
+        userGameState.lastAnswerStatus = UNKNOWN;
+        return userGameState;
     }
 
-    public String lastResponseTimeSec() {
-        return QuizUtils.divide(
-                lastResponseTime,
-                1_000) + " сек.";
+    public String getUsername() {
+        return profile.username();
+    }
+
+    public void updateColorAndPhoto(String color, String photoUrl) {
+        this.profile = this.profile.withColorAndAvatar(color, photoUrl);
+    }
+
+    public void updateLastPosition(int position) {
+        this.lastPosition = position;
+    }
+
+    public void submitAnswer(String answerText,
+                             LocalDateTime questionRenderTime,
+                             Supplier<AnswerResult> answerResult) {
+        if (answerGiven) {
+            return;
+        }
+        // todo: need to keep how many points on the line for GuessPhoto per user
+        final var result = answerResult.get();
+
+        lastAnswerText = answerText;
+        answerGiven = true;
+        lastResponseTimeMs = MILLIS.between(questionRenderTime, now());
+        lastAnswerStatus = result.status();
+
+        if (result.status().correct()) {
+            this.score += result.correctCount();
+            this.correctAnswersCount++;
+        }
+    }
+
+    public String getLastResponseTimeSec() {
+        return "%.1f сек.".formatted(divide(lastResponseTimeMs, 1_000));
     }
 
     public void prepareForNext() {
-        lastWasCorrect = false;
+        lastAnswerStatus = UNKNOWN;
         lastAnswerText = "";
         answerGiven = false;
-        lastResponseTime = 0;
+        lastResponseTimeMs = 0;
     }
 
     public void increaseBetScore() {
         betScore++;
     }
 
-    public void increaseScore() {
-        score++;
-        correctAnswersCount++;
-        lastWasCorrect = true;
-    }
-
-    public void increaseScore(int score) {
+    public void increaseScoreAndMarkCorrect(int score) {
         this.score += score;
         this.correctAnswersCount++;
-        this.lastWasCorrect = true;
+        this.lastAnswerStatus = CORRECT;
     }
 
-    public void decreaseScore(int score) {
+    public void decreaseScoreAndMarkWrong(int score) {
         this.score -= score;
-        this.lastWasCorrect = false;
+        this.lastAnswerStatus = WRONG;
     }
 
     public int totalScore() {
@@ -106,19 +129,16 @@ public class UserGameState implements Comparable<UserGameState> {
                 .compare(this, other);
     }
 
-    public UserGameState copy() {
-        return new UserGameState(
-                username,
-                color,
-                lastWasCorrect,
-                lastAnswerText,
-                lastPosition,
-                lastResponseTime,
-                correctAnswersCount,
-                score,
-                answerGiven,
-                bets,
-                betScore,
-                avgResponseTime);
+    public UserProfile profile() {
+        return profile;
+    }
+
+    public UserStateSnapshot snapshot(Optional<UUID> questionId) {
+        return new UserStateSnapshot(profile, lastAnswerText, lastAnswerStatus,
+                answerGiven, lastResponseTimeMs, score, lastPosition, questionId);
+    }
+
+    public UserStateSnapshot snapshot() {
+        return snapshot(empty());
     }
 }

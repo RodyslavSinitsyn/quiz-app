@@ -1,76 +1,88 @@
 package org.rsinitsyn.quiz.model;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.rsinitsyn.quiz.entity.QuestionHintType;
 import org.rsinitsyn.quiz.entity.QuestionType;
 
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static org.rsinitsyn.quiz.entity.QuestionHintType.PHOTO;
+import static org.rsinitsyn.quiz.entity.QuestionHintType.TEXT;
+
 @Getter
-@Setter
-@EqualsAndHashCode(exclude = {"playersAnswersHistory", "answers"})
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@EqualsAndHashCode(of = {"id"})
+@ToString(of = {"id", "text"})
 public class QuestionModel {
     private UUID id;
     private String text;
     private QuestionType type;
+    @Getter(AccessLevel.NONE)
     private String photoFilename;
+    @Getter(AccessLevel.NONE)
     private String audioFilename;
     private String categoryName;
     private boolean optionsOnly;
     private Integer validRange;
+    @Getter(AccessLevel.NONE)
     private String answerDescription;
     private Map<String, AnswerHistory> playersAnswersHistory;
-    private Set<AnswerModel> answers;
+    private List<AnswerModel> answers;
+    private List<HintModel> hints;
 
-    // for cleverest
+    // for cleverest, mutable
+    @Setter
     private boolean alreadyAnswered;
+    @Setter
     private int points;
+    @Setter
+    private boolean manualApprove;
+
+    public Optional<String> photoFilename() {
+        return Optional.ofNullable(photoFilename).filter(StringUtils::isNoneBlank);
+    }
+
+    public Optional<String> audioFilename() {
+        return Optional.ofNullable(audioFilename).filter(StringUtils::isNoneBlank);
+    }
+
+    public Optional<String> answerDescription() {
+        return Optional.ofNullable(answerDescription).filter(StringUtils::isNoneBlank);
+    }
 
     public AnswerModel getFirstCorrectAnswer() {
         return answers.stream()
-                .sorted(Comparator.comparing(AnswerModel::getNumber))
-                .filter(AnswerModel::isCorrect)
+                .sorted(Comparator.comparing(AnswerModel::number))
+                .filter(AnswerModel::correct)
                 .findFirst().orElseThrow();
     }
 
     public String getCorrectAnswersAsText() {
         if (!type.equals(QuestionType.LINK)) {
             return answers.stream()
-                    .sorted(Comparator.comparing(AnswerModel::getNumber))
-                    .filter(AnswerModel::isCorrect)
-                    .map(AnswerModel::getText)
+                    .sorted(Comparator.comparing(AnswerModel::number))
+                    .filter(AnswerModel::correct)
+                    .map(AnswerModel::text)
                     .collect(Collectors.joining(System.lineSeparator()));
         } else {
             return answers.stream()
-                    .collect(Collectors.groupingBy(AnswerModel::getNumber,
+                    .collect(Collectors.groupingBy(AnswerModel::number,
                             LinkedHashMap::new,
                             Collectors.collectingAndThen(
                                     Collectors.toList(),
                                     answerModels -> MutablePair.of(
-                                            answerModels.stream().filter(AnswerModel::isCorrect).findFirst().orElseThrow(),
-                                            answerModels.stream().filter(am -> !am.isCorrect()).findFirst().orElseThrow()
+                                            answerModels.stream().filter(AnswerModel::correct).findFirst().orElseThrow(),
+                                            answerModels.stream().filter(am -> !am.correct()).findFirst().orElseThrow()
                                     )
                             )))
                     .values()
                     .stream()
-                    .map(pair -> pair.getLeft().getText() + " = " + pair.getRight().getText())
+                    .map(pair -> pair.getLeft().text() + " = " + pair.getRight().text())
                     .collect(Collectors.joining(System.lineSeparator()));
         }
     }
@@ -81,67 +93,22 @@ public class QuestionModel {
         return answerList;
     }
 
-    public boolean areAnswersCorrect(Set<AnswerModel> userAnswers) {
-        if (type.equals(QuestionType.TEXT)) {
-            return userAnswers.stream().anyMatch(AnswerModel::isCorrect);
-        } else if (type.equals(QuestionType.MULTI)) {
-            long correctAnswersCount = this.answers.stream().filter(AnswerModel::isCorrect).count();
-            long userCorrectAnswersCount = userAnswers.stream().filter(AnswerModel::isCorrect).count();
-            boolean userHasOnlyCorrectAnswers = userCorrectAnswersCount == userAnswers.size();
-            return userHasOnlyCorrectAnswers && correctAnswersCount == userCorrectAnswersCount;
-        } else if (type.equals(QuestionType.PRECISION)) {
-            AnswerModel answerModel = userAnswers.stream().findFirst().orElseThrow(() -> new RuntimeException("No answer"));
-            if (!StringUtils.isNumeric(answerModel.getText())) {
-                return Boolean.FALSE;
-            }
-            int userAnswer = Integer.parseInt(answerModel.getText());
-            int validAnswer = Integer.parseInt(answers.stream().findFirst().orElseThrow().getText());
-            return Math.abs(validAnswer - userAnswer) <= validRange;
-        } else if (type.equals(QuestionType.OR)) {
-            return userAnswers.stream().allMatch(AnswerModel::isCorrect);
-        } else if (type.equals(QuestionType.TOP)) {
-            return userAnswers.stream().allMatch(AnswerModel::isCorrect);
-        } else {
-            throw new IllegalStateException("QuestionType not defined");
-        }
+    @Builder
+    public record AnswerModel(String text,
+                              boolean correct,
+                              int number,
+                              String photoFilename) {
     }
 
-    public boolean areAnswersCorrect(List<MutablePair<AnswerModel, AnswerModel>> pairs) {
-        var correct = answers.stream()
-                .collect(Collectors.groupingBy(AnswerModel::getNumber,
-                        LinkedHashMap::new,
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                answerModels -> MutablePair.of(
-                                        answerModels.stream().filter(AnswerModel::isCorrect).findFirst().orElseThrow(),
-                                        answerModels.stream().filter(am -> !am.isCorrect()).findFirst().orElseThrow()
-                                )
-                        )));
-        for (MutablePair<AnswerModel, AnswerModel> userPair : pairs) {
-            boolean anyPairMatched = correct.values().stream().anyMatch(correctPair -> correctPair.equals(userPair));
-            if (!anyPairMatched) {
-                return false;
-            }
+    @Builder
+    public record HintModel(String text, String photoFilename, QuestionHintType type, int number) {
+
+        public boolean textType() {
+            return type == TEXT;
         }
-        return true;
-    }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class AnswerModel {
-        private String text;
-        private boolean correct;
-        private int number;
-        private String photoFilename;
-
-        public static AnswerModel defaultWrong() {
-            return new AnswerModel(
-                    "Неверный",
-                    false,
-                    0,
-                    null
-            );
+        public boolean photoType() {
+            return type == PHOTO;
         }
     }
 }

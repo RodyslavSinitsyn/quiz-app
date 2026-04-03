@@ -17,10 +17,10 @@ import lombok.Setter;
 @Setter
 @EqualsAndHashCode
 public class GameQuestionUserId implements Serializable {
-    @Column(nullable = false)
+    @Column(name = "game_id", nullable = false)
     private UUID gameId;
-    @Column(nullable = false)
+    @Column(name = "question_id", nullable = false)
     private UUID questionId;
-    @Column(nullable = false)
+    @Column(name = "user_id", nullable = false)
     private UUID userId;
 }

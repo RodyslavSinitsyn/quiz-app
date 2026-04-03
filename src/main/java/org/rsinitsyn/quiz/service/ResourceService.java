@@ -13,6 +13,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import static org.apache.commons.io.FileUtils.copyInputStreamToFile;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -22,13 +24,13 @@ public class ResourceService {
     private static final String IMAGE_PATH = "image/";
 
     @SneakyThrows
-    public void saveAudio(String audioFilename, InputStream audioData) {
-        if (StringUtils.isBlank(audioFilename)) {
+    public void saveAudio(String filename, InputStream audioData) {
+        if (StringUtils.isBlank(filename)) {
             return;
         }
         try (audioData) {
-            File targetFile = new File(RESOURCES_PATH + AUDIO_PATH + audioFilename);
-            FileUtils.copyInputStreamToFile(audioData, targetFile);
+            File targetFile = new File(RESOURCES_PATH + AUDIO_PATH + filename);
+            copyInputStreamToFile(audioData, targetFile);
         }
     }
 
@@ -41,6 +43,17 @@ public class ResourceService {
             log.debug("Image file saved, filename: {}", filename);
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @SneakyThrows
+    public void saveImageFromInputStream(String filename, InputStream photoData) {
+        if (StringUtils.isBlank(filename)) {
+            return;
+        }
+        try (photoData) {
+            File targetFile = new File(RESOURCES_PATH + IMAGE_PATH + filename);
+            copyInputStreamToFile(photoData, targetFile);
         }
     }
 

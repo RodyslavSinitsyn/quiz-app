@@ -2,49 +2,49 @@ package org.rsinitsyn.quiz.component.cleverest;
 
 import com.flowingcode.vaadin.addons.carousel.Carousel;
 import com.flowingcode.vaadin.addons.carousel.Slide;
-import com.vaadin.flow.component.AbstractField;
-import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.ComponentEventListener;
-import com.vaadin.flow.component.HasValue;
-import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.*;
+import com.vaadin.flow.component.avatar.AvatarVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.listbox.ListBox;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.popover.Popover;
+import com.vaadin.flow.component.popover.PopoverVariant;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
-import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import de.jfancy.StarsRating;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
-import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.MutablePair;
-import org.rsinitsyn.quiz.component.сustom.LinkQuestionsComponent;
+import org.rsinitsyn.quiz.component.custom.Emoji;
+import org.rsinitsyn.quiz.component.theme.ThemePreset;
+import org.rsinitsyn.quiz.entity.AnswerStatus;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
-import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
-import org.rsinitsyn.quiz.model.cleverest.UserGameState;
-import org.rsinitsyn.quiz.utils.AudioUtils;
-import org.rsinitsyn.quiz.utils.QuizComponents;
-import org.rsinitsyn.quiz.utils.QuizUtils;
+import org.rsinitsyn.quiz.model.cleverest.ManualApprove;
+import org.rsinitsyn.quiz.model.cleverest.UserProfile;
+import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 
-@UtilityClass
-public class CleverestComponents {
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+
+import static org.rsinitsyn.quiz.utils.QuizComponents.*;
+
+public final class CleverestComponents {
 
     public static final String LARGE_IMAGE_HEIGHT = "30em";
     public static final String MEDIUM_IMAGE_HEIGHT = "17.5em";
@@ -54,7 +54,11 @@ public class CleverestComponents {
     public static final String MOBILE_MEDIUM_FONT = LumoUtility.FontSize.XLARGE;
     public static final String MOBILE_LARGE_FONT = LumoUtility.FontSize.XXLARGE;
 
-    public Dialog openDialog(Component component, String headerTitle, Runnable closeAction) {
+    private CleverestComponents() {
+        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
+
+    public static Dialog openDialog(Component component, String headerTitle, Runnable closeAction) {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle(headerTitle);
         dialog.add(component);
@@ -67,44 +71,89 @@ public class CleverestComponents {
         return dialog;
     }
 
-    public Span questionTextSpan(String text, String... classes) {
-        Span span = new Span();
-        span.setText(text);
-        span.addClassNames(
-                LumoUtility.FontWeight.SEMIBOLD,
-                LumoUtility.LineHeight.XSMALL,
-                LumoUtility.TextAlignment.CENTER,
-                LumoUtility.Whitespace.PRE_LINE);
-        span.addClassNames(classes);
-        span.setWidthFull();
+    public static Span emojiSmall(String emoji) {
+        final var span = new Span(emoji);
+        span.addClassName("hoover");
         return span;
     }
 
-    public Span userAnswerSpan(UserGameState userGameState, QuestionType questionType, String... classes) {
-        Span userAnswer = new Span();
+    public static Button emojiBig(String emoji) {
+        final var button = new Button(emoji);
+        button.addThemeVariants(ButtonVariant.LUMO_LARGE);
+        button.addClassName("emoji");
+        return button;
+    }
+
+    public static Span questionTextSpan(String text) {
+        Span span = new Span();
+        span.setText(text);
+        span.addClassName("question-text");
+        return span;
+    }
+
+    public static Span smallTextSpan(String text) {
+        Span span = new Span(text);
+        span.addClassNames(MOBILE_MEDIUM_FONT);
+        return span;
+    }
+
+    public static HorizontalLayout horizontalLayoutBetween(Component... components) {
+        return horizontalLayout(JustifyContentMode.BETWEEN, components);
+    }
+
+    public static HorizontalLayout horizontalLayoutCenter(Component... components) {
+        return horizontalLayout(JustifyContentMode.CENTER, components);
+    }
+
+    public static HorizontalLayout horizontalLayout(JustifyContentMode mode, Component... components) {
+        HorizontalLayout layout = new HorizontalLayout();
+        layout.setWidthFull();
+        layout.setAlignItems(Alignment.CENTER);
+        layout.setJustifyContentMode(mode);
+        layout.add(components);
+        return layout;
+    }
+
+    public static HorizontalLayout userProfileWithAnswer(UserStateSnapshot userStateSnapshot, QuestionType questionType, String... classes) {
+        final var userAnswer = new Span();
         if (questionType.equals(QuestionType.PHOTO)) {
-            userAnswer.add(QuizComponents.largeAvatar(userGameState.getLastAnswerText()));
+            userAnswer.add(largeAvatar(userStateSnapshot.answerText()));
         } else {
-            userAnswer.add(String.valueOf(userGameState.getLastAnswerText()));
+            userAnswer.add(userStateSnapshot.answerText());
         }
-        userAnswer.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
         userAnswer.addClassNames(classes);
-
-        return new Span(
-                userNameSpan(userGameState.getUsername(), userGameState.getColor(), classes),
-                delimiterSpan(classes),
-                userAnswer);
+        final var userProfile = userProfile(userStateSnapshot.profile(), classes);
+        userProfile.add(userAnswer);
+        return userProfile;
     }
 
-    public Span userNameSpan(String username, String textColor, String... classes) {
-        return QuizComponents.appendTextBorder(new Span() {{
-            setText(username);
-            getStyle().set("color", textColor);
-            addClassNames(classes);
-        }});
+    public static HorizontalLayout userProfileWithScore(UserStateSnapshot snapshot, String... classes) {
+        final var userScore = new Span("[%s]".formatted(snapshot.score()));
+        userScore.addClassNames(classes);
+        userScore.addClassName("score-label");
+        userScore.getStyle().set("color", snapshot.color());
+        final var userProfile = userProfile(snapshot.profile(), classes);
+        userProfile.add(appendTextBorder(userScore));
+        return userProfile;
     }
 
-    public Span correctAnswerSpan(QuestionModel questionModel, String... classes) {
+    public static HorizontalLayout userProfile(UserProfile profile, String... classes) {
+        return horizontalLayoutCenter(
+                userPhoto(profile),
+                appendTextBorder(new Span() {{
+                    setText(profile.username());
+                    getStyle().set("color", profile.color());
+                    addClassNames(classes);
+                }}));
+    }
+
+    public static Component userPhoto(UserProfile profile) {
+        return profile.photoFilename()
+                .map(url -> (Component) avatarByUrl(url, AvatarVariant.LUMO_XLARGE))
+                .orElseGet(VaadinIcon.USER::create);
+    }
+
+    public static Span correctAnswerSpan(QuestionModel questionModel, String... classes) {
         Span span = new Span();
         span.addClassNames(classes);
         span.addClassNames(LumoUtility.TextAlignment.CENTER,
@@ -114,29 +163,22 @@ public class CleverestComponents {
         span.setWidthFull();
         span.getStyle().set("white-space", "pre-line");
         if (questionModel.getType().equals(QuestionType.PHOTO)) {
-            span.add(new Image() {{
-                setMaxHeight(MEDIUM_IMAGE_HEIGHT);
-                setSrc(QuizUtils.createStreamResourceForPhoto(questionModel.getFirstCorrectAnswer().getPhotoFilename()));
-            }});
+            span.add(image(questionModel.getFirstCorrectAnswer().photoFilename(), MEDIUM_IMAGE_HEIGHT));
         } else {
             span.setText(questionModel.getCorrectAnswersAsText());
         }
         return span;
     }
 
-    public Span correctAnswerDescriptionSpan(QuestionModel questionModel, String... classes) {
+    public static Span answerDescriptionSpan(String answerDescription, String... classes) {
         Span span = new Span();
         span.addClassNames(classes);
-        span.addClassNames(LumoUtility.TextAlignment.CENTER,
-                LumoUtility.Border.ALL,
-                LumoUtility.BorderColor.PRIMARY);
-        span.setWidthFull();
-        span.getStyle().set("white-space", "pre-line");
-        span.setText(questionModel.getAnswerDescription());
+        span.addClassName("answer-description");
+        span.setText(answerDescription);
         return span;
     }
 
-    public Span userInfoLightSpan(String text, String... classes) {
+    public static Span userInfoLightSpan(String text, String... classes) {
         Span span = new Span();
         span.setText(text);
         span.addClassNames(
@@ -146,43 +188,39 @@ public class CleverestComponents {
         return span;
     }
 
-
-    private Span delimiterSpan(String... classes) {
-        Span span = new Span();
-        span.setText(": ");
-        span.addClassNames(classes);
-        return span;
-    }
-
-    // Form Elements
-    public Notification notification(String text, NotificationVariant variant) {
-        Notification notification = Notification.show(text, 1_500, Notification.Position.TOP_STRETCH);
+    public static Notification notification(String text,
+                                            NotificationVariant variant,
+                                            Notification.Position position) {
+        Notification notification = Notification.show(text, 1_500, position);
         notification.addThemeVariants(variant);
         return notification;
     }
 
-    public Div optionComponent(String text,
-                               int maxLength,
-                               ComponentEventListener<ClickEvent<Div>> eventHandler) {
+    public static Notification chatNotification(UserProfile profile, String text) {
+        Notification notification = new Notification();
+        notification.setDuration(2_000);
+        notification.setPosition(Notification.Position.TOP_END);
+        notification.addThemeVariants(NotificationVariant.LUMO_PRIMARY);
+        final var userProfile = userProfile(profile);
+        userProfile.add(new Span("%s".formatted(text)));
+        notification.add(userProfile);
+        notification.open();
+        return notification;
+    }
+
+    public static Div optionComponent(String text,
+                                      int maxLength,
+                                      ComponentEventListener<ClickEvent<Div>> eventHandler) {
         var option = new Div();
         option.setWidthFull();
         option.setText(text);
-        option.addClassNames(
-                text.length() > maxLength
-                        ? CleverestComponents.MOBILE_MEDIUM_FONT
-                        : CleverestComponents.MOBILE_LARGE_FONT,
-                LumoUtility.TextAlignment.CENTER,
-                LumoUtility.TextColor.PRIMARY,
-                LumoUtility.FontWeight.BOLD,
-                LumoUtility.Border.ALL,
-                LumoUtility.BorderColor.PRIMARY,
-                LumoUtility.BorderRadius.MEDIUM);
+        option.addClassNames("quiz-option");
         option.addClickListener(eventHandler);
         return option;
     }
 
-    public TextField answerInput(HasValue.ValueChangeListener<? super AbstractField.ComponentValueChangeEvent<TextField, String>> valueChangeHandler) {
-        TextField textField = new TextField("Введите ответ");
+    public static TextField textAnswerInput(HasValue.ValueChangeListener<? super AbstractField.ComponentValueChangeEvent<TextField, String>> valueChangeHandler) {
+        TextField textField = new TextField("Напиши ответ");
         textField.setValueChangeMode(ValueChangeMode.EAGER);
         textField.addThemeVariants(TextFieldVariant.LUMO_ALIGN_CENTER);
         textField.addClassNames(MOBILE_MEDIUM_FONT);
@@ -191,7 +229,6 @@ public class CleverestComponents {
         return textField;
     }
 
-
     public static Button submitButton(ComponentEventListener<ClickEvent<Button>> clickAction) {
         var submit = primaryButton("Ответить", clickAction);
         submit.setWidthFull();
@@ -199,7 +236,7 @@ public class CleverestComponents {
         return submit;
     }
 
-    public Button primaryButton(String text, ComponentEventListener<ClickEvent<Button>> clickAction) {
+    public static Button primaryButton(String text, ComponentEventListener<ClickEvent<Button>> clickAction) {
         Button button = new Button(text);
         button.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
         button.addClickListener(clickAction);
@@ -207,18 +244,25 @@ public class CleverestComponents {
         return button;
     }
 
-    public Button approveButton(Runnable clickAction,
-                                int countLimit) {
-        Button button = new Button();
-        button.setIcon(VaadinIcon.CHECK.create());
+    public static Button iconButton(Icon icon, ComponentEventListener<ClickEvent<Button>> clickAction) {
+        Button button = new Button(icon);
         button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        button.addClickListener(clickAction);
+        return button;
+    }
+
+    public static Button approveButton(Runnable clickAction,
+                                       int clicksLimit,
+                                       int pointsPerClick) {
+        final var button = iconButton(VaadinIcon.CHECK.create(), event -> {
+        });
         button.addClickListener(event -> {
-            if (countLimit > 0) {
+            if (clicksLimit > 0) {
                 String currText = event.getSource().getElement().getText();
                 var countValue = currText.isBlank()
-                        ? 1
-                        : Integer.parseInt(button.getText()) + 1;
-                if (countValue <= countLimit) {
+                        ? pointsPerClick
+                        : Integer.parseInt(button.getText()) + pointsPerClick;
+                if (countValue <= clicksLimit) {
                     button.setText(String.valueOf(countValue));
                     clickAction.run();
                 }
@@ -227,270 +271,206 @@ public class CleverestComponents {
                 button.setEnabled(false);
             }
             event.getSource().getParent().ifPresent(p ->
-                    p.addClassNames(
-                            LumoUtility.Background.PRIMARY_10, LumoUtility.Border.ALL, LumoUtility.BorderColor.PRIMARY));
+                    p.addClassNames(LumoUtility.Background.PRIMARY_10, LumoUtility.Border.ALL, LumoUtility.BorderColor.PRIMARY));
         });
         return button;
     }
 
     // Icons
-    public Icon doneIcon() {
-        Icon icon = VaadinIcon.CHECK.create();
-        icon.getElement().getThemeList().add("badge success");
+    public static Icon doneIcon() {
+        return iconWithBadge(VaadinIcon.CHECK.create(), "success");
+    }
+
+    public static Icon cancelIcon() {
+        return iconWithBadge(VaadinIcon.CLOSE_SMALL.create(), "error");
+    }
+
+    public static Icon iconWithBadge(Icon icon, String badge) {
+        icon.getElement().getThemeList().add("badge %s".formatted(badge));
         return icon;
     }
 
-    public Icon cancelIcon() {
-        Icon icon = VaadinIcon.CLOSE_SMALL.create();
-        icon.getElement().getThemeList().add("badge error");
-        return icon;
-    }
-
-    public Icon userCheckIcon() {
+    public static Icon userCheckIcon() {
         return VaadinIcon.USER_CHECK.create();
     }
 
     // Big Business Layouts
-    public VerticalLayout questionLayout(QuestionModel questionModel,
-                                         List<String> textContentClasses,
-                                         String imageHeight,
-                                         boolean isAdmin) {
-        VerticalLayout layout = new VerticalLayout();
-        layout.setSpacing(false);
-        layout.setPadding(false);
-        layout.addClassNames(LumoUtility.Margin.Top.MEDIUM);
-        layout.setDefaultHorizontalComponentAlignment(FlexComponent.Alignment.CENTER);
-
-        if (StringUtils.isNotEmpty(questionModel.getPhotoFilename())) {
-            Image image = new Image();
-            image.setSrc(QuizUtils.createStreamResourceForPhoto(questionModel.getPhotoFilename()));
-            image.setMaxHeight(imageHeight);
-            if (!isAdmin) image.setWidthFull();
-            image.getStyle().set("object-fit", "cover");
-            image.getStyle().set("object-position", "center center");
-            layout.add(image);
-        }
-
-        Span categorySpan = new Span(questionModel.getCategoryName());
-        categorySpan.addClassNames(LumoUtility.FontWeight.LIGHT, MOBILE_SMALL_FONT);
-        layout.add(categorySpan);
-
-        Span textContent = CleverestComponents.questionTextSpan(
-                questionModel.getText(),
-                textContentClasses.toArray(new String[]{}));
-
-        layout.add(questionModel.getType().equals(QuestionType.PRECISION)
-                ? new Span(VaadinIcon.STAR.create(), textContent)
-                : textContent);
-
-        if (StringUtils.isNotEmpty(questionModel.getAudioFilename())) {
-            Button playAudioButton = new Button("Слушать", VaadinIcon.PLAY_CIRCLE.create());
-            playAudioButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST,
-                    ButtonVariant.LUMO_PRIMARY,
-                    ButtonVariant.LUMO_SMALL);
-            playAudioButton.setEnabled(isAdmin);
-            playAudioButton.addClickListener(event -> {
-                AudioUtils.playSoundAsync(questionModel.getAudioFilename());
-            });
-            layout.add(playAudioButton);
-            // TODO Play audio on each device
-//            AudioPlayer audioPlayer = new AudioPlayer(QuizUtils.createStreamResourceForAudio(questionModel.getAudioFilename()));
-//            layout.add(audioPlayer);
-        }
-        return layout;
-    }
-
-    public VerticalLayout usersScoreTableLayout(Map<String, UserGameState> users) {
-        var layout = new VerticalLayout();
-        users.forEach((username, userGameState) -> {
-            HorizontalLayout row = new HorizontalLayout();
-
-            Span positionSpan = new Span();
-            positionSpan.addClassNames(LumoUtility.FontSize.XXXLARGE,
-                    LumoUtility.FontWeight.SEMIBOLD);
-            if (userGameState.getLastPosition() == 1) {
-                positionSpan.add(VaadinIcon.ACADEMY_CAP.create());
-            } else if (userGameState.getLastPosition() == users.size()) {
-                positionSpan.add(VaadinIcon.GLASS.create());
+    public static VerticalLayout usersScoreTableLayout(List<UserStateSnapshot> users,
+                                                       Map<String, List<AnswerStatus>> lastAnswers) {
+        var layout = new VerticalLayout(JustifyContentMode.START);
+        users.forEach(userStateSnapshot -> {
+            Span emojiSpan;
+            if (userStateSnapshot.position() == 1) {
+                emojiSpan = emojiSmall(Emoji.randomGood().value);
+            } else if (userStateSnapshot.position() == users.size()) {
+                emojiSpan = emojiSmall(Emoji.randomBad().value);
             } else {
-                positionSpan.setText(userGameState.getLastPosition() + ".");
+                emojiSpan = emojiSmall(Emoji.randomMid().value);
             }
-            row.add(positionSpan);
-
-            row.add(CleverestComponents.userScoreLayout(username,
-                    userGameState.getColor(),
-                    userGameState.getScore(),
-                    LumoUtility.FontSize.XXXLARGE));
-
+            final var icons = lastAnswers.get(userStateSnapshot.username()).stream()
+                    .map(CleverestComponents::getIconFromAnswer)
+                    .toArray(Icon[]::new);
+            final var row = horizontalLayoutBetween(emojiSpan,
+                    smallTextSpan(String.valueOf(userStateSnapshot.position())),
+                    userProfileWithScore(userStateSnapshot));
+            row.add(icons);
+            layout.addClassNames(MOBILE_MEDIUM_FONT);
             layout.add(row);
         });
         return layout;
     }
 
-    public HorizontalLayout userScoreLayout(String username, String ustTxtColor, int score, String... classes) {
-        HorizontalLayout layout = new HorizontalLayout();
-        layout.setAlignItems(FlexComponent.Alignment.CENTER);
-        layout.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.STRETCH);
-        layout.addClassNames(LumoUtility.Border.BOTTOM,
-                LumoUtility.FontWeight.SEMIBOLD);
-        layout.getStyle().set("border-color", ustTxtColor);
-        layout.setWidthFull();
-
-        Span userScore = new Span(String.valueOf(score));
-        userScore.addClassNames(classes);
-        userScore.getStyle().set("color", ustTxtColor);
-
-        layout.add(userNameSpan(username, ustTxtColor, classes),
-                QuizComponents.appendTextBorder(userScore));
-
-        return layout;
+    public static Image image(String filename) {
+        return image(filename, null);
     }
 
-    public VerticalLayout questionGradeLayout(Consumer<Integer> eventHandler) {
-        VerticalLayout layout = new VerticalLayout();
-        layout.setSpacing(false);
-        layout.setPadding(false);
-        layout.setWidthFull();
-        layout.setAlignItems(FlexComponent.Alignment.CENTER);
-        layout.add(userInfoLightSpan("Оцените сложность вопроса", MOBILE_SMALL_FONT));
-
-        StarsRating rating = new StarsRating(0, 5, true);
-        rating.addValueChangeListener(event -> eventHandler.accept(event.getValue()));
-        layout.add(rating);
-
-        return layout;
+    public static Image image(String filename, String height) {
+        Image image = new Image();
+        image.setSrc("/quiz-images/%s".formatted(filename));
+        image.addClassName("quiz-photo");
+        if (height != null) {
+            image.setMaxHeight(height);
+        }
+        return image;
     }
 
-    public List<Component> userTopListInputComponents(QuestionModel questionModel,
-                                                      Consumer<List<String>> answersConsumer) {
-        int topSize = questionModel.getAnswers().size();
-        VerticalLayout topListLayout = new VerticalLayout();
-        topListLayout.setSpacing(false);
-        topListLayout.setPadding(false);
-        Button submit = CleverestComponents.submitButton(
-                e -> answersConsumer.accept(topListLayout.getChildren().map(component -> component.getElement().getText()).toList()));
-
-        Button addToListButton = new Button(VaadinIcon.PLUS_CIRCLE.create());
-        addToListButton.addClickShortcut(Key.ENTER);
-        TextField textField = CleverestComponents.answerInput(event -> {
-            addToListButton.setEnabled(!event.getValue().isBlank());
-        });
-        addToListButton.addClickListener(event -> {
-            Button topListItem = new Button(textField.getValue());
-            topListItem.addClassNames(MOBILE_MEDIUM_FONT);
-            topListItem.setWidthFull();
-            topListItem.addClickListener(e -> {
-                topListLayout.remove(e.getSource());
-                textField.setEnabled(topListLayout.getChildren().count() != topSize);
-                submit.setEnabled(topListLayout.getChildren().count() == topSize);
-            });
-            topListLayout.add(topListItem);
-            textField.setValue("");
-            textField.setEnabled(topListLayout.getChildren().count() != topSize);
-            submit.setEnabled(topListLayout.getChildren().count() == topSize);
-        });
-        addToListButton.setEnabled(false);
-
-        HorizontalLayout userInput = new HorizontalLayout(textField, addToListButton);
-        userInput.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
-        userInput.setAlignItems(FlexComponent.Alignment.END);
-        userInput.setWidthFull();
-
-        return List.of(
-                userInput,
-                topListLayout,
-                submit
-        );
-    }
-
-    public List<Component> userTextOptionsInputComponents(QuestionModel questionModel,
-                                                          boolean clickEnabled,
-                                                          Consumer<AnswerModel> answerConsumer) {
-        return simpleOptionsComponents(questionModel, answerConsumer, clickEnabled,
-                new ComponentRenderer<Component, AnswerModel>(
-                        answerModel -> optionComponent(answerModel.getText(), 15, event -> {
-                        })));
-    }
-
-    public static List<Component> userPhotoOptionsInputComponents(QuestionModel questionModel,
-                                                                  Consumer<AnswerModel> answerConsumer) {
-        return simpleOptionsComponents(questionModel, answerConsumer, true, new ComponentRenderer<Component, AnswerModel>(
-                answerModel -> {
-                    Image image = new Image();
-                    image.setSrc(QuizUtils.createStreamResourceForPhoto(answerModel.getPhotoFilename()));
-                    image.setMaxHeight(SMALL_IMAGE_HEIGHT);
-                    image.setWidthFull();
-                    image.getStyle().set("object-fit", "cover");
-                    image.getStyle().set("object-position", "center center");
-                    image.addClassNames(
-                            LumoUtility.AlignSelf.CENTER,
-                            LumoUtility.Border.ALL,
-                            LumoUtility.BorderRadius.MEDIUM,
-                            LumoUtility.BorderColor.PRIMARY
-                    );
-                    return image;
-                }));
-    }
-
-    private List<Component> simpleOptionsComponents(QuestionModel questionModel,
-                                                    Consumer<AnswerModel> answerConsumer,
-                                                    boolean clickActionEnabled,
-                                                    ComponentRenderer<? extends Component, AnswerModel> componentRenderer) {
-        ListBox<AnswerModel> options = new ListBox<>();
-
-        Button submit = submitButton(event -> answerConsumer.accept(options.getValue()));
-        submit.setVisible(clickActionEnabled);
-
-        options.setWidthFull();
-        options.setReadOnly(!clickActionEnabled);
-        options.setItems(questionModel.getShuffledAnswers());
-        options.setRenderer(componentRenderer);
-        options.addValueChangeListener(event -> submit.setEnabled(true));
-
-        return List.of(options, submit);
-    }
-
-    public static List<Component> userPhotoOptionsInputComponentsCarousel(QuestionModel questionModel) {
-        List<AnswerModel> shuffledAnswers = questionModel.getShuffledAnswers();
-        var slides = shuffledAnswers.stream()
-                .map(answerModel -> {
-                    Image image = new Image();
-                    image.setSrc(QuizUtils.createStreamResourceForPhoto(answerModel.getPhotoFilename()));
-                    image.setMaxHeight(LARGE_IMAGE_HEIGHT);
-                    image.setWidthFull();
-                    image.getStyle().set("object-fit", "contain");
-                    image.getStyle().set("object-position", "center center");
-                    return image;
-                })
+    public static VerticalLayout manualPhotoCarousel(List<String> photoFilenames) {
+        var slides = photoFilenames.stream()
+                .map(CleverestComponents::image)
                 .map(Slide::new)
                 .toArray(Slide[]::new);
 
-        Carousel carousel = new Carousel(slides).withAutoProgress();
-        carousel.setWidthFull();
-        carousel.setSlideDuration(3);
-        carousel.setHeight(LARGE_IMAGE_HEIGHT);
+        Carousel carousel = new Carousel(slides)
+                .withStartPosition(photoFilenames.size() - 1)
+                .withoutNavigation();
+        carousel.addClassName("quiz-carousel");
+        carousel.setHeight(MEDIUM_IMAGE_HEIGHT);
 
-//        Button prev = new Button("<<", event -> carousel.movePrev());
-//        Button next = new Button(">>", event -> carousel.moveNext());
-//        var nav = new HorizontalLayout(prev, next);
-//        nav.setWidthFull();
-//        nav.addClassNames(LumoUtility.Margin.Bottom.XLARGE);
-//        nav.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-//        nav.setAlignItems(FlexComponent.Alignment.CENTER);
-
-        return List.of(carousel);
+        final var prev = iconButton(VaadinIcon.ARROW_CIRCLE_LEFT_O.create(), event -> carousel.movePrev());
+        final var next = iconButton(VaadinIcon.ARROW_CIRCLE_RIGHT_O.create(), event -> carousel.moveNext());
+        return new VerticalLayout(carousel, horizontalLayoutCenter(prev, next));
     }
 
-    public static List<Component> userMatchAnswersComponents(QuestionModel questionModel,
-                                                             Consumer<List<MutablePair<AnswerModel, AnswerModel>>> listOfAnswerLinksConsumer) {
-        Button submit = submitButton(event -> {
+    public static VerticalLayout userAnswersLayout(QuestionModel question,
+                                                   Collection<UserStateSnapshot> users,
+                                                   Optional<ManualApprove> manualApprove) {
+        VerticalLayout answersLayout = new VerticalLayout();
+
+        answersLayout.add(correctAnswerSpan(question));
+        question.answerDescription().ifPresent(answerDescription ->
+                answersLayout.add(answerDescriptionSpan(answerDescription, MOBILE_SMALL_FONT)));
+        users.forEach(userStateSnapshot -> {
+            final var userProfileWithAnswer = userProfileWithAnswer(userStateSnapshot,
+                    question.getType());
+            if (userStateSnapshot.correct()) {
+                userProfileWithAnswer.addClassNames(LumoUtility.Background.PRIMARY_10, LumoUtility.Border.ALL, LumoUtility.BorderColor.PRIMARY);
+            }
+            if (manualApprove.isEmpty()) {
+                userProfileWithAnswer.add(getIconFromAnswer(userStateSnapshot.answerStatus()));
+            }
+            if (manualApprove.isPresent()) {
+                final var approve = manualApprove.orElseThrow();
+                Button approveButton = approveButton(
+                        () -> approve.action().accept(userStateSnapshot.username()),
+                        approve.clickLimit(),
+                        approve.pointsPerClick());
+                userProfileWithAnswer.add(approveButton);
+            }
+            answersLayout.add(userProfileWithAnswer);
         });
+        answersLayout.addClassNames(MOBILE_MEDIUM_FONT);
+        return answersLayout;
+    }
 
-        LinkQuestionsComponent component = new LinkQuestionsComponent(questionModel);
-        component.addPairLinkedEventListener(event -> submit.setEnabled(event.isDone()));
+    public static Icon getIconFromAnswer(AnswerStatus status) {
+        return switch (status) {
+            case CORRECT -> doneIcon();
+            case WRONG -> cancelIcon();
+            case PARTIAL -> iconWithBadge(VaadinIcon.STAR_HALF_RIGHT_O.create(), "secondary");
+            case UNKNOWN -> iconWithBadge(VaadinIcon.QUESTION.create(), "warning");
+        };
+    }
 
-        submit.addClickListener(event -> listOfAnswerLinksConsumer.accept(component.getPairs()));
+    public static HorizontalLayout themeColor(ThemePreset preset) {
+        final var circle = new Div();
+        circle.setWidth("10px");
+        circle.setHeight("10px");
+        circle.getStyle()
+                .set("border-radius", "50%")
+                .set("background-color", preset.color())
+                .set("border", "1px solid var(--lumo-contrast-20pct)");
+        final var label = new Span(preset.name());
+        return horizontalLayout(JustifyContentMode.START, circle, label);
+    }
 
-        return List.of(component, submit);
+
+    public static Button soundButton(Runnable task) {
+        final var soundButton = new Button(Emoji.SOUND.value);
+        final var contextMenu = new ContextMenu(soundButton);
+        contextMenu.setOpenOnClick(true);
+        final var layout = horizontalLayoutCenter();
+        Stream.of(Emoji.GUITAR.value, Emoji.LAUGH.value, Emoji.EXPLODE.value)
+                .map(CleverestComponents::emojiBig)
+                .forEach(emoji -> {
+                    layout.add(emoji);
+                    emoji.addClickListener(e -> {
+                        task.run();
+                        contextMenu.close();
+                        layout.remove(e.getSource());
+                    });
+                });
+        contextMenu.add(layout);
+        return soundButton;
+    }
+
+    public static Button openChatButton(final Consumer<String> messageAction) {
+        final var chatButton = new Button(Emoji.CHAT.value);
+        final var contextMenu = new ContextMenu(chatButton);
+        contextMenu.setOpenOnClick(true);
+        final var textField = chatInput(messageAction);
+        textField.setAutofocus(true);
+        contextMenu.addOpenedChangeListener(e -> {
+            if (e.isOpened()) {
+                textField.focus();
+            }
+        });
+        contextMenu.add(textField);
+        return chatButton;
+    }
+
+    public static TextField chatInput(Consumer<String> messageAction) {
+        final var textField = new TextField();
+        textField.setWidthFull();
+        textField.setLabel("Отправь всем сообщение! (отправка на Enter)");
+        textField.setMaxLength(200);
+        textField.addKeyPressListener(Key.ENTER, event -> {
+            if (StringUtils.isBlank(textField.getValue())) {
+                return;
+            }
+            messageAction.accept(textField.getValue());
+            textField.clear();
+        });
+        return textField;
+    }
+
+    public static Button reactionButton(String emoji, Consumer<Emoji> action) {
+        final var reactionButton = new Button(emoji);
+
+        final var popover = new Popover();
+        popover.setTarget(reactionButton);
+        popover.setOpenOnClick(true);
+        popover.setCloseOnOutsideClick(true);
+        popover.setHideDelay(100);
+        popover.addThemeVariants(PopoverVariant.ARROW);
+
+        final var layout = horizontalLayoutCenter();
+        Emoji.REACTION_LIST.forEach(reaction -> {
+            final var emojiSmall = emojiSmall(reaction.value);
+            emojiSmall.addClickListener(e -> action.accept(reaction));
+            layout.add(emojiSmall);
+        });
+        popover.add(layout);
+
+        return reactionButton;
     }
 }

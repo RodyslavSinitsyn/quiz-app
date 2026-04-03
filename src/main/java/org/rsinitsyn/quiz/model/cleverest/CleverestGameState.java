@@ -1,34 +1,43 @@
 package org.rsinitsyn.quiz.model.cleverest;
 
 import com.google.common.collect.Iterables;
+import lombok.AccessLevel;
+import lombok.Getter;
+import org.apache.commons.collections4.MapUtils;
+import org.rsinitsyn.quiz.entity.AnswerStatus;
+import org.rsinitsyn.quiz.model.QuestionModel;
+
+import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import lombok.Getter;
-import org.rsinitsyn.quiz.model.QuestionModel;
+
+import static java.util.Comparator.comparingInt;
+import static java.util.Map.Entry.comparingByValue;
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toMap;
+import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
+import static org.rsinitsyn.quiz.model.cleverest.UserGameState.userGameState;
 
 @Getter
 public class CleverestGameState {
 
+    private static final int REVEALS_COUNT = 3;
+
+    @Getter(AccessLevel.NONE)
     private final Map<String, UserGameState> users = new HashMap<>();
-    private final String createdBy;
+    private final String gameHostName;
     private final List<QuestionModel> firstQuestions;
     private final List<QuestionModel> secondQuestions;
     private final Map<String, List<QuestionModel>> thirdQuestions;
 
     private final Map<Integer, String> roundRules = new HashMap<>();
-    private final Map<QuestionModel, List<UserGameState>> history = new LinkedHashMap<>();
+    private final Map<QuestionModel, List<UserStateSnapshot>> history = new LinkedHashMap<>();
+    @Getter(AccessLevel.NONE)
+    private final List<UserMessage> userMessages = new ArrayList<>();
 
     // mutable
     private Iterator<UserGameState> usersToAnswerOrder = null;
@@ -36,53 +45,144 @@ public class CleverestGameState {
     private int roundNumber = 1;
     private int questionNumber = 0;
     private Supplier<List<QuestionModel>> currRoundQuestionsSource;
+    private RoundRevealPlan revealPlan;
 
     public CleverestGameState(
-            String createdBy,
+            String gameHostName,
             List<QuestionModel> firstRound,
             List<QuestionModel> secondRound,
             Map<String, List<QuestionModel>> thirdRound) {
-        this.createdBy = createdBy;
+        this.gameHostName = gameHostName;
         this.firstQuestions = firstRound;
         this.secondQuestions = secondRound;
         this.thirdQuestions = thirdRound;
         currRoundQuestionsSource = () -> firstQuestions;
+        revealPlan = RoundRevealPlan.of(currRoundQuestionsSource.get().size(), REVEALS_COUNT);
         initRoundRules();
     }
 
     private void initRoundRules() {
-        roundRules.put(1, "В первом раунде будут вопросы на разные темы и 4 варианта ответов.");
-        roundRules.put(2, "Во втором раунде будут вопросы на разные темы, без вариантов ответов.");
-        roundRules.put(3, "В третьем раунде по очереди нужно выбрать тему и ответить на вопрос. За верный ответ дают баллы, за неверный забирают. Количество баллов зависит от сложности вопроса.");
+        roundRules.put(1, "Раунд 1");
+        roundRules.put(2, "Раунд 2");
+        roundRules.put(3, "Раунд 3");
     }
 
-    public void putUserStateToHistory(QuestionModel key, UserGameState currUserState) {
-        List<UserGameState> states = history.get(key);
-        if (states == null || states.isEmpty()) {
-            List<UserGameState> temp = new ArrayList<>();
-            temp.add(currUserState.copy());
-            history.put(key, temp);
-        } else {
-            states.add(currUserState.copy());
-        }
+    public UserGameState addOrUpdateUser(String gameId,
+                                         String username,
+                                         String color,
+                                         String photoFilename,
+                                         String winnerBet,
+                                         String loserBet) {
+        users.computeIfAbsent(username, key -> userGameState(username, color, photoFilename));
+        return users.computeIfPresent(username, (key, userGameState) -> {
+            userGameState.updateColorAndPhoto(color, photoFilename);
+            userGameState.updateBet(defaultIfEmpty(winnerBet, ""), true, false);
+            userGameState.updateBet(defaultIfEmpty(loserBet, ""), false, false);
+            return userGameState;
+        });
     }
 
-    public Map<String, UserGameState> getSortedByScoreUsers() {
+    public UserGameState removeUser(String username) {
+        return users.remove(username);
+    }
+
+    public boolean usersPresent() {
+        return MapUtils.isNotEmpty(users);
+    }
+
+    public boolean userPresent(String username) {
+        return users.containsKey(username);
+    }
+
+    public UserGameState getUserState(String username) {
+        return users.get(username);
+    }
+
+    public Set<String> getAllUsernames() {
+        return users.keySet();
+    }
+
+    public List<UserGameState> getAllUserStates() {
+        return new ArrayList<>(users.values());
+    }
+
+    public List<UserProfile> getAllUserProfiles() {
+        return users.values().stream().map(UserGameState::profile).toList();
+    }
+
+    public UserRefreshState getUserRefreshState(String username) {
+        final var userState = getUserState(username);
+        final var currentQuestion = getCurrentQuestion();
+        final var questionNumber = getQuestionNumber() + 1;
+        return new UserRefreshState(currentQuestion,
+                questionNumber,
+                currRoundQuestionsSource.get().size(),
+                userState.isAnswerGiven());
+    }
+
+    public void putUserStateToHistory(QuestionModel question, UserGameState currUserState) {
+        final var snapshots = history.computeIfAbsent(question, ignored -> new ArrayList<>(5));
+        snapshots.add(currUserState.snapshot(ofNullable(question.getId())));
+        snapshots.sort(comparingInt(UserStateSnapshot::position));
+    }
+
+    public void putToMessages(String username, String text) {
+        userMessages.add(new UserMessage(username,
+                text,
+                Instant.now(),
+                ofNullable(getUserState(username)).flatMap(u -> u.profile().photoFilename())));
+    }
+
+    public List<UserMessage> userMessagesDesc() {
+        return userMessages.stream()
+                .sorted(Comparator.comparing(UserMessage::date).reversed())
+                .toList();
+    }
+
+    public List<UserGameState> usersWhoAnswered() {
+        return users.values()
+                .stream()
+                .filter(UserGameState::isAnswerGiven)
+                .toList();
+    }
+
+    public void usersCleanState() {
+        users.values().forEach(UserGameState::prepareForNext);
+    }
+
+    public Map<String, List<AnswerStatus>> getLastAnswers() {
+        final var lastN = revealPlan.getLastN(questionNumber);
+
+        return history.entrySet().stream()
+                .skip(Math.max(0, history.size() - lastN))
+                .flatMap(entry -> entry.getValue().stream())
+                .collect(Collectors.groupingBy(
+                        UserStateSnapshot::username,
+                        LinkedHashMap::new,
+                        Collectors.mapping(
+                                UserStateSnapshot::answerStatus,
+                                Collectors.toList())
+                ));
+    }
+
+    public int getCountToRevealScoreTable() {
+        return revealPlan.questionsUntilNextReveal(questionNumber);
+    }
+
+    // TODO: Reduce to Snapshot not full sate
+    public List<UserGameState> usersSortedByScore() {
+        return users.values().stream()
+                .sorted(Comparator.comparingInt(UserGameState::totalScore).reversed())
+                .toList();
+    }
+
+    public Map<String, UserStateSnapshot> userSnapshotsSortedByResponseTime() {
         return users.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue())
-                .collect(Collectors.toMap(Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (e1, e2) -> e2,
-                        LinkedHashMap::new));
-    }
-
-    public Map<String, UserGameState> getSortedByResponseTimeUsers() {
-        return users.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue((s1, s2) -> Comparator
-                        .comparingLong(UserGameState::getLastResponseTime)
+                .sorted(comparingByValue((s1, s2) -> Comparator
+                        .comparingLong(UserGameState::getLastResponseTimeMs)
                         .compare(s1, s2)))
-                .collect(Collectors.toMap(Map.Entry::getKey,
-                        Map.Entry::getValue,
+                .collect(toMap(Map.Entry::getKey,
+                        v -> v.getValue().snapshot(),
                         (e1, e2) -> e2,
                         LinkedHashMap::new));
     }
@@ -99,35 +199,26 @@ public class CleverestGameState {
         questionRenderedTime = LocalDateTime.now();
     }
 
-    public boolean prepareNextRoundAndCheckIsLast() {
+    public boolean prepareNextRoundAndCheckIsGameOver() {
         roundNumber++;
         questionNumber = 0;
         if (roundNumber == 2) {
             currRoundQuestionsSource = () -> secondQuestions;
+            revealPlan = RoundRevealPlan.of(currRoundQuestionsSource.get().size(), REVEALS_COUNT);
         }
         return roundNumber > 3;
     }
 
     public void prepareUsersToAnswerOrder() {
-        usersToAnswerOrder = Iterables.cycle(getSortedByScoreUsers().values()).iterator();
+        usersToAnswerOrder = Iterables.cycle(usersSortedByScore()).iterator();
     }
 
-    public boolean prepareNextQuestionAndCheckIsLast() {
+    public void increaseQuestionNumber() {
         questionNumber++;
-        return questionNumber == currRoundQuestionsSource.get().size();
     }
 
-    public void submitAnswer(String username,
-                             String answerAsText,
-                             Supplier<Boolean> isCorrect) {
-        UserGameState userGameState = users.get(username);
-        if (userGameState.isAnswerGiven()) {
-            return;
-        }
-        userGameState.submitLatestAnswer(answerAsText, questionRenderedTime);
-        if (isCorrect.get()) {
-            userGameState.increaseScore();
-        }
+    public boolean lastQuestionInRound() {
+        return questionNumber + 1 == currRoundQuestionsSource.get().size();
     }
 
     public boolean areAllUsersAnswered() {
@@ -135,14 +226,14 @@ public class CleverestGameState {
     }
 
     public void updateUserPositions() {
-        Map<String, UserGameState> sortedByScore = getSortedByScoreUsers();
+        final var sortedByScore = usersSortedByScore();
         AtomicInteger pos = new AtomicInteger(1);
         AtomicInteger prevScoreHolder = new AtomicInteger(0);
-        sortedByScore.forEach((username, userGameState) -> {
+        sortedByScore.forEach(userGameState -> {
             if (userGameState.totalScore() < prevScoreHolder.get()) {
                 pos.incrementAndGet();
             }
-            userGameState.setLastPosition(pos.get());
+            userGameState.updateLastPosition(pos.get());
             prevScoreHolder.set(userGameState.totalScore());
         });
     }
@@ -180,25 +271,11 @@ public class CleverestGameState {
 
         history.entrySet().stream()
                 .flatMap(e -> e.getValue().stream())
-                .filter(uState -> uState.getLastResponseTime() > 0)
+                .filter(uState -> uState.lastResponseTimeMs() > 0)
                 .collect(Collectors.groupingBy(Function.identity(),
-                        Collectors.averagingLong(UserGameState::getLastResponseTime)))
-                .forEach((userGameState, avgTime) -> {
-                    users.get(userGameState.getUsername()).setAvgResponseTime(avgTime);
+                        Collectors.averagingLong(UserStateSnapshot::lastResponseTimeMs)))
+                .forEach((snapshot, avgTime) -> {
+                    users.get(snapshot.username()).setAvgResponseTime(avgTime); // todo: remove setter
                 });
-    }
-
-    public int getQuestionsLeftToRevealScoreTable() {
-        final int CHUNK_SIZE = 3;
-        if (currRoundQuestionsSource.get().size() <= CHUNK_SIZE) {
-            return 0;
-        }
-        if (currRoundQuestionsSource.get().size() == questionNumber + 1) {
-            return 0;
-        }
-        int currChunk = currRoundQuestionsSource.get().size() / CHUNK_SIZE;
-        int questionsAndChunkDiff = (questionNumber / currChunk) + 1;
-        currChunk = currChunk * questionsAndChunkDiff;
-        return currChunk - (questionNumber + 1);
     }
 }

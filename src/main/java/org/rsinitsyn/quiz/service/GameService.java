@@ -1,34 +1,28 @@
 package org.rsinitsyn.quiz.service;
 
 import io.micrometer.observation.annotation.Observed;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.rsinitsyn.quiz.dao.GameDao;
 import org.rsinitsyn.quiz.dao.GameQuestionUserDao;
-import org.rsinitsyn.quiz.entity.GameEntity;
-import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
-import org.rsinitsyn.quiz.entity.GameQuestionUserId;
-import org.rsinitsyn.quiz.entity.GameStatus;
-import org.rsinitsyn.quiz.entity.GameType;
-import org.rsinitsyn.quiz.entity.UserEntity;
+import org.rsinitsyn.quiz.entity.*;
 import org.rsinitsyn.quiz.model.QuestionModel;
-import org.rsinitsyn.quiz.model.cleverest.UserGameState;
+import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import static org.rsinitsyn.quiz.entity.AnswerStatus.UNKNOWN;
 
 @Observed(name = "gameService")
 @Service
@@ -39,21 +33,47 @@ public class GameService {
     private final GameQuestionUserDao gameQuestionUserDao;
     private final QuestionService questionService;
     private final UserService userService;
+    private final EntityManager entityManager;
 
+    public boolean exist(String id) {
+        return gameDao.existsById(UUID.fromString(id));
+    }
+
+    @Transactional(readOnly = true)
     public GameEntity findById(String id) {
-        return gameDao.findByIdJoinQuestions(UUID.fromString(id))
+        return gameDao.findByIdJoinQuestions(UUID.fromString(id)).stream()
+                .peek(gq -> {
+                    gq.getGameQuestions().stream()
+                            .map(GameQuestionUserEntity::getQuestion)
+                            .forEach(q -> {
+                                Hibernate.initialize(q.getAnswers());
+                                Hibernate.initialize(q.getGrades());
+                                Hibernate.initialize(q.getHints());
+                            });
+                })
+                .findFirst()
                 .orElse(null);
     }
 
+    public List<GameEntity> findAllNewFirst() {
+        return gameDao.findAllJoinGamesQuestionsNewFirst();
+    }
+
+    public boolean exists(UUID id) {
+        return gameDao.existsById(id);
+    }
+
     @Transactional
-    public void submitAnswersBatch(String gameId, QuestionModel question, List<UserGameState> userStates) {
-        userStates.forEach(userGameState -> {
+    public void submitAnswersBatch(String gameId,
+                                   QuestionModel question,
+                                   List<UserStateSnapshot> userAnswers) {
+        userAnswers.forEach(answerSnapshot -> {
             submitAnswers(
                     gameId,
-                    userGameState.getUsername(),
+                    answerSnapshot.username(),
                     question,
-                    Collections.singletonList(userGameState.getLastAnswerText()),
-                    () -> userGameState.isAnswerGiven() ? userGameState.isLastWasCorrect() : null);
+                    Collections.singletonList(answerSnapshot.answerText()),
+                    answerSnapshot::answerStatus);
         });
     }
 
@@ -62,7 +82,7 @@ public class GameService {
                               String playerName,
                               QuestionModel questionModel,
                               List<String> answersList,
-                              Supplier<Boolean> correctAnswerProvider) {
+                              Supplier<AnswerStatus> answerStatusSupplier) {
         UserEntity user = userService.findByUsername(playerName);
         var primaryKey = new GameQuestionUserId(
                 UUID.fromString(gameId),
@@ -71,7 +91,7 @@ public class GameService {
         Optional<GameQuestionUserEntity> optEntity = gameQuestionUserDao.findById(primaryKey);
         if (optEntity.isPresent()) {
             GameQuestionUserEntity persistent = optEntity.get();
-            persistent.setAnswered(correctAnswerProvider.get());
+            persistent.setAnswerStatus(answerStatusSupplier.get());
             persistent.setAnswerText(String.join(",", answersList));
 
             gameQuestionUserDao.save(persistent);
@@ -81,23 +101,21 @@ public class GameService {
             newEntity.setQuestion(questionService.findByIdLazy(questionModel.getId()));
             newEntity.setUser(user);
             newEntity.setGame(findById(gameId));
-            newEntity.setAnswered(correctAnswerProvider.get());
+            newEntity.setAnswerStatus(answerStatusSupplier.get());
             newEntity.setAnswerText(String.join(",", answersList));
             newEntity.setOrderNumber(gameQuestionUserDao.getMaxOrderNumber(primaryKey.getGameId()) + 1);
-
             gameQuestionUserDao.save(newEntity);
         }
     }
 
-    public boolean createIfNotExists(String id, GameType gameType) {
-        Optional<GameEntity> gameEntityOptional = gameDao.findById(UUID.fromString(id));
-        if (gameEntityOptional.isPresent()) {
+    public boolean createIfNotExists(String id, String name, GameType gameType) {
+        if (gameDao.existsById(UUID.fromString(id))) {
             log.info("Game already exists, id: {}", id);
             return false;
         }
         GameEntity entity = new GameEntity();
         entity.setId(UUID.fromString(id));
-        entity.setName("Cleverest");
+        entity.setName(name);
         entity.setStatus(GameStatus.NOT_STARTED);
         entity.setType(gameType);
         entity.setCreatedBy(SessionWrapper.getLoggedUser());
@@ -108,18 +126,18 @@ public class GameService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public void update(String id, String name, GameStatus status) {
-        GameEntity gameEntity = gameDao.findById(UUID.fromString(id)).orElseThrow();
-        setNewFields(gameEntity, name, status);
-        log.info("Updating game, id: {}", id);
+    public void updateStatus(String id, GameStatus status) {
+        entityManager.createQuery("update GameEntity set status = :status where id = :id")
+                .setParameter("status", status)
+                .setParameter("id", UUID.fromString(id))
+                .executeUpdate();
+        log.info("Updated game, id: {}", id);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
     public void linkQuestionsWithGame(String id, QuizGameState stateModel) {
         GameEntity gameEntity = findById(id);
-        setNewFields(gameEntity, stateModel.getGameName(), GameStatus.STARTED);
         log.info("Updating game, id: {}", id);
-
         UserEntity user = userService.findByUsername(stateModel.getPlayerName());
         AtomicInteger questionOrder = new AtomicInteger(0);
         List<GameQuestionUserEntity> gameQuestionEntitiesToSave = stateModel.getQuestions().stream().map(questionModel -> {
@@ -128,7 +146,7 @@ public class GameService {
                     UUID.fromString(id),
                     questionModel.getId(),
                     user.getId()));
-            gameQuestionUserEntity.setAnswered(null);
+            gameQuestionUserEntity.setAnswerStatus(UNKNOWN);
             gameQuestionUserEntity.setOrderNumber(questionOrder.getAndIncrement());
             gameQuestionUserEntity.setGame(gameEntity);
             gameQuestionUserEntity.setUser(user);
@@ -138,12 +156,6 @@ public class GameService {
 
         List<GameQuestionUserEntity> savedGameQuestions = gameQuestionUserDao.saveAll(gameQuestionEntitiesToSave);
         log.info("Saved game questions, size: {}", savedGameQuestions.size());
-    }
-
-    private void setNewFields(GameEntity gameEntity, String name, GameStatus status) {
-        gameEntity.setName(name);
-        gameEntity.setCreatedBy(SessionWrapper.getLoggedUser());
-        gameEntity.setStatus(status);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
@@ -168,7 +180,7 @@ public class GameService {
                 gameQuestionUserEntity.setUser(user);
                 gameQuestionUserEntity.setQuestion(questionService.findByIdLazy(questionModel.getId()));
                 gameQuestionUserEntity.setOrderNumber(qCounter.getAndIncrement());
-                gameQuestionUserEntity.setAnswered(null);
+                gameQuestionUserEntity.setAnswerStatus(UNKNOWN);
 
                 entities.add(gameQuestionUserEntity);
             });
@@ -179,15 +191,35 @@ public class GameService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     public void finishGame(String id) {
-        gameDao.findById(UUID.fromString(id))
-                .ifPresent(gameEntity -> {
-                    gameEntity.setStatus(GameStatus.FINISHED);
-                    gameEntity.setFinishDate(LocalDateTime.now());
-                });
+        updateStatus(id, GameStatus.FINISHED);
     }
 
-    public List<GameEntity> findAllNewFirst() {
-        return gameDao.findAllJoinGamesQuestionsNewFirst();
+    @Transactional(readOnly = true)
+    public QuizGameState restoreQuizGameState(String gameId) {
+        var gameEntity = findById(gameId);
+        var gameQuestions = gameEntity.getGameQuestions();
+        var state = new QuizGameState();
+        state.setGameId(gameEntity.getId());
+        state.setGameName(gameEntity.getName());
+        state.setPlayerName(gameEntity.getPlayerNames().stream().findFirst().orElseThrow());
+        state.setAnswerOptionsEnabled(true);
+        state.setQuestions(gameQuestions.stream()
+                .sorted(Comparator.comparing(GameQuestionUserEntity::getOrderNumber, Comparator.naturalOrder()))
+                .map(GameQuestionUserEntity::getQuestion)
+                .map(questionService::toQuizQuestionModel)
+                .collect(Collectors.toCollection(LinkedHashSet::new)));
+        gameQuestions.stream()
+                .filter(e -> Boolean.TRUE.equals(e.getAnswered()))
+                .forEach(e -> {
+                    state.incrementCorrectAnswersCounter();
+                });
+        state.setStatus(gameEntity.getStatus());
+        var currentQuestionNumber = (int) (gameQuestions.size() - gameQuestions
+                .stream()
+                .filter(e -> e.getAnswered() == null)
+                .count());
+        state.setCurrentQuestionNumber(Math.max(0, currentQuestionNumber));
+        return state;
     }
 
     @Transactional

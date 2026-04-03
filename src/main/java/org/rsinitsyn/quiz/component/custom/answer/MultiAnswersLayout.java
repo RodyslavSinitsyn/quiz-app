@@ -1,0 +1,67 @@
+package org.rsinitsyn.quiz.component.custom.answer;
+
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.listbox.MultiSelectListBox;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
+import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
+import org.rsinitsyn.quiz.model.AnswerHint;
+import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
+import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.answer.AnswerResult;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.rsinitsyn.quiz.entity.AnswerStatus.answerStatus;
+
+public class MultiAnswersLayout extends AbstractAnswersLayout {
+
+    private final MultiSelectListBox<QuestionModel.AnswerModel> multiAnswerListBox = new MultiSelectListBox<>();
+
+    public MultiAnswersLayout(AnswerLayoutRequest question) {
+        super(question);
+    }
+
+    @Override
+    protected void renderAnswers() {
+        multiAnswerListBox.setItems(answers);
+        multiAnswerListBox.setRenderer(
+                new ComponentRenderer<Component, QuestionModel.AnswerModel>(
+                        am -> CleverestComponents.optionComponent(am.text(), 50, event -> {
+                        })));
+        multiAnswerListBox.addValueChangeListener(e ->
+                submitButton.setEnabled(!e.getValue().isEmpty()));
+        add(multiAnswerListBox);
+    }
+
+    @Override
+    protected AnswerGivenEvent createAnswerGivenEvent() {
+        var userAnswers = multiAnswerListBox.getSelectedItems();
+        var maxCount = (int) question.getAnswers().stream().filter(QuestionModel.AnswerModel::correct).count();
+        var correctCount = (int) userAnswers.stream().filter(QuestionModel.AnswerModel::correct).count();
+
+        return AnswerGivenEvent.builder()
+                .answers(userAnswers.stream()
+                        .map(QuestionModel.AnswerModel::text)
+                        .collect(Collectors.toSet()))
+                .result(new AnswerResult(answerStatus(correctCount, maxCount), maxCount, correctCount))
+                .build();
+    }
+
+    @Override
+    protected List<Component> getHintsComponents() {
+        Button revealCountHint = new Button("Количество ответов");
+        revealCountHint.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        revealCountHint.setEnabled(hintsState.hintsUsage().get(AnswerHint.CORRECT_COUNT));
+        revealCountHint.addClickListener(event -> {
+            revealCountHint.setText("Верных ответов: "
+                    + question.getAnswers().stream().filter(QuestionModel.AnswerModel::correct).count());
+            revealCountHint.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
+            fireEvent(new HintUsedEvent(AnswerHint.CORRECT_COUNT));
+        });
+        return Collections.singletonList(revealCountHint);
+    }
+}

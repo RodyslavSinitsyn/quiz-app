@@ -7,27 +7,33 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H4;
-import com.vaadin.flow.component.html.Label;
+import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.upload.SucceededEvent;
 import com.vaadin.flow.component.upload.Upload;
-import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
+import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
+import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import java.util.function.BiConsumer;
-import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 
-@UtilityClass
-public class QuizComponents {
+import java.util.function.BiConsumer;
 
-    public H1 mainHeader(String text) {
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.horizontalLayoutBetween;
+import static org.rsinitsyn.quiz.utils.QuizUtils.createStreamResourceForPhoto;
+
+public final class QuizComponents {
+
+    private QuizComponents() {
+        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
+
+    public static H1 mainHeader(String text) {
         var header = new H1(text);
         header.addClassNames(
                 LumoUtility.AlignSelf.CENTER,
@@ -35,13 +41,13 @@ public class QuizComponents {
         return header;
     }
 
-    public H4 subHeader(String text) {
+    public static H4 subHeader(String text) {
         return new H4(text);
     }
 
-    public ConfirmDialog openConfirmDialog(Component content,
-                                           String headerText,
-                                           Runnable confirmAction) {
+    public static ConfirmDialog openConfirmDialog(Component content,
+                                                  String headerText,
+                                                  Runnable confirmAction) {
         var dialog = new ConfirmDialog();
         dialog.setRejectable(false);
         dialog.setCloseOnEsc(true);
@@ -59,20 +65,20 @@ public class QuizComponents {
         return dialog;
     }
 
-    public Notification infoNotification(String text) {
+    public static Notification infoNotification(String text) {
         return Notification.show(text,
                 2_000,
-                Notification.Position.TOP_STRETCH);
+                Notification.Position.TOP_END);
     }
 
-    public <T extends Component> T appendTextBorder(T component) {
+    public static <T extends Component> T appendTextBorder(T component) {
         component.getStyle().set("text-shadow", StaticValuesHolder.getFontBorder());
 //        component.getStyle().set("-webkit-text-stroke-width", "1px");
 //        component.getStyle().set("-webkit-text-stroke-color", "black");
         return component;
     }
 
-    public Span questionLinkedWithGameIcon(QuestionEntity question) {
+    public static Span questionLinkedWithGameIcon(QuestionEntity question) {
         if (question.presentInAnyGame()) {
             Icon icon = VaadinIcon.LINK.create();
             icon.setTooltipText("Вопрос связан с игрой и не может быть удален");
@@ -81,47 +87,41 @@ public class QuizComponents {
         return new Span();
     }
 
-    public Span questionMechanicSpan(QuestionEntity question) {
+    public static Span questionMechanicSpan(QuestionEntity question) {
         return questionMechanicSpan(question.isOptionsOnly(), question.getType());
     }
 
-    public Span questionMechanicSpan(boolean optionsOnly, QuestionType questionType) {
+    public static Span questionMechanicSpan(boolean optionsOnly, QuestionType questionType) {
         Span result = new Span();
         if (optionsOnly) {
             result.getElement().getThemeList().add("badge contrast");
-        } else if (questionType.equals(QuestionType.TOP)) {
-            result.getElement().getThemeList().add("badge error");
         } else {
             result.getElement().getThemeList().add("badge");
         }
-        Icon typeIcon;
-        switch (questionType) {
-            case TOP -> typeIcon = VaadinIcon.LIST_OL.create();
-            case TEXT -> typeIcon = VaadinIcon.QUESTION.create();
-            case OR -> typeIcon = VaadinIcon.CORNER_UPPER_LEFT.create();
-            case MULTI -> typeIcon = VaadinIcon.LIST_UL.create();
-            case PHOTO -> typeIcon = VaadinIcon.PICTURE.create();
-            case LINK -> typeIcon = VaadinIcon.LINK.create();
-            default -> typeIcon = VaadinIcon.DOT_CIRCLE.create();
-        }
-        result.add(typeIcon);
+        result.add(questionType.icon.create());
         return result;
     }
 
-    public Upload uploadComponent(String uploadLabel, BiConsumer<MemoryBuffer, SucceededEvent> eventHandler, String allowedTypes) {
-        MemoryBuffer buffer = new MemoryBuffer();
+    public static Upload uploadComponent(String uploadLabel,
+                                         BiConsumer<MultiFileMemoryBuffer, SucceededEvent> eventHandler,
+                                         String allowedTypes,
+                                         int maxFiles) {
+        final var buffer = new MultiFileMemoryBuffer();
         Upload upload = new Upload(buffer);
         upload.setUploadButton(new Button(uploadLabel));
         upload.setDropAllowed(true);
-        upload.setDropLabel(new Label(""));
-        upload.setAcceptedFileTypes(allowedTypes);
+        upload.setMaxFiles(maxFiles);
+        upload.setMaxFileSize(1024 * 1024 * 50);
+        upload.setDropLabel(new NativeLabel("Выбрать файлы"));
+        if (allowedTypes != null) {
+            upload.setAcceptedFileTypes(allowedTypes);
+        }
         upload.addSucceededListener(event -> eventHandler.accept(buffer, event));
         return upload;
     }
 
-    public HorizontalLayout questionDescription(QuestionEntity question) {
-        HorizontalLayout row = new HorizontalLayout();
-        row.setAlignItems(FlexComponent.Alignment.CENTER);
+    public static HorizontalLayout questionDescription(QuestionEntity question) {
+        final var row = horizontalLayoutBetween();
         if (StringUtils.isNotEmpty(question.getAudioFilename())) {
             Icon playSound = VaadinIcon.PLAY_CIRCLE.create();
             playSound.addClickListener(event -> AudioUtils.playSoundAsync(question.getAudioFilename()));
@@ -130,26 +130,29 @@ public class QuizComponents {
         if (StringUtils.isNotEmpty(question.getPhotoFilename())) {
             row.add(smallAvatar(question.getPhotoFilename()));
         }
-        row.add(new Span(
-                question.getText().length() > 300
-                        ? question.getText().substring(0, 300).concat("...")
-                        : question.getText()));
+        row.add(new Span(question.getTextTruncated(300)));
         return row;
     }
 
-    public Avatar largeAvatar(String photoFilename) {
+    public static Avatar largeAvatar(String photoFilename) {
         return avatar(photoFilename, AvatarVariant.LUMO_XLARGE);
     }
 
-    public Avatar smallAvatar(String photoFilename) {
+    public static Avatar smallAvatar(String photoFilename) {
         return avatar(photoFilename);
     }
 
-    private Avatar avatar(String photoFilename, AvatarVariant... variant) {
+    public static Avatar avatar(String photoFilename, AvatarVariant... variant) {
         Avatar avatar = new Avatar();
         avatar.addThemeVariants(variant);
-        avatar.setImageResource(
-                QuizUtils.createStreamResourceForPhoto(photoFilename));
+        avatar.setImageResource(createStreamResourceForPhoto(photoFilename));
+        return avatar;
+    }
+
+    public static Avatar avatarByUrl(String photoUrl, AvatarVariant... variant) {
+        Avatar avatar = new Avatar();
+        avatar.addThemeVariants(variant);
+        avatar.setImage("/quiz-images/%s".formatted(photoUrl));
         return avatar;
     }
 }
