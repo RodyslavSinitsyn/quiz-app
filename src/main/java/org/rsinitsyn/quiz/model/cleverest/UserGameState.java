@@ -48,8 +48,8 @@ public class UserGameState implements Comparable<UserGameState> {
         return profile.username();
     }
 
-    public void updatePhoto(String photoUrl) {
-        this.profile = this.profile.withColorAndAvatar(photoUrl);
+    public void updateColorAndPhoto(String color, String photoUrl) {
+        this.profile = this.profile.withColorAndAvatar(color, photoUrl);
     }
 
     public void updateLastPosition(int position) {

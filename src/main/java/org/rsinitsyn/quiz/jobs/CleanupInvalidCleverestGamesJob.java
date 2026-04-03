@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @ConditionalOnProperty(value = "quiz.job.cleanupCleverestGames", havingValue = "true")
 @RequiredArgsConstructor
+@Deprecated
 public class CleanupInvalidCleverestGamesJob {
 
     private final GameService gameService;

@@ -71,7 +71,7 @@ public class CleverestGameState {
                                          String loserBet) {
         users.computeIfAbsent(username, key -> userGameState(username, color, photoFilename));
         return users.computeIfPresent(username, (key, userGameState) -> {
-            userGameState.updatePhoto(photoFilename);
+            userGameState.updateColorAndPhoto(color, photoFilename);
             userGameState.updateBet(defaultIfEmpty(winnerBet, ""), true, false);
             userGameState.updateBet(defaultIfEmpty(loserBet, ""), false, false);
             return userGameState;

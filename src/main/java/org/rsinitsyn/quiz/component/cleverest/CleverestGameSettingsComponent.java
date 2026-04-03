@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static org.rsinitsyn.quiz.utils.QuizComponents.infoNotification;
 import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
 
 public class CleverestGameSettingsComponent extends VerticalLayout {
@@ -241,6 +242,10 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
         submitButton.setText("Подтвердить вопросы");
         submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
         submitButton.addClickListener(event -> {
+            if (firstRoundGrid.getListDataView().getItemCount() == 0) {
+                infoNotification("Ты не выбрал вопросы на игру");
+                return;
+            }
             fireEvent(new SettingsCompletedEvent(this,
                     firstRoundGrid.getListDataView().getItems().toList(),
                     secondRoundGrid.getListDataView().getItems().toList(),

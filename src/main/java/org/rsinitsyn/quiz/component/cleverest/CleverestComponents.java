@@ -154,10 +154,6 @@ public final class CleverestComponents {
     public static Span correctAnswerSpan(QuestionModel questionModel, String... classes) {
         Span span = new Span();
         span.addClassNames(classes);
-        span.addClassNames(LumoUtility.TextAlignment.CENTER,
-                LumoUtility.Border.ALL,
-                LumoUtility.Background.PRIMARY_10,
-                LumoUtility.BorderColor.PRIMARY);
         span.setWidthFull();
         span.getStyle().set("white-space", "pre-line");
         if (questionModel.getType().equals(QuestionType.PHOTO)) {
@@ -324,7 +320,6 @@ public final class CleverestComponents {
     public static Image image(String filename, String height) {
         Image image = new Image();
         image.setSrc("/quiz-images/%s".formatted(filename));
-//        image.setSrc(createStreamResourceForPhoto(filename));
         image.addClassName("quiz-photo");
         if (height != null) {
             image.setMaxHeight(height);
