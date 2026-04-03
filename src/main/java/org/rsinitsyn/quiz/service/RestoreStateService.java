@@ -53,7 +53,7 @@ public class RestoreStateService {
         log.info("Game {} [{}] users count [{}]", gameEntity.getType(), gameId, users.size());
         users.forEach(userEntity ->
                 broadcaster.getState(gameId)
-                        .addOrUpdateUser(gameId, userEntity.getUsername(), BLACK_COLOR, null, "", ""));
+                        .addOrUpdateUser(gameId, userEntity.getUsername(), BLACK_COLOR, userEntity.getPhotoFilename(), "", ""));
         log.info("Game {} [{}] state restored", gameEntity.getType(), gameId);
     }
 }

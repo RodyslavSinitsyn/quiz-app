@@ -3,6 +3,7 @@ package org.rsinitsyn.quiz.component.cleverest;
 import com.flowingcode.vaadin.addons.carousel.Carousel;
 import com.flowingcode.vaadin.addons.carousel.Slide;
 import com.vaadin.flow.component.*;
+import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.avatar.AvatarVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -133,14 +134,18 @@ public final class CleverestComponents {
 
     public static HorizontalLayout userProfile(UserProfile profile, String... classes) {
         return horizontalLayoutCenter(
-                profile.photoUrl()
-                        .map(url -> (Component) avatarByUrl(url, AvatarVariant.LUMO_XLARGE))
-                        .orElseGet(VaadinIcon.USER::create),
+                userPhoto(profile),
                 appendTextBorder(new Span() {{
                     setText(profile.username());
                     getStyle().set("color", profile.color());
                     addClassNames(classes);
                 }}));
+    }
+
+    public static Component userPhoto(UserProfile profile) {
+        return profile.photoFilename()
+                .map(url -> (Component) avatarByUrl(url, AvatarVariant.LUMO_XLARGE))
+                .orElseGet(VaadinIcon.USER::create);
     }
 
     public static Span correctAnswerSpan(QuestionModel questionModel, String... classes) {
@@ -419,7 +424,6 @@ public final class CleverestComponents {
         contextMenu.add(layout);
         return soundButton;
     }
-
 
     public static Button messageBar(final Consumer<String> messageAction) {
         final var chatButton = new Button(Emoji.CHAT.value);

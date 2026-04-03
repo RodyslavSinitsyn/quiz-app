@@ -89,7 +89,7 @@ class CleverestBroadcasterTest implements QuizTestFixture {
         assertSoftly(softly -> {
             final var alice = broadcaster.getState(gameId).getUserState("Alice");
             softly.assertThat(alice).isNotNull();
-            softly.assertThat(alice.profile().photoUrl()).isEqualTo(of("photo-upd"));
+            softly.assertThat(alice.profile().photoFilename()).isEqualTo(of("photo-upd"));
             softly.assertThat(alice.getBets()).hasSize(2);
         });
 

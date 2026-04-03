@@ -120,12 +120,13 @@ public class CleverestWaitingPage extends VerticalLayout
 
         // waiting room events
         subscriptions.add(waitingRoom.addUserSubmitDataEventListener(event -> {
-            String photoFilename = getLoggedUserPhoto();
+            String photoFilename = userService.findByUsername(event.username()).getPhotoFilename();
             if (event.photoFilename() != null) {
                 // Update only if changes
                 final var user = userService.updatePhoto(event.username(), event.photoFilename(), event.photoData());
                 photoFilename = user.getPhotoFilename();
             }
+            waitingRoom.clearPhotoRef();
             broadcaster.sendJoinUserEvent(
                     gameId, event.username(), event.color(), photoFilename, event.userWinner(), event.userLoser());
         }));

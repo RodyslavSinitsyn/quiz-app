@@ -37,9 +37,9 @@ public class UserGameState implements Comparable<UserGameState> {
 
     public static UserGameState userGameState(String username,
                                               String color,
-                                              String photoUrl) {
+                                              String photoFilename) {
         final var userGameState = new UserGameState();
-        userGameState.profile = new UserProfile(username, color, Optional.ofNullable(photoUrl));
+        userGameState.profile = new UserProfile(username, color, Optional.ofNullable(photoFilename));
         userGameState.lastAnswerStatus = UNKNOWN;
         return userGameState;
     }

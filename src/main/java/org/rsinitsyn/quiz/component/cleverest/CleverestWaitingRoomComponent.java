@@ -195,6 +195,10 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
                 : "Играть");
     }
 
+    public void clearPhotoRef() {
+        photoHolder.set(null);
+    }
+
     public void updateTableAndBets(final List<UserProfile> users) {
         usersGrid.setItems(users);
         usersGrid.getDataProvider().refreshAll();

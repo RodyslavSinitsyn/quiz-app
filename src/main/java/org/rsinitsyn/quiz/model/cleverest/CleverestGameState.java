@@ -66,12 +66,12 @@ public class CleverestGameState {
     public UserGameState addOrUpdateUser(String gameId,
                                          String username,
                                          String color,
-                                         String photoUrl,
+                                         String photoFilename,
                                          String winnerBet,
                                          String loserBet) {
-        users.computeIfAbsent(username, key -> userGameState(username, color, photoUrl));
+        users.computeIfAbsent(username, key -> userGameState(username, color, photoFilename));
         return users.computeIfPresent(username, (key, userGameState) -> {
-            userGameState.updatePhoto(photoUrl);
+            userGameState.updatePhoto(photoFilename);
             userGameState.updateBet(defaultIfEmpty(winnerBet, ""), true, false);
             userGameState.updateBet(defaultIfEmpty(loserBet, ""), false, false);
             return userGameState;
@@ -126,7 +126,7 @@ public class CleverestGameState {
         userMessages.add(new UserMessage(username,
                 text,
                 Instant.now(),
-                ofNullable(getUserState(username)).flatMap(u -> u.profile().photoUrl())));
+                ofNullable(getUserState(username)).flatMap(u -> u.profile().photoFilename())));
     }
 
     public List<UserMessage> userMessagesDesc() {

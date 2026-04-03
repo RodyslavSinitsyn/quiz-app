@@ -1,6 +1,7 @@
 package org.rsinitsyn.quiz.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.dao.UserDao;
@@ -22,6 +23,7 @@ import static org.rsinitsyn.quiz.utils.QuizUtils.generateFilenameWithExt;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
 
     private final UserDao userDao;
@@ -49,8 +51,9 @@ public class UserService {
                     final var filepath = properties.getFilesFolder()
                             + generateFilenameWithExt(FilenameUtils.getExtension(filename));
                     resourceService.saveImageFromInputStream(filepath, photoStream);
+                    log.info("Updating user [{}] from [{}] to [{}]", user.getUsername(), user.getPhotoFilename(), filepath);
                     user.setPhotoFilename(filepath);
-                    return user;
+                    return userDao.save(user);
                 })
                 .orElseThrow();
     }
