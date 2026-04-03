@@ -142,12 +142,12 @@ class CleverestBroadcasterTest implements QuizTestFixture {
         assertSoftly(softly -> {
             final var questions = state.getCurrRoundQuestionsSource().get();
             assertThat(state.getRoundNumber()).isEqualTo(1);
-            assertThat(state.getQuestionNumber()).isEqualTo(1);
+            assertThat(state.getQuestionNumber()).isEqualTo(0);
             assertThat(questions).hasSize(1);
         });
         // and
         then(eventBus).should().fireEvent(new UserAnsweredEvent(gameId, "Alice", "0.0 сек.", 1));
-        then(eventBus).should().fireEvent(new AllUsersAnsweredEvent(gameId, q, true, false, 1, 0));
+        then(eventBus).should().fireEvent(new AllUsersAnsweredEvent(gameId, q, true, 1, 0));
     }
 
     @Test
@@ -194,17 +194,17 @@ class CleverestBroadcasterTest implements QuizTestFixture {
         createEmptyState();
 
         // when
-        broadcaster.sendNewRoundEvent(gameId);
+        broadcaster.sendNextRoundEvent(gameId);
 
         // then
         baseAssertions();
         then(eventBus).should().fireEvent(new RoundInfoEvent(gameId,
-                1,
-                "Раунд 1"));
+                2,
+                "Раунд 2"));
     }
 
     @Test
-    void sends_get_question_event() {
+    void sends_current_question_event() {
         // given
         final var q1 = aQuestionModel()
                 .text("q1 text1")
@@ -212,11 +212,46 @@ class CleverestBroadcasterTest implements QuizTestFixture {
         createStateWithQuestions(List.of(q1));
 
         // when
-        broadcaster.sendGetQuestionEvent(gameId);
+        broadcaster.sendCurrentQuestionEvent(gameId);
 
         // then
         baseAssertions();
         then(eventBus).should().fireEvent(new GetQuestionEvent(gameId, q1, 1, 1, 1));
+    }
+
+
+    @Test
+    void sends_round_info_event_when_round_has_no_questions() {
+        // given
+        createEmptyState();
+
+        // when
+        broadcaster.sendCurrentQuestionEvent(gameId);
+
+        // then
+        baseAssertions();
+
+        then(eventBus).should(never()).fireEvent(any(GetQuestionEvent.class));
+        then(eventBus).should().fireEvent(new RoundInfoEvent(gameId, 2, "Раунд 2"));
+    }
+
+    @Test
+    void sends_next_question_event() {
+        // given
+        final var q1 = aQuestionModel()
+                .text("q1 text1")
+                .build();
+        final var q2 = aQuestionModel()
+                .text("q2 text2")
+                .build();
+        createStateWithQuestions(List.of(q1, q2));
+
+        // when
+        broadcaster.sendNextQuestionEvent(gameId);
+
+        // then
+        baseAssertions();
+        then(eventBus).should().fireEvent(new GetQuestionEvent(gameId, q2, 2, 2, 1));
     }
 
     @Test

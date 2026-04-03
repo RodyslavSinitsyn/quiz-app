@@ -134,37 +134,34 @@ public class CleverestBroadcaster {
         sendEventIfAllAnswered(gameId, questionModel);
     }
 
-    public void sendNewRoundEvent(String gameId) {
-        int currRound = getState(gameId).getRoundNumber();
-        eventBuses.get(gameId).fireEvent(new RoundInfoEvent(gameId,
-                currRound,
-                getState(gameId).getRoundRules().get(currRound)));
+    public void sendNextRoundEvent(String gameId) {
+        final var state = getState(gameId);
+        final var gameOver = state.prepareNextRoundAndCheckIsGameOver();
+        if (gameOver) {
+            sendFinishGameEvent(gameId);
+            return;
+        }
+        final var roundNumber = state.getRoundNumber();
+        log.info("Send next round {}", roundNumber);
+        eventBuses.get(gameId).fireEvent(new RoundInfoEvent(gameId, roundNumber, state.getRoundRules().get(roundNumber)));
     }
 
     private void sendEventIfAllAnswered(String gameId, QuestionModel currQuestion) {
         if (getState(gameId).areAllUsersAnswered()
                 && getState(gameId).getRoundNumber() != 3) {
-            CleverestGameState gameState = getState(gameId);
-            int leftToRevealScore = gameState.getQuestionsLeftToRevealScoreTable();
-            boolean noMoreQuestionsInRound = gameState.prepareNextQuestionAndCheckIsLast();
-            boolean roundsOver = false;
-            int currRound = gameState.getRoundNumber();
-            if (noMoreQuestionsInRound) {
-                roundsOver = gameState.prepareNextRoundAndCheckIsLast();
-            }
-            log.info("All users answered. CurrQuestionNumber: {}. NextQuestionNumber: {}. TotalQuestons: {}, CurrRound: {}. RoundIsOver: {}. GameOver: {}",
-                    gameState.getQuestionNumber() - 1,
-                    gameState.getQuestionNumber(),
-                    gameState.getCurrRoundQuestionsSource().get().size(),
-                    currRound,
-                    noMoreQuestionsInRound,
-                    roundsOver);
+            final var state = getState(gameId);
+            boolean roundOver = state.lastQuestionInRound();
+            log.info("All users answered. CurrQuestionNumber: {}. NextQuestionNumber: {}. TotalQuestons: {}, CurrRound: {}. RoundIsOver: {}.",
+                    state.getQuestionNumber() - 1,
+                    state.getQuestionNumber(),
+                    state.getCurrRoundQuestionsSource().get().size(),
+                    state.getRoundNumber(),
+                    roundOver);
             eventBuses.get(gameId).fireEvent(new AllUsersAnsweredEvent(gameId,
                     currQuestion,
-                    noMoreQuestionsInRound,
-                    roundsOver,
-                    currRound,
-                    leftToRevealScore));
+                    roundOver,
+                    state.getRoundNumber(),
+                    state.getCountToRevealScoreTable()));
         }
     }
 
@@ -177,35 +174,37 @@ public class CleverestBroadcaster {
     }
 
     // GetQuestionEvent
-    public void sendGetQuestionEvent(String gameId) {
-        CleverestGameState gameState = getState(gameId);
-        QuestionModel question = gameState.getCurrentQuestion();
+    public void sendCurrentQuestionEvent(String gameId) {
+        final var state = getState(gameId);
+        final var question = state.getCurrentQuestion();
 
-        // In case smth went wrong
         if (question == null) {
-            log.debug("Get question returns null, the cause could be refreshes. Try to finish game or render next round");
-            if (gameState.prepareNextRoundAndCheckIsLast()) {
-                eventBuses.get(gameId).fireEvent(
-                        new GameFinishedEvent(gameId)
-                );
-            } else {
-                eventBuses.get(gameId).fireEvent(
-                        new RoundInfoEvent(
-                                gameId,
-                                gameState.getRoundNumber(),
-                                gameState.getRoundRules().get(gameState.getRoundNumber())
-                        ));
-            }
+            log.debug("Get question returns null, perhaps round just empty, render next");
+            sendNextRoundEvent(gameId);
             return;
         }
 
-        log.info("Sending question for render: {}", question.getText() + " - " + question.getCategoryName());
+        log.info("Sending current question for render: #{} {}", state.getQuestionNumber(), question.getText());
         eventBuses.get(gameId).fireEvent(new GetQuestionEvent(
                 gameId,
                 question,
-                gameState.getQuestionNumber() + 1,
-                gameState.getCurrRoundQuestionsSource().get().size(),
-                gameState.getRoundNumber()));
+                state.getQuestionNumber() + 1,
+                state.getCurrRoundQuestionsSource().get().size(),
+                state.getRoundNumber()));
+    }
+
+    public void sendNextQuestionEvent(String gameId) {
+        final var state = getState(gameId);
+        state.increaseQuestionNumber();
+        final var question = state.getCurrentQuestion();
+        log.info("Sending next question for render: #{} {}", state.getQuestionNumber(), question.getText());
+        eventBuses.get(gameId).fireEvent(new GetQuestionEvent(
+                gameId,
+                question,
+                state.getQuestionNumber() + 1,
+                state.getCurrRoundQuestionsSource().get().size(),
+                state.getRoundNumber()
+        ));
     }
 
     // UpdatePersonalScoreEvent
@@ -388,20 +387,17 @@ public class CleverestBroadcaster {
     public static class AllUsersAnsweredEvent extends CleverestGameEvent {
         private final QuestionModel question;
         private final boolean roundOver;
-        private final boolean roundsOver;
         private final int currentRound;
         private final int revealScoreAfter;
 
         public AllUsersAnsweredEvent(String gameId,
                                      QuestionModel question,
                                      boolean roundOver,
-                                     boolean roundsOver,
                                      int currentRound,
                                      int revealScoreAfter) {
             super(gameId);
             this.question = question;
             this.roundOver = roundOver;
-            this.roundsOver = roundsOver;
             this.currentRound = currentRound;
             this.revealScoreAfter = revealScoreAfter;
         }

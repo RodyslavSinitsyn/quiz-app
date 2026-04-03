@@ -9,6 +9,7 @@ import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.cleverest.CleverestResultComponent;
+import org.rsinitsyn.quiz.page.MainPage;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
@@ -50,6 +51,10 @@ public class CleverestResultsPage extends VerticalLayout
         if (result.navigationRequired()) {
             result.navigateAction().ifPresent(a -> a.accept(event));
             runActionInUi(event.getUI(), () -> result.notificationMessage().ifPresent(QuizComponents::infoNotification));
+            return;
+        }
+        if (!broadcaster.stateExists(gameId)) {
+            event.forwardTo(MainPage.class);
             return;
         }
         final var gameEntity = result.game();

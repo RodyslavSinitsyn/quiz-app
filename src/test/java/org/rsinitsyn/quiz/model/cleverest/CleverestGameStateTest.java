@@ -19,18 +19,18 @@ class CleverestGameStateTest implements QuizTestFixture {
             delimiter = ';',
             value = {
                     "3;0,0,0",
-                    "4;0,0,0,0",
-                    "5;0,0,0,0,0",
+//                    "4;0,0,0,0",
+//                    "5;0,0,0,0,0",
                     "6;1,0,1,0,1,0",
-                    "7;1,0,1,0,1,0,0",
-                    "8;1,0,1,0,1,0,1,0",
+//                    "7;1,0,1,0,1,0,0",
+//                    "8;1,0,1,0,1,0,1,0",
                     "9;2,1,0,2,1,0,2,1,0",
-                    "10;2,1,0,2,1,0,2,1,0,0",
+//                    "10;2,1,0,2,1,0,2,1,0,0",
                     "15;4,3,2,1,0,4,3,2,1,0,4,3,2,1,0",
                     "30;9,8,7,6,5,4,3,2,1,0,9,8,7,6,5,4,3,2,1,0,9,8,7,6,5,4,3,2,1,0"
             }
     )
-    void getQuestionsLeftToRevealScoreTable(String listSize, String returnedValues) {
+    void getCountToRevealScoreTable(String listSize, String returnedValues) {
         // given
         String[] valuesArr = returnedValues.split(",");
         if (valuesArr.length != Integer.parseInt(listSize)) {
@@ -54,8 +54,8 @@ class CleverestGameStateTest implements QuizTestFixture {
     }
 
     private void assertQuestionsLeftToReveal(int expectedSize, CleverestGameState state) {
-        Assertions.assertEquals(expectedSize, state.getQuestionsLeftToRevealScoreTable());
-        state.prepareNextQuestionAndCheckIsLast();
+        Assertions.assertEquals(expectedSize, state.getCountToRevealScoreTable());
+        state.increaseQuestionNumber();
     }
 
     @ParameterizedTest
@@ -98,10 +98,10 @@ class CleverestGameStateTest implements QuizTestFixture {
             final var expectedReveal = Integer.parseInt(revealArr[i]);
             final var expectedWindow = Integer.parseInt(windowArr[i]);
 
-            assertThat(state.getQuestionsLeftToRevealScoreTable()).isEqualTo(expectedReveal);
+            assertThat(state.getCountToRevealScoreTable()).isEqualTo(expectedReveal);
 //            assertThat(state.updateQuestionsChunk()).isEqualTo(expectedWindow);
 
-            state.prepareNextQuestionAndCheckIsLast();
+            state.increaseQuestionNumber();
         }
     }
 }

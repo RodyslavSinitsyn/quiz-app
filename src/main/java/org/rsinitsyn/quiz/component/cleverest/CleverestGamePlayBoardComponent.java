@@ -81,7 +81,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             if (refreshEvent) {
                 renderCurrentQuestion();
             } else {
-                showRoundRules(currRound, broadcaster.getState(gameId).getRoundRules().get(currRound));
+                showRoundRules(broadcaster.getState(gameId).getRoundRules().get(currRound));
             }
         } else {
             renderUserProfile();
@@ -182,7 +182,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 })));
 
         subscriptions.add(broadcaster.subscribe(gameId, RoundInfoEvent.class, event ->
-                runActionInUi(ui, () -> showRoundRules(event.getRoundNumber(), event.getRules()))));
+                runActionInUi(ui, () -> showRoundRules(event.getRules()))));
 
         subscriptions.add(broadcaster.subscribe(gameId, GameFinishedEvent.class, event ->
                 runActionInUi(ui, this::renderResults)));
@@ -214,12 +214,17 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                 showCorrectAnswer(
                                         event.getQuestion(),
                                         broadcaster.getState(gameId).userSnapshotsSortedByResponseTime().values(),
-                                        event.isRoundOver(),
                                         event.getRevealScoreAfter(),
                                         manualApprove(event.getQuestion()),
                                         () -> {
                                         },
-                                        () -> broadcaster.sendGetQuestionEvent(gameId))))
+                                        () -> {
+                                            if (event.isRoundOver()) {
+                                                broadcaster.sendNextRoundEvent(gameId);
+                                            } else {
+                                                broadcaster.sendNextQuestionEvent(gameId);
+                                            }
+                                        })))
 //                )
         );
         subscriptions.add(broadcaster.subscribe(gameId, QuestionGradedEvent.class, event ->
@@ -310,11 +315,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 .findAny();
     }
 
-    private void showRoundRules(int roundNumber, String rulesText) {
-        Div rulesComponent = new Div();
-        rulesComponent.setText(rulesText);
-        rulesComponent.addClassNames(MOBILE_LARGE_FONT, LumoUtility.TextAlignment.CENTER);
-        openDialog(rulesComponent, "", gameHost ? this::renderCurrentQuestion : () -> {
+    private void showRoundRules(String rulesText) {
+        openDialog(horizontalLayoutCenter(new Span(rulesText)), "", gameHost ? this::renderCurrentQuestion : () -> {
         });
     }
 
@@ -325,7 +327,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         if (broadcaster.getState(gameId).getRoundNumber() == 3) {
             broadcaster.sendRenderCategoriesEvent(gameId, null, true);
         } else {
-            broadcaster.sendGetQuestionEvent(gameId);
+            broadcaster.sendCurrentQuestionEvent(gameId);
         }
     }
 
@@ -432,7 +434,6 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 question.setAlreadyAnswered(true);
                 // 3rd round
                 showCorrectAnswer(question, List.of(userToAnswer.snapshot()),
-                        false,
                         0,
                         Optional.of(new ManualApprove(1, question.getPoints(), uName -> {
                             userToAnswer.increaseScoreAndMarkCorrect(question.getPoints());
@@ -483,27 +484,20 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         topContainer.add(new Hr());
     }
 
-    private void showUsersPositionsTable(boolean roundOver, int revealScoreAfter, Runnable onCloseAction) {
+    private void showUsersPositionsTable(int revealScoreAfter, Runnable onCloseAction) {
         var usersScoreLayout = revealScoreAfter == 0
                 ? usersScoreTableLayout(broadcaster.getState(gameId).usersSortedByScore().stream()
                         .map(UserGameState::snapshot)
                         .toList(),
                 broadcaster.getState(gameId).getLastAnswers())
                 : new VerticalLayout(userInfoLightSpan(
-                "Вопросов до таблицы результатов: " + revealScoreAfter, LumoUtility.FontSize.XXXLARGE));
+                "Вопросов до таблицы результатов: %d".formatted(revealScoreAfter), MOBILE_MEDIUM_FONT));
 
-        openDialog(usersScoreLayout, "Таблица результатов", () -> {
-            if (roundOver) {
-                broadcaster.sendNewRoundEvent(gameId);
-                return;
-            }
-            onCloseAction.run();
-        });
+        openDialog(usersScoreLayout, "Таблица результатов", onCloseAction);
     }
 
     private void showCorrectAnswer(QuestionModel question,
                                    Collection<UserStateSnapshot> users,
-                                   boolean roundOver,
                                    int revealScoreAfter,
                                    Optional<ManualApprove> manualApprove,
                                    Runnable onCloseAction,
@@ -520,7 +514,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             onCloseAction.run();
             broadcaster.sendUpdatePersonalScoreEvent(gameId);
             broadcaster.sendSaveUsersAnswersEvent(gameId, question);
-            showUsersPositionsTable(roundOver, revealScoreAfter, usersScoreCloseAction);
+            showUsersPositionsTable(revealScoreAfter, usersScoreCloseAction);
         });
     }
 

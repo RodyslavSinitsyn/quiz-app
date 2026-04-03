@@ -45,7 +45,7 @@ public class CleverestGameState {
     private int roundNumber = 1;
     private int questionNumber = 0;
     private Supplier<List<QuestionModel>> currRoundQuestionsSource;
-    private Map<Integer, Integer> roundsChunksMap = new HashMap<>();
+    private RoundRevealPlan revealPlan;
 
     public CleverestGameState(
             String gameHostName,
@@ -57,20 +57,14 @@ public class CleverestGameState {
         this.secondQuestions = secondRound;
         this.thirdQuestions = thirdRound;
         currRoundQuestionsSource = () -> firstQuestions;
+        revealPlan = RoundRevealPlan.of(currRoundQuestionsSource.get().size(), REVEALS_COUNT);
         initRoundRules();
-        initRoundsChunksMap();
     }
 
     private void initRoundRules() {
         roundRules.put(1, "Раунд 1");
         roundRules.put(2, "Раунд 2");
         roundRules.put(3, "Раунд 3");
-    }
-
-    private void initRoundsChunksMap() {
-        roundsChunksMap.put(1, getRoundChunksSize(firstQuestions.size()));
-        roundsChunksMap.put(2, getRoundChunksSize(secondQuestions.size()));
-        roundsChunksMap.put(3, getRoundChunksSize(thirdQuestions.size()));
     }
 
     public UserGameState addOrUpdateUser(String gameId,
@@ -157,10 +151,10 @@ public class CleverestGameState {
     }
 
     public Map<String, List<AnswerStatus>> getLastAnswers() {
-        final var skipSize = Math.max(0, history.size() - roundsChunksMap.get(roundNumber));
+        final var lastN = revealPlan.getLastN(questionNumber);
 
         return history.entrySet().stream()
-                .skip(skipSize)
+                .skip(Math.max(0, history.size() - lastN))
                 .flatMap(entry -> entry.getValue().stream())
                 .collect(Collectors.groupingBy(
                         UserStateSnapshot::username,
@@ -169,6 +163,10 @@ public class CleverestGameState {
                                 UserStateSnapshot::answerStatus,
                                 Collectors.toList())
                 ));
+    }
+
+    public int getCountToRevealScoreTable() {
+        return revealPlan.questionsUntilNextReveal(questionNumber);
     }
 
     // TODO: Reduce to Snapshot not full sate
@@ -201,11 +199,12 @@ public class CleverestGameState {
         questionRenderedTime = LocalDateTime.now();
     }
 
-    public boolean prepareNextRoundAndCheckIsLast() {
+    public boolean prepareNextRoundAndCheckIsGameOver() {
         roundNumber++;
         questionNumber = 0;
         if (roundNumber == 2) {
             currRoundQuestionsSource = () -> secondQuestions;
+            revealPlan = RoundRevealPlan.of(currRoundQuestionsSource.get().size(), REVEALS_COUNT);
         }
         return roundNumber > 3;
     }
@@ -214,9 +213,12 @@ public class CleverestGameState {
         usersToAnswerOrder = Iterables.cycle(usersSortedByScore()).iterator();
     }
 
-    public boolean prepareNextQuestionAndCheckIsLast() {
+    public void increaseQuestionNumber() {
         questionNumber++;
-        return questionNumber == currRoundQuestionsSource.get().size();
+    }
+
+    public boolean lastQuestionInRound() {
+        return questionNumber + 1 == currRoundQuestionsSource.get().size();
     }
 
     public boolean areAllUsersAnswered() {
@@ -275,25 +277,5 @@ public class CleverestGameState {
                 .forEach((snapshot, avgTime) -> {
                     users.get(snapshot.username()).setAvgResponseTime(avgTime); // todo: remove setter
                 });
-    }
-
-    public int getRoundChunksSize(int listSize) {
-        if (listSize <= REVEALS_COUNT) {
-            return 0;
-        }
-        return listSize / REVEALS_COUNT;
-    }
-
-    public int getQuestionsLeftToRevealScoreTable() {
-        if (currRoundQuestionsSource.get().size() <= REVEALS_COUNT) {
-            return 0;
-        }
-        if (currRoundQuestionsSource.get().size() == questionNumber + 1) {
-            return 0;
-        }
-        int currChunk = currRoundQuestionsSource.get().size() / REVEALS_COUNT;
-        int questionsAndChunkDiff = (questionNumber / currChunk) + 1;
-        currChunk = currChunk * questionsAndChunkDiff;
-        return currChunk - (questionNumber + 1);
     }
 }
