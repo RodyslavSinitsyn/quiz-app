@@ -9,12 +9,14 @@ import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.cleverest.CleverestWaitingRoomComponent;
+import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.AllUsersReadyEvent;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.UserJoinedEvent;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.UserSentMessageEvent;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
+import org.rsinitsyn.quiz.service.UserService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 
 import java.util.ArrayList;
@@ -25,6 +27,7 @@ import static org.rsinitsyn.quiz.entity.GameStatus.NOT_STARTED;
 import static org.rsinitsyn.quiz.entity.GameStatus.STARTED;
 import static org.rsinitsyn.quiz.utils.QuizUtils.*;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
+import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUserPhoto;
 
 @Route(value = "cleverest/waiting", layout = MainLayout.class)
 @PageTitle("Cleverest - Ожидание")
@@ -33,6 +36,7 @@ import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 public class CleverestWaitingPage extends VerticalLayout
         implements HasUrlParameter<String>, BeforeEnterObserver, AfterNavigationObserver {
 
+    private final UserService userService;
     private final QuestionService questionService;
     private final GameService gameService;
     private final CleverestBroadcaster broadcaster;
@@ -44,10 +48,12 @@ public class CleverestWaitingPage extends VerticalLayout
 
     private CleverestWaitingRoomComponent waitingRoom;
 
-    public CleverestWaitingPage(final QuestionService questionService,
+    public CleverestWaitingPage(final UserService userService,
+                                final QuestionService questionService,
                                 final GameService gameService,
                                 final CleverestBroadcaster broadcaster,
                                 final PageValidator pageValidator) {
+        this.userService = userService;
         this.questionService = questionService;
         this.gameService = gameService;
         this.broadcaster = broadcaster;
@@ -113,9 +119,16 @@ public class CleverestWaitingPage extends VerticalLayout
                 runActionInUi(ui, () -> waitingRoom.updateMessageList(event.getMessages()))));
 
         // waiting room events
-        subscriptions.add(waitingRoom.addUserSubmitDataEventListener(event -> broadcaster.sendJoinUserEvent(
-                gameId, event.username(), event.color(), event.photo(), event.userWinner(), event.userLoser()
-        )));
+        subscriptions.add(waitingRoom.addUserSubmitDataEventListener(event -> {
+            String photoFilename = getLoggedUserPhoto();
+            if (event.photoFilename() != null) {
+                // Update only if changes
+                final var user = userService.updatePhoto(event.username(), event.photoFilename(), event.photoData());
+                photoFilename = user.getPhotoFilename();
+            }
+            broadcaster.sendJoinUserEvent(
+                    gameId, event.username(), event.color(), photoFilename, event.userWinner(), event.userLoser());
+        }));
         subscriptions.add(waitingRoom.addStartGameEventListener(event ->
                 broadcaster.sendUsersReadyEvent(gameId)));
         subscriptions.add(waitingRoom.addUserTextedMessageEventListener(event ->

@@ -446,3 +446,23 @@ databaseChangeLog:
         - dropColumn:
             tableName: games_questions
             columnName: answer_result
+  - changeSet:
+      id: 2-users_tbl-add-photo-filename
+      author: rsinitsyn
+      comment: Add photo_filename column to users_tbl
+      labels: users
+      runAlways: false
+      runOnChange: false
+      changes:
+        - addColumn:
+            tableName: users_tbl
+            columns:
+              - column:
+                  name: photo_filename
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+      rollback:
+        - dropColumn:
+            tableName: users_tbl
+            columnName: photo_filename

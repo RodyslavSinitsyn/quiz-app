@@ -154,7 +154,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                         runHostAction();
                     } else {
                         notification("%s ответил!".formatted(event.username()),
-                                NotificationVariant.LUMO_PRIMARY,
+                                NotificationVariant.LUMO_CONTRAST,
                                 Notification.Position.TOP_START);
                     }
                 })));
@@ -195,9 +195,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 runActionInUi(ui, this::renderResults)));
 
         subscriptions.add(broadcaster.subscribe(gameId, UserSentMessageEvent.class, event ->
-                runActionInUi(ui, () -> notification(event.getMessage(),
-                        NotificationVariant.LUMO_CONTRAST,
-                        Notification.Position.TOP_END))));
+                runActionInUi(ui, () -> chatNotification(event.getUserProfile().orElseThrow(), event.getMessage()))));
     }
 
     private void subscribeOnPlayerOnlyEvents(UI ui) {

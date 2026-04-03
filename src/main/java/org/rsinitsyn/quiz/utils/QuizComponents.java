@@ -149,10 +149,10 @@ public final class QuizComponents {
         return avatar;
     }
 
-    public static Avatar avatar(StreamResource streamResource, AvatarVariant... variant) {
+    public static Avatar avatarByUrl(String photoUrl, AvatarVariant... variant) {
         Avatar avatar = new Avatar();
         avatar.addThemeVariants(variant);
-        avatar.setImageResource(streamResource);
+        avatar.setImage("/quiz-images/%s".formatted(photoUrl));
         return avatar;
     }
 }

@@ -43,6 +43,7 @@ public class UserEntity implements UserDetails {
     private String firstName;
     private String lastName;
     private String password; // TODO: Set required after DB migration
+    private String photoFilename;
     private LocalDateTime registrationDate;
     private LocalDateTime lastVisitDate;
 

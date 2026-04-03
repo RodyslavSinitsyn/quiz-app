@@ -21,7 +21,6 @@ import com.vaadin.flow.theme.lumo.Lumo;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.page.*;
-import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.rsinitsyn.quiz.utils.ThemeUtils;
 import org.springframework.core.env.Environment;
@@ -93,7 +92,7 @@ public class MainLayout extends AppLayout implements
         themeToggle.addClickListener(event -> {
             darkTheme = !darkTheme;
             ThemeUtils.setThemeMode(darkTheme ? Lumo.DARK : Lumo.LIGHT);
-            event.getSource().getUI().ifPresent(ThemeUtils::restoreTheme);
+            event.getSource().getUI().ifPresent(ThemeUtils::updateTheme);
         });
     }
 
@@ -201,7 +200,7 @@ public class MainLayout extends AppLayout implements
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
-        ThemeUtils.restoreTheme(event.getLocationChangeEvent().getUI());
+        ThemeUtils.updateTheme(event.getLocationChangeEvent().getUI());
     }
 
     @Override

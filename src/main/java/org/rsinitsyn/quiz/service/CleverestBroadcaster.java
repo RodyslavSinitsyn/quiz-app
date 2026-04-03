@@ -19,15 +19,12 @@ import org.rsinitsyn.quiz.model.cleverest.*;
 import org.rsinitsyn.quiz.model.sound.GameSound;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static java.util.Optional.ofNullable;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
 @Component
@@ -80,19 +77,12 @@ public class CleverestBroadcaster {
     // UserJoinedEvent
     public void sendJoinUserEvent(String gameId,
                                   String username,
-                                  String userColor,
-                                  InputStream photo,
+                                  String color,
+                                  String photoUrl,
                                   String winnerBet,
                                   String loserBet) {
         CleverestGameState gameState = getState(gameId);
-        final var userState = gameState.addOrUpdateUser(gameId, username, userColor,
-                ofNullable(photo).map(s -> {
-                    try {
-                        return s.readAllBytes();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                }).orElse(null), winnerBet, loserBet);
+        final var userState = gameState.addOrUpdateUser(gameId, username, color, photoUrl, winnerBet, loserBet);
         eventBuses.get(gameId).fireEvent(new UserJoinedEvent(gameId, userState.profile(), gameState.getAllUserProfiles()));
     }
 
@@ -284,7 +274,8 @@ public class CleverestBroadcaster {
         eventBuses.get(gameId).fireEvent(new UserSentMessageEvent(
                 gameId,
                 messageText,
-                state.userMessagesDesc()));
+                state.userMessagesDesc(),
+                Optional.ofNullable(state.getUserState(username)).map(UserGameState::profile)));
     }
 
     @Getter
@@ -563,13 +554,16 @@ public class CleverestBroadcaster {
     public static class UserSentMessageEvent extends CleverestGameEvent {
         private final String message;
         private final List<UserMessage> messages;
+        private final Optional<UserProfile> userProfile;
 
         public UserSentMessageEvent(final String gameId,
                                     final String message,
-                                    final List<UserMessage> messages) {
+                                    final List<UserMessage> messages,
+                                    final Optional<UserProfile> userProfile) {
             super(gameId);
             this.message = message;
             this.messages = messages;
+            this.userProfile = userProfile;
         }
     }
 

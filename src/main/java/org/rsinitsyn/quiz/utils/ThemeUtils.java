@@ -9,12 +9,9 @@ import org.rsinitsyn.quiz.component.theme.ThemePreset;
 
 import java.awt.*;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import static com.vaadin.flow.component.page.WebStorage.Storage.LOCAL_STORAGE;
 import static java.util.Optional.ofNullable;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class ThemeUtils {
 
@@ -60,7 +57,7 @@ public class ThemeUtils {
         };
     }
 
-    public static void restoreTheme(UI ui) {
+    public static void updateTheme(UI ui) {
         var js = "document.documentElement.setAttribute('theme', $0)";
         ui.getElement().executeJs(js, ThemeUtils.getThemeMode());
 

@@ -37,9 +37,9 @@ public class UserGameState implements Comparable<UserGameState> {
 
     public static UserGameState userGameState(String username,
                                               String color,
-                                              byte[] photo) {
+                                              String photoUrl) {
         final var userGameState = new UserGameState();
-        userGameState.profile = new UserProfile(username, color, photo);
+        userGameState.profile = new UserProfile(username, color, Optional.ofNullable(photoUrl));
         userGameState.lastAnswerStatus = UNKNOWN;
         return userGameState;
     }
@@ -48,16 +48,8 @@ public class UserGameState implements Comparable<UserGameState> {
         return profile.username();
     }
 
-    public String getColor() {
-        return profile.color();
-    }
-
-    public byte[] getPhoto() {
-        return profile.avatar();
-    }
-
-    public void updateColorAndPhoto(String color, byte[] photo) {
-        this.profile = this.profile.withColorAndAvatar(color, photo);
+    public void updatePhoto(String photoUrl) {
+        this.profile = this.profile.withColorAndAvatar(photoUrl);
     }
 
     public void updateLastPosition(int position) {

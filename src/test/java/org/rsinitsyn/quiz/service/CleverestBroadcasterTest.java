@@ -6,9 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.rsinitsyn.quiz.QuizTestFixture;
 import org.rsinitsyn.quiz.component.custom.Emoji;
-import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionModel;
-import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
 import org.rsinitsyn.quiz.model.answer.AnswerResult;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.model.cleverest.UserProfile;
@@ -21,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.InstanceOfAssertFactories.LIST;
@@ -29,7 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.rsinitsyn.quiz.QuizTestFixture.*;
+import static org.rsinitsyn.quiz.QuizTestFixture.aQuestionModel;
 import static org.rsinitsyn.quiz.entity.AnswerStatus.*;
 
 class CleverestBroadcasterTest implements QuizTestFixture {
@@ -75,31 +74,28 @@ class CleverestBroadcasterTest implements QuizTestFixture {
         assertSoftly(softly -> {
             final var alice = broadcaster.getState(gameId).getUserState("Alice");
             softly.assertThat(alice).isNotNull();
-            softly.assertThat(alice.getColor()).isEqualTo(color);
-            softly.assertThat(alice.getPhoto()).isNull();
             softly.assertThat(alice.getBets()).hasSize(2);
         });
 
         then(eventBus).should().fireEvent(new UserJoinedEvent(gameId,
-                new UserProfile("Alice", color, null),
-                List.of(new UserProfile("Alice", color, null))));
+                new UserProfile("Alice", color, empty()),
+                List.of(new UserProfile("Alice", color, empty()))));
 
         // and-when
-        broadcaster.sendJoinUserEvent(gameId, "Alice", "color-upd", null, "Bob", "Charlie");
+        broadcaster.sendJoinUserEvent(gameId, "Alice", color, "photo-upd", "Bob", "Charlie");
 
         // then
         baseAssertions();
         assertSoftly(softly -> {
             final var alice = broadcaster.getState(gameId).getUserState("Alice");
             softly.assertThat(alice).isNotNull();
-            softly.assertThat(alice.getColor()).isEqualTo("color-upd");
-            softly.assertThat(alice.getPhoto()).isNull();
+            softly.assertThat(alice.profile().photoUrl()).isEqualTo(of("photo-upd"));
             softly.assertThat(alice.getBets()).hasSize(2);
         });
 
         then(eventBus).should().fireEvent(new UserJoinedEvent(gameId,
-                new UserProfile("Alice", "color-upd", null),
-                List.of(new UserProfile("Alice", "color-upd", null))));
+                new UserProfile("Alice", color, of("photo-upd")),
+                List.of(new UserProfile("Alice", color, of("photo-upd")))));
     }
 
     @Test
@@ -295,10 +291,10 @@ class CleverestBroadcasterTest implements QuizTestFixture {
         then(eventBus).should().fireEvent(new SaveUsersAnswersEvent(gameId,
                 q,
                 List.of(new UserStateSnapshot(
-                                new UserProfile("Alice", color, null),
+                                new UserProfile("Alice", color, empty()),
                                 "4", CORRECT, true, 0, 1, 1, of(q.getId())),
                         new UserStateSnapshot(
-                                new UserProfile("Bob", color, null),
+                                new UserProfile("Bob", color, empty()),
                                 "22", WRONG, true, 0, 0, 2, of(q.getId())))));
     }
 

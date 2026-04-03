@@ -2,16 +2,12 @@ package org.rsinitsyn.quiz.component.cleverest;
 
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
-import com.vaadin.flow.component.Key;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.messages.MessageList;
 import com.vaadin.flow.component.messages.MessageListItem;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -28,31 +24,29 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.rsinitsyn.quiz.component.theme.ThemePreset;
+import org.apache.commons.lang3.tuple.Pair;
+import org.rsinitsyn.quiz.component.custom.event.UserEvent;
 import org.rsinitsyn.quiz.model.cleverest.UserMessage;
 import org.rsinitsyn.quiz.model.cleverest.UserProfile;
-import org.rsinitsyn.quiz.service.ImageCacheService;
-import org.rsinitsyn.quiz.utils.ThemeUtils;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static java.util.Optional.ofNullable;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.chatInput;
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.primaryButton;
 import static org.rsinitsyn.quiz.utils.QuizComponents.uploadComponent;
 import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
 import static org.rsinitsyn.quiz.utils.QuizUtils.resolveLocalIp;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
-import static org.rsinitsyn.quiz.utils.ThemeUtils.BLACK_COLOR;
-import static org.rsinitsyn.quiz.utils.ThemeUtils.THEME_PRESETS;
+import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUserThemeColor;
 
 @Slf4j
 public class CleverestWaitingRoomComponent extends VerticalLayout {
 
     private final boolean hostPage;
-    private final AtomicReference<InputStream> photoHolder = new AtomicReference<>();
+    private final AtomicReference<Pair<String, InputStream>> photoHolder = new AtomicReference<>();
     private final AtomicReference<UserProfile> userGameState = new AtomicReference<>();
 
     private final Grid<UserProfile> usersGrid = new Grid<>(UserProfile.class, false);
@@ -100,17 +94,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
             dialog.open();
         });
         add(joinButton);
-
-        final var textField = new TextField();
-        textField.setWidthFull();
-        textField.addKeyPressListener(Key.ENTER, event -> {
-            if (StringUtils.isBlank(textField.getValue())) {
-                return;
-            }
-            fireEvent(new UserTextedMessageEvent(getLoggedUser(), textField.getValue()));
-            textField.clear();
-        });
-        add(textField);
+        add(chatInput(message -> fireEvent(new UserTextedMessageEvent(getLoggedUser(), message))));
     }
 
 
@@ -126,17 +110,6 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
         playerName.setReadOnly(true);
         playerName.addClassNames(LumoUtility.FontSize.LARGE);
 
-        Span chooseColor = new Span("Выберите цвет");
-        final var themes = new ComboBox<ThemePreset>("Theme");
-        themes.setItems(THEME_PRESETS);
-        themes.setItemLabelGenerator(ThemePreset::name);
-        themes.setRenderer(new ComponentRenderer<>(CleverestComponents::themeColor));
-
-        themes.addValueChangeListener(event -> {
-            final var preset = event.getValue();
-            ThemeUtils.applyTheme(UI.getCurrent(), preset.color());
-        });
-
 //        ofNullable(userGameState.get())
 //                .ifPresent(state -> {
 //                    winnerBet.setValue(state.winnerBet().getKey());
@@ -144,17 +117,18 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
 //                });
 
         final var upload = uploadComponent("Фото", (buffer, event) -> {
-            photoHolder.set(buffer.getInputStream(event.getFileName()));
+            photoHolder.set(Pair.of(event.getFileName(), buffer.getInputStream(event.getFileName())));
         }, null, 1);
 
-        dialogLayout.add(playerName, chooseColor, themes, upload);
+        dialogLayout.add(playerName, upload);
 //        TODO: Bets disabled for now
 //        dialog.add(winnerBet, loserBet);
 
         dialog.addConfirmListener(event -> {
             fireEvent(new UserSubmitDataEvent(getLoggedUser(),
-                    ofNullable(themes.getValue()).map(ThemePreset::color).orElse(BLACK_COLOR),
-                    photoHolder.get(),
+                    getLoggedUserThemeColor(),
+                    Optional.ofNullable(photoHolder.get()).map(Pair::getLeft).orElse(null),
+                    Optional.ofNullable(photoHolder.get()).map(Pair::getRight).orElse(null),
                     winnerBet.getValue(),
                     loserBet.getValue()));
         });
@@ -233,7 +207,11 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
 
     public void updateMessageList(final List<UserMessage> messages) {
         messageList.setItems(messages.stream()
-                .map(m -> new MessageListItem(m.message(), m.date(), m.username(), "/quiz-images/dev/54f62b6d-edfd-4cdf-897f-6ef10c101639.jpg"))
+                .map(userMessage -> {
+                    return userMessage.photoUrl()
+                            .map(photoUrl -> new MessageListItem(userMessage.message(), userMessage.date(), userMessage.username(), "/quiz-images/%s".formatted(photoUrl)))
+                            .orElseGet(() -> new MessageListItem(userMessage.message(), userMessage.date(), userMessage.username()));
+                })
                 .toList());
     }
 
@@ -251,10 +229,11 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
     @Accessors(fluent = true)
     @EqualsAndHashCode(callSuper = false)
     @ToString
-    public class UserSubmitDataEvent extends WaitingRoomEvent {
+    public class UserSubmitDataEvent extends WaitingRoomEvent implements UserEvent {
         private final String username;
         private final String color;
-        private final InputStream photo;
+        private final String photoFilename;
+        private final InputStream photoData;
         private final String userWinner;
         private final String userLoser;
     }

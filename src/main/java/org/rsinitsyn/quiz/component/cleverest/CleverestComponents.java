@@ -133,8 +133,8 @@ public final class CleverestComponents {
 
     public static HorizontalLayout userProfile(UserProfile profile, String... classes) {
         return horizontalLayoutCenter(
-                profile.avatarResource()
-                        .map(data -> (Component) avatar(data, AvatarVariant.LUMO_XLARGE))
+                profile.photoUrl()
+                        .map(url -> (Component) avatarByUrl(url, AvatarVariant.LUMO_XLARGE))
                         .orElseGet(VaadinIcon.USER::create),
                 appendTextBorder(new Span() {{
                     setText(profile.username());
@@ -183,6 +183,18 @@ public final class CleverestComponents {
                                             Notification.Position position) {
         Notification notification = Notification.show(text, 1_500, position);
         notification.addThemeVariants(variant);
+        return notification;
+    }
+
+    public static Notification chatNotification(UserProfile profile, String text) {
+        Notification notification = new Notification();
+        notification.setDuration(2_000);
+        notification.setPosition(Notification.Position.TOP_END);
+        notification.addThemeVariants(NotificationVariant.LUMO_PRIMARY);
+        final var userProfile = userProfile(profile);
+        userProfile.add(new Span("%s".formatted(text)));
+        notification.add(userProfile);
+        notification.open();
         return notification;
     }
 
@@ -412,21 +424,31 @@ public final class CleverestComponents {
     public static Button messageBar(final Consumer<String> messageAction) {
         final var chatButton = new Button(Emoji.CHAT.value);
         chatButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-
         final var contextMenu = new ContextMenu(chatButton);
         contextMenu.setOpenOnClick(true);
+        final var textField = chatInput(messageAction);
+        textField.setAutofocus(true);
+        contextMenu.addOpenedChangeListener(e -> {
+            if (e.isOpened()) {
+                textField.focus();
+            }
+        });
+        contextMenu.add(textField);
+        return chatButton;
+    }
+
+    public static TextField chatInput(Consumer<String> messageAction) {
         final var textField = new TextField();
         textField.setWidthFull();
-        textField.setLabel("Отправь всем сообщение");
+        textField.setLabel("Отправь всем сообщение! (отправка на Enter)");
+        textField.setMaxLength(200);
         textField.addKeyPressListener(Key.ENTER, event -> {
             if (StringUtils.isBlank(textField.getValue())) {
                 return;
             }
             messageAction.accept(textField.getValue());
             textField.clear();
-            contextMenu.close();
         });
-        contextMenu.add(textField);
-        return chatButton;
+        return textField;
     }
 }

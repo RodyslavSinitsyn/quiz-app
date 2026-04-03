@@ -24,6 +24,7 @@ import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 import org.rsinitsyn.quiz.service.QuestionService;
+import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.rsinitsyn.quiz.utils.ThemeUtils;
 
 import java.io.FileInputStream;
@@ -39,6 +40,7 @@ import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory
 import static org.rsinitsyn.quiz.entity.AnswerStatus.*;
 import static org.rsinitsyn.quiz.entity.QuestionHintType.PHOTO;
 import static org.rsinitsyn.quiz.entity.QuestionType.TEXT;
+import static org.rsinitsyn.quiz.utils.ThemeUtils.BLACK_COLOR;
 
 @Route(value = "/labs", layout = MainLayout.class)
 @PageTitle("Labs")
@@ -52,8 +54,8 @@ public class LabsPage extends VerticalLayout {
         this.questionService = questionService;
 
         final var userGameState = UserGameState.userGameState("Rodyslav",
-                "F54927",
-                new FileInputStream("src/main/resources/image/dev/4704b5fb-a349-4f96-8fc0-240a30d10cca.jpg").readAllBytes());
+                SessionWrapper.getLoggedUserThemeColor(),
+                "/dev/4704b5fb-a349-4f96-8fc0-240a30d10cca.jpg");
         userGameState.submitAnswer("Lionel Messi", now(), () -> AnswerResult.oneOptionResult(true));
 
         final var users = List.of(userStateSnapshot("Alice", 1, CORRECT),
@@ -161,7 +163,7 @@ public class LabsPage extends VerticalLayout {
     }
 
     private UserStateSnapshot userStateSnapshot(String username, int position, AnswerStatus status) {
-        return new UserStateSnapshot(new UserProfile(username, ThemeUtils.BLACK_COLOR, null, Optional.empty()),
+        return new UserStateSnapshot(new UserProfile(username, BLACK_COLOR, Optional.of("")),
                 randomText(1), status, true, 0, randomInt(), position, Optional.empty());
     }
 
