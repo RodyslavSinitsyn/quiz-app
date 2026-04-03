@@ -25,9 +25,7 @@ import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
-import org.rsinitsyn.quiz.utils.ThemeUtils;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
@@ -135,7 +133,7 @@ public class LabsPage extends VerticalLayout {
         add(new Hr());
 
         Arrays.stream(Emoji.values()).map(e -> e.value).toList().stream()
-                .map(CleverestComponents::emoji)
+                .map(CleverestComponents::emojiBig)
                 .forEach(this::add);
 
         final var questions = questionService.findAllByCurrentUserAsModel();

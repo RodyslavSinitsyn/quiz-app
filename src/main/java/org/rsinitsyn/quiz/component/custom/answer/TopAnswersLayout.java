@@ -3,6 +3,7 @@ package org.rsinitsyn.quiz.component.custom.answer;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
@@ -35,7 +36,10 @@ public class TopAnswersLayout extends AbstractAnswersLayout {
             submitButton.setEnabled(topListLayout.getChildren().count() == topSize);
         });
         configureAddToListButton(addToListButton, textField);
-        add(horizontalLayoutBetween(textField, addToListButton));
+        final var layout = horizontalLayoutBetween(textField, addToListButton);
+        // Due to input label, puts Button down
+        layout.setAlignItems(Alignment.END);
+        add(layout);
         add(topListLayout);
     }
 

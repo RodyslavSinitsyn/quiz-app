@@ -2,6 +2,7 @@ package org.rsinitsyn.quiz.page.cleverest;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.*;
@@ -36,6 +37,7 @@ import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 @PermitAll
 @Slf4j
 @PreserveOnRefresh
+@JsModule("./js/reactions.js")
 public class CleverestGamePage extends VerticalLayout
         implements HasUrlParameter<String>, BeforeEnterObserver, BeforeLeaveObserver {
 

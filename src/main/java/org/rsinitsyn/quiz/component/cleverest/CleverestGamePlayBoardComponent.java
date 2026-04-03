@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.rsinitsyn.quiz.component.cleverest.CleverestWaitingRoomComponent.UserTextedMessageEvent;
 import org.rsinitsyn.quiz.component.custom.Emoji;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
@@ -35,8 +34,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
-import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.messageBar;
-import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.soundBar;
 import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory.createQuestionLayout;
 import static org.rsinitsyn.quiz.utils.AudioUtils.playStaticSoundAsync;
 import static org.rsinitsyn.quiz.utils.QuizComponents.appendTextBorder;
@@ -239,8 +236,10 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 })));
         subscriptions.add(broadcaster.subscribe(gameId, PlaySoundEvent.class, event ->
                 playStaticSoundAsync(event.getSound().path())));
-        subscriptions.add(broadcaster.subscribe(gameId, DeleteUserEvent.class, event -> {
-            renderTopContainerForHost(broadcaster.getState(gameId).getAllUserProfiles());
+        subscriptions.add(broadcaster.subscribe(gameId, DeleteUserEvent.class, event ->
+                renderTopContainerForHost(broadcaster.getState(gameId).getAllUserProfiles())));
+        subscriptions.add(broadcaster.subscribe(gameId, LiveReactionEvent.class, event -> {
+            runActionInUi(ui, () -> ui.getPage().executeJs("window.spawnReaction($0)", event.getEmoji().value));
         }));
     }
 
@@ -282,7 +281,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
     private void updateUserGrade(String username, Emoji emoji) {
         topContainerUserComponent(username).ifPresent(component ->
-                component.addComponentAsFirst(emoji(emoji.value)));
+                component.addComponentAsFirst(emojiBig(emoji.value)));
     }
 
     private Optional<HorizontalLayout> topContainerUserComponent(String username) {
@@ -351,7 +350,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         });
         List.of(Emoji.randomBad(), Emoji.randomGood(), Emoji.randomGreat())
                 .forEach(e -> {
-                    final var emoji = emoji(e.value);
+                    final var emoji = emojiBig(e.value);
                     emoji.addClickListener(event -> {
                         fireEvent(new UpdateQuestionGradeEvent(
                                 question,
@@ -451,10 +450,12 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             return;
         }
         topContainer.removeAll();
-        final var userRow = userProfileWithScore(userState.snapshot(), MOBILE_LARGE_FONT);
-        userRow.add(soundBar(() -> broadcaster.sendPlaySoundEvent(gameId, GameSound.next())));
-        userRow.add(messageBar(messageText -> broadcaster.sendUserTextedEvent(gameId, getLoggedUser(), messageText)));
-        topContainer.add(userRow);
+
+        topContainer.add(userProfileWithScore(userState.snapshot(), MOBILE_LARGE_FONT));
+        topContainer.add(horizontalLayoutCenter(
+                soundButton(() -> broadcaster.sendPlaySoundEvent(gameId, GameSound.next())), // TODO: Better meme handling and chosing
+                openChatButton(messageText -> broadcaster.sendUserTextedEvent(gameId, getLoggedUser(), messageText)),
+                reactionButton(Emoji.HEART.value, (emoji) -> broadcaster.sendLiveReactionEvent(gameId, getLoggedUser(), emoji))));
         topContainer.add(new Hr());
     }
 

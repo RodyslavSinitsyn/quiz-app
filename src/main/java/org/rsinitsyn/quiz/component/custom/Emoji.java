@@ -24,7 +24,12 @@ public enum Emoji {
     CHAT("💬"),
     GUITAR("🎸"),
     LAUGH("😂"),
-    EXPLODE("🤯");
+    EXPLODE("🤯"),
+
+    HEART("❤️"),
+    FIRE("🔥"),
+    CLAP("👏"),
+    SHOCK("😱");
 
     public final String value;
     public final int rating;
@@ -37,6 +42,7 @@ public enum Emoji {
     public static final List<Emoji> BAD_LIST = List.of(SKULL, DEVIL, SHIT);
     public static final List<Emoji> GOOD_LIST = List.of(POKER_FACE, SLEEPY, GOOD);
     public static final List<Emoji> GREAT_LIST = List.of(PARTY, LOVE, AMAZING);
+    public static final List<Emoji> REACTION_LIST = List.of(HEART, LAUGH, FIRE, CLAP, SHOCK);
 
     private static Emoji random(List<Emoji> emojis) {
         return emojis.get(ThreadLocalRandom.current().nextInt(emojis.size()));
@@ -52,5 +58,9 @@ public enum Emoji {
 
     public static Emoji randomGreat() {
         return random(GREAT_LIST);
+    }
+
+    public static Emoji randomReaction() {
+        return random(REACTION_LIST);
     }
 }

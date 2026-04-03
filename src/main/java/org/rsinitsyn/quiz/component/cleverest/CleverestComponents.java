@@ -3,7 +3,6 @@ package org.rsinitsyn.quiz.component.cleverest;
 import com.flowingcode.vaadin.addons.carousel.Carousel;
 import com.flowingcode.vaadin.addons.carousel.Slide;
 import com.vaadin.flow.component.*;
-import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.avatar.AvatarVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -20,6 +19,8 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.popover.Popover;
+import com.vaadin.flow.component.popover.PopoverVariant;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
@@ -69,10 +70,12 @@ public final class CleverestComponents {
     }
 
     public static Span emojiSmall(String emoji) {
-        return new Span(emoji);
+        final var span = new Span(emoji);
+        span.addClassName("hoover");
+        return span;
     }
 
-    public static Button emoji(String emoji) {
+    public static Button emojiBig(String emoji) {
         final var button = new Button(emoji);
         button.addThemeVariants(ButtonVariant.LUMO_LARGE);
         button.addClassName("emoji");
@@ -215,7 +218,7 @@ public final class CleverestComponents {
     }
 
     public static TextField textAnswerInput(HasValue.ValueChangeListener<? super AbstractField.ComponentValueChangeEvent<TextField, String>> valueChangeHandler) {
-        TextField textField = new TextField("Введите ответ");
+        TextField textField = new TextField("Напиши ответ");
         textField.setValueChangeMode(ValueChangeMode.EAGER);
         textField.addThemeVariants(TextFieldVariant.LUMO_ALIGN_CENTER);
         textField.addClassNames(MOBILE_MEDIUM_FONT);
@@ -404,15 +407,13 @@ public final class CleverestComponents {
     }
 
 
-    public static Button soundBar(Runnable task) {
+    public static Button soundButton(Runnable task) {
         final var soundButton = new Button(Emoji.SOUND.value);
-        soundButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-
         final var contextMenu = new ContextMenu(soundButton);
         contextMenu.setOpenOnClick(true);
         final var layout = horizontalLayoutCenter();
         Stream.of(Emoji.GUITAR.value, Emoji.LAUGH.value, Emoji.EXPLODE.value)
-                .map(CleverestComponents::emoji)
+                .map(CleverestComponents::emojiBig)
                 .forEach(emoji -> {
                     layout.add(emoji);
                     emoji.addClickListener(e -> {
@@ -425,9 +426,8 @@ public final class CleverestComponents {
         return soundButton;
     }
 
-    public static Button messageBar(final Consumer<String> messageAction) {
+    public static Button openChatButton(final Consumer<String> messageAction) {
         final var chatButton = new Button(Emoji.CHAT.value);
-        chatButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
         final var contextMenu = new ContextMenu(chatButton);
         contextMenu.setOpenOnClick(true);
         final var textField = chatInput(messageAction);
@@ -454,5 +454,26 @@ public final class CleverestComponents {
             textField.clear();
         });
         return textField;
+    }
+
+    public static Button reactionButton(String emoji, Consumer<Emoji> action) {
+        final var reactionButton = new Button(emoji);
+
+        final var popover = new Popover();
+        popover.setTarget(reactionButton);
+        popover.setOpenOnClick(true);
+        popover.setCloseOnOutsideClick(true);
+        popover.setHideDelay(100);
+        popover.addThemeVariants(PopoverVariant.ARROW);
+
+        final var layout = horizontalLayoutCenter();
+        Emoji.REACTION_LIST.forEach(reaction -> {
+            final var emojiSmall = emojiSmall(reaction.value);
+            emojiSmall.addClickListener(e -> action.accept(reaction));
+            layout.add(emojiSmall);
+        });
+        popover.add(layout);
+
+        return reactionButton;
     }
 }

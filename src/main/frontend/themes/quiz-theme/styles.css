@@ -66,6 +66,10 @@ vaadin-item[selected] {
     transition: transform 1s ease;
 }
 
+.hoover {
+    cursor: pointer;
+}
+
 /*Less than 700*/
 @media (max-width: 700px) {
 

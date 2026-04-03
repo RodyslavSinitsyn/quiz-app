@@ -278,6 +278,12 @@ public class CleverestBroadcaster {
                 Optional.ofNullable(state.getUserState(username)).map(UserGameState::profile)));
     }
 
+    public void sendLiveReactionEvent(String gameId, final String user, final Emoji emoji) {
+        final var state = getState(gameId);
+        eventBuses.get(gameId).fireEvent(
+                new LiveReactionEvent(gameId, state.getUserState(user).profile(), emoji));
+    }
+
     @Getter
     @EqualsAndHashCode(of = "gameId", callSuper = false)
     @ToString(of = "gameId", callSuper = false)
@@ -564,6 +570,20 @@ public class CleverestBroadcaster {
             this.message = message;
             this.messages = messages;
             this.userProfile = userProfile;
+        }
+    }
+
+    @Getter
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
+    public static class LiveReactionEvent extends CleverestGameEvent {
+        private final UserProfile userProfile;
+        private final Emoji emoji;
+
+        public LiveReactionEvent(final String gameId, final UserProfile userProfile, final Emoji emoji) {
+            super(gameId);
+            this.userProfile = userProfile;
+            this.emoji = emoji;
         }
     }
 
