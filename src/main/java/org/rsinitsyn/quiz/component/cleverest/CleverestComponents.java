@@ -39,6 +39,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -251,29 +252,51 @@ public final class CleverestComponents {
         return button;
     }
 
-    public static Button approveButton(Runnable clickAction,
-                                       int clicksLimit,
-                                       int pointsPerClick) {
-        final var button = iconButton(VaadinIcon.CHECK.create(), event -> {
-        });
-        button.addClickListener(event -> {
-            if (clicksLimit > 0) {
-                String currText = event.getSource().getElement().getText();
-                var countValue = currText.isBlank()
-                        ? pointsPerClick
-                        : Integer.parseInt(button.getText()) + pointsPerClick;
-                if (countValue <= clicksLimit) {
-                    button.setText(String.valueOf(countValue));
-                    clickAction.run();
-                }
-            } else {
-                clickAction.run();
-                button.setEnabled(false);
+    public static HorizontalLayout manualScoreControl(Runnable approveAction,
+                                                      Runnable rejectAction,
+                                                      int maxClicks,
+                                                      int pointsPerClick) {
+        final var clicks = new AtomicInteger();
+        final var score = new AtomicInteger();
+
+        final var scoreLabel = new Span("0");
+
+        final var minusButton = iconButton(VaadinIcon.MINUS.create(), event -> {
+            if (clicks.get() > 0) {
+                clicks.decrementAndGet();
+                score.addAndGet(-pointsPerClick);
+                rejectAction.run();
             }
-            event.getSource().getParent().ifPresent(p ->
-                    p.addClassNames(LumoUtility.Background.PRIMARY_10, LumoUtility.Border.ALL, LumoUtility.BorderColor.PRIMARY));
         });
-        return button;
+        minusButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+
+        final var plusButton = iconButton(VaadinIcon.PLUS.create(), event -> {
+            if (maxClicks <= 0 || clicks.get() < maxClicks) {
+                clicks.incrementAndGet();
+                score.addAndGet(pointsPerClick);
+                approveAction.run();
+            }
+        });
+        plusButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
+
+        minusButton.addClickListener(event -> refreshManualScoreControl(score, clicks, scoreLabel, minusButton, plusButton, maxClicks));
+        plusButton.addClickListener(event -> refreshManualScoreControl(score, clicks, scoreLabel, minusButton, plusButton, maxClicks));
+        refreshManualScoreControl(score, clicks, scoreLabel, minusButton, plusButton, maxClicks);
+
+        return horizontalLayout(JustifyContentMode.END, minusButton, scoreLabel, plusButton);
+    }
+
+    private static void refreshManualScoreControl(AtomicInteger score,
+                                                  AtomicInteger clicks,
+                                                  Span scoreLabel,
+                                                  Button minusButton,
+                                                  Button plusButton,
+                                                  int maxClicks) {
+        final var currentScore = score.get();
+
+        scoreLabel.setText(String.valueOf(currentScore));
+        minusButton.setEnabled(clicks.get() > 0);
+        plusButton.setEnabled(maxClicks <= 0 || clicks.get() < maxClicks);
     }
 
     // Icons
@@ -369,12 +392,13 @@ public final class CleverestComponents {
                 userProfileWithAnswer.add(getIconFromAnswer(userStateSnapshot.answerStatus()));
             }
             if (manualApprove.isPresent()) {
-                final var approve = manualApprove.orElseThrow();
-                Button approveButton = approveButton(
-                        () -> approve.action().accept(userStateSnapshot.username()),
-                        approve.clickLimit(),
-                        approve.pointsPerClick());
-                userProfileWithAnswer.add(approveButton);
+                final var approveModel = manualApprove.orElseThrow();
+                final var manualScoreWidget = manualScoreControl(
+                        () -> approveModel.approve().accept(userStateSnapshot.username()),
+                        () -> approveModel.reject().accept(userStateSnapshot.username()),
+                        approveModel.clickLimit(),
+                        approveModel.pointsPerClick());
+                userProfileWithAnswer.add(manualScoreWidget);
             }
             answersLayout.add(userProfileWithAnswer);
         });
@@ -416,7 +440,7 @@ public final class CleverestComponents {
                     emoji.addClickListener(e -> {
                         task.run();
                         contextMenu.close();
-                        layout.remove(e.getSource());
+                        emoji.setEnabled(false);
                     });
                 });
         contextMenu.add(layout);

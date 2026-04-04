@@ -54,7 +54,7 @@ public class CleverestSetupPage extends VerticalLayout {
         logState(this, attachEvent.getUI(), "onAttach", true, subscriptions);
         subscriptions.add(settingsComponent.addSettingsCompletedListener(event -> {
             final var newGameId = UUID.randomUUID().toString();
-            gameService.createIfNotExists(newGameId, "Cleverest", GameType.CLEVEREST);
+            gameService.createIfNotExists(newGameId, event.getGameName(), GameType.CLEVEREST);
             final var r1 = shuffleAndToModel(event.getFirstRound());
             final var r2 = shuffleAndToModel(event.getSecondRound());
             final var r3 = shuffleAndToModel(event.getThirdRound());

@@ -106,7 +106,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         final var roundNumber = state.getRoundNumber();
         if (roundNumber == 3) {
             // Round 3 is categories-based — nothing to restore here,
-            // the RenderCategoriesEvent will re-render on next action.
+            // the RenderCategoriesEvent will re-render on next approve.
             // Just show a waiting message for players.
             if (!gameHost) {
                 midContainer.add(userInfoLightSpan("В ожидании вопроса", LumoUtility.TextColor.SECONDARY, CleverestComponents.MOBILE_LARGE_FONT));
@@ -217,8 +217,6 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                         event.getRevealScoreAfter(),
                                         manualApprove(event.getQuestion()),
                                         () -> {
-                                        },
-                                        () -> {
                                             if (event.isRoundOver()) {
                                                 broadcaster.sendNextRoundEvent(gameId);
                                             } else {
@@ -256,15 +254,16 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         };
         final var pointsPerClick = broadcaster.getState(gameId).getRoundNumber() == 3
                 ? question.getPoints()
-                : switch (question.getType()) {
-            case TOP -> 1;
-            case GUESS_PHOTO -> question.getPoints();
-            default -> 1;
-        };
-        return Optional.of(new ManualApprove(clicksLimit, pointsPerClick, uName -> {
-            broadcaster.getState(gameId).getUserState(uName).increaseScoreAndMarkCorrect(pointsPerClick);
-            broadcaster.sendUpdatePersonalScoreEvent(gameId);
-        }));
+                : 1;
+        return Optional.of(new ManualApprove(clicksLimit, pointsPerClick,
+                username -> {
+                    broadcaster.getState(gameId).getUserState(username).increaseScoreAndMarkCorrect(pointsPerClick);
+                    broadcaster.sendUpdatePersonalScoreEvent(gameId);
+                },
+                username -> {
+                    broadcaster.getState(gameId).getUserState(username).decreaseScoreAndMarkWrong(pointsPerClick);
+                    broadcaster.sendUpdatePersonalScoreEvent(gameId);
+                }));
     }
 
     @Override
@@ -435,16 +434,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 // 3rd round
                 showCorrectAnswer(question, List.of(userToAnswer.snapshot()),
                         0,
-                        Optional.of(new ManualApprove(1, question.getPoints(), uName -> {
-                            userToAnswer.increaseScoreAndMarkCorrect(question.getPoints());
-                            approved.set(true);
-                            broadcaster.sendUpdatePersonalScoreEvent(gameId);
-                        })),
-                        () -> {
-                            if (!approved.get()) {
-                                userToAnswer.decreaseScoreAndMarkWrong(question.getPoints());
-                            }
-                        },
+                        manualApprove(question),
                         () -> broadcaster.sendRenderCategoriesEvent(gameId, question, false));
             });
         });
@@ -457,7 +447,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         if (gameHost) {
             Optional.ofNullable(hostAction).ifPresentOrElse(
                     Runnable::run,
-                    () -> log.debug("No host action to run, gameId: {}", gameId));
+                    () -> log.debug("No host approve to run, gameId: {}", gameId));
             hostAction = null;
         }
     }
@@ -500,7 +490,6 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                    Collection<UserStateSnapshot> users,
                                    int revealScoreAfter,
                                    Optional<ManualApprove> manualApprove,
-                                   Runnable onCloseAction,
                                    Runnable usersScoreCloseAction) {
         if (users.stream().allMatch(UserStateSnapshot::correct)) {
             playStaticSoundAsync(CORRECT_ANSWER_AUDIOS.next());
@@ -511,7 +500,6 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         }
         final var answersLayout = userAnswersLayout(question, users, manualApprove);
         openDialog(answersLayout, "Ответы", () -> {
-            onCloseAction.run();
             broadcaster.sendUpdatePersonalScoreEvent(gameId);
             broadcaster.sendSaveUsersAnswersEvent(gameId, question);
             showUsersPositionsTable(revealScoreAfter, usersScoreCloseAction);

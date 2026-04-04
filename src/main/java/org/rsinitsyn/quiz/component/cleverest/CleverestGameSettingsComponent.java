@@ -10,6 +10,7 @@ import com.vaadin.flow.component.grid.dnd.GridDropMode;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.shared.Registration;
 import lombok.Getter;
@@ -17,9 +18,11 @@ import org.rsinitsyn.quiz.component.custom.QuestionListGrid;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.rsinitsyn.quiz.utils.QuizComponents.infoNotification;
@@ -29,6 +32,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
 
     private List<QuestionEntity> questionEntityList;
 
+    private final TextField gameName = new TextField("Название игры");
     private final QuestionListGrid allQuestionsGrid = new QuestionListGrid(Collections.emptyList(), true);
     private final QuestionListGrid firstRoundGrid = new QuestionListGrid(Collections.emptyList());
     private final QuestionListGrid secondRoundGrid = new QuestionListGrid(Collections.emptyList());
@@ -55,6 +59,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
         updateHelpText();
 
         add(QuizComponents.mainHeader("Список вопросов"));
+        add(gameName);
         add(buttonsLayout);
         add(allQuestionsGrid);
         add(createRoundGridsLayout());
@@ -247,6 +252,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
                 return;
             }
             fireEvent(new SettingsCompletedEvent(this,
+                    Optional.ofNullable(gameName.getValue()).orElse("Cleverest"),
                     firstRoundGrid.getListDataView().getItems().toList(),
                     secondRoundGrid.getListDataView().getItems().toList(),
                     thirdRoundGrid.getListDataView().getItems().toList()));
@@ -265,16 +271,18 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
 
     @Getter
     public static class SettingsCompletedEvent extends ComponentEvent<CleverestGameSettingsComponent> {
-
+        private final String gameName;
         private List<QuestionEntity> firstRound;
         private List<QuestionEntity> secondRound;
         private List<QuestionEntity> thirdRound;
 
         public SettingsCompletedEvent(CleverestGameSettingsComponent source,
+                                      final String gameName,
                                       List<QuestionEntity> firstRound,
                                       List<QuestionEntity> secondRound,
                                       List<QuestionEntity> thirdRound) {
             super(source, false);
+            this.gameName = gameName;
             this.firstRound = firstRound;
             this.secondRound = secondRound;
             this.thirdRound = thirdRound;

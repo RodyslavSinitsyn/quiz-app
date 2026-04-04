@@ -20,6 +20,7 @@ import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
 import org.rsinitsyn.quiz.model.QuestionModel.HintModel;
 import org.rsinitsyn.quiz.model.answer.AnswerResult;
+import org.rsinitsyn.quiz.model.cleverest.ManualApprove;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
@@ -30,7 +31,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 
-import static com.vaadin.flow.component.notification.NotificationVariant.LUMO_CONTRAST;
+import static com.vaadin.flow.component.notification.NotificationVariant.*;
 import static java.time.LocalDateTime.now;
 import static java.util.UUID.randomUUID;
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
@@ -60,6 +61,12 @@ public class LabsPage extends VerticalLayout {
                 userStateSnapshot("Bob", 2, PARTIAL),
                 userStateSnapshot("Charlie", 3, WRONG));
 
+        openDialog(CleverestComponents.userAnswersLayout(aQuestionModel(TEXT).build(), users,
+                Optional.of(new ManualApprove(
+                        5, 1,
+                        (u) -> notification("%s +1".formatted(u), LUMO_SUCCESS, Notification.Position.TOP_STRETCH),
+                        (u) -> notification("%s -1".formatted(u), LUMO_ERROR, Notification.Position.TOP_STRETCH)))
+        ), "Results", () -> {});
 
         add(new AnimatedLeaderboardComponent(
                 List.of(
@@ -124,6 +131,7 @@ public class LabsPage extends VerticalLayout {
         add(userProfile(userGameState.profile()));
         add(new Hr());
 
+        add(soundButton(() -> {}));
 
         add(userProfileWithScore(userGameState.snapshot()));
         add(new Hr());

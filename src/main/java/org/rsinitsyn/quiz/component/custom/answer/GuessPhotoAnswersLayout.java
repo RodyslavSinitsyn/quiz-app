@@ -76,7 +76,7 @@ public class GuessPhotoAnswersLayout extends AbstractAnswersLayout {
     protected AnswerGivenEvent createAnswerGivenEvent() {
         final var points = photoHints.size() - currentHintIndex;
         return AnswerGivenEvent.builder()
-                .answers(Set.of(answerField.getValue()))
+                .answers(Set.of("%s (%d)".formatted(answerField.getValue(), points)))
                 .result(new AnswerResult(UNKNOWN, photoHints.size(), points))
                 .manuallyApprove(true)
                 .build();
