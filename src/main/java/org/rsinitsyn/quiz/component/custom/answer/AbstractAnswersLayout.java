@@ -9,6 +9,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.shared.Registration;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.experimental.Accessors;
 import org.rsinitsyn.quiz.component.custom.event.StubEvent;
 import org.rsinitsyn.quiz.model.AnswerHint;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
@@ -16,16 +17,14 @@ import org.rsinitsyn.quiz.model.HintsState;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.answer.AnswerResult;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.submitButton;
 
 public abstract class AbstractAnswersLayout extends VerticalLayout {
 
     protected final QuestionModel question;
+    protected final Optional<String> username;
     protected final List<QuestionModel.AnswerModel> answers;
     protected HintsState hintsState;
 
@@ -36,6 +35,7 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
 
     public AbstractAnswersLayout(AnswerLayoutRequest request) {
         this.question = request.getQuestion();
+        this.username = request.getUsername();
         this.answers = new ArrayList<>(request.getQuestion().getShuffledAnswers());
         this.hintsState = request.getHintsState();
         setAlignItems(Alignment.STRETCH);
@@ -108,11 +108,27 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
         }
     }
 
+    @Getter
+    @Accessors(fluent = true)
+    public static class InputChangedEvent extends StubEvent {
+        private final String username;
+        private final String text;
+
+        public InputChangedEvent(final String username, final String text) {
+            this.username = username;
+            this.text = text;
+        }
+    }
+
     public Registration addAnswerGivenListener(ComponentEventListener<AnswerGivenEvent> listener) {
         return getEventBus().addListener(AnswerGivenEvent.class, listener);
     }
 
     public Registration addHintUsedListener(ComponentEventListener<HintUsedEvent> listener) {
         return getEventBus().addListener(HintUsedEvent.class, listener);
+    }
+
+    public Registration addInputChangedListener(ComponentEventListener<InputChangedEvent> listener) {
+        return getEventBus().addListener(InputChangedEvent.class, listener);
     }
 }

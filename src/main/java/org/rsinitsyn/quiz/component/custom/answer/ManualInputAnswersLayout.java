@@ -21,6 +21,8 @@ public class ManualInputAnswersLayout extends AbstractAnswersLayout {
 
     @Override
     protected void renderAnswers() {
+        answerField.addValueChangeListener(e ->
+                fireEvent(new InputChangedEvent(username.orElseThrow(), e.getValue())));
         add(answerField);
     }
 

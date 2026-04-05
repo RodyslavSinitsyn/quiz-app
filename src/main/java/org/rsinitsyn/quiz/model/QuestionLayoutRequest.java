@@ -6,6 +6,7 @@ import lombok.experimental.Accessors;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.rsinitsyn.quiz.model.HintsState.disabledHintsState;
 
@@ -15,6 +16,7 @@ import static org.rsinitsyn.quiz.model.HintsState.disabledHintsState;
 public class QuestionLayoutRequest {
    private QuestionModel question;
    private boolean host = false;
+   private Optional<String> username = Optional.empty();
    private String imageHeight = "25em";
    private HintsState hintsState = disabledHintsState();
    private boolean renderCategory = true;

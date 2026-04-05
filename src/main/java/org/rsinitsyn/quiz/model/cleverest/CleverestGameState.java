@@ -16,6 +16,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparingInt;
+import static java.util.Comparator.comparingLong;
 import static java.util.Map.Entry.comparingByValue;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toMap;
@@ -32,7 +33,7 @@ public class CleverestGameState {
     private final String gameHostName;
     private final List<QuestionModel> firstQuestions;
     private final List<QuestionModel> secondQuestions;
-    private final Map<String, List<QuestionModel>> thirdQuestions;
+    private final List<QuestionModel> thirdQuestions;
 
     private final Map<Integer, String> roundRules = new HashMap<>();
     private final Map<QuestionModel, List<UserStateSnapshot>> history = new LinkedHashMap<>();
@@ -51,7 +52,7 @@ public class CleverestGameState {
             String gameHostName,
             List<QuestionModel> firstRound,
             List<QuestionModel> secondRound,
-            Map<String, List<QuestionModel>> thirdRound) {
+            List<QuestionModel> thirdRound) {
         this.gameHostName = gameHostName;
         this.firstQuestions = firstRound;
         this.secondQuestions = secondRound;
@@ -184,15 +185,11 @@ public class CleverestGameState {
                 .toList();
     }
 
-    public Map<String, UserStateSnapshot> userSnapshotsSortedByResponseTime() {
-        return users.entrySet().stream()
-                .sorted(comparingByValue((s1, s2) -> Comparator
-                        .comparingLong(UserGameState::getLastResponseTimeMs)
-                        .compare(s1, s2)))
-                .collect(toMap(Map.Entry::getKey,
-                        v -> v.getValue().snapshot(),
-                        (e1, e2) -> e2,
-                        LinkedHashMap::new));
+    public List<UserStateSnapshot> userSnapshotsSortedByResponseTime() {
+        return users.values().stream()
+                .sorted(comparingLong(UserGameState::getLastResponseTimeMs))
+                .map(UserGameState::snapshot)
+                .toList();
     }
 
     public QuestionModel getCurrentQuestion() {

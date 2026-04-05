@@ -16,7 +16,6 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.upload.SucceededEvent;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
-import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
@@ -72,7 +71,7 @@ public final class QuizComponents {
     }
 
     public static <T extends Component> T appendTextBorder(T component) {
-        component.getStyle().set("text-shadow", StaticValuesHolder.getFontBorder());
+        component.getStyle().set("text-shadow", AudioHolder.getFontBorder());
 //        component.getStyle().set("-webkit-text-stroke-width", "1px");
 //        component.getStyle().set("-webkit-text-stroke-color", "black");
         return component;

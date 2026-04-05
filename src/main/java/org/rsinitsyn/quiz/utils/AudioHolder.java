@@ -7,7 +7,7 @@ import java.util.Iterator;
 import static com.google.common.collect.Iterables.cycle;
 import static org.rsinitsyn.quiz.utils.ThemeUtils.getThemeMode;
 
-public class StaticValuesHolder {
+public class AudioHolder {
 
     public static final Iterator<String> SUBMIT_ANSWER_SHORT_AUDIOS = cycle(
                     "submit-answer-short-1.mp3",

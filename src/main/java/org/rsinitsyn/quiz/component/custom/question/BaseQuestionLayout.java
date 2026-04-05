@@ -104,6 +104,7 @@ public class BaseQuestionLayout extends VerticalLayout {
     private void renderAnswersLayout(QuestionLayoutRequest request) {
         final var answerLayoutRequest = AnswerLayoutRequest.builder()
                 .question(questionModel)
+                .username(request.username())
                 .hintsState(request.hintsState())
                 .build();
         answersLayout = request.manualAnswer()

@@ -21,9 +21,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
@@ -54,23 +52,12 @@ public class CleverestBroadcaster {
                             List<QuestionModel> secondRound,
                             List<QuestionModel> thirdRound) {
         log.info("Create game state: [{}]", gameId);
-        final var categoriesAndQuestions = thirdRound.stream()
-                .collect(Collectors.groupingBy(QuestionModel::getCategoryName,
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                questionModels -> {
-                                    final var questionPoints = new AtomicInteger(1);
-                                    return questionModels.stream()
-                                            .peek(q -> q.setPoints(questionPoints.getAndIncrement()))
-                                            .toList();
-                                }
-                        )));
         gameStateMap.put(gameId,
                 new CleverestGameState(
                         createdBy,
                         firstRound,
                         secondRound,
-                        categoriesAndQuestions)
+                        thirdRound)
         );
     }
 
@@ -131,7 +118,7 @@ public class CleverestBroadcaster {
                         userGameState.getLastResponseTimeSec(),
                         getState(gameId).getRoundNumber()));
 
-        sendEventIfAllAnswered(gameId, questionModel);
+        sendEventIfAllAnswered(gameId, questionModel, Optional.of(username));
     }
 
     public void sendNextRoundEvent(String gameId) {
@@ -146,24 +133,30 @@ public class CleverestBroadcaster {
         eventBuses.get(gameId).fireEvent(new RoundInfoEvent(gameId, roundNumber, state.getRoundRules().get(roundNumber)));
     }
 
-    private void sendEventIfAllAnswered(String gameId, QuestionModel currQuestion) {
-        if (getState(gameId).areAllUsersAnswered()
-                && getState(gameId).getRoundNumber() != 3) {
-            final var state = getState(gameId);
-            boolean roundOver = state.lastQuestionInRound();
-            log.info("All users answered. CurrQuestionNumber: {}. NextQuestionNumber: {}. TotalQuestons: {}, CurrRound: {}. RoundIsOver: {}.",
-                    state.getQuestionNumber() - 1,
-                    state.getQuestionNumber(),
-                    state.getCurrRoundQuestionsSource().get().size(),
+    private void sendEventIfAllAnswered(String gameId, QuestionModel currQuestion, Optional<String> username) {
+        final var state = getState(gameId);
+        if (getState(gameId).areAllUsersAnswered()) {
+            eventBuses.get(gameId).fireEvent(new AllUsersAnsweredEvent(
+                    gameId,
+                    state.userSnapshotsSortedByResponseTime(),
                     state.getRoundNumber(),
-                    roundOver);
-            eventBuses.get(gameId).fireEvent(new AllUsersAnsweredEvent(gameId,
                     currQuestion,
-                    roundOver,
+                    state.lastQuestionInRound(),
                     state.getRoundNumber(),
                     state.getCountToRevealScoreTable()));
+        } else if (getState(gameId).getRoundNumber() == 3) {
+            eventBuses.get(gameId).fireEvent(new AllUsersAnsweredEvent(
+                    gameId,
+                    List.of(state.getUserState(username.orElseThrow()).snapshot()),
+                    state.getRoundNumber(),
+                    currQuestion,
+                    state.lastQuestionInRound(),
+                    state.getRoundNumber(),
+                    0
+            ));
         }
     }
+
 
     // GameFinishedEvent
     public void sendFinishGameEvent(String gameId) {
@@ -227,9 +220,7 @@ public class CleverestBroadcaster {
         if (question != null) {
             question.setAlreadyAnswered(true);
         }
-        if (gameState.getThirdQuestions().values().stream()
-                .flatMap(Collection::stream)
-                .allMatch(QuestionModel::isAlreadyAnswered)) {
+        if (gameState.getThirdQuestions().stream().allMatch(QuestionModel::isAlreadyAnswered)) {
             sendFinishGameEvent(gameId);
             return;
         }
@@ -269,7 +260,7 @@ public class CleverestBroadcaster {
     public void sendDeleteUserEvent(String gameId, String username) {
         final var state = getState(gameId);
         eventBuses.get(gameId).fireEvent(new DeleteUserEvent(gameId, state.removeUser(username)));
-        sendEventIfAllAnswered(gameId, state.getCurrentQuestion());
+        sendEventIfAllAnswered(gameId, state.getCurrentQuestion(), Optional.empty());
     }
 
     public void sendUserTextedEvent(String gameId, String username, String messageText) {
@@ -286,6 +277,10 @@ public class CleverestBroadcaster {
         final var state = getState(gameId);
         eventBuses.get(gameId).fireEvent(
                 new LiveReactionEvent(gameId, state.getUserState(user).profile(), emoji));
+    }
+
+    public void sendManualAnswerChangedEvent(final String gameId, final String username, final String text) {
+        eventBuses.get(gameId).fireEvent(new UserManualAnswerChangedEvent(gameId, username, text));
     }
 
     @Getter
@@ -390,17 +385,23 @@ public class CleverestBroadcaster {
     @EqualsAndHashCode(callSuper = true)
     @ToString(callSuper = true)
     public static class AllUsersAnsweredEvent extends CleverestGameEvent {
+        private final List<UserStateSnapshot> userStateSnapshots;
+        private final int roundNumber;
         private final QuestionModel question;
         private final boolean roundOver;
         private final int currentRound;
         private final int revealScoreAfter;
 
         public AllUsersAnsweredEvent(String gameId,
+                                     final List<UserStateSnapshot> userStateSnapshots,
+                                     final int roundNumber,
                                      QuestionModel question,
                                      boolean roundOver,
                                      int currentRound,
                                      int revealScoreAfter) {
             super(gameId);
+            this.userStateSnapshots = userStateSnapshots;
+            this.roundNumber = roundNumber;
             this.question = question;
             this.roundOver = roundOver;
             this.currentRound = currentRound;
@@ -445,14 +446,14 @@ public class CleverestBroadcaster {
     @ToString(callSuper = true)
     public static class RenderCategoriesEvent extends CleverestGameEvent implements UserEvent {
         private final UserGameState user;
-        private final Map<String, List<QuestionModel>> data;
+        private final List<QuestionModel> questions;
 
         public RenderCategoriesEvent(String gameId,
                                      UserGameState user,
-                                     Map<String, List<QuestionModel>> data) {
+                                     List<QuestionModel> questions) {
             super(gameId);
             this.user = user;
-            this.data = data;
+            this.questions = questions;
         }
 
         @Override
@@ -586,6 +587,22 @@ public class CleverestBroadcaster {
             super(gameId);
             this.userProfile = userProfile;
             this.emoji = emoji;
+        }
+    }
+
+
+    @Getter
+    @Accessors(fluent = true)
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
+    public static class UserManualAnswerChangedEvent extends CleverestGameEvent {
+        private final String username;
+        private final String answerText;
+
+        public UserManualAnswerChangedEvent(final String gameId, final String username, final String answerText) {
+            super(gameId);
+            this.username = username;
+            this.answerText = answerText;
         }
     }
 

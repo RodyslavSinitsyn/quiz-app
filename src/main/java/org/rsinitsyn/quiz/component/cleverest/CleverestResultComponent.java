@@ -22,7 +22,7 @@ import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.rsinitsyn.quiz.utils.QuizUtils;
-import org.rsinitsyn.quiz.utils.StaticValuesHolder;
+import org.rsinitsyn.quiz.utils.AudioHolder;
 
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.getIconFromAnswer;
 
@@ -116,7 +116,7 @@ public class CleverestResultComponent extends VerticalLayout {
                         String timeInSeconds = String.format("%.2f сек.", state.lastResponseTimeMs() / 1000.0);
                         layout.add(new Span("Время: " + timeInSeconds));
                         layout.getStyle().set("color", state.color());
-                        layout.getStyle().set("text-shadow", StaticValuesHolder.getFontBorder());
+                        layout.getStyle().set("text-shadow", AudioHolder.getFontBorder());
                         layout.setPadding(false);
                         return layout;
                     }))

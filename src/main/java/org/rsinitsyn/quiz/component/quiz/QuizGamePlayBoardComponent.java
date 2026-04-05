@@ -26,7 +26,6 @@ import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.utils.AudioUtils;
-import org.rsinitsyn.quiz.utils.QuizComponents;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +33,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.rsinitsyn.quiz.utils.QuizComponents.openConfirmDialog;
-import static org.rsinitsyn.quiz.utils.StaticValuesHolder.*;
+import static org.rsinitsyn.quiz.utils.AudioHolder.*;
 
 @Slf4j
 public class QuizGamePlayBoardComponent extends VerticalLayout implements BeforeLeaveObserver {
