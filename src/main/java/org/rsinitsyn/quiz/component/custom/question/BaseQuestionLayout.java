@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.custom.AudioPlayer;
 import org.rsinitsyn.quiz.component.custom.answer.AbstractAnswersLayout;
 import org.rsinitsyn.quiz.component.custom.answer.AbstractAnswersLayout.AnswerGivenEvent;
+import org.rsinitsyn.quiz.component.custom.answer.ManualInputAnswersLayout;
 import org.rsinitsyn.quiz.component.custom.event.StubEvent;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
@@ -101,11 +102,15 @@ public class BaseQuestionLayout extends VerticalLayout {
     }
 
     private void renderAnswersLayout(QuestionLayoutRequest request) {
-        answersLayout = createAnswerLayout(AnswerLayoutRequest.builder()
+        final var answerLayoutRequest = AnswerLayoutRequest.builder()
                 .question(questionModel)
                 .hintsState(request.hintsState())
-                .build());
+                .build();
+        answersLayout = request.manualAnswer()
+                ? new ManualInputAnswersLayout(answerLayoutRequest)
+                : createAnswerLayout(answerLayoutRequest);
         answersLayout.setEnabled(!host);
+        answersLayout.setVisible(!request.hideAnswers());
         add(answersLayout);
     }
 

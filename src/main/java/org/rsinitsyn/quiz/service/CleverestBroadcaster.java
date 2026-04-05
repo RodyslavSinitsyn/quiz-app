@@ -170,7 +170,12 @@ public class CleverestBroadcaster {
         getState(gameId).calculateUsersStatistic();
         getState(gameId).updateUserPositions();
         log.info("Game finished: {}", gameId);
-        eventBuses.get(gameId).fireEvent(new CleverestBroadcaster.GameFinishedEvent(gameId));
+        eventBuses.get(gameId).fireEvent(new GameFinishedEvent(gameId));
+    }
+
+    public void sendRenderResultsEvent(String gameId) {
+        log.info("Render results: {}", gameId);
+        eventBuses.get(gameId).fireEvent(new RenderResultsEvent(gameId));
     }
 
     // GetQuestionEvent
@@ -215,7 +220,7 @@ public class CleverestBroadcaster {
     // RenderCategoriesEvent
     public void sendRenderCategoriesEvent(String gameId, QuestionModel question, boolean initial) {
         log.info("Sending  categories for render, {}", gameId);
-        CleverestGameState gameState = getState(gameId);
+        final var gameState = getState(gameId);
         if (initial) {
             gameState.prepareUsersToAnswerOrder();
         }
@@ -422,9 +427,7 @@ public class CleverestBroadcaster {
     @ToString(callSuper = true)
     public static class GetQuestionEvent extends CleverestGameEvent {
         private final QuestionModel question;
-        private final int questionNumber;
-        private final int totalQuestionsInRound;
-        private final int roundNumber;
+        private final QuestionDetails details;
 
         public GetQuestionEvent(String gameId,
                                 QuestionModel question,
@@ -433,9 +436,7 @@ public class CleverestBroadcaster {
                                 int roundNumber) {
             super(gameId);
             this.question = question;
-            this.questionNumber = questionNumber;
-            this.totalQuestionsInRound = totalQuestionsInRound;
-            this.roundNumber = roundNumber;
+            this.details = new QuestionDetails(questionNumber, totalQuestionsInRound, roundNumber);
         }
     }
 
@@ -512,7 +513,7 @@ public class CleverestBroadcaster {
     @Getter
     @EqualsAndHashCode(of = {"question", "username"}, callSuper = true)
     @ToString(of = {"question", "username"}, callSuper = true)
-    public static class QuestionChoosenEvent extends CleverestGameEvent {
+    public static class QuestionChoosenEvent extends CleverestGameEvent implements UserEvent {
         private final QuestionModel question;
         private final String username;
 
@@ -522,6 +523,11 @@ public class CleverestBroadcaster {
             super(gameId);
             this.question = question;
             this.username = username;
+        }
+
+        @Override
+        public String username() {
+            return getUsername();
         }
     }
 
@@ -580,6 +586,15 @@ public class CleverestBroadcaster {
             super(gameId);
             this.userProfile = userProfile;
             this.emoji = emoji;
+        }
+    }
+
+    @Getter
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
+    public static class RenderResultsEvent extends CleverestGameEvent {
+        public RenderResultsEvent(final String gameId) {
+            super(gameId);
         }
     }
 

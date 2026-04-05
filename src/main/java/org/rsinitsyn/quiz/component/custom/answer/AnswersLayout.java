@@ -46,7 +46,6 @@ public class AnswersLayout extends AbstractAnswersLayout {
     @Override
     protected List<Component> getHintsComponents() {
         final var halfHint = new Button("50 на 50");
-        halfHint.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         halfHint.addClickListener(event -> {
             removeWrongAnswersAndRerender(2);
             hintsLayout.setEnabled(false);
@@ -55,7 +54,6 @@ public class AnswersLayout extends AbstractAnswersLayout {
         halfHint.setEnabled(!hintsState.hintsUsage().get(HALF));
 
         final var threeLeftHint = new Button("3/4");
-        threeLeftHint.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         threeLeftHint.addClickListener(event -> {
             removeWrongAnswersAndRerender(1);
             hintsLayout.setEnabled(false);

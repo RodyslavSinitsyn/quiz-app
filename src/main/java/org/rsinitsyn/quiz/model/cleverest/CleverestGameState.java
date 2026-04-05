@@ -115,8 +115,7 @@ public class CleverestGameState {
         final var currentQuestion = getCurrentQuestion();
         final var questionNumber = getQuestionNumber() + 1;
         return new UserRefreshState(currentQuestion,
-                questionNumber,
-                currRoundQuestionsSource.get().size(),
+                new QuestionDetails(questionNumber, currRoundQuestionsSource.get().size(), roundNumber),
                 userState.isAnswerGiven());
     }
 
@@ -151,7 +150,9 @@ public class CleverestGameState {
     }
 
     public Map<String, List<AnswerStatus>> getLastAnswers() {
-        final var lastN = revealPlan.getLastN(questionNumber);
+        final var lastN = roundNumber == 3
+                ? 1
+                : revealPlan.getLastN(questionNumber);
 
         return history.entrySet().stream()
                 .skip(Math.max(0, history.size() - lastN))
@@ -172,6 +173,13 @@ public class CleverestGameState {
     // TODO: Reduce to Snapshot not full sate
     public List<UserGameState> usersSortedByScore() {
         return users.values().stream()
+                .sorted(Comparator.comparingInt(UserGameState::totalScore).reversed())
+                .toList();
+    }
+
+    public List<UserGameState> usersSortedByScore(List<UserStateSnapshot> users) {
+        return users.stream()
+                .map(s -> this.users.get(s.username()))
                 .sorted(Comparator.comparingInt(UserGameState::totalScore).reversed())
                 .toList();
     }

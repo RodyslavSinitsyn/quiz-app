@@ -22,10 +22,12 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 import static java.util.concurrent.CompletableFuture.delayedExecutor;
 import static java.util.concurrent.CompletableFuture.runAsync;
@@ -154,6 +156,20 @@ public final class QuizUtils {
                 () -> {},
                 delayedExecutor(seconds, SECONDS)
         );
+    }
+
+    public static CompletableFuture<Void> waitUntil(Supplier<Boolean> condition,
+                                                    Duration interval) {
+        return CompletableFuture.runAsync(() -> {
+            while (!condition.get()) {
+                try {
+                    Thread.sleep(interval.toMillis());
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(e);
+                }
+            }
+        });
     }
 
     public static String resolveLocalIp() {

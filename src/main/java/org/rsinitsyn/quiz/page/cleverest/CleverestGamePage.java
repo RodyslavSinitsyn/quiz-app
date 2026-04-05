@@ -14,10 +14,10 @@ import org.rsinitsyn.quiz.component.cleverest.CleverestGamePlayBoardComponent;
 import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.page.MainPage;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
+import org.rsinitsyn.quiz.service.CleverestBroadcaster.GameFinishedEvent;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
-import org.rsinitsyn.quiz.utils.QuizUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -112,25 +112,20 @@ public class CleverestGamePage extends VerticalLayout
                     event -> gameService.submitAnswersBatch(
                             gameId, event.getQuestion(), event.getUserStateSnapshots())));
 
-            subscriptions.add(broadcaster.subscribe(gameId,
-                    CleverestBroadcaster.GameFinishedEvent.class,
+            subscriptions.add(broadcaster.subscribe(gameId, GameFinishedEvent.class,
                     event -> {
                         gameService.finishGame(gameId);
-                        QuizUtils.runActionInUi(Optional.of(ui),
-                                () -> ui.navigate(CleverestResultsPage.class, gameId));
+                        broadcaster.sendRenderResultsEvent(gameId);
                     }));
 
-            subscriptions.add(playBoard.addUpdateQuestionGradeEventListener(event ->
-                    questionService.updateQuestionGrade(
+            subscriptions.add(playBoard.addUpdateQuestionGradeEventListener(
+                    event -> questionService.updateQuestionGrade(
                             event.question().getId(),
                             event.username(),
                             event.grade())));
-        } else {
-            subscriptions.add(broadcaster.subscribe(gameId,
-                    CleverestBroadcaster.GameFinishedEvent.class,
-                    event -> QuizUtils.runActionInUi(Optional.of(ui),
-                            () -> ui.navigate(CleverestResultsPage.class, gameId))));
         }
+        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.RenderResultsEvent.class,
+                event -> runActionInUi(Optional.of(ui), () -> ui.navigate(CleverestResultsPage.class, gameId))));
         logState(this, attachEvent.getUI(), "onAttach", false, subscriptions);
     }
 
@@ -147,8 +142,9 @@ public class CleverestGamePage extends VerticalLayout
         if (gameId == null || broadcaster.getState(gameId) == null) {
             return;
         }
-        final var gameEntity = gameService.findById(gameId);
-        if (gameEntity == null || gameEntity.getStatus() != GameStatus.STARTED) {
+        final var status = gameService.getStatus(gameId);
+        if (status == null || status == GameStatus.FINISHED) {
+            event.postpone().proceed();
             return;
         }
         logState(this, event.getUI(), "beforeLeave", true, subscriptions);

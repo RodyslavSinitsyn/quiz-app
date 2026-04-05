@@ -74,7 +74,7 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
             return;
         }
         hintsLayout.setAlignItems(Alignment.CENTER);
-        hintsLayout.add(getHintsComponents());
+        hintsLayout.add(hintComponents);
         add(hintsLayout);
     }
 

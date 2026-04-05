@@ -63,8 +63,6 @@ public class CleverestResultsPage extends VerticalLayout
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
-        if (gameId == null) return;
-
         final var state = broadcaster.getState(gameId);
         final var resultComponent = new CleverestResultComponent();
         resultComponent.setState(

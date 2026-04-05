@@ -18,4 +18,6 @@ public class QuestionLayoutRequest {
    private String imageHeight = "25em";
    private HintsState hintsState = disabledHintsState();
    private boolean renderCategory = true;
+   private boolean manualAnswer = false;
+   private boolean hideAnswers = false;
 }

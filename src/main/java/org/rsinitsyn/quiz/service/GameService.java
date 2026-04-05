@@ -39,6 +39,10 @@ public class GameService {
         return gameDao.existsById(UUID.fromString(id));
     }
 
+    public GameStatus getStatus(String gameId) {
+        return gameDao.findById(UUID.fromString(gameId)).map(GameEntity::getStatus).orElse(null);
+    }
+
     @Transactional(readOnly = true)
     public GameEntity findById(String id) {
         return gameDao.findByIdJoinQuestions(UUID.fromString(id)).stream()

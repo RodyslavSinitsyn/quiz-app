@@ -19,34 +19,32 @@ public class PageValidator {
 
     private final GameService gameService;
 
-    public CheckResult validate(String gameId,
-                                GameStatus expectedStatus) {
+    public ValidationResult validate(String gameId,
+                                     GameStatus expectedStatus) {
         if (!validUuid(gameId) || !gameService.exist(gameId)) {
-            return CheckResult.notExist();
+            return ValidationResult.notExist();
         }
-        final var game = gameService.findById(gameId);
-        if (game.getStatus() == expectedStatus) {
-            return CheckResult.builder()
-                    .game(game)
+        final var currentStatus = gameService.getStatus(gameId);
+        if (currentStatus == expectedStatus) {
+            return ValidationResult.builder()
+                    .game(gameService.findById(gameId))
                     .navigationRequired(false)
                     .navigateAction(Optional.empty())
                     .notificationMessage(Optional.empty())
                     .build();
         }
-        return switch (game.getStatus()) {
-            case NOT_STARTED -> redirect(game, e -> e.forwardTo(CleverestWaitingPage.class, gameId), "Ждем игроков");
-            case STARTED -> redirect(game, e -> e.forwardTo(CleverestGamePage.class, gameId), "Игра уже идет");
-            case FINISHED -> redirect(game, e -> e.forwardTo(CleverestResultsPage.class, gameId), "Игра закончена");
+        return switch (currentStatus) {
+            case NOT_STARTED -> redirect(e -> e.forwardTo(CleverestWaitingPage.class, gameId), "Ждем игроков");
+            case STARTED -> redirect(e -> e.forwardTo(CleverestGamePage.class, gameId), "Игра уже идет");
+            case FINISHED -> redirect(e -> e.forwardTo(CleverestResultsPage.class, gameId), "Игра закончена");
         };
     }
 
-    private CheckResult redirect(
-            final GameEntity game,
+    private ValidationResult redirect(
             final Consumer<BeforeEnterEvent> redirectAction,
             final String message
     ) {
-        return CheckResult.builder()
-                .game(game)
+        return ValidationResult.builder()
                 .navigationRequired(true)
                 .navigateAction(Optional.of(redirectAction))
                 .notificationMessage(Optional.of(message))
@@ -63,13 +61,13 @@ public class PageValidator {
     }
 
     @Builder
-    public record CheckResult(GameEntity game,
-                              boolean navigationRequired,
-                              Optional<Consumer<BeforeEnterEvent>> navigateAction,
-                              Optional<String> notificationMessage) {
+    public record ValidationResult(GameEntity game,
+                                   boolean navigationRequired,
+                                   Optional<Consumer<BeforeEnterEvent>> navigateAction,
+                                   Optional<String> notificationMessage) {
 
-        public static CheckResult notExist() {
-            return CheckResult.builder()
+        public static ValidationResult notExist() {
+            return ValidationResult.builder()
                     .navigationRequired(true)
                     .notificationMessage(Optional.of("Такой игры нет :("))
                     .navigateAction(Optional.of(e -> e.forwardTo(MainPage.class)))
