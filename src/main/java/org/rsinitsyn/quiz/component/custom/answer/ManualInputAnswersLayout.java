@@ -30,7 +30,8 @@ public class ManualInputAnswersLayout extends AbstractAnswersLayout {
     protected AnswerGivenEvent createAnswerGivenEvent() {
         return AnswerGivenEvent.builder()
                 .answers(Set.of(answerField.getValue()))
-                .result(new AnswerResult(AnswerStatus.UNKNOWN, question.getPoints(), 0))
+                // TODO: Link points with Betting here, later
+                .result(new AnswerResult(AnswerStatus.UNKNOWN, 1, 0))
                 .manuallyApprove(true)
                 .build();
     }

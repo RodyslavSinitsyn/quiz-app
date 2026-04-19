@@ -370,7 +370,7 @@ class CleverestBroadcasterTest implements QuizTestFixture {
         final var initialQuestionRenderTime = broadcaster.getState(gameId).getQuestionRenderedTime();
 
         // when
-        broadcaster.sendQuestionChoosenEvent(gameId, q, broadcaster.getState(gameId).getUserState("Alice"));
+        broadcaster.sendQuestionChosenEvent(gameId, q, broadcaster.getState(gameId).getUserState("Alice"));
 
         // then
         baseAssertions();

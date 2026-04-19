@@ -41,7 +41,8 @@ public class CleverestGameState {
     private final List<UserMessage> userMessages = new ArrayList<>();
 
     // mutable
-    private Iterator<UserGameState> usersToAnswerOrder = null;
+    private Iterator<UserGameState> thirdRoundUsersOrder = null;
+    private UserGameState thirdRoundCurrentUser = null;
     private LocalDateTime questionRenderedTime;
     private int roundNumber = 1;
     private int questionNumber = 0;
@@ -151,9 +152,7 @@ public class CleverestGameState {
     }
 
     public Map<String, List<AnswerStatus>> getLastAnswers() {
-        final var lastN = roundNumber == 3
-                ? 1
-                : revealPlan.getLastN(questionNumber);
+        final var lastN = revealPlan.getLastN(questionNumber);
 
         return history.entrySet().stream()
                 .skip(Math.max(0, history.size() - lastN))
@@ -196,7 +195,6 @@ public class CleverestGameState {
         if (questionNumber == currRoundQuestionsSource.get().size()) {
             return null;
         }
-        refreshQuestionRenderedTime();
         return currRoundQuestionsSource.get().get(questionNumber);
     }
 
@@ -210,12 +208,23 @@ public class CleverestGameState {
         if (roundNumber == 2) {
             currRoundQuestionsSource = () -> secondQuestions;
             revealPlan = RoundRevealPlan.of(currRoundQuestionsSource.get().size(), REVEALS_COUNT);
+        } else if (roundNumber == 3) {
+            currRoundQuestionsSource = () -> thirdQuestions;
+            revealPlan = RoundRevealPlan.of(
+                    thirdQuestions.size(),
+                    thirdQuestions.size());
         }
         return roundNumber > 3;
     }
 
     public void prepareUsersToAnswerOrder() {
-        usersToAnswerOrder = Iterables.cycle(usersSortedByScore()).iterator();
+        if (thirdRoundUsersOrder == null) {
+            thirdRoundUsersOrder = Iterables.cycle(usersSortedByScore()).iterator();
+        }
+    }
+
+    public void updateThirdRoundCurrentUser() {
+        thirdRoundCurrentUser = thirdRoundUsersOrder.next();
     }
 
     public void increaseQuestionNumber() {
@@ -282,5 +291,9 @@ public class CleverestGameState {
                 .forEach((snapshot, avgTime) -> {
                     users.get(snapshot.username()).setAvgResponseTime(avgTime); // todo: remove setter
                 });
+    }
+
+    public void updateCurrentQuestionNumber(final QuestionModel question) {
+        questionNumber = currRoundQuestionsSource.get().indexOf(question);
     }
 }

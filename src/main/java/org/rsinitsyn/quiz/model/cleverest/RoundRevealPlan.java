@@ -41,7 +41,6 @@ public record RoundRevealPlan(List<Integer> windows) {
 
         if (revealIndex == -1) {
             return revealIndex;
-//            throw new IllegalStateException("Current question is not reveal point");
         }
 
         if (revealIndex == 0) {

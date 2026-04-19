@@ -4,21 +4,26 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.html.RangeInput;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.shared.Registration;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.Accessors;
+import org.checkerframework.checker.nullness.Opt;
 import org.rsinitsyn.quiz.component.custom.event.StubEvent;
 import org.rsinitsyn.quiz.model.AnswerHint;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.HintsState;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.answer.AnswerBet;
 import org.rsinitsyn.quiz.model.answer.AnswerResult;
 
 import java.util.*;
 
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.horizontalLayoutBetween;
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.submitButton;
 
 public abstract class AbstractAnswersLayout extends VerticalLayout {
@@ -27,6 +32,7 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
     protected final Optional<String> username;
     protected final List<QuestionModel.AnswerModel> answers;
     protected HintsState hintsState;
+    protected Optional<AnswerBet> answerBet;
 
     // Components
     protected final HorizontalLayout hintsLayout = new HorizontalLayout();
@@ -38,6 +44,7 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
         this.username = request.getUsername();
         this.answers = new ArrayList<>(request.getQuestion().getShuffledAnswers());
         this.hintsState = request.getHintsState();
+        this.answerBet = request.getAnswerBet();
         setAlignItems(Alignment.STRETCH);
     }
 
@@ -48,6 +55,7 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
 
     private void renderComponents() {
         renderHintsLayout();
+        renderBets();
         renderAnswers();
         renderSubmitButton();
     }
@@ -76,6 +84,29 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
         hintsLayout.setAlignItems(Alignment.CENTER);
         hintsLayout.add(hintComponents);
         add(hintsLayout);
+    }
+
+    protected void renderBets() {
+        if (answerBet.isEmpty()) {
+            return;
+        }
+        final var bet = answerBet.get();
+
+        final var slider = new RangeInput();
+        slider.setWidthFull();
+        slider.setMax(bet.min());
+        slider.setMax(bet.max());
+        slider.setStep(1.0);
+
+        final var labelText = new Span("+1 | -1");
+
+        slider.addValueChangeListener(event -> {
+            final var multiplier = event.getValue().intValue();
+            labelText.setText("+%d | -%d".formatted(multiplier, multiplier));
+            fireEvent(new BetChangedEvent(username.orElseThrow(), multiplier));
+        });
+
+        add(horizontalLayoutBetween(labelText, slider));
     }
 
     protected void removeWrongAnswersAndRerender(int answersToRemove) {
@@ -120,6 +151,18 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
         }
     }
 
+    @Getter
+    @Accessors(fluent = true)
+    public static class BetChangedEvent extends StubEvent {
+        private final String username;
+        private final int value;
+
+        public BetChangedEvent(final String username, final int value) {
+            this.username = username;
+            this.value = value;
+        }
+    }
+
     public Registration addAnswerGivenListener(ComponentEventListener<AnswerGivenEvent> listener) {
         return getEventBus().addListener(AnswerGivenEvent.class, listener);
     }
@@ -130,5 +173,9 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
 
     public Registration addInputChangedListener(ComponentEventListener<InputChangedEvent> listener) {
         return getEventBus().addListener(InputChangedEvent.class, listener);
+    }
+
+    public Registration addBetChangedListener(ComponentEventListener<BetChangedEvent> listener) {
+        return getEventBus().addListener(BetChangedEvent.class, listener);
     }
 }

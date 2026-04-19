@@ -179,12 +179,10 @@ public final class CleverestComponents {
         return span;
     }
 
-    public static Span userInfoLightSpan(String text, String... classes) {
+    public static Span infoSpan(String text, String... classes) {
         Span span = new Span();
         span.setText(text);
-        span.addClassNames(
-                LumoUtility.FontWeight.LIGHT,
-                LumoUtility.TextAlignment.CENTER);
+        span.addClassNames(LumoUtility.TextAlignment.CENTER);
         span.addClassNames(classes);
         return span;
     }
@@ -254,36 +252,44 @@ public final class CleverestComponents {
 
     public static HorizontalLayout manualScoreControl(Runnable approveAction,
                                                       Runnable rejectAction,
-                                                      int maxClicks,
-                                                      int pointsPerClick) {
-        final var clicks = new AtomicInteger();
+                                                      int maxPoints) {
         final var score = new AtomicInteger();
 
         final var scoreLabel = new Span("0");
 
         final var minusButton = iconButton(VaadinIcon.MINUS.create(), event -> {
-            if (clicks.get() > 0) {
-                clicks.decrementAndGet();
-                score.addAndGet(-pointsPerClick);
+            if (score.get() > -maxPoints) {
+                score.decrementAndGet();
                 rejectAction.run();
             }
         });
         minusButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
 
         final var plusButton = iconButton(VaadinIcon.PLUS.create(), event -> {
-            if (maxClicks <= 0 || clicks.get() < maxClicks) {
-                clicks.incrementAndGet();
-                score.addAndGet(pointsPerClick);
+            if (score.get() < maxPoints) {
+                score.incrementAndGet();
                 approveAction.run();
             }
         });
         plusButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
 
-        minusButton.addClickListener(event -> refreshManualScoreControl(score, clicks, scoreLabel, minusButton, plusButton, maxClicks));
-        plusButton.addClickListener(event -> refreshManualScoreControl(score, clicks, scoreLabel, minusButton, plusButton, maxClicks));
-        refreshManualScoreControl(score, clicks, scoreLabel, minusButton, plusButton, maxClicks);
+        minusButton.addClickListener(event -> refreshManualScoreControl(score, scoreLabel, minusButton, plusButton, maxPoints));
+        plusButton.addClickListener(event -> refreshManualScoreControl(score, scoreLabel, minusButton, plusButton, maxPoints));
+        refreshManualScoreControl(score, scoreLabel, minusButton, plusButton, maxPoints);
 
         return horizontalLayout(JustifyContentMode.END, minusButton, scoreLabel, plusButton);
+    }
+
+    private static void refreshManualScoreControl(AtomicInteger score,
+                                                  Span scoreLabel,
+                                                  Button minusButton,
+                                                  Button plusButton,
+                                                  int maxPoints) {
+        final var currentScore = score.get();
+
+        scoreLabel.setText(String.valueOf(currentScore));
+        minusButton.setEnabled(currentScore > -maxPoints);
+        plusButton.setEnabled(currentScore < maxPoints);
     }
 
     private static void refreshManualScoreControl(AtomicInteger score,
@@ -396,8 +402,7 @@ public final class CleverestComponents {
                 final var manualScoreWidget = manualScoreControl(
                         () -> approveModel.approve().accept(userStateSnapshot.username()),
                         () -> approveModel.reject().accept(userStateSnapshot.username()),
-                        approveModel.clickLimit(),
-                        approveModel.pointsPerClick());
+                        approveModel.maxPoints());
                 userProfileWithAnswer.add(manualScoreWidget);
             }
             answersLayout.add(userProfileWithAnswer);

@@ -31,6 +31,9 @@ public class ImageRequestHandler implements RequestHandler, VaadinServiceInitLis
         final var filename = path.substring(PATH.length());
         final var data = imageCache.load(filename);
 
+        if (data == null) {
+            return false;
+        }
         response.setContentType(resolveContentType(filename));
         response.setCacheTime(CACHE_TIME);
         response.getOutputStream().write(data);

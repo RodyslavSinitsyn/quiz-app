@@ -23,7 +23,7 @@ public class ImageCacheService {
         try {
             return cache.get(filename, () -> readFromDisk(filename));
         } catch (ExecutionException e) {
-            throw new RuntimeException(e);
+            return null;
         }
     }
 

@@ -2,6 +2,7 @@ package org.rsinitsyn.quiz.model;
 
 import lombok.Builder;
 import lombok.Getter;
+import org.rsinitsyn.quiz.model.answer.AnswerBet;
 
 import java.util.Optional;
 
@@ -15,4 +16,6 @@ public class AnswerLayoutRequest {
     private Optional<String> username = Optional.empty();
     @Builder.Default
     private HintsState hintsState = disabledHintsState();
+    @Builder.Default
+    private Optional<AnswerBet> answerBet = Optional.empty();
 }

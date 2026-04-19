@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.custom.Emoji;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.answer.AnswerBet;
 import org.rsinitsyn.quiz.model.cleverest.*;
 import org.rsinitsyn.quiz.model.sound.GameSound;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
@@ -93,6 +94,19 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         logState(this, ui, "SetState", false, subscriptions);
     }
 
+    private void showRoundRules(String rulesText) {
+        openDialog(horizontalLayoutCenter(new Span(rulesText)), "", gameHost ? this::renderCurrentQuestion : () -> {
+        });
+    }
+
+    private void renderCurrentQuestion() {
+        if (broadcaster.getState(gameId).getRoundNumber() == 3) {
+            broadcaster.sendRenderCategoriesEvent(gameId, null);
+        } else {
+            broadcaster.sendCurrentQuestionEvent(gameId);
+        }
+    }
+
     /**
      * Restores the current question from broadcaster state during a page refresh.
      * Does NOT call getCurrentQuestion() to avoid the side-effect of resetting
@@ -100,19 +114,28 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
      * For round 3 (categories), renders the categories table instead of a question.
      */
     private void restoreCurrentQuestion() {
-        CleverestGameState state = broadcaster.getState(gameId);
+        final var state = broadcaster.getState(gameId);
         final var roundNumber = state.getRoundNumber();
-        if (roundNumber == 3) {
-            // Round 3 is categories-based — nothing to restore here,
-            // the RenderCategoriesEvent will re-render on next approve.
-            // Just show a waiting message for players.
-            if (!gameHost) {
-                midContainer.add(userInfoLightSpan("В ожидании вопроса", LumoUtility.TextColor.SECONDARY, MOBILE_LARGE_FONT));
-            }
-            return;
-        }
         final var userRefreshState = state.getUserRefreshState(getLoggedUser());
-        renderQuestionLayout(userRefreshState.question(), userRefreshState.details());
+        if (roundNumber == 3) {
+            if (state.getThirdRoundCurrentUser().getUsername().equals(getLoggedUser())) {
+                // todo: reduce copy-past
+                renderQuestionLayout(new QuestionLayoutRequest()
+                                .question(userRefreshState.question())
+                                .host(false)
+                                .username(Optional.of(getLoggedUser()))
+                                .renderCategory(true)
+                                .manualAnswer(true)
+                                .answerBet(Optional.of(new AnswerBet(1, 5)))
+                                .imageHeight(MEDIUM_IMAGE_HEIGHT),
+                        new QuestionDetails(1, 1, 3));
+            } else {
+                midContainer.add(horizontalLayoutCenter(
+                        infoSpan("В ожидании вопроса", MOBILE_LARGE_FONT)));
+            }
+        } else {
+            renderQuestionLayout(userRefreshState.question(), userRefreshState.details());
+        }
         midContainer.setEnabled(!userRefreshState.answerGiven());
     }
 
@@ -129,7 +152,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         subscriptions.add(broadcaster.subscribe(gameId, UserAnsweredEvent.class, event ->
                 runActionInUi(ui, () -> {
                     if (gameHost) {
-                        updateUserAnswerGiven(event.username(), event.lastResponseTimeSec());
+                        udpateUserTopDetails(event.username(), event.lastResponseTimeSec());
                     }
                     if (doneByAuthenticated(event)) {
                         midContainer.setEnabled(false);
@@ -163,7 +186,8 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                             midContainer.setEnabled(true);
                             renderFlexCategoriesTable(event.getUser(), event.getQuestions());
                         } else {
-                            midContainer.add(userInfoLightSpan("В ожидании вопроса", LumoUtility.TextColor.SECONDARY, MOBILE_LARGE_FONT));
+                            midContainer.add(horizontalLayoutCenter(
+                                    infoSpan("В ожидании вопроса", MOBILE_LARGE_FONT)));
                         }
                     }
                 })));
@@ -186,6 +210,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                         .username(Optional.ofNullable(event.getUsername()))
                                         .renderCategory(true)
                                         .manualAnswer(true)
+                                        .answerBet(Optional.of(new AnswerBet(1, 5)))
                                         .imageHeight(MEDIUM_IMAGE_HEIGHT),
                                 new QuestionDetails(1, 1, 3));
                     }
@@ -215,7 +240,10 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                         playStaticSoundAsync(SUBMIT_ANSWER_SHORT_AUDIOS.next()).thenRun(() ->
                                 runActionInUi(ui, () -> {
                                     final Runnable closeAnswersAction = event.getCurrentRound() == 3
-                                            ? () -> broadcaster.sendRenderCategoriesEvent(gameId, event.getQuestion(), false)
+                                            ? () -> {
+                                        broadcaster.getState(gameId).updateThirdRoundCurrentUser();
+                                        broadcaster.sendRenderCategoriesEvent(gameId, event.getQuestion());
+                                    }
                                             : () -> {
                                         if (event.isRoundOver()) {
                                             broadcaster.sendNextRoundEvent(gameId);
@@ -248,9 +276,9 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         subscriptions.add(broadcaster.subscribe(gameId, LiveReactionEvent.class, event ->
                 runActionInUi(ui, () -> spawnReaction(ui, event.getEmoji()))));
 
-        subscriptions.add(broadcaster.subscribe(gameId, UserManualAnswerChangedEvent.class, event ->
+        subscriptions.add(broadcaster.subscribe(gameId, UpdateUserDetailsEvent.class, event ->
                 runActionInUi(ui, () -> {
-                    updateUserAnswerGiven(event.username(), event.answerText());
+                    udpateUserTopDetails(event.username(), event.updateText());
                 })));
     }
 
@@ -258,24 +286,22 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         if (!question.isManualApprove()) {
             return Optional.empty();
         }
-        final var clicksLimit = broadcaster.getState(gameId).getRoundNumber() == 3
-                ? 1
+        final var round3 = broadcaster.getState(gameId).getRoundNumber() == 3;
+        final var maxPoints = round3
+                ? question.getPoints()
                 : switch (question.getType()) {
             case TOP -> question.getAnswers().size();
             case LINK -> question.getAnswers().size() / 2;
             case GUESS_PHOTO -> question.getHints().size();
             default -> 1;
         };
-        final var pointsPerClick = broadcaster.getState(gameId).getRoundNumber() == 3
-                ? question.getPoints() // todo: add betting
-                : 1;
-        return Optional.of(new ManualApprove(clicksLimit, pointsPerClick,
+        return Optional.of(new ManualApprove(maxPoints,
                 username -> {
-                    broadcaster.getState(gameId).getUserState(username).increaseScoreAndMarkCorrect(pointsPerClick);
+                    broadcaster.getState(gameId).getUserState(username).increaseScoreAndMarkCorrect(1);
                     broadcaster.sendUpdatePersonalScoreEvent(gameId);
                 },
                 username -> {
-                    broadcaster.getState(gameId).getUserState(username).decreaseScoreAndMarkWrong(pointsPerClick);
+                    broadcaster.getState(gameId).getUserState(username).decreaseScoreAndMarkWrong(1);
                     broadcaster.sendUpdatePersonalScoreEvent(gameId);
                 }));
     }
@@ -309,7 +335,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         });
     }
 
-    private void updateUserAnswerGiven(String username, String updateText) {
+    private void udpateUserTopDetails(String username, String updateText) {
         topContainerUserComponent(username).ifPresent(component -> {
             component.removeAll();
             component.addComponentAsFirst(userCheckIcon());
@@ -328,22 +354,6 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 .filter(c -> c.getId().map(id -> id.equals("top-container-user-" + username)).orElse(false))
                 .map(c -> (HorizontalLayout) c)
                 .findAny();
-    }
-
-    private void showRoundRules(String rulesText) {
-        openDialog(horizontalLayoutCenter(new Span(rulesText)), "", gameHost ? this::renderCurrentQuestion : () -> {
-        });
-    }
-
-    private void renderCurrentQuestion() {
-        if (!gameHost) {
-            return;
-        }
-        if (broadcaster.getState(gameId).getRoundNumber() == 3) {
-            broadcaster.sendRenderCategoriesEvent(gameId, null, true);
-        } else {
-            broadcaster.sendCurrentQuestionEvent(gameId);
-        }
     }
 
     private void renderQuestionLayout(QuestionModel questionModel, QuestionDetails details) {
@@ -376,8 +386,12 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
             QuizUtils.wait(1).thenRun(() ->
                     runActionInUi(getUI(), () -> openQuestionGradeDialog(questionModel)));
         });
+
         questionLayout.getAnswersLayout().addInputChangedListener(event ->
-                broadcaster.sendManualAnswerChangedEvent(gameId, event.username(), event.text()));
+                broadcaster.sendUpdateUserDetailsEvent(gameId, event.username(), event.text()));
+
+        questionLayout.getAnswersLayout().addBetChangedListener(event ->
+                broadcaster.sendUpdateUserBetEvent(gameId, event.username(), event.value()));
 
         midContainer.add(questionLayout);
     }
@@ -446,7 +460,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
     private Button createCategoryQuestionButton(UserGameState userToAnswer, QuestionModel question) {
         final var button = primaryButton(
                 question.getCategoryName(),
-                event -> broadcaster.sendQuestionChoosenEvent(gameId, question, userToAnswer));
+                event -> broadcaster.sendQuestionChosenEvent(gameId, question, userToAnswer));
         button.setEnabled(!question.isAlreadyAnswered());
         button.addClassNames(MOBILE_MEDIUM_FONT);
         return button;
@@ -474,7 +488,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                         .map(UserGameState::snapshot)
                         .toList(),
                 broadcaster.getState(gameId).getLastAnswers())
-                : new VerticalLayout(userInfoLightSpan(
+                : new VerticalLayout(infoSpan(
                 "Вопросов до таблицы результатов: %d".formatted(revealScoreAfter), MOBILE_MEDIUM_FONT));
 
         openDialog(usersScoreLayout, "Таблица результатов", onCloseAction);

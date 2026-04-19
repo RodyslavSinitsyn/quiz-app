@@ -34,6 +34,7 @@ public class UserGameState implements Comparable<UserGameState> {
     private int betScore;
     @Setter
     private Double avgResponseTime;
+    private int betMultiplier = 1;
 
     public static UserGameState userGameState(String username,
                                               String color,
@@ -54,6 +55,14 @@ public class UserGameState implements Comparable<UserGameState> {
 
     public void updateLastPosition(int position) {
         this.lastPosition = position;
+    }
+
+    public void updateBetMultiplier(int betMultiplier) {
+        this.betMultiplier = betMultiplier;
+    }
+
+    public void updateLastAnswer(String lastAnswerText) {
+        this.lastAnswerText = lastAnswerText;
     }
 
     public void submitAnswer(String answerText,

@@ -129,6 +129,10 @@ public class CleverestBroadcaster {
             return;
         }
         final var roundNumber = state.getRoundNumber();
+        if (roundNumber == 3) {
+            state.prepareUsersToAnswerOrder();
+            state.updateThirdRoundCurrentUser();
+        }
         log.info("Send next round {}", roundNumber);
         eventBuses.get(gameId).fireEvent(new RoundInfoEvent(gameId, roundNumber, state.getRoundRules().get(roundNumber)));
     }
@@ -145,9 +149,12 @@ public class CleverestBroadcaster {
                     state.getRoundNumber(),
                     state.getCountToRevealScoreTable()));
         } else if (getState(gameId).getRoundNumber() == 3) {
+            // todo: maybe move from here points for question
+            final var userState = state.getUserState(username.orElseThrow());
+            currQuestion.setPoints(userState.getBetMultiplier());
             eventBuses.get(gameId).fireEvent(new AllUsersAnsweredEvent(
                     gameId,
-                    List.of(state.getUserState(username.orElseThrow()).snapshot()),
+                    List.of(userState.snapshot()),
                     state.getRoundNumber(),
                     currQuestion,
                     state.lastQuestionInRound(),
@@ -175,7 +182,7 @@ public class CleverestBroadcaster {
     public void sendCurrentQuestionEvent(String gameId) {
         final var state = getState(gameId);
         final var question = state.getCurrentQuestion();
-
+        state.refreshQuestionRenderedTime(); // bad side-effect
         if (question == null) {
             log.debug("Get question returns null, perhaps round just empty, render next");
             sendNextRoundEvent(gameId);
@@ -195,6 +202,7 @@ public class CleverestBroadcaster {
         final var state = getState(gameId);
         state.increaseQuestionNumber();
         final var question = state.getCurrentQuestion();
+        state.refreshQuestionRenderedTime();
         log.info("Sending next question for render: #{} {}", state.getQuestionNumber(), question.getText());
         eventBuses.get(gameId).fireEvent(new GetQuestionEvent(
                 gameId,
@@ -211,12 +219,9 @@ public class CleverestBroadcaster {
     }
 
     // RenderCategoriesEvent
-    public void sendRenderCategoriesEvent(String gameId, QuestionModel question, boolean initial) {
+    public void sendRenderCategoriesEvent(String gameId, QuestionModel question) {
         log.info("Sending  categories for render, {}", gameId);
         final var gameState = getState(gameId);
-        if (initial) {
-            gameState.prepareUsersToAnswerOrder();
-        }
         if (question != null) {
             question.setAlreadyAnswered(true);
         }
@@ -226,7 +231,7 @@ public class CleverestBroadcaster {
         }
         eventBuses.get(gameId).fireEvent(new RenderCategoriesEvent(
                 gameId,
-                gameState.getUsersToAnswerOrder().next(),
+                gameState.getThirdRoundCurrentUser(),
                 gameState.getThirdQuestions()));
     }
 
@@ -244,8 +249,10 @@ public class CleverestBroadcaster {
                 ));
     }
 
-    public void sendQuestionChoosenEvent(String gameId, QuestionModel question, UserGameState userToAnswer) {
-        getState(gameId).refreshQuestionRenderedTime();
+    public void sendQuestionChosenEvent(String gameId, QuestionModel question, UserGameState userToAnswer) {
+        final var state = getState(gameId);
+        state.refreshQuestionRenderedTime();
+        state.updateCurrentQuestionNumber(question);
         eventBuses.get(gameId).fireEvent(new QuestionChoosenEvent(
                 gameId,
                 question,
@@ -279,8 +286,18 @@ public class CleverestBroadcaster {
                 new LiveReactionEvent(gameId, state.getUserState(user).profile(), emoji));
     }
 
-    public void sendManualAnswerChangedEvent(final String gameId, final String username, final String text) {
-        eventBuses.get(gameId).fireEvent(new UserManualAnswerChangedEvent(gameId, username, text));
+    public void sendUpdateUserDetailsEvent(final String gameId, final String username, final String text) {
+        final var userState = getState(gameId).getUserState(username);
+        userState.updateLastAnswer(text);
+        final var updateText = "%s x%d".formatted(text, userState.getBetMultiplier());
+        eventBuses.get(gameId).fireEvent(new UpdateUserDetailsEvent(gameId, username, updateText));
+    }
+
+    public void sendUpdateUserBetEvent(final String gameId, final String username, final int value) {
+        final var state = getState(gameId);
+        final var userState = state.getUserState(username);
+        userState.updateBetMultiplier(value);
+        sendUpdateUserDetailsEvent(gameId, username, userState.getLastAnswerText());
     }
 
     @Getter
@@ -595,14 +612,14 @@ public class CleverestBroadcaster {
     @Accessors(fluent = true)
     @EqualsAndHashCode(callSuper = true)
     @ToString(callSuper = true)
-    public static class UserManualAnswerChangedEvent extends CleverestGameEvent {
+    public static class UpdateUserDetailsEvent extends CleverestGameEvent {
         private final String username;
-        private final String answerText;
+        private final String updateText;
 
-        public UserManualAnswerChangedEvent(final String gameId, final String username, final String answerText) {
+        public UpdateUserDetailsEvent(final String gameId, final String username, final String updateText) {
             super(gameId);
             this.username = username;
-            this.answerText = answerText;
+            this.updateText = updateText;
         }
     }
 

@@ -70,16 +70,16 @@ public class CleverestResultComponent extends VerticalLayout {
                 .setHeader("Время на ответ");
         grid.addColumn(UserGameState::getCorrectAnswersCount)
                 .setHeader("Верных ответов");
-        grid.addColumn(UserGameState::getScore)
-                .setHeader("Очки")
-                .setFlexGrow(0);
-        grid.addColumn(UserGameState::getBetScore)
-                .setHeader("Ставка");
-        grid.addColumn(new ComponentRenderer<>(u -> new Span(
-                        u.winnerBet().getRight() ? CleverestComponents.doneIcon() : CleverestComponents.cancelIcon(),
-                        u.loserBet().getRight() ? CleverestComponents.doneIcon() : CleverestComponents.cancelIcon())))
-                .setHeader("Ставки")
-                .setFlexGrow(0);
+//        grid.addColumn(UserGameState::getScore)
+//                .setHeader("Очки")
+//                .setFlexGrow(0);
+//        grid.addColumn(UserGameState::getBetScore)
+//                .setHeader("Ставка");
+//        grid.addColumn(new ComponentRenderer<>(u -> new Span(
+//                        u.winnerBet().getRight() ? CleverestComponents.doneIcon() : CleverestComponents.cancelIcon(),
+//                        u.loserBet().getRight() ? CleverestComponents.doneIcon() : CleverestComponents.cancelIcon())))
+//                .setHeader("Ставки")
+//                .setFlexGrow(0);
         grid.addColumn(UserGameState::totalScore)
                 .setHeader("Общее колво очков")
                 .setFlexGrow(0)

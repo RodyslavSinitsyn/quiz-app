@@ -63,10 +63,11 @@ public class LabsPage extends VerticalLayout {
 
         openDialog(CleverestComponents.userAnswersLayout(aQuestionModel(TEXT).build(), users,
                 Optional.of(new ManualApprove(
-                        5, 1,
+                        5,
                         (u) -> notification("%s +1".formatted(u), LUMO_SUCCESS, Notification.Position.TOP_STRETCH),
                         (u) -> notification("%s -1".formatted(u), LUMO_ERROR, Notification.Position.TOP_STRETCH)))
-        ), "Results", () -> {});
+        ), "Results", () -> {
+        });
 
         add(new AnimatedLeaderboardComponent(
                 List.of(
@@ -131,7 +132,8 @@ public class LabsPage extends VerticalLayout {
         add(userProfile(userGameState.profile()));
         add(new Hr());
 
-        add(soundButton(() -> {}));
+        add(soundButton(() -> {
+        }));
 
         add(userProfileWithScore(userGameState.snapshot()));
         add(new Hr());
