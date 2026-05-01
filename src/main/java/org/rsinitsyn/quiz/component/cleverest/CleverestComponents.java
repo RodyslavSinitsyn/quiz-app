@@ -27,6 +27,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.apache.commons.lang3.StringUtils;
 import org.rsinitsyn.quiz.component.custom.Emoji;
+import org.rsinitsyn.quiz.component.custom.Video;
 import org.rsinitsyn.quiz.component.theme.ThemePreset;
 import org.rsinitsyn.quiz.entity.AnswerStatus;
 import org.rsinitsyn.quiz.entity.QuestionType;
@@ -361,6 +362,13 @@ public final class CleverestComponents {
             image.setMaxHeight(height);
         }
         return image;
+    }
+
+    public static Video video(String filename) {
+        final var video = new Video();
+        video.setSrc("/quiz-videos/%s".formatted(filename));
+        video.addClassName("quiz-video");
+        return video;
     }
 
     public static VerticalLayout manualPhotoCarousel(List<String> photoFilenames) {

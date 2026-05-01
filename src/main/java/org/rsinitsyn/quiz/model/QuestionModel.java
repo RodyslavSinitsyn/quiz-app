@@ -26,6 +26,8 @@ public class QuestionModel {
     private String photoFilename;
     @Getter(AccessLevel.NONE)
     private String audioFilename;
+    @Getter(AccessLevel.NONE)
+    private String videoFilename;
     private String categoryName;
     private boolean optionsOnly;
     private Integer validRange;
@@ -49,6 +51,10 @@ public class QuestionModel {
 
     public Optional<String> audioFilename() {
         return Optional.ofNullable(audioFilename).filter(StringUtils::isNoneBlank);
+    }
+
+    public Optional<String> videoFilename() {
+        return Optional.ofNullable(videoFilename).filter(StringUtils::isNoneBlank);
     }
 
     public Optional<String> answerDescription() {

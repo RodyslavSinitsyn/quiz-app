@@ -466,3 +466,23 @@ databaseChangeLog:
         - dropColumn:
             tableName: users_tbl
             columnName: photo_filename
+  - changeSet:
+      id: 2-questions-add-video-filename
+      author: rsinitsyn
+      comment: Add video_filename column to questions
+      labels: questions
+      runAlways: false
+      runOnChange: false
+      changes:
+        - addColumn:
+            tableName: questions
+            columns:
+              - column:
+                  name: video_filename
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+      rollback:
+        - dropColumn:
+            tableName: questions
+            columnName: video_filename

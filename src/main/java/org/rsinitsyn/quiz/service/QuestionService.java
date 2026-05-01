@@ -137,6 +137,7 @@ public class QuestionService {
                 .hints(toHintModel(question.getHints()))
                 .photoFilename(question.getPhotoFilename())
                 .audioFilename(question.getAudioFilename())
+                .videoFilename(question.getVideoFilename())
                 .optionsOnly(question.isOptionsOnly())
                 .validRange(question.getValidRange())
                 .answerDescription(question.getAnswerDescriptionText())

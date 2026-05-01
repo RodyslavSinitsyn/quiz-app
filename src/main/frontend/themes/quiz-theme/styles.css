@@ -70,6 +70,15 @@ vaadin-item[selected] {
     cursor: pointer;
 }
 
+.quiz-video {
+    width: 100%;
+    max-width: 800px;
+    height: 400px;
+    border-radius: 12px;
+    background: #000;
+    outline: none;
+}
+
 /*Less than 700*/
 @media (max-width: 700px) {
 

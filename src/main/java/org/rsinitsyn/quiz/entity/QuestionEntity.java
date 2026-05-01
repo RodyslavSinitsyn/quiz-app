@@ -31,6 +31,7 @@ public class QuestionEntity {
     private String originalPhotoUrl;
     private String photoFilename;
     private String audioFilename;
+    private String videoFilename; // Todo: Logic to save video from the UI not via SQL
     private boolean optionsOnly;
     private Integer validRange;
     private String answerDescriptionText;

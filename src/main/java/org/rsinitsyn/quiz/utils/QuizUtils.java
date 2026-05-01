@@ -42,6 +42,7 @@ public final class QuizUtils {
 
     public static final String RESOURCES_PATH = "src/main/resources/";
     public static final String IMAGE_FOLDER = "image/";
+    public static final String VIDEO_FOLDER = "video/";
     public static final String AUDIO_FOLDER = "audio/";
 
     private QuizUtils() {
@@ -107,10 +108,14 @@ public final class QuizUtils {
         return org.springframework.util.ResourceUtils.getFile(RESOURCES_PATH + pathToFile);
     }
 
-
     @SneakyThrows
     public static File readImageFile(String pathToFile) {
         return readFileFromResources(IMAGE_FOLDER + pathToFile);
+    }
+
+    @SneakyThrows
+    public static File readVideoFile(String pathToFile) {
+        return readFileFromResources(VIDEO_FOLDER + pathToFile);
     }
 
     @SneakyThrows

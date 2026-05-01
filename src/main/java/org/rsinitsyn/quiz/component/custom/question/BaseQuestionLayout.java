@@ -61,9 +61,17 @@ public class BaseQuestionLayout extends VerticalLayout {
             renderCategory();
         }
         renderQuestionText();
+        if (request.host()) { // TODO: Render video for player
+            renderVideo();
+        }
         renderImage();
         renderAudio();
         renderAnswersLayout(request);
+    }
+
+    private void renderVideo() {
+        questionModel.videoFilename()
+                .ifPresent(filename -> add(video(filename)));
     }
 
     protected void renderImage() {

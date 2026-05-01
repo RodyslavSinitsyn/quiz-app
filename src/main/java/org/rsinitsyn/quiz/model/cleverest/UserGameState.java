@@ -17,7 +17,7 @@ import static org.rsinitsyn.quiz.utils.QuizUtils.divide;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@EqualsAndHashCode(of = {"profile", "lastAnswerResult", "lastAnswerText", "score", "correctAnswersCount", "answerGiven"})
+@EqualsAndHashCode(of = {"profile", "lastAnswerStatus", "lastAnswerText", "score", "correctAnswersCount", "answerGiven"})
 @ToString(exclude = "bets")
 public class UserGameState implements Comparable<UserGameState> {
     @Getter(AccessLevel.NONE)
