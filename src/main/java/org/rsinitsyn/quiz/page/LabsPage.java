@@ -1,6 +1,7 @@
 package org.rsinitsyn.quiz.page;
 
 
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -69,7 +70,7 @@ public class LabsPage extends VerticalLayout {
         ), "Results", () -> {
         });
 
-        add(new AnimatedLeaderboardComponent(
+        final var animatedLeaderboardComponent = new AnimatedLeaderboardComponent(
                 List.of(
                         userStateSnapshot("Alice", 0, CORRECT),
                         userStateSnapshot("Bob", 0, CORRECT),
@@ -108,7 +109,10 @@ public class LabsPage extends VerticalLayout {
                         )
                 ),
                 Duration.ofSeconds(2)
-        ));
+        );
+        final var dialog = openDialog(animatedLeaderboardComponent, "Leaderboard", () -> {
+        });
+        dialog.setWidthFull();
 
 
         final var userAnswersLayout = userAnswersLayout(aQuestionModel(TEXT)

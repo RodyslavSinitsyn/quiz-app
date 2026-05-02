@@ -17,9 +17,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparingInt;
 import static java.util.Comparator.comparingLong;
-import static java.util.Map.Entry.comparingByValue;
 import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.rsinitsyn.quiz.model.cleverest.UserGameState.userGameState;
 
@@ -149,6 +147,15 @@ public class CleverestGameState {
 
     public void usersCleanState() {
         users.values().forEach(UserGameState::prepareForNext);
+    }
+
+    public List<List<UserStateSnapshot>> getLastAnswersNew() {
+        final var lastN = revealPlan.getLastN(questionNumber);
+
+        return history.entrySet().stream()
+                .skip(Math.max(0, history.size() - lastN))
+                .map(Map.Entry::getValue)
+                .toList();
     }
 
     public Map<String, List<AnswerStatus>> getLastAnswers() {

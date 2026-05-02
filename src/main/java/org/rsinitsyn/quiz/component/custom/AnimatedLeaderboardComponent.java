@@ -16,6 +16,11 @@ public class AnimatedLeaderboardComponent extends VerticalLayout {
 
     private static final String ROW_HEIGHT_PX = "56";
 
+    public AnimatedLeaderboardComponent(final List<List<UserStateSnapshot>> history,
+                                        final Duration delay) {
+        this(history.getFirst(), history, delay);
+    }
+
     public AnimatedLeaderboardComponent(
             final List<UserStateSnapshot> initialState,
             final List<List<UserStateSnapshot>> history,
@@ -40,11 +45,15 @@ public class AnimatedLeaderboardComponent extends VerticalLayout {
             container.add(row);
         });
 
+        final var stepLabel = new Span("1 / " + history.size());
+        stepLabel.addClassName("leaderboard-step-label");
+        add(stepLabel);
+
         add(container);
         addClassName(MOBILE_MEDIUM_FONT);
 
         final var historyJson = serializeHistory(history);
-        getElement().executeJs(buildAnimationScript(historyJson, delay));
+        getElement().executeJs(buildAnimationScript(historyJson, delay), getElement(), stepLabel.getElement());
     }
 
     private Div buildRow(UserStateSnapshot snapshot, int totalUsers) {
@@ -86,10 +95,11 @@ public class AnimatedLeaderboardComponent extends VerticalLayout {
 
     private String buildAnimationScript(String historyJson, Duration delay) {
         return """
-                (function(container) {
+                (function(container, stepLabel) {
                     const history = %s;
                     const ROW_HEIGHT = %s;
                     const STEP_DELAY = %s;
+                    const total = history.length;
                 
                     function applyRound(round) {
                         round.forEach(function(userState) {
@@ -109,14 +119,15 @@ public class AnimatedLeaderboardComponent extends VerticalLayout {
                 
                     let step = 0;
                     const interval = setInterval(function() {
-                        if (step >= history.length) {
+                        if (step >= total) {
                             clearInterval(interval);
                             return;
                         }
                         applyRound(history[step]);
+                        stepLabel.textContent = (step + 1) + ' / ' + total;
                         step++;
                     }, STEP_DELAY);
-                })($0);
+                })($0, $1);
                 """.formatted(historyJson, ROW_HEIGHT_PX, String.valueOf(delay.toMillis()));
     }
 }

@@ -156,7 +156,7 @@ public final class QuizUtils {
                 subs);
     }
 
-    public static CompletableFuture<Void> wait(int seconds) {
+    public static CompletableFuture<Void> waitAsync(int seconds) {
         return runAsync(
                 () -> {},
                 delayedExecutor(seconds, SECONDS)

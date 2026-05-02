@@ -11,12 +11,12 @@ import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.shared.Registration;
-import com.vaadin.flow.theme.lumo.LumoUtility;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.rsinitsyn.quiz.component.custom.AnimatedLeaderboardComponent;
 import org.rsinitsyn.quiz.component.custom.Emoji;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
@@ -25,8 +25,8 @@ import org.rsinitsyn.quiz.model.cleverest.*;
 import org.rsinitsyn.quiz.model.sound.GameSound;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.*;
-import org.rsinitsyn.quiz.utils.QuizUtils;
 
+import java.time.Duration;
 import java.util.*;
 
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
@@ -383,7 +383,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                     String.join(", ", event.getAnswerGivenEvent().getAnswers()),
                     () -> event.getAnswerGivenEvent().getResult());
 
-            QuizUtils.wait(1).thenRun(() ->
+            waitAsync(1).thenRun(() ->
                     runActionInUi(getUI(), () -> openQuestionGradeDialog(questionModel)));
         });
 
@@ -491,7 +491,17 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 : new VerticalLayout(infoSpan(
                 "Вопросов до таблицы результатов: %d".formatted(revealScoreAfter), MOBILE_MEDIUM_FONT));
 
-        openDialog(usersScoreLayout, "Таблица результатов", onCloseAction);
+        // Show animated and then show normal
+        if (revealScoreAfter == 0) {
+            final var lastAnswersNew = broadcaster.getState(gameId).getLastAnswersNew();
+            final var delay = Duration.ofMillis(3_000);
+            final var animatedLeaderboard = new AnimatedLeaderboardComponent(lastAnswersNew, delay);
+            final var dialog = openDialog(animatedLeaderboard, "Обновление таблицы...", () ->
+                    openDialog(usersScoreLayout, "Таблица результатов", onCloseAction));
+            dialog.setWidthFull();
+        } else {
+            openDialog(usersScoreLayout, "Таблица результатов", onCloseAction);
+        }
     }
 
     private void showCorrectAnswer(QuestionModel question,
