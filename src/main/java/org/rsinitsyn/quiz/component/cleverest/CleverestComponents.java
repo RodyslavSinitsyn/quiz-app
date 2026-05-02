@@ -214,7 +214,8 @@ public final class CleverestComponents {
         var option = new Div();
         option.setWidthFull();
         option.setText(text);
-        option.addClassNames("quiz-option");
+        option.addClassName("quiz-option");
+        option.addClassName(text.length() > maxLength ? "small" : "large");
         option.addClickListener(eventHandler);
         return option;
     }

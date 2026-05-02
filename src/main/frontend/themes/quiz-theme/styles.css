@@ -30,7 +30,6 @@ vaadin-item[selected] {
 
 .quiz-option {
     text-align: center;
-    font-size: var(--lumo-font-size-xxl);
     color: var(--lumo-primary-text-color);
     font-weight: 700;
     border: 1px solid var(--lumo-primary-color);
@@ -41,6 +40,14 @@ vaadin-item[selected] {
         color 0.2s ease,
         transform 0.15s ease,
         box-shadow 0.2s ease;
+}
+
+.quiz-option.large {
+    font-size: var(--lumo-font-size-xxl);
+}
+
+.quiz-option.small {
+    font-size: var(--lumo-font-size-l);
 }
 
 .answer-description {

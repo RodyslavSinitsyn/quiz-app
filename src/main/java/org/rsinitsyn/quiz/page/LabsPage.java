@@ -149,12 +149,12 @@ public class LabsPage extends VerticalLayout {
                 .map(CleverestComponents::emojiBig)
                 .forEach(this::add);
 
-        final var questions = questionService.findAllByCurrentUserAsModel();
-        if (questions.isEmpty()) {
+        if (true) {
             renderMockQuestions();
             return;
         }
 
+        final var questions = questionService.findAllByCurrentUserAsModel();
         for (final var question : questions) {
             final var sequenceQuestion = createQuestionLayout(new QuestionLayoutRequest()
                     .host(false)
@@ -212,8 +212,8 @@ public class LabsPage extends VerticalLayout {
                 .answers(List.of(
                         new AnswerModel("Everest", true, 1, null),
                         new AnswerModel(randomText(7), false, 2, null),
-                        new AnswerModel(randomText(20), false, 3, null),
-                        new AnswerModel(randomText(35), false, 4, null)
+                        new AnswerModel("Ответ который состоит из нескольких слов", false, 3, null),
+                        new AnswerModel("Вполне себе такой длинный вариант ответа, в нем даже есть запятая", false, 4, null)
                 ));
     }
 
