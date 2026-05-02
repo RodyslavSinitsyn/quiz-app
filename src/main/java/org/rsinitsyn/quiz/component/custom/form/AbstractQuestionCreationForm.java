@@ -12,19 +12,23 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.shared.Registration;
-import java.util.List;
-import java.util.function.Consumer;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.model.binding.AbstractQuestionBindingModel;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
 
+import java.io.InputStream;
+import java.util.List;
+import java.util.function.Consumer;
+
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.horizontalLayoutBetween;
+import static org.rsinitsyn.quiz.utils.QuizComponents.uploadComponent;
 
 @Slf4j
 public abstract class AbstractQuestionCreationForm<T extends AbstractQuestionBindingModel> extends FormLayout {
@@ -34,10 +38,11 @@ public abstract class AbstractQuestionCreationForm<T extends AbstractQuestionBin
 
     protected final TextArea text = new TextArea("Текст вопроса");
     protected final TextField photoLocation = new TextField("Ссылка на фото");
-    protected final Checkbox enableDescription = new Checkbox("Описане ответа", false);
+    protected final Checkbox enableMore = new Checkbox("Больше настроек", false);
     protected final TextArea answerDescriptionText = new TextArea("Описание ответ");
     protected final TextArea hintsText = new TextArea("Подсказки", "Новая подсказка через перенос строки");
     protected final ComboBox<String> category = new ComboBox<>();
+    protected Upload audio = new Upload();
 
     private final Button save = new Button("Сохранить");
     private final Button delete = new Button("Удалить");
@@ -48,7 +53,7 @@ public abstract class AbstractQuestionCreationForm<T extends AbstractQuestionBin
         setWidth("30em");
         setVisibility(false);
         configureTextInput();
-        enableDescription.addValueChangeListener(event -> setVisibility(event.getValue()));
+        enableMore.addValueChangeListener(event -> setVisibility(event.getValue()));
     }
 
     private void configureTextInput() {
@@ -65,8 +70,14 @@ public abstract class AbstractQuestionCreationForm<T extends AbstractQuestionBin
 
     protected void addCommonComponents() {
         add(category);
+        add(enableMore);
         add(photoLocation);
-        add(enableDescription);
+        audio = uploadComponent("Импортировать аудио",
+                (buffer, event) -> {
+                    InputStream inputStream = buffer.getInputStream(event.getFileName());
+                    model.setAudio(inputStream);
+                }, ".mp3", 1);
+        add(audio);
         add(new Hr());
         add(answerDescriptionText);
         add(hintsText);
@@ -76,6 +87,9 @@ public abstract class AbstractQuestionCreationForm<T extends AbstractQuestionBin
 
     private void setVisibility(boolean val) {
         answerDescriptionText.setVisible(val);
+        photoLocation.setVisible(val);
+        audio.setVisible(val);
+        hintsText.setVisible(val);
     }
 
     protected abstract Binder<T> getBinder();

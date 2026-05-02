@@ -36,9 +36,6 @@ public class FourAnswersQuestionUpdateStrategy extends AbstractQuestionUpdateStr
     @Override
     protected void createHook(FourAnswersQuestionBindingModel model, QuestionEntity question) {
         super.createHook(model, question);
-        if (model.getAudio() != null) {
-            question.setAudioFilename(properties.getFilesFolder() + generateFilenameWithExt("mp3"));
-        }
         AtomicInteger counter = new AtomicInteger(0);
         model.getAnswers().forEach(answerBindingModel -> {
             question.addAnswer(createAnswerEntity(answerBindingModel.getText(),

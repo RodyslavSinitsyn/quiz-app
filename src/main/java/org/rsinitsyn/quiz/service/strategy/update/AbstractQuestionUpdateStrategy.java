@@ -18,6 +18,7 @@ import static java.time.LocalDateTime.*;
 import static org.rsinitsyn.quiz.entity.QuestionHintType.PHOTO;
 import static org.rsinitsyn.quiz.entity.QuestionHintType.TEXT;
 import static org.rsinitsyn.quiz.utils.QuizUtils.generateFilename;
+import static org.rsinitsyn.quiz.utils.QuizUtils.generateFilenameWithExt;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
 @Component
@@ -57,6 +58,9 @@ public abstract class AbstractQuestionUpdateStrategy<T extends AbstractQuestionB
         question.setText(model.getText());
         question.setAnswerDescriptionText(model.getAnswerDescriptionText());
         setPhotoFields(question, persistEntity, model.getPhotoLocation());
+        if (model.getAudio() != null) {
+            question.setAudioFilename(properties.getFilesFolder() + generateFilenameWithExt("mp3"));
+        }
         categoryService.findByName(model.getCategory())
                 .ifPresentOrElse(
                         question::setCategory,

@@ -45,11 +45,7 @@ public class QuestionForm extends AbstractQuestionCreationForm<FourAnswersQuesti
 
         add(text);
         add(inputsLayout);
-        add(author, uploadComponent("Импортировать аудио",
-                        (buffer, event) -> {
-                            InputStream inputStream = buffer.getInputStream(event.getFileName());
-                            model.setAudio(inputStream);
-                        }, ".mp3", 1));
+        add(author);
         addCommonComponents();
     }
 
@@ -91,13 +87,13 @@ public class QuestionForm extends AbstractQuestionCreationForm<FourAnswersQuesti
     protected void validate() throws ValidationException {
         binder.writeBean(model);
         if (model.optionsRepeated()) {
-            answers.get(0).setErrorMessage("Варианты ответов должны быть уникальные");
-            answers.get(0).setInvalid(true);
+            answers.getFirst().setErrorMessage("Варианты ответов должны быть уникальные");
+            answers.getFirst().setInvalid(true);
             throw new IllegalArgumentException("Варианты ответов не валидны");
         }
         if (model.noCorrectOption()) {
-            answers.get(0).setErrorMessage("Не указан верный ответ");
-            answers.get(0).setInvalid(true);
+            answers.getFirst().setErrorMessage("Не указан верный ответ");
+            answers.getFirst().setInvalid(true);
             throw new IllegalArgumentException("Не выбран верны ответ");
         }
     }

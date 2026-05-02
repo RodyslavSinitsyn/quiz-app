@@ -9,7 +9,6 @@ import org.rsinitsyn.quiz.entity.*;
 import org.rsinitsyn.quiz.model.AnswerHistory;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.binding.AbstractQuestionBindingModel;
-import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.service.strategy.update.AbstractQuestionUpdateStrategy;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -176,11 +175,8 @@ public class QuestionService {
                 ? null
                 : findById(UUID.fromString(model.getId())));
         saveEntityAndResources(question);
-        // TODO: Temp solution for saving audio only for one question type
-        if (model instanceof FourAnswersQuestionBindingModel fourAnswersModel) {
-            if (fourAnswersModel.getId() == null) {
-                resourceService.saveAudio(question.getAudioFilename(), fourAnswersModel.getAudio());
-            }
+        if (model.getId() == null) {
+            resourceService.saveAudio(question.getAudioFilename(), model.getAudio());
         }
     }
 

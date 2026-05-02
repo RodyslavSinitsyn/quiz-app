@@ -1,13 +1,13 @@
 package org.rsinitsyn.quiz.model.binding;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Length;
 import org.rsinitsyn.quiz.validator.PhotoUrlValid;
 
-@AllArgsConstructor
+import java.io.InputStream;
+
 @NoArgsConstructor
 @Data
 public abstract class AbstractQuestionBindingModel {
@@ -23,4 +23,19 @@ public abstract class AbstractQuestionBindingModel {
     private String photoLocation;
     private String category;
     private String hintsText;
+    private InputStream audio;
+
+    public AbstractQuestionBindingModel(final String id,
+                                        final String text,
+                                        final String answerDescriptionText,
+                                        final String photoLocation,
+                                        final String category,
+                                        final String hintsText) {
+        this.id = id;
+        this.text = text;
+        this.answerDescriptionText = answerDescriptionText;
+        this.photoLocation = photoLocation;
+        this.category = category;
+        this.hintsText = hintsText;
+    }
 }
