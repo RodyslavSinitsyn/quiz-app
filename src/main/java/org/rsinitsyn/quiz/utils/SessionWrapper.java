@@ -47,4 +47,8 @@ public class SessionWrapper {
                 .map((auth) -> !(auth instanceof AnonymousAuthenticationToken))
                 .orElse(false);
     }
+
+    public static boolean isAdmin() {
+        return ADMIN_NAME.equals(getLoggedUser());
+    }
 }

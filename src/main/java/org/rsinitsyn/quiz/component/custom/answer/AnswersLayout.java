@@ -2,7 +2,6 @@ package org.rsinitsyn.quiz.component.custom.answer;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.listbox.ListBox;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
@@ -12,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.optionComponent;
-import static org.rsinitsyn.quiz.entity.AnswerStatus.answerStatus;
 import static org.rsinitsyn.quiz.model.AnswerHint.HALF;
 import static org.rsinitsyn.quiz.model.AnswerHint.THREE;
 import static org.rsinitsyn.quiz.model.answer.AnswerResult.oneOptionResult;
@@ -29,7 +27,7 @@ public class AnswersLayout extends AbstractAnswersLayout {
         options.setItems(answers);
         options.setRenderer(
                 new ComponentRenderer<Component, QuestionModel.AnswerModel>(
-                        am -> optionComponent(am.text(), 50, event -> {
+                        am -> optionComponent(am.text(), 30, event -> {
                         })));
         options.addValueChangeListener(e -> submitButton.setEnabled(true));
         add(options);

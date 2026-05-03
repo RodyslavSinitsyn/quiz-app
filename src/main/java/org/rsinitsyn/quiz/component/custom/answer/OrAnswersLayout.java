@@ -24,7 +24,7 @@ public class OrAnswersLayout extends AbstractAnswersLayout {
         radioButtonGroup.setItems(answers);
         radioButtonGroup.setRenderer(
                 new ComponentRenderer<Component, QuestionModel.AnswerModel>(
-                        am -> CleverestComponents.optionComponent(am.text(), 50, event -> {
+                        am -> CleverestComponents.optionComponent(am.text(), 30, event -> {
                         })));
         radioButtonGroup.addValueChangeListener(e -> submitButton.setEnabled(true));
         add(radioButtonGroup);

@@ -149,12 +149,15 @@ public class LabsPage extends VerticalLayout {
                 .map(CleverestComponents::emojiBig)
                 .forEach(this::add);
 
-        if (true) {
+        if (false) {
             renderMockQuestions();
             return;
         }
 
-        final var questions = questionService.findAllByCurrentUserAsModel();
+        final var questions = questionService.findAllByCurrentUserAsModel()
+                .stream()
+                .limit(50)
+                .toList();
         for (final var question : questions) {
             final var sequenceQuestion = createQuestionLayout(new QuestionLayoutRequest()
                     .host(false)

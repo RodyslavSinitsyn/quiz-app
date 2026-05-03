@@ -117,7 +117,7 @@ public class MainLayout extends AppLayout implements
         tabs.add(createTab("Играть", VaadinIcon.PLAY_CIRCLE_O.create(), MainPage.class));
         tabs.add(createTab("Вопросы", VaadinIcon.QUESTION_CIRCLE_O.create(), QuestionsPage.class));
         tabs.add(createTab("Статистика", VaadinIcon.TRENDING_UP.create(), StatisticPage.class));
-        if (Arrays.asList(environment.getActiveProfiles()).contains(DEV.value)) {
+        if (Arrays.asList(environment.getActiveProfiles()).contains(DEV.value) || SessionWrapper.isAdmin()) {
             tabs.add(createTab("Шрифты", VaadinIcon.TEXT_LABEL.create(), FontsPage.class));
             tabs.add(createTab("Labs", VaadinIcon.BOLT.create(), LabsPage.class));
         }

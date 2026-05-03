@@ -30,7 +30,7 @@ public class MultiAnswersLayout extends AbstractAnswersLayout {
         multiAnswerListBox.setItems(answers);
         multiAnswerListBox.setRenderer(
                 new ComponentRenderer<Component, QuestionModel.AnswerModel>(
-                        am -> CleverestComponents.optionComponent(am.text(), 50, event -> {
+                        am -> CleverestComponents.optionComponent(am.text(), 30, event -> {
                         })));
         multiAnswerListBox.addValueChangeListener(e ->
                 submitButton.setEnabled(!e.getValue().isEmpty()));

@@ -32,7 +32,7 @@ public class SequenceAnswersLayout extends AbstractAnswersLayout {
             final var index = i;
             final var answer = answers.get(i);
 
-            final var option = optionComponent(answer.text(), 50, event -> {
+            final var option = optionComponent(answer.text(), 20, event -> {
             });
 
             final var up = new Button(VaadinIcon.ARROW_CIRCLE_UP.create(), e -> moveUp(index));
