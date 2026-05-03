@@ -23,6 +23,7 @@ import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.answer.AnswerBet;
 import org.rsinitsyn.quiz.model.cleverest.*;
 import org.rsinitsyn.quiz.model.sound.GameSound;
+import org.rsinitsyn.quiz.model.sound.GameSounds;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.*;
 
@@ -476,7 +477,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
         topContainer.add(userProfileWithScore(userState.snapshot(), MOBILE_LARGE_FONT));
         topContainer.add(horizontalLayoutCenter(
-                soundButton(() -> broadcaster.sendPlaySoundEvent(gameId, GameSound.next())), // TODO: Better meme handling and chosing
+                soundButton(() -> broadcaster.sendPlaySoundEvent(gameId, GameSounds.next())), // TODO: Better meme handling and chosing
                 openChatButton(messageText -> broadcaster.sendUserTextedEvent(gameId, getLoggedUser(), messageText)),
                 reactionButton(Emoji.HEART.value, (emoji) -> broadcaster.sendLiveReactionEvent(gameId, getLoggedUser(), emoji))));
         topContainer.add(new Hr());
