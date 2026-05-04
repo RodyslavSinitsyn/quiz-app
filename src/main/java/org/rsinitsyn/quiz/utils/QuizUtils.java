@@ -77,7 +77,7 @@ public final class QuizUtils {
     }
 
     public static StreamResource createStreamResourceForPhoto(String filename) {
-        if (filename.split("/").length != 2) {
+        if (filename == null || filename.split("/").length != 2) {
             return null;
         }
         return new StreamResource(filename.split("/")[1], () -> {

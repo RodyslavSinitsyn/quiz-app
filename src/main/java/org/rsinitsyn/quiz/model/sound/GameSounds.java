@@ -34,11 +34,7 @@ public final class GameSounds {
         return CYCLE.next();
     }
 
-    public static GameSound random(SoundCategory category) {
-        final var sounds = ALL.stream()
-                .filter(sound -> sound.category() == category)
-                .toList();
-
-        return sounds.get(ThreadLocalRandom.current().nextInt(sounds.size()));
+    public static GameSound random() {
+        return ALL.get(ThreadLocalRandom.current().nextInt(ALL.size()));
     }
 }

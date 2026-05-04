@@ -117,7 +117,7 @@ public class CleverestGamePage extends VerticalLayout
                         gameService.finishGame(gameId);
                         broadcaster.sendRenderResultsEvent(gameId);
                     }));
-
+        } else {
             subscriptions.add(playBoard.addUpdateQuestionGradeEventListener(
                     event -> questionService.updateQuestionGrade(
                             event.question().getId(),

@@ -2,6 +2,7 @@ package org.rsinitsyn.quiz.service;
 
 import io.micrometer.observation.annotation.Observed;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.rsinitsyn.quiz.dao.GameQuestionUserDao;
 import org.rsinitsyn.quiz.dao.QuestionDao;
 import org.rsinitsyn.quiz.dao.QuestionGradeDao;
@@ -76,11 +77,15 @@ public class QuestionService {
         if (username.equals(ADMIN_NAME)) {
             final var questionsWithAnswers = questionDao.findAllWithAnswers();
             questionDao.findAllWithHints();
-            return questionsWithAnswers;
+            return questionsWithAnswers.stream()
+                    .peek(q -> Hibernate.initialize(q.getGrades()))
+                    .toList();
         }
         final var allWithAnswers = questionDao.findAllWithAnswers(username);
         questionDao.findAllWithHints(username);
-        return allWithAnswers;
+        return allWithAnswers.stream()
+                .peek(q -> Hibernate.initialize(q.getGrades()))
+                .toList();
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
@@ -211,23 +216,23 @@ public class QuestionService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     public void updateQuestionGrade(UUID questionId, String username, int grade) {
-        UserEntity user = userService.findByUsername(username);
+        final var user = userService.findByUsername(username);
         final var maybeQuestionGrade = questionGradeDao.findById(questionGradeId(questionId, user.getId()));
         if (maybeQuestionGrade.isPresent()) {
-            QuestionGrade updEntity = maybeQuestionGrade.get();
-            updEntity.setGrade(grade);
-            log.info("Updated question grade, id: {}, grade: {}",
-                    questionId + "-" + user.getId(),
-                    grade);
+            final var questionGrade = maybeQuestionGrade.get();
+            questionGrade.setGrade(grade);
+            log.debug("Updated question grade questionId: {}, userId: {}, grade: {}",
+                    questionId, user.getId(), grade);
         } else {
             var newEntity = new QuestionGrade();
             newEntity.setQuestionId(questionId);
             newEntity.setUserId(user.getId());
             newEntity.setGrade(grade);
+            newEntity.setUser(user);
+            newEntity.setQuestion(questionDao.getReferenceById(questionId));
             questionGradeDao.save(newEntity);
-            log.info("Created question grade, id: {}, grade: {}",
-                    questionId + "-" + user.getId(),
-                    grade);
+            log.debug("Created question grade questionId: {}, userId: {}, grade: {}",
+                    questionId, user.getId(), grade);
         }
     }
 

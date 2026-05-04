@@ -25,7 +25,9 @@ import org.rsinitsyn.quiz.model.cleverest.ManualApprove;
 import org.rsinitsyn.quiz.model.cleverest.UserGameState;
 import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
+import org.rsinitsyn.quiz.model.sound.GameSounds;
 import org.rsinitsyn.quiz.service.QuestionService;
+import org.rsinitsyn.quiz.utils.AudioUtils;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
 
 import java.io.IOException;
@@ -69,6 +71,8 @@ public class LabsPage extends VerticalLayout {
                         (u) -> notification("%s -1".formatted(u), LUMO_ERROR, Notification.Position.TOP_STRETCH)))
         ), "Results", () -> {
         });
+
+        add(CleverestComponents.soundButton(() -> AudioUtils.playStaticSoundAsync(GameSounds.next().fullPath())));
 
         final var animatedLeaderboardComponent = new AnimatedLeaderboardComponent(
                 List.of(

@@ -7,15 +7,15 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.LocalDateTimeRenderer;
+import lombok.extern.slf4j.Slf4j;
+import org.rsinitsyn.quiz.entity.QuestionEntity;
+import org.rsinitsyn.quiz.utils.QuizComponents;
+import org.rsinitsyn.quiz.utils.QuizUtils;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.extern.slf4j.Slf4j;
-import org.rsinitsyn.quiz.entity.AnswerEntity;
-import org.rsinitsyn.quiz.entity.QuestionEntity;
-import org.rsinitsyn.quiz.utils.QuizComponents;
-import org.rsinitsyn.quiz.utils.QuizUtils;
 
 @Slf4j
 public class QuestionListGrid extends Grid<QuestionEntity> {
@@ -56,7 +56,7 @@ public class QuestionListGrid extends Grid<QuestionEntity> {
                 .setHeader("Автор")
                 .setSortable(true);
         addMechanicColumn();
-//        addGradeColumn();
+        addGradeColumn();
         addColumn(new LocalDateTimeRenderer<>(QuestionEntity::getCreationDate, QuizUtils.DATE_FORMAT_VALUE))
                 .setHeader("Дата создания")
                 .setSortable(true)

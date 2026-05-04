@@ -22,7 +22,6 @@ import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.answer.AnswerBet;
 import org.rsinitsyn.quiz.model.cleverest.*;
-import org.rsinitsyn.quiz.model.sound.GameSound;
 import org.rsinitsyn.quiz.model.sound.GameSounds;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.*;
@@ -269,7 +268,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 })));
 
         subscriptions.add(broadcaster.subscribe(gameId, PlaySoundEvent.class, event ->
-                playStaticSoundAsync(event.getSound().path())));
+                playStaticSoundAsync(event.getSound().fullPath())));
 
         subscriptions.add(broadcaster.subscribe(gameId, DeleteUserEvent.class, event ->
                 renderTopContainerForHost(broadcaster.getState(gameId).getAllUserProfiles())));
@@ -405,7 +404,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 .forEach(e -> {
                     final var emoji = emojiBig(e.value);
                     emoji.addClickListener(event -> {
-                        fireEvent(new UpdateQuestionGradeEvent(
+                        CleverestGamePlayBoardComponent.this.fireEvent(new UpdateQuestionGradeEvent(
                                 question,
                                 getLoggedUser(),
                                 e.rating
@@ -477,7 +476,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
         topContainer.add(userProfileWithScore(userState.snapshot(), MOBILE_LARGE_FONT));
         topContainer.add(horizontalLayoutCenter(
-                soundButton(() -> broadcaster.sendPlaySoundEvent(gameId, GameSounds.next())), // TODO: Better meme handling and chosing
+                soundButton(() -> broadcaster.sendPlaySoundEvent(gameId, GameSounds.random())), // TODO: Better meme handling and chosing
                 openChatButton(messageText -> broadcaster.sendUserTextedEvent(gameId, getLoggedUser(), messageText)),
                 reactionButton(Emoji.HEART.value, (emoji) -> broadcaster.sendLiveReactionEvent(gameId, getLoggedUser(), emoji))));
         topContainer.add(new Hr());
