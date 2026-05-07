@@ -156,6 +156,7 @@ public class QuestionService {
                         .correct(answerEntity.isCorrect())
                         .number(answerEntity.getNumber())
                         .photoFilename(answerEntity.getPhotoFilename())
+                        .type(QuestionModel.AnswerType.TEXT)
                         .build())
                 .toList();
     }

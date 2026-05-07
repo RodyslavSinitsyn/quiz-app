@@ -12,7 +12,6 @@ import com.vaadin.flow.shared.Registration;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import org.checkerframework.checker.nullness.Opt;
 import org.rsinitsyn.quiz.component.custom.event.StubEvent;
 import org.rsinitsyn.quiz.model.AnswerHint;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
@@ -42,7 +41,7 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
     public AbstractAnswersLayout(AnswerLayoutRequest request) {
         this.question = request.getQuestion();
         this.username = request.getUsername();
-        this.answers = new ArrayList<>(request.getQuestion().getShuffledAnswers());
+        this.answers = questionAnswers(request);
         this.hintsState = request.getHintsState();
         this.answerBet = request.getAnswerBet();
         setAlignItems(Alignment.STRETCH);
@@ -58,6 +57,10 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
         renderBets();
         renderAnswers();
         renderSubmitButton();
+    }
+
+    protected List<QuestionModel.AnswerModel> questionAnswers(AnswerLayoutRequest request) {
+        return new ArrayList<>(request.getQuestion().getShuffledAnswers());
     }
 
     protected void renderSubmitButton() {

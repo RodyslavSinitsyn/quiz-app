@@ -103,7 +103,15 @@ public class QuestionModel {
     public record AnswerModel(String text,
                               boolean correct,
                               int number,
-                              String photoFilename) {
+                              String photoFilename,
+                              String audioFilename,
+                              AnswerType type) {
+    }
+
+    public enum AnswerType {
+        TEXT,
+        PHOTO,
+        AUDIO
     }
 
     @Builder

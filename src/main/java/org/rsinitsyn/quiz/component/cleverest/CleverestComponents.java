@@ -26,6 +26,7 @@ import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.apache.commons.lang3.StringUtils;
+import org.rsinitsyn.quiz.component.custom.AudioPlayer;
 import org.rsinitsyn.quiz.component.custom.Emoji;
 import org.rsinitsyn.quiz.component.custom.Video;
 import org.rsinitsyn.quiz.component.theme.ThemePreset;
@@ -45,6 +46,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static org.rsinitsyn.quiz.utils.QuizComponents.*;
+import static org.rsinitsyn.quiz.utils.QuizUtils.createStreamResourceForAudio;
 
 public final class CleverestComponents {
 
@@ -198,7 +200,7 @@ public final class CleverestComponents {
 
     public static Notification chatNotification(UserProfile profile, String text) {
         Notification notification = new Notification();
-        notification.setDuration(2_000);
+        notification.setDuration(30_000);
         notification.setPosition(Notification.Position.TOP_END);
         notification.addThemeVariants(NotificationVariant.LUMO_PRIMARY);
         final var userProfile = userProfile(profile);
@@ -363,6 +365,10 @@ public final class CleverestComponents {
             image.setMaxHeight(height);
         }
         return image;
+    }
+
+    public static AudioPlayer audio(String filename) {
+        return new AudioPlayer(createStreamResourceForAudio(filename));
     }
 
     public static Video video(String filename) {

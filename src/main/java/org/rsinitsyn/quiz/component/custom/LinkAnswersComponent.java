@@ -4,23 +4,23 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
-import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.image;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.optionComponent;
 
 public class LinkAnswersComponent extends HorizontalLayout {
 
@@ -47,102 +47,110 @@ public class LinkAnswersComponent extends HorizontalLayout {
         setPadding(false);
         setWidthFull();
 
-        List<AnswerModel> left = questionModel.getShuffledAnswers().stream().filter(AnswerModel::correct).toList();
-        List<AnswerModel> right = questionModel.getShuffledAnswers().stream().filter(am -> !am.correct()).toList();
+        final var left = questionModel.getShuffledAnswers().stream().filter(AnswerModel::correct).toList();
+        final var right = questionModel.getShuffledAnswers().stream().filter(am -> !am.correct()).toList();
 
-        VerticalLayout leftSide = matchSideLayout(left, true);
-        VerticalLayout rightSide = matchSideLayout(right, false);
-
-        add(leftSide, rightSide);
+        add(matchSideLayout(left, true), matchSideLayout(right, false));
     }
 
     public List<MutablePair<AnswerModel, AnswerModel>> getPairs() {
         return resultPairs.stream()
-                .map(pair -> MutablePair.of(pair.getLeft().getAnswer(), pair.getRight().getAnswer()))
+                .map(pair -> MutablePair.of(pair.getLeft().answer(), pair.getRight().answer()))
                 .toList();
     }
 
-    private VerticalLayout matchSideLayout(List<AnswerModel> answers,
-                                           boolean isLeft) {
-        VerticalLayout side = new VerticalLayout();
+    private VerticalLayout matchSideLayout(List<AnswerModel> answers, boolean isLeft) {
+        final var side = new VerticalLayout();
         side.setMargin(false);
         side.setPadding(false);
         side.setSpacing(true);
-        answers.forEach(answerModel -> {
-            Component component = matchAnswerComponent(answerModel, isLeft, event -> {
-                if (currLeft == null || currRight == null) return;
-
-                if (currLeftLinked() && currRightLinked()) {
-                    var linkedByLeft = getPairByLeftComponent();
-                    var linkedByRight = getPairByRightComponent();
-                    if (linkedByLeft != linkedByRight) {
-                        var leftSideColor = linkedByLeft.getLeft().getColor();
-                        var rightSideColor = linkedByRight.getRight().getColor();
-                        linkedByLeft.getRight().getComponent().removeClassName(leftSideColor);
-                        linkedByRight.getLeft().getComponent().removeClassName(rightSideColor);
-                        String dominantColor = null;
-                        if (leftSelectedFirst) {
-                            dominantColor = leftSideColor;
-                            linkedByRight.getRight().getComponent().removeClassName(rightSideColor);
-                            colors.put(rightSideColor, false);
-                        } else {
-                            dominantColor = rightSideColor;
-                            linkedByLeft.getLeft().getComponent().removeClassName(leftSideColor);
-                            colors.put(leftSideColor, false);
-                        }
-                        resultPairs.remove(linkedByLeft);
-                        resultPairs.remove(linkedByRight);
-
-                        createAndAddNewPair(dominantColor);
-                    }
-                } else if (currLeftLinked() && !currRightLinked()) {
-                    var linkedByLeft = getPairByLeftComponent();
-                    var leftSideColor = linkedByLeft.getLeft().getColor();
-                    linkedByLeft.getRight().getComponent().removeClassName(leftSideColor);
-                    markRightComponentWithColor(leftSideColor);
-                    linkedByLeft.setRight(currRight);
-                } else if (!currLeftLinked() && currRightLinked()) {
-                    var linkedByRight = getPairByRightComponent();
-                    var rightSideColor = linkedByRight.getRight().getColor();
-                    linkedByRight.getLeft().getComponent().removeClassName(rightSideColor);
-                    markLeftComponentWithColor(rightSideColor);
-                    linkedByRight.setLeft(currLeft);
-                } else {
-                    createAndAddNewPair(getFreeColor());
-                }
-                cleanupState();
-                getEventBus().fireEvent(new PairLinkedEvent(this, desiredPairsSize == resultPairs.size()));
-            });
-            side.add(component);
-        });
+        answers.forEach(answer -> side.add(buildSelectableComponent(answer, isLeft, event -> {
+            if (currLeft == null || currRight == null) return;
+            handlePairEvent();
+            cleanupState();
+            getEventBus().fireEvent(new PairLinkedEvent(this, desiredPairsSize == resultPairs.size()));
+        })));
         return side;
+    }
+
+    private void handlePairEvent() {
+        if (currLeftLinked() && currRightLinked()) {
+            handleBothLinked();
+        } else if (currLeftLinked()) {
+            handleLeftLinkedOnly();
+        } else if (currRightLinked()) {
+            handleRightLinkedOnly();
+        } else {
+            createAndAddNewPair(getFreeColor());
+        }
+    }
+
+    private void handleBothLinked() {
+        final var linkedByLeft = getPairByLeftComponent();
+        final var linkedByRight = getPairByRightComponent();
+        if (linkedByLeft == linkedByRight) return;
+
+        final var leftSideColor = linkedByLeft.getLeft().color();
+        final var rightSideColor = linkedByRight.getRight().color();
+        linkedByLeft.getRight().component().removeClassName(leftSideColor);
+        linkedByRight.getLeft().component().removeClassName(rightSideColor);
+
+        final String dominantColor;
+        if (leftSelectedFirst) {
+            dominantColor = leftSideColor;
+            linkedByRight.getRight().component().removeClassName(rightSideColor);
+            colors.put(rightSideColor, false);
+        } else {
+            dominantColor = rightSideColor;
+            linkedByLeft.getLeft().component().removeClassName(leftSideColor);
+            colors.put(leftSideColor, false);
+        }
+        resultPairs.remove(linkedByLeft);
+        resultPairs.remove(linkedByRight);
+        createAndAddNewPair(dominantColor);
+    }
+
+    private void handleLeftLinkedOnly() {
+        final var linkedByLeft = getPairByLeftComponent();
+        final var color = linkedByLeft.getLeft().color();
+        linkedByLeft.getRight().component().removeClassName(color);
+        markRightComponentWithColor(color);
+        linkedByLeft.setRight(currRight);
+    }
+
+    private void handleRightLinkedOnly() {
+        final var linkedByRight = getPairByRightComponent();
+        final var color = linkedByRight.getRight().color();
+        linkedByRight.getLeft().component().removeClassName(color);
+        markLeftComponentWithColor(color);
+        linkedByRight.setLeft(currLeft);
     }
 
     private void createAndAddNewPair(String color) {
         markLeftComponentWithColor(color);
         markRightComponentWithColor(color);
         colors.put(color, true);
-
-        var newPair = MutablePair.of(currLeft, currRight);
-        resultPairs.add(newPair);
+        resultPairs.add(MutablePair.of(currLeft, currRight));
     }
 
     private void markLeftComponentWithColor(String colorClass) {
-        currLeft.setColor(colorClass);
-        if (!currLeft.getComponent().hasClassName(colorClass)) {
-            currLeft.getComponent().addClassNames(colorClass);
-        }
+        currLeft = currLeft.withColor(colorClass);
+        applyColorClass(currLeft.component(), colorClass);
     }
 
     private void markRightComponentWithColor(String colorClass) {
-        currRight.setColor(colorClass);
-        if (!currRight.getComponent().hasClassName(colorClass)) {
-            currRight.getComponent().addClassNames(colorClass);
+        currRight = currRight.withColor(colorClass);
+        applyColorClass(currRight.component(), colorClass);
+    }
+
+    private void applyColorClass(Component component, String colorClass) {
+        if (!component.hasClassName(colorClass)) {
+            component.addClassNames(colorClass);
         }
     }
 
-    private void markComponentAsSelected(Component component, boolean bolded) {
-        if (bolded) {
+    private void markComponentAsSelected(Component component, boolean selected) {
+        if (selected) {
             component.removeClassName(LumoUtility.TextColor.PRIMARY);
             component.addClassNames(LumoUtility.TextColor.BODY);
         } else {
@@ -152,24 +160,22 @@ public class LinkAnswersComponent extends HorizontalLayout {
     }
 
     private void cleanupState() {
-        markComponentAsSelected(currLeft.getComponent(), false);
-        markComponentAsSelected(currRight.getComponent(), false);
-
+        markComponentAsSelected(currLeft.component(), false);
+        markComponentAsSelected(currRight.component(), false);
         currLeft = null;
         currRight = null;
-
         leftSelectedFirst = null;
     }
 
     private MutablePair<LinkItemDto, LinkItemDto> getPairByLeftComponent() {
         return resultPairs.stream()
-                .filter(pair -> pair.getLeft().getComponent().equals(currLeft.getComponent()))
+                .filter(pair -> pair.getLeft().component().equals(currLeft.component()))
                 .findFirst().orElse(null);
     }
 
     private MutablePair<LinkItemDto, LinkItemDto> getPairByRightComponent() {
         return resultPairs.stream()
-                .filter(pair -> pair.getRight().getComponent().equals(currRight.getComponent()))
+                .filter(pair -> pair.getRight().component().equals(currRight.component()))
                 .findFirst().orElse(null);
     }
 
@@ -181,39 +187,71 @@ public class LinkAnswersComponent extends HorizontalLayout {
         return getPairByRightComponent() != null;
     }
 
-    private Component matchAnswerComponent(AnswerModel answerModel,
-                                           boolean isLeft,
-                                           ComponentEventListener<ClickEvent<Div>> eventHandler) {
-        return CleverestComponents.optionComponent(
-                answerModel.text(),
+    private Component buildSelectableComponent(AnswerModel answer,
+                                               boolean isLeft,
+                                               ComponentEventListener<ClickEvent<Component>> eventHandler) {
+        return switch (answer.type()) {
+            case TEXT -> createTextComponent(answer, isLeft, eventHandler);
+            case PHOTO -> createImageComponent(answer, isLeft, eventHandler);
+            case AUDIO -> createAudioComponent(answer, isLeft, eventHandler);
+        };
+    }
+
+    private Component createTextComponent(AnswerModel answer,
+                                          boolean isLeft,
+                                          ComponentEventListener<ClickEvent<Component>> eventHandler) {
+        return optionComponent(
+                answer.text(),
                 10,
-                event -> {
-                    if (leftSelectedFirst == null) {
-                        leftSelectedFirst = isLeft;
-                    }
-                    if (currLeft == null && isLeft) {
-                        currLeft = new LinkItemDto(event.getSource(), answerModel, null, isLeft);
-                    } else if (currRight == null && !isLeft) {
-                        currRight = new LinkItemDto(event.getSource(), answerModel, null, isLeft);
-                    }
-                    updateSideRow(isLeft ? currLeft : currRight, isLeft, event.getSource(), answerModel);
-                    eventHandler.onComponentEvent(event);
-                }
+                event -> onAnswerSelected(event, answer, isLeft, eventHandler)
         );
     }
 
-    private void updateSideRow(LinkItemDto currDto,
-                               boolean isLeft,
-                               Component selectedComponent,
-                               AnswerModel answerModel) {
-        markComponentAsSelected(currDto.getComponent(), false);
-        currDto.setComponent(selectedComponent);
-        markComponentAsSelected(currDto.getComponent(), true);
-
-        currDto.setLeft(isLeft);
-        currDto.setAnswer(answerModel);
+    private Component createImageComponent(AnswerModel answer,
+                                           boolean isLeft,
+                                           ComponentEventListener<ClickEvent<Component>> eventHandler) {
+        final var image = image(answer.photoFilename(), "100px");
+        image.addClickListener(event -> onAnswerSelected(event, answer, isLeft, eventHandler));
+        return image;
     }
 
+    private Component createAudioComponent(AnswerModel answer,
+                                           boolean isLeft,
+                                           ComponentEventListener<ClickEvent<Component>> eventHandler) {
+        final var audio = CleverestComponents.audio(answer.audioFilename());
+        audio.getElement().addEventListener("click", event -> onAnswerSelected(null, answer, isLeft, eventHandler));
+        return audio;
+    }
+
+    private void onAnswerSelected(ClickEvent<? extends Component> event,
+                                  AnswerModel answer,
+                                  boolean isLeft,
+                                  ComponentEventListener<ClickEvent<Component>> eventHandler) {
+        if (leftSelectedFirst == null) {
+            leftSelectedFirst = isLeft;
+        }
+        final var dto = new LinkItemDto(event.getSource(), answer, null);
+        if (isLeft && currLeft == null) {
+            currLeft = dto;
+        } else if (!isLeft && currRight == null) {
+            currRight = dto;
+        }
+        updateSideSlot(isLeft, event.getSource(), answer);
+        eventHandler.onComponentEvent((ClickEvent<Component>) event);
+    }
+
+    private void updateSideSlot(boolean isLeft, Component selectedComponent, AnswerModel answer) {
+        final var curr = isLeft ? currLeft : currRight;
+        markComponentAsSelected(curr.component(), false);
+
+        final var updated = new LinkItemDto(selectedComponent, answer, curr.color());
+        if (isLeft) {
+            currLeft = updated;
+        } else {
+            currRight = updated;
+        }
+        markComponentAsSelected(selectedComponent, true);
+    }
 
     private String getFreeColor() {
         return colors.entrySet().stream()
@@ -224,10 +262,9 @@ public class LinkAnswersComponent extends HorizontalLayout {
 
     public static class PairLinkedEvent extends ComponentEvent<LinkAnswersComponent> {
         @Getter
-        private boolean done;
+        private final boolean done;
 
-        public PairLinkedEvent(LinkAnswersComponent source,
-                               boolean done) {
+        public PairLinkedEvent(LinkAnswersComponent source, boolean done) {
             super(source, true);
             this.done = done;
         }
@@ -237,13 +274,13 @@ public class LinkAnswersComponent extends HorizontalLayout {
         return getEventBus().addListener(PairLinkedEvent.class, listener);
     }
 
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    private static class LinkItemDto {
-        private Component component;
-        private AnswerModel answer;
-        private String color;
-        private boolean isLeft;
+    private record LinkItemDto(Component component, AnswerModel answer, String color) {
+        LinkItemDto withColor(String newColor) {
+            return new LinkItemDto(component, answer, newColor);
+        }
+
+        LinkItemDto withComponent(Component newComponent) {
+            return new LinkItemDto(newComponent, answer, color);
+        }
     }
 }

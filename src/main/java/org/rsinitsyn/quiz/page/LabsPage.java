@@ -1,7 +1,6 @@
 package org.rsinitsyn.quiz.page;
 
 
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -13,12 +12,13 @@ import org.apache.commons.text.RandomStringGenerator;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.component.custom.AnimatedLeaderboardComponent;
-import org.rsinitsyn.quiz.component.custom.Emoji;
+import org.rsinitsyn.quiz.component.custom.LinkAnswersComponent;
 import org.rsinitsyn.quiz.entity.AnswerStatus;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
+import org.rsinitsyn.quiz.model.QuestionModel.AnswerType;
 import org.rsinitsyn.quiz.model.QuestionModel.HintModel;
 import org.rsinitsyn.quiz.model.answer.AnswerResult;
 import org.rsinitsyn.quiz.model.cleverest.ManualApprove;
@@ -32,7 +32,10 @@ import org.rsinitsyn.quiz.utils.SessionWrapper;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
 
 import static com.vaadin.flow.component.notification.NotificationVariant.*;
 import static java.time.LocalDateTime.now;
@@ -41,6 +44,7 @@ import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
 import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory.createQuestionLayout;
 import static org.rsinitsyn.quiz.entity.AnswerStatus.*;
 import static org.rsinitsyn.quiz.entity.QuestionHintType.PHOTO;
+import static org.rsinitsyn.quiz.entity.QuestionType.LINK;
 import static org.rsinitsyn.quiz.entity.QuestionType.TEXT;
 import static org.rsinitsyn.quiz.utils.ThemeUtils.BLACK_COLOR;
 
@@ -71,6 +75,52 @@ public class LabsPage extends VerticalLayout {
                         (u) -> notification("%s -1".formatted(u), LUMO_ERROR, Notification.Position.TOP_STRETCH)))
         ), "Results", () -> {
         });
+
+        add(new LinkAnswersComponent(aQuestionModel(LINK)
+                .answers(List.of(
+                        AnswerModel.builder().type(AnswerType.TEXT).text("Один").number(1).correct(true).build(),
+                        AnswerModel.builder().type(AnswerType.TEXT).text("Два").number(2).correct(true).build(),
+                        AnswerModel.builder().type(AnswerType.TEXT).text("Три").number(3).correct(true).build(),
+                        AnswerModel.builder().type(AnswerType.TEXT).text("Четыре").number(4).correct(true).build(),
+
+                        AnswerModel.builder().type(AnswerType.TEXT).text("One").number(1).correct(false).build(),
+                        AnswerModel.builder().type(AnswerType.TEXT).text("Two").number(2).correct(false).build(),
+                        AnswerModel.builder().type(AnswerType.TEXT).text("Three").number(3).correct(false).build(),
+                        AnswerModel.builder().type(AnswerType.TEXT).text("Four").number(4).correct(false).build()
+                ))
+                .build()));
+
+        add(new Hr());
+
+        add(new LinkAnswersComponent(aQuestionModel(LINK)
+                .answers(List.of(
+                        AnswerModel.builder().type(AnswerType.PHOTO).photoFilename("dev/2a54eb19-cb6e-4d5c-9c56-77f994b37658.jpeg").number(1).correct(true).build(),
+                        AnswerModel.builder().type(AnswerType.PHOTO).photoFilename("dev/3ff9006b-a710-4547-859e-8329f308045a.jpg").number(2).correct(true).build(),
+                        AnswerModel.builder().type(AnswerType.PHOTO).photoFilename("dev/6c96ba5f-eef7-4c91-890d-697c14c19109.jpeg").number(3).correct(true).build(),
+                        AnswerModel.builder().type(AnswerType.PHOTO).photoFilename("dev/6d9c045d-482e-4a9d-a463-c1dc220303a5.jpeg").number(4).correct(true).build(),
+
+                        AnswerModel.builder().type(AnswerType.TEXT).text("Arsenal").number(1).correct(false).build(),
+                        AnswerModel.builder().type(AnswerType.TEXT).text("PSG").number(2).correct(false).build(),
+                        AnswerModel.builder().type(AnswerType.TEXT).text("Barsa").number(3).correct(false).build(),
+                        AnswerModel.builder().type(AnswerType.TEXT).text("Pourtugal").number(4).correct(false).build()
+                ))
+                .build()));
+
+        add(new Hr());
+
+        add(new LinkAnswersComponent(aQuestionModel(LINK)
+                .answers(List.of(
+                        AnswerModel.builder().type(AnswerType.PHOTO).photoFilename("dev/2a54eb19-cb6e-4d5c-9c56-77f994b37658.jpeg").number(1).correct(true).build(),
+                        AnswerModel.builder().type(AnswerType.PHOTO).photoFilename("dev/3ff9006b-a710-4547-859e-8329f308045a.jpg").number(2).correct(true).build(),
+                        AnswerModel.builder().type(AnswerType.PHOTO).photoFilename("dev/6c96ba5f-eef7-4c91-890d-697c14c19109.jpeg").number(3).correct(true).build(),
+                        AnswerModel.builder().type(AnswerType.PHOTO).photoFilename("dev/6d9c045d-482e-4a9d-a463-c1dc220303a5.jpeg").number(4).correct(true).build(),
+
+                        AnswerModel.builder().type(AnswerType.AUDIO).audioFilename("dev/8ee8ff90-239c-411e-b8f8-bccfaa5c923f.mp3").number(1).correct(false).build(),
+                        AnswerModel.builder().type(AnswerType.AUDIO).audioFilename("dev/9f7eed38-0e10-41a9-aeac-027379f4f7d5.mp3").number(2).correct(false).build(),
+                        AnswerModel.builder().type(AnswerType.AUDIO).audioFilename("dev/35e5afc6-1b6b-4026-b3ea-15bfdd4e588d.mp3").number(3).correct(false).build(),
+                        AnswerModel.builder().type(AnswerType.AUDIO).audioFilename("dev/76ce581e-dc13-4af5-ab17-15f630457faa.mp3").number(4).correct(false).build()
+                ))
+                .build()));
 
         add(CleverestComponents.soundButton(() -> AudioUtils.playStaticSoundAsync(GameSounds.next().fullPath())));
 
@@ -137,21 +187,8 @@ public class LabsPage extends VerticalLayout {
 //        openDialog(scoreTableLayout, "Таблица результатов", () -> {
 //        });
 
-        add(userProfile(userGameState.profile()));
-        add(new Hr());
-
-        add(soundButton(() -> {
-        }));
-
         add(userProfileWithScore(userGameState.snapshot()));
         add(new Hr());
-
-        add(userProfileWithAnswer(userGameState.snapshot(), TEXT));
-        add(new Hr());
-
-        Arrays.stream(Emoji.values()).map(e -> e.value).toList().stream()
-                .map(CleverestComponents::emojiBig)
-                .forEach(this::add);
 
         if (false) {
             renderMockQuestions();
@@ -217,10 +254,10 @@ public class LabsPage extends VerticalLayout {
                 .text(randomText(5))
                 .type(questionType)
                 .answers(List.of(
-                        new AnswerModel("Everest", true, 1, null),
-                        new AnswerModel(randomText(7), false, 2, null),
-                        new AnswerModel("Ответ который состоит из нескольких слов", false, 3, null),
-                        new AnswerModel("Вполне себе такой длинный вариант ответа, в нем даже есть запятая", false, 4, null)
+                        new AnswerModel("Everest", true, 1, null, null, AnswerType.TEXT),
+                        new AnswerModel(randomText(7), false, 2, null, null, AnswerType.TEXT),
+                        new AnswerModel("Ответ который состоит из нескольких слов", false, 3, null, null, AnswerType.TEXT),
+                        new AnswerModel("Вполне себе такой длинный вариант ответа, в нем даже есть запятая", false, 4, null, null, AnswerType.TEXT)
                 ));
     }
 
