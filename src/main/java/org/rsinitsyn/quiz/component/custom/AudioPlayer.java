@@ -14,6 +14,7 @@ public class AudioPlayer extends Component {
 
     public AudioPlayer(StreamResource path) {
         this();
+        getElement().getStyle().set("width", "100%");
         setSource(path);
     }
 

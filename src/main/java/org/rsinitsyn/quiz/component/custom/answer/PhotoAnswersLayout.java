@@ -24,7 +24,7 @@ public class PhotoAnswersLayout extends AbstractAnswersLayout {
         options.setItems(answers);
         options.setWidthFull();
         options.setRenderer(new ComponentRenderer<Component, QuestionModel.AnswerModel>(
-                answerModel -> image(answerModel.photoFilename(), MEDIUM_IMAGE_HEIGHT)));
+                answerModel -> image(answerModel.photoFilename(), SMALL_IMAGE_HEIGHT)));
         options.addValueChangeListener(e -> submitButton.setEnabled(true));
         add(options);
     }

@@ -50,6 +50,17 @@ vaadin-item[selected] {
     font-size: var(--lumo-font-size-l);
 }
 
+.quiz-option img {
+    object-fit: cover;
+    object-position: top;
+    border: none;
+}
+
+.quiz-option audio {
+    height: 2.5em;
+    padding: .250em;
+}
+
 .answer-description {
     text-align: center;
     border: 1px solid var(--lumo-primary-color);

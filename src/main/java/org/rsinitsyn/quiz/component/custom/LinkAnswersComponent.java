@@ -10,31 +10,27 @@ import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import lombok.Getter;
 import org.apache.commons.lang3.tuple.MutablePair;
-import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.image;
-import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.optionComponent;
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
 
 public class LinkAnswersComponent extends HorizontalLayout {
 
     private final List<MutablePair<LinkItemDto, LinkItemDto>> resultPairs = new ArrayList<>();
     private final int desiredPairsSize;
-    private final Map<String, Boolean> colors = new HashMap<>();
+    private final Map<String, Boolean> colors = new LinkedHashMap<>();
 
     {
-        colors.put(LumoUtility.Background.PRIMARY_10, false);
+        colors.put(LumoUtility.Background.PRIMARY_50, false);
         colors.put(LumoUtility.Background.SUCCESS_50, false);
-        colors.put(LumoUtility.Background.SUCCESS_10, false);
         colors.put(LumoUtility.Background.ERROR_50, false);
-        colors.put(LumoUtility.Background.ERROR_10, false);
         colors.put(LumoUtility.Background.CONTRAST_30, false);
+        colors.put(LumoUtility.Background.PRIMARY_10, false);
+        colors.put(LumoUtility.Background.SUCCESS_10, false);
+        colors.put(LumoUtility.Background.ERROR_10, false);
     }
 
     private LinkItemDto currLeft = null;
@@ -50,7 +46,13 @@ public class LinkAnswersComponent extends HorizontalLayout {
         final var left = questionModel.getShuffledAnswers().stream().filter(AnswerModel::correct).toList();
         final var right = questionModel.getShuffledAnswers().stream().filter(am -> !am.correct()).toList();
 
-        add(matchSideLayout(left, true), matchSideLayout(right, false));
+        final var leftSide = matchSideLayout(left, true);
+        final var rightSide = matchSideLayout(right, false);
+
+        setFlexGrow(1, leftSide);
+        setFlexGrow(1, rightSide);
+
+        add(leftSide, rightSide);
     }
 
     public List<MutablePair<AnswerModel, AnswerModel>> getPairs() {
@@ -64,6 +66,7 @@ public class LinkAnswersComponent extends HorizontalLayout {
         side.setMargin(false);
         side.setPadding(false);
         side.setSpacing(true);
+        side.setWidthFull();
         answers.forEach(answer -> side.add(buildSelectableComponent(answer, isLeft, event -> {
             if (currLeft == null || currRight == null) return;
             handlePairEvent();
@@ -197,30 +200,25 @@ public class LinkAnswersComponent extends HorizontalLayout {
         };
     }
 
-    private Component createTextComponent(AnswerModel answer,
-                                          boolean isLeft,
-                                          ComponentEventListener<ClickEvent<Component>> eventHandler) {
-        return optionComponent(
-                answer.text(),
-                10,
-                event -> onAnswerSelected(event, answer, isLeft, eventHandler)
-        );
-    }
-
     private Component createImageComponent(AnswerModel answer,
                                            boolean isLeft,
                                            ComponentEventListener<ClickEvent<Component>> eventHandler) {
-        final var image = image(answer.photoFilename(), "100px");
-        image.addClickListener(event -> onAnswerSelected(event, answer, isLeft, eventHandler));
-        return image;
+        return imageOptionComponent(answer.photoFilename(), "5em",
+                event -> onAnswerSelected(event, answer, isLeft, eventHandler));
     }
 
     private Component createAudioComponent(AnswerModel answer,
                                            boolean isLeft,
                                            ComponentEventListener<ClickEvent<Component>> eventHandler) {
-        final var audio = CleverestComponents.audio(answer.audioFilename());
-        audio.getElement().addEventListener("click", event -> onAnswerSelected(null, answer, isLeft, eventHandler));
-        return audio;
+        return audioOptionComponent(answer.audioFilename(),
+                event -> onAnswerSelected(event, answer, isLeft, eventHandler));
+    }
+
+    private Component createTextComponent(AnswerModel answer,
+                                          boolean isLeft,
+                                          ComponentEventListener<ClickEvent<Component>> eventHandler) {
+        return optionComponent(answer.text(), 10,
+                event -> onAnswerSelected(event, answer, isLeft, eventHandler));
     }
 
     private void onAnswerSelected(ClickEvent<? extends Component> event,

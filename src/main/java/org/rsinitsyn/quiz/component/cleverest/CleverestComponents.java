@@ -222,6 +222,25 @@ public final class CleverestComponents {
         return option;
     }
 
+    public static Div audioOptionComponent(String audioFilename,
+                                           ComponentEventListener<ClickEvent<Div>> eventHandler) {
+        var option = new Div(audio(audioFilename));
+        option.setWidthFull();
+        option.addClassName("quiz-option");
+        option.addClickListener(eventHandler);
+        return option;
+    }
+
+    public static Div imageOptionComponent(String photoFilename,
+                                           final String height,
+                                           ComponentEventListener<ClickEvent<Div>> eventHandler) {
+        var option = new Div(image(photoFilename, height));
+        option.setWidthFull();
+        option.addClassName("quiz-option");
+        option.addClickListener(eventHandler);
+        return option;
+    }
+
     public static TextField textAnswerInput(HasValue.ValueChangeListener<? super AbstractField.ComponentValueChangeEvent<TextField, String>> valueChangeHandler) {
         TextField textField = new TextField("Напиши ответ");
         textField.setValueChangeMode(ValueChangeMode.EAGER);

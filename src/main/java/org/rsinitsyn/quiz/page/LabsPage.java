@@ -76,7 +76,7 @@ public class LabsPage extends VerticalLayout {
         ), "Results", () -> {
         });
 
-        add(new LinkAnswersComponent(aQuestionModel(LINK)
+        new LinkAnswersComponent(aQuestionModel(LINK)
                 .answers(List.of(
                         AnswerModel.builder().type(AnswerType.TEXT).text("Один").number(1).correct(true).build(),
                         AnswerModel.builder().type(AnswerType.TEXT).text("Два").number(2).correct(true).build(),
@@ -88,7 +88,7 @@ public class LabsPage extends VerticalLayout {
                         AnswerModel.builder().type(AnswerType.TEXT).text("Three").number(3).correct(false).build(),
                         AnswerModel.builder().type(AnswerType.TEXT).text("Four").number(4).correct(false).build()
                 ))
-                .build()));
+                .build());
 
         add(new Hr());
 
@@ -119,6 +119,22 @@ public class LabsPage extends VerticalLayout {
                         AnswerModel.builder().type(AnswerType.AUDIO).audioFilename("dev/9f7eed38-0e10-41a9-aeac-027379f4f7d5.mp3").number(2).correct(false).build(),
                         AnswerModel.builder().type(AnswerType.AUDIO).audioFilename("dev/35e5afc6-1b6b-4026-b3ea-15bfdd4e588d.mp3").number(3).correct(false).build(),
                         AnswerModel.builder().type(AnswerType.AUDIO).audioFilename("dev/76ce581e-dc13-4af5-ab17-15f630457faa.mp3").number(4).correct(false).build()
+                ))
+                .build()));
+
+        add(new Hr());
+
+        add(new LinkAnswersComponent(aQuestionModel(LINK)
+                .answers(List.of(
+                        AnswerModel.builder().type(AnswerType.TEXT).text("Arsenal").number(1).correct(false).build(),
+                        AnswerModel.builder().type(AnswerType.TEXT).text("PSG").number(2).correct(false).build(),
+                        AnswerModel.builder().type(AnswerType.TEXT).text("Barsa").number(3).correct(false).build(),
+                        AnswerModel.builder().type(AnswerType.TEXT).text("Pourtugal").number(4).correct(false).build(),
+
+                        AnswerModel.builder().type(AnswerType.AUDIO).audioFilename("dev/8ee8ff90-239c-411e-b8f8-bccfaa5c923f.mp3").number(1).correct(true).build(),
+                        AnswerModel.builder().type(AnswerType.AUDIO).audioFilename("dev/9f7eed38-0e10-41a9-aeac-027379f4f7d5.mp3").number(2).correct(true).build(),
+                        AnswerModel.builder().type(AnswerType.AUDIO).audioFilename("dev/35e5afc6-1b6b-4026-b3ea-15bfdd4e588d.mp3").number(3).correct(true).build(),
+                        AnswerModel.builder().type(AnswerType.AUDIO).audioFilename("dev/76ce581e-dc13-4af5-ab17-15f630457faa.mp3").number(4).correct(true).build()
                 ))
                 .build()));
 
