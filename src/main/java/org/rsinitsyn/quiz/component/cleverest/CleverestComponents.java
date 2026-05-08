@@ -201,7 +201,7 @@ public final class CleverestComponents {
 
     public static Notification chatNotification(UserProfile profile, String text) {
         Notification notification = new Notification();
-        notification.setDuration(30_000);
+        notification.setDuration(10_000); // todo: show 10 seconds main screen and 2 seconds player screen
         notification.setPosition(Notification.Position.TOP_END);
         notification.addThemeVariants(NotificationVariant.LUMO_PRIMARY);
         final var userProfile = userProfile(profile);
@@ -468,12 +468,12 @@ public final class CleverestComponents {
     }
 
 
-    public static Button soundButton(Consumer<GameSound> soundConsumer) {
+    public static Button soundButton(int size, Consumer<GameSound> soundConsumer) {
         final var soundButton = new Button(Emoji.SOUND.value);
         final var contextMenu = new ContextMenu(soundButton);
         contextMenu.setOpenOnClick(true);
         final var layout = horizontalLayoutCenter();
-        GameSounds.random(3)
+        GameSounds.random(size)
                 .forEach(gameSound -> {
                     final var emoji = emojiBig(gameSound.emoji().value);
                     layout.add(emoji);

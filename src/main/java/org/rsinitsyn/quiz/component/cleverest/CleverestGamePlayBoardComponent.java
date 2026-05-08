@@ -475,7 +475,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
         topContainer.add(userProfileWithScore(userState.snapshot(), MOBILE_LARGE_FONT));
         topContainer.add(horizontalLayoutCenter(
-                soundButton(sound -> broadcaster.sendPlaySoundEvent(gameId, sound)),
+                soundButton(3, sound -> broadcaster.sendPlaySoundEvent(gameId, sound)),
                 openChatButton(messageText -> broadcaster.sendUserTextedEvent(gameId, getLoggedUser(), messageText)),
                 reactionButton(Emoji.HEART.value, (emoji) -> broadcaster.sendLiveReactionEvent(gameId, getLoggedUser(), emoji))));
         topContainer.add(new Hr());

@@ -139,6 +139,8 @@ public class LabsPage extends VerticalLayout {
                 ))
                 .build()));
 
+        add(soundButton(5, sound -> AudioUtils.playStaticSoundAsync(sound.fullPath())));
+
         // test emoji
         final var verticalLayout = new VerticalLayout();
         GameSounds.ALL
