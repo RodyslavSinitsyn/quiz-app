@@ -58,8 +58,10 @@ public enum Emoji {
     BANANA("🍌"),
     BURGER("🍔"),
     BEER("🍺"),
-    ROCKET("🚀", 5);
+    ROCKET("🚀", 5),
 
+    BOBR("🦫"),
+    ;
     public final String value;
     public final int rating;
 

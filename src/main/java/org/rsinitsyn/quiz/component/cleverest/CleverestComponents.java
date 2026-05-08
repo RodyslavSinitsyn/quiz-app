@@ -36,6 +36,8 @@ import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.ManualApprove;
 import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
+import org.rsinitsyn.quiz.model.sound.GameSound;
+import org.rsinitsyn.quiz.model.sound.GameSounds;
 
 import java.util.Collection;
 import java.util.List;
@@ -43,7 +45,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import static org.rsinitsyn.quiz.utils.QuizComponents.*;
 import static org.rsinitsyn.quiz.utils.QuizUtils.createStreamResourceForAudio;
@@ -467,19 +468,19 @@ public final class CleverestComponents {
     }
 
 
-    public static Button soundButton(Runnable task) {
+    public static Button soundButton(Consumer<GameSound> soundConsumer) {
         final var soundButton = new Button(Emoji.SOUND.value);
         final var contextMenu = new ContextMenu(soundButton);
         contextMenu.setOpenOnClick(true);
         final var layout = horizontalLayoutCenter();
-        Stream.of(Emoji.GUITAR.value, Emoji.LAUGH.value, Emoji.EXPLODE.value)
-                .map(CleverestComponents::emojiBig)
-                .forEach(emoji -> {
+        GameSounds.random(3)
+                .forEach(gameSound -> {
+                    final var emoji = emojiBig(gameSound.emoji().value);
                     layout.add(emoji);
                     emoji.addClickListener(e -> {
-                        task.run();
+                        soundConsumer.accept(gameSound);
                         contextMenu.close();
-                        emoji.setEnabled(false);
+                        layout.setEnabled(false);
                     });
                 });
         contextMenu.add(layout);

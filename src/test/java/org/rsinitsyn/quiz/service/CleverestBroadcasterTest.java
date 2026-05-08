@@ -147,7 +147,7 @@ class CleverestBroadcasterTest implements QuizTestFixture {
         });
         // and
         then(eventBus).should().fireEvent(new UserAnsweredEvent(gameId, "Alice", "0.0 сек.", 1));
-        then(eventBus).should().fireEvent(new AllUsersAnsweredEvent(gameId, , , q, true, 1, 0));
+        then(eventBus).should().fireEvent(new AllUsersAnsweredEvent(gameId, List.of(), 1, q, true, 1, 0));
     }
 
     @Test

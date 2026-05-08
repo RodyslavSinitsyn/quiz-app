@@ -2,6 +2,7 @@ package org.rsinitsyn.quiz.page;
 
 
 import com.vaadin.flow.component.html.Hr;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
@@ -138,7 +139,21 @@ public class LabsPage extends VerticalLayout {
                 ))
                 .build()));
 
-        add(CleverestComponents.soundButton(() -> AudioUtils.playStaticSoundAsync(GameSounds.next().fullPath())));
+        // test emoji
+        final var verticalLayout = new VerticalLayout();
+        GameSounds.ALL
+                .forEach(gameSound -> {
+                    final var layout = horizontalLayoutCenter();
+                    final var emoji = emojiBig(gameSound.emoji().value);
+                    layout.add(emoji);
+                    layout.add(new Span(gameSound.path()));
+                    emoji.addClickListener(e -> {
+                        AudioUtils.playStaticSoundAsync(gameSound.fullPath());
+                        layout.setEnabled(false);
+                    });
+                    verticalLayout.add(layout);
+                });
+        add(verticalLayout);
 
         final var animatedLeaderboardComponent = new AnimatedLeaderboardComponent(
                 List.of(
