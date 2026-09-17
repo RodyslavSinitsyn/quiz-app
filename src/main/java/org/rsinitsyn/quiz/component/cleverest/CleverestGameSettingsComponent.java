@@ -110,7 +110,7 @@ public class CleverestGameSettingsComponent extends VerticalLayout {
             allQuestionsGrid.asMultiSelect().deselectAll();
         });
 
-        Button hideUsed = new Button("Убрать" + " used");
+        Button hideUsed = new Button("Убрать used");
         hideUsed.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_CONTRAST);
         hideUsed.addClickListener(event -> {
             hiddenFilterUsed = !hiddenFilterUsed;

@@ -51,8 +51,8 @@ public abstract class AbstractQuestionCreationForm<T extends AbstractQuestionBin
     public AbstractQuestionCreationForm(List<QuestionCategoryEntity> categoryEntityList) {
         setCategoryList(categoryEntityList);
         setWidth("30em");
-        setVisibility(false);
         configureTextInput();
+        setVisibility(false);
         enableMore.addValueChangeListener(event -> setVisibility(event.getValue()));
     }
 
