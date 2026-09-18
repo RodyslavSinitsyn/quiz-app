@@ -1,21 +1,20 @@
 package org.rsinitsyn.quiz.service.strategy.update;
 
 import org.apache.commons.lang3.StringUtils;
-import org.rsinitsyn.quiz.entity.*;
+import org.rsinitsyn.quiz.entity.AnswerEntity;
+import org.rsinitsyn.quiz.entity.QuestionEntity;
+import org.rsinitsyn.quiz.entity.QuestionHintEntity;
 import org.rsinitsyn.quiz.model.binding.AbstractQuestionBindingModel;
-import org.rsinitsyn.quiz.model.binding.LinkQuestionBindingModel;
 import org.rsinitsyn.quiz.properties.QuizAppProperties;
 import org.rsinitsyn.quiz.service.QuestionCategoryService;
-import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static java.time.LocalDateTime.*;
-import static org.rsinitsyn.quiz.entity.QuestionHintType.PHOTO;
+import static java.time.LocalDateTime.now;
+import static java.util.Optional.ofNullable;
 import static org.rsinitsyn.quiz.entity.QuestionHintType.TEXT;
 import static org.rsinitsyn.quiz.utils.QuizUtils.generateFilename;
 import static org.rsinitsyn.quiz.utils.QuizUtils.generateFilenameWithExt;
@@ -62,6 +61,7 @@ public abstract class AbstractQuestionUpdateStrategy<T extends AbstractQuestionB
             question.setAudioFilename(properties.getFilesFolder() + generateFilenameWithExt("mp3"));
         }
         categoryService.findByName(model.getCategory())
+                .or(() -> ofNullable(model.getCategory()).map(categoryService::save))
                 .ifPresentOrElse(
                         question::setCategory,
                         () -> question.setCategory(categoryService.getOrCreateDefaultCategory()));
@@ -134,7 +134,7 @@ public abstract class AbstractQuestionUpdateStrategy<T extends AbstractQuestionB
 
     protected List<QuestionHintEntity> createHints(T model) {
         final var counter = new AtomicInteger(0);
-        return model.getHintsText().lines()
+        return ofNullable(model.getHintsText()).stream().flatMap(String::lines)
                 .filter(StringUtils::isNoneBlank)
                 .map(line -> {
                     final var entity = new QuestionHintEntity();

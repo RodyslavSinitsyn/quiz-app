@@ -5,15 +5,12 @@ import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
 import org.rsinitsyn.quiz.properties.QuizAppProperties;
 import org.rsinitsyn.quiz.service.QuestionCategoryService;
-import org.rsinitsyn.quiz.utils.QuizUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-
-import static org.rsinitsyn.quiz.utils.QuizUtils.generateFilenameWithExt;
 
 @Service
 public class FourAnswersQuestionUpdateStrategy extends AbstractQuestionUpdateStrategy<FourAnswersQuestionBindingModel> {

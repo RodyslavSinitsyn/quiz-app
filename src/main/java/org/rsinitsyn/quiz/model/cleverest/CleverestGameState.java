@@ -10,7 +10,6 @@ import org.rsinitsyn.quiz.model.QuestionModel;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -24,6 +23,9 @@ import static org.rsinitsyn.quiz.model.cleverest.UserGameState.userGameState;
 @Getter
 public class CleverestGameState {
 
+    private static final Comparator<UserGameState> SCORE_COMPARATOR = comparingInt(UserGameState::totalScore)
+            .reversed()
+            .thenComparing(UserGameState::lastResponseTimeMs);
     private static final int REVEALS_COUNT = 3;
 
     @Getter(AccessLevel.NONE)
@@ -180,14 +182,14 @@ public class CleverestGameState {
     // TODO: Reduce to Snapshot not full sate
     public List<UserGameState> usersSortedByScore() {
         return users.values().stream()
-                .sorted(Comparator.comparingInt(UserGameState::totalScore).reversed())
+                .sorted(SCORE_COMPARATOR)
                 .toList();
     }
 
-    public List<UserGameState> usersSortedByScore(List<UserStateSnapshot> users) {
-        return users.stream()
-                .map(s -> this.users.get(s.username()))
-                .sorted(Comparator.comparingInt(UserGameState::totalScore).reversed())
+    public List<UserGameState> usersSortedByScore(List<UserStateSnapshot> snapshots) {
+        return snapshots.stream()
+                .map(snapshot -> users.get(snapshot.username()))
+                .sorted(SCORE_COMPARATOR)
                 .toList();
     }
 
@@ -248,15 +250,9 @@ public class CleverestGameState {
 
     public void updateUserPositions() {
         final var sortedByScore = usersSortedByScore();
-        AtomicInteger pos = new AtomicInteger(1);
-        AtomicInteger prevScoreHolder = new AtomicInteger(0);
-        sortedByScore.forEach(userGameState -> {
-            if (userGameState.totalScore() < prevScoreHolder.get()) {
-                pos.incrementAndGet();
-            }
-            userGameState.updateLastPosition(pos.get());
-            prevScoreHolder.set(userGameState.totalScore());
-        });
+        for (int i = 0; i < sortedByScore.size(); i++) {
+            sortedByScore.get(i).updateLastPosition(i + 1);
+        }
     }
 
     public void calculateUsersStatistic() {

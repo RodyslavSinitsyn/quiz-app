@@ -174,16 +174,21 @@ public class QuestionService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     public <T extends AbstractQuestionBindingModel> void saveOrUpdate(T model) {
-        final var abstractStrategy =
-                questionUpdateStrategyMap.get(model.getClass().getSimpleName());
-        @SuppressWarnings("unchecked") final var specificStrategy = (AbstractQuestionUpdateStrategy<T>) abstractStrategy;
-        var question = specificStrategy.prepareEntity(model, model.getId() == null
-                ? null
-                : findById(UUID.fromString(model.getId())));
+        var question = prepareQuestionEntity(model);
         saveEntityAndResources(question);
         if (model.getId() == null) {
             resourceService.saveAudio(question.getAudioFilename(), model.getAudio());
         }
+    }
+
+    public  <T extends AbstractQuestionBindingModel> QuestionEntity prepareQuestionEntity(final T model) {
+        final var abstractStrategy =
+                questionUpdateStrategyMap.get(model.getClass().getSimpleName());
+        @SuppressWarnings("unchecked") final var specificStrategy = (AbstractQuestionUpdateStrategy<T>) abstractStrategy;
+        final var question = specificStrategy.prepareEntity(model, model.getId() == null
+                ? null
+                : findById(UUID.fromString(model.getId())));
+        return question;
     }
 
     @Transactional(propagation = Propagation.REQUIRED)

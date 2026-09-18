@@ -151,7 +151,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         subscriptions.add(broadcaster.subscribe(gameId, UserAnsweredEvent.class, event ->
                 runActionInUi(ui, () -> {
                     if (gameHost) {
-                        udpateUserTopDetails(event.username(), event.lastResponseTimeSec());
+                        updateUserTopDetails(event.username(), event.lastResponseTimeSec());
                     }
                     if (doneByAuthenticated(event)) {
                         midContainer.setEnabled(false);
@@ -223,6 +223,15 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
         subscriptions.add(broadcaster.subscribe(gameId, UserSentMessageEvent.class, event ->
                 runActionInUi(ui, () -> chatNotification(event.getUserProfile().orElseThrow(), event.getMessage()))));
+
+        subscriptions.add(broadcaster.subscribe(gameId, LiveReactionEvent.class, event ->
+                runActionInUi(ui, () -> spawnReaction(ui, event.getEmoji()))));
+
+        subscriptions.add(broadcaster.subscribe(gameId, QuestionGradedEvent.class, event ->
+                runActionInUi(ui, () -> {
+                    updateUserGrade(event.username(), event.getEmoji());
+                    spawnReaction(ui, event.getEmoji(), 5);
+                })));
     }
 
     private void subscribeOnPlayerOnlyEvents(UI ui) {
@@ -260,24 +269,15 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                 )
         );
 
-        subscriptions.add(broadcaster.subscribe(gameId, QuestionGradedEvent.class, event ->
-                runActionInUi(ui, () -> {
-                    updateUserGrade(event.username(), event.getEmoji());
-                    spawnReaction(ui, event.getEmoji(), 5);
-                })));
-
         subscriptions.add(broadcaster.subscribe(gameId, PlaySoundEvent.class, event ->
                 playStaticSoundAsync(event.getSound().fullPath())));
 
         subscriptions.add(broadcaster.subscribe(gameId, DeleteUserEvent.class, event ->
                 renderTopContainerForHost(broadcaster.getState(gameId).getAllUserProfiles())));
 
-        subscriptions.add(broadcaster.subscribe(gameId, LiveReactionEvent.class, event ->
-                runActionInUi(ui, () -> spawnReaction(ui, event.getEmoji()))));
-
         subscriptions.add(broadcaster.subscribe(gameId, UpdateUserDetailsEvent.class, event ->
                 runActionInUi(ui, () -> {
-                    udpateUserTopDetails(event.username(), event.updateText());
+                    updateUserTopDetails(event.username(), event.updateText());
                 })));
     }
 
@@ -334,9 +334,9 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
         });
     }
 
-    private void udpateUserTopDetails(String username, String updateText) {
+    private void updateUserTopDetails(String username, String updateText) {
         topContainerUserComponent(username).ifPresent(component -> {
-            component.removeAll();
+//            component.removeAll(); todo: bugfix for override avatar with response time + emoji
             component.addComponentAsFirst(userCheckIcon());
             component.addComponentAsFirst(appendTextBorder(new Span(updateText)));
         });

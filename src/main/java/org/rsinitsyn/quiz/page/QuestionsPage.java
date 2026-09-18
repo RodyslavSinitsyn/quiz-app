@@ -31,10 +31,7 @@ import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.binding.*;
-import org.rsinitsyn.quiz.service.ImportService;
-import org.rsinitsyn.quiz.service.QuestionCategoryService;
-import org.rsinitsyn.quiz.service.QuestionService;
-import org.rsinitsyn.quiz.service.UserService;
+import org.rsinitsyn.quiz.service.*;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.springframework.security.concurrent.DelegatingSecurityContextExecutor;
 
@@ -74,6 +71,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
 
     private final QuestionService questionService;
     private final ImportService importService;
+    private final JsonImportService jsonImportService;
     private final UserService userService;
     private final QuestionCategoryService categoryService;
     // Async workaround, move to separate service
@@ -82,10 +80,12 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
 
     public QuestionsPage(QuestionService questionService,
                          ImportService importService,
+                         JsonImportService jsonImportService,
                          UserService userService,
                          QuestionCategoryService categoryService) {
         this.questionService = questionService;
         this.importService = importService;
+        this.jsonImportService = jsonImportService;
         this.userService = userService;
         this.categoryService = categoryService;
 
@@ -269,9 +269,10 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
                 "Импортировать",
                 (buffer, event) -> {
                     InputStream inputStream = buffer.getInputStream(event.getFileName());
-                    importService.importQuestions(inputStream);
+                    boolean dryRun = event.getFileName().contains("test");
+                    jsonImportService.importQuestions(inputStream, dryRun);
                     updateListAsync();
-                }, ".txt", 1);
+                }, ".json", 1);
 
         Button addCategoryButton = createButton("Добавить тему", event -> {
             categoryForm.setModel(new QuestionCategoryBindingModel());
@@ -289,7 +290,7 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
                 addTopQuestionButton,
                 addLinkQuestionButton,
                 addGuessPhotoButton,
-//                uploadComponent, TODO: Upload anyway not updated
+                uploadComponent,
                 addCategoryButton,
                 groupedOperations);
         toolbar.setWidthFull();

@@ -5,8 +5,6 @@ import org.rsinitsyn.quiz.entity.AnswerStatus;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.rsinitsyn.quiz.entity.AnswerStatus.CORRECT;
-
 public record UserStateSnapshot(UserProfile profile,
                                 String answerText,
                                 AnswerStatus answerStatus,

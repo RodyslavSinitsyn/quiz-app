@@ -138,6 +138,10 @@ public class UserGameState implements Comparable<UserGameState> {
                 .compare(this, other);
     }
 
+    public long lastResponseTimeMs() {
+        return lastResponseTimeMs;
+    }
+
     public UserProfile profile() {
         return profile;
     }

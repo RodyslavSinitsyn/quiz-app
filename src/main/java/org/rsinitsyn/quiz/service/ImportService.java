@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Deprecated
 public class ImportService {
 
     private static final String DEFAULT_DELIMITER = "|";

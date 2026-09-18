@@ -52,7 +52,7 @@ public class CleanupImagesJob {
         if (maybeReference.isEmpty()) {
             resourceService.deleteImageFile(fullPath);
         } else {
-            log.debug("Image file [{}] linked to entity: [{}-{}]", path,
+            log.trace("Image file [{}] linked to entity: [{}-{}]", path,
                     maybeReference.get().entity(),
                     maybeReference.get().id());
         }
