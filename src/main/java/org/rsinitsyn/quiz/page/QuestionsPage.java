@@ -31,7 +31,10 @@ import org.rsinitsyn.quiz.entity.QuestionCategoryEntity;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionType;
 import org.rsinitsyn.quiz.model.binding.*;
-import org.rsinitsyn.quiz.service.*;
+import org.rsinitsyn.quiz.service.JsonImportService;
+import org.rsinitsyn.quiz.service.QuestionCategoryService;
+import org.rsinitsyn.quiz.service.QuestionService;
+import org.rsinitsyn.quiz.service.UserService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 import org.springframework.security.concurrent.DelegatingSecurityContextExecutor;
 
@@ -70,7 +73,6 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
     private AbstractQuestionCreationForm<GuessPhotoQuestionBindingModel> guessPhotoForm;
 
     private final QuestionService questionService;
-    private final ImportService importService;
     private final JsonImportService jsonImportService;
     private final UserService userService;
     private final QuestionCategoryService categoryService;
@@ -79,12 +81,10 @@ public class QuestionsPage extends VerticalLayout implements AfterNavigationObse
     private final Executor securityDelegatingExecutor = new DelegatingSecurityContextExecutor(executor);
 
     public QuestionsPage(QuestionService questionService,
-                         ImportService importService,
                          JsonImportService jsonImportService,
                          UserService userService,
                          QuestionCategoryService categoryService) {
         this.questionService = questionService;
-        this.importService = importService;
         this.jsonImportService = jsonImportService;
         this.userService = userService;
         this.categoryService = categoryService;
