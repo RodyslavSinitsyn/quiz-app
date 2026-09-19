@@ -5,8 +5,7 @@ import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.*;
 import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.RandomStringGenerator;
@@ -40,6 +39,7 @@ import java.util.Random;
 
 import static com.vaadin.flow.component.notification.NotificationVariant.*;
 import static java.time.LocalDateTime.now;
+import static java.util.Optional.ofNullable;
 import static java.util.UUID.randomUUID;
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
 import static org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory.createQuestionLayout;
@@ -53,13 +53,18 @@ import static org.rsinitsyn.quiz.utils.ThemeUtils.BLACK_COLOR;
 @PageTitle("Labs")
 @Slf4j
 @PermitAll
-public class LabsPage extends VerticalLayout {
+public class LabsPage extends VerticalLayout implements HasUrlParameter<String>, AfterNavigationObserver {
 
     private final QuestionService questionService;
+    boolean host = false;
+
 
     public LabsPage(final QuestionService questionService) throws IOException {
         this.questionService = questionService;
+    }
 
+    @Override
+    public void afterNavigation(AfterNavigationEvent afterNavigationEvent) {
         final var userGameState = UserGameState.userGameState("Rodyslav",
                 SessionWrapper.getLoggedUserThemeColor(),
                 "/dev/4704b5fb-a349-4f96-8fc0-240a30d10cca.jpg");
@@ -234,7 +239,7 @@ public class LabsPage extends VerticalLayout {
                 .toList();
         for (final var question : questions) {
             final var sequenceQuestion = createQuestionLayout(new QuestionLayoutRequest()
-                    .host(false)
+                    .host(host)
                     .question(question));
             add(sequenceQuestion);
             add(new Hr());
@@ -313,5 +318,10 @@ public class LabsPage extends VerticalLayout {
             }
         }
         return builder.toString().trim();
+    }
+
+    @Override
+    public void setParameter(final BeforeEvent beforeEvent, @OptionalParameter final String param) {
+        this.host = ofNullable(param).orElse("").equalsIgnoreCase("host");
     }
 }

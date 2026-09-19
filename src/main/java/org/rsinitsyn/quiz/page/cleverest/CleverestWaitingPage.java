@@ -9,7 +9,6 @@ import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.cleverest.CleverestWaitingRoomComponent;
-import org.rsinitsyn.quiz.entity.UserEntity;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.AllUsersReadyEvent;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.UserJoinedEvent;
@@ -27,7 +26,6 @@ import static org.rsinitsyn.quiz.entity.GameStatus.NOT_STARTED;
 import static org.rsinitsyn.quiz.entity.GameStatus.STARTED;
 import static org.rsinitsyn.quiz.utils.QuizUtils.*;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
-import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUserPhoto;
 
 @Route(value = "cleverest/waiting", layout = MainLayout.class)
 @PageTitle("Cleverest - Ожидание")

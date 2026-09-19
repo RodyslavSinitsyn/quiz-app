@@ -15,6 +15,7 @@ import org.rsinitsyn.quiz.entity.GameStatus;
 import org.rsinitsyn.quiz.page.MainPage;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.GameFinishedEvent;
+import org.rsinitsyn.quiz.service.CleverestBroadcaster.RenderResultsEvent;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
@@ -124,7 +125,7 @@ public class CleverestGamePage extends VerticalLayout
                             event.username(),
                             event.grade())));
         }
-        subscriptions.add(broadcaster.subscribe(gameId, CleverestBroadcaster.RenderResultsEvent.class,
+        subscriptions.add(broadcaster.subscribe(gameId, RenderResultsEvent.class,
                 event -> runActionInUi(Optional.of(ui), () -> ui.navigate(CleverestResultsPage.class, gameId))));
         logState(this, attachEvent.getUI(), "onAttach", false, subscriptions);
     }

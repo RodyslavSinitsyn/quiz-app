@@ -40,6 +40,8 @@ import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 @Slf4j
 public class CleverestGamePlayBoardComponent extends VerticalLayout {
 
+    private static final int MAX_3RD_ROUND_BET = 3;
+
     private String gameId;
     private CleverestBroadcaster broadcaster;
     private boolean gameHost;
@@ -125,7 +127,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                 .username(Optional.of(getLoggedUser()))
                                 .renderCategory(true)
                                 .manualAnswer(true)
-                                .answerBet(Optional.of(new AnswerBet(1, 5)))
+                                .answerBet(Optional.of(new AnswerBet(1, MAX_3RD_ROUND_BET)))
                                 .imageHeight(MEDIUM_IMAGE_HEIGHT),
                         new QuestionDetails(1, 1, 3));
             } else {
@@ -209,7 +211,7 @@ public class CleverestGamePlayBoardComponent extends VerticalLayout {
                                         .username(Optional.ofNullable(event.getUsername()))
                                         .renderCategory(true)
                                         .manualAnswer(true)
-                                        .answerBet(Optional.of(new AnswerBet(1, 5)))
+                                        .answerBet(Optional.of(new AnswerBet(1, MAX_3RD_ROUND_BET)))
                                         .imageHeight(MEDIUM_IMAGE_HEIGHT),
                                 new QuestionDetails(1, 1, 3));
                     }
