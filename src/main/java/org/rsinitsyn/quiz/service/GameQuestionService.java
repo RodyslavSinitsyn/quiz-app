@@ -3,6 +3,7 @@ package org.rsinitsyn.quiz.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.rsinitsyn.quiz.dao.GameDao;
 import org.rsinitsyn.quiz.dao.GameQuestionDao;
 import org.rsinitsyn.quiz.dao.QuestionDao;
@@ -11,6 +12,7 @@ import org.rsinitsyn.quiz.entity.GameQuestionId;
 import org.rsinitsyn.quiz.entity.GameQuestionMetadata;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -21,6 +23,12 @@ public class GameQuestionService {
     private final GameQuestionDao gameQuestionDao;
     private final GameDao gameDao;
     private final QuestionDao questionDao;
+
+    @Transactional
+    public void addQuestionsToGame(UUID gameId, List<Pair<UUID, GameQuestionMetadata>> questions) {
+        questions.forEach(question ->
+                addQuestionToGame(gameId, question.getLeft(), question.getRight()));
+    }
 
     @Transactional
     public void addQuestionToGame(UUID gameId, UUID questionId, GameQuestionMetadata metadata) {

@@ -7,9 +7,11 @@ import org.rsinitsyn.quiz.dao.GameParticipantDao;
 import org.rsinitsyn.quiz.dao.UserDao;
 import org.rsinitsyn.quiz.entity.GameParticipantEntity;
 import org.rsinitsyn.quiz.entity.GameParticipantRole;
+import org.rsinitsyn.quiz.entity.UserEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static java.time.LocalDateTime.now;
@@ -25,14 +27,22 @@ public class GameParticipantService {
     private final GameDao gameDao;
     private final UserDao userDao;
 
+    public void addPlayer(UUID gameId, String username) {
+        addPlayer(gameId, userDao.findByUsername(username).orElseThrow());
+    }
+
+    public Optional<GameParticipantEntity> findParticipant(UUID gameId, UUID userId) {
+        return gameParticipantDao.findById(gameParticipantId(gameId, userId));
+    }
+
     @Transactional
-    public void addPlayer(UUID gameId, UUID userId) {
+    public void addPlayer(UUID gameId, UserEntity user) {
+        final var userId = user.getId();
         if (gameParticipantDao.existsById(gameParticipantId(gameId, userId))) {
             log.debug("User {} is already a participant of game {}", userId, gameId);
             return;
         }
         final var game = gameDao.getReferenceById(gameId);
-        final var user = userDao.getReferenceById(userId);
 
         final var entity = GameParticipantEntity.builder()
                 .id(gameParticipantId(gameId, userId))

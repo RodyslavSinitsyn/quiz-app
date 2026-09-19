@@ -2,6 +2,11 @@ package org.rsinitsyn.quiz.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import static org.rsinitsyn.quiz.entity.AnswerEvaluationType.AUTOMATIC;
+import static org.rsinitsyn.quiz.entity.AnswerStatus.UNKNOWN;
 
 @Entity
 @Table(
@@ -60,11 +65,16 @@ public class GameQuestionUserAnswerEntity {
     private GameParticipantEntity participant;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "answer_status", nullable = false)
-    private AnswerStatus answerStatus;
+    @Column(name = "status", nullable = false)
+    private AnswerStatus status = UNKNOWN;
 
-    @Column(name = "answer_text")
-    private String answerText;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "evaluation_type", nullable = false)
+    private AnswerEvaluationType evaluationType = AUTOMATIC;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "details", columnDefinition = "jsonb")
+    private UserAnswerDetails details;
 
     @Column(name = "response_time_ms")
     private Long responseTimeMs;

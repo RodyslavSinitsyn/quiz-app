@@ -10,7 +10,7 @@ import com.vaadin.flow.data.renderer.LocalDateTimeRenderer;
 import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
 import org.rsinitsyn.quiz.entity.GameType;
-import org.rsinitsyn.quiz.page.QuizGamePlayPage;
+import org.rsinitsyn.quiz.page.quiz.QuizGamePlayPage;
 import org.rsinitsyn.quiz.page.cleverest.CleverestGamePage;
 import org.rsinitsyn.quiz.page.cleverest.CleverestResultsPage;
 import org.rsinitsyn.quiz.page.cleverest.CleverestWaitingPage;

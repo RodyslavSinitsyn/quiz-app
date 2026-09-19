@@ -1,4 +1,4 @@
-package org.rsinitsyn.quiz.page;
+package org.rsinitsyn.quiz.page.labs;
 
 
 import com.vaadin.flow.component.html.Hr;

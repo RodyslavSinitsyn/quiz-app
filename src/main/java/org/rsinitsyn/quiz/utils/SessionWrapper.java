@@ -9,6 +9,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
+import java.util.UUID;
 
 public class SessionWrapper {
 
@@ -18,6 +19,12 @@ public class SessionWrapper {
         return getLoggedUserEntity()
                 .map(UserEntity::getUsername)
                 .orElse("Аноним");
+    }
+
+    public static UUID getLoggedUserId() {
+        return getLoggedUserEntity()
+                .map(UserEntity::getId)
+                .orElse(UUID.randomUUID());
     }
 
     public static String getLoggedUserPhoto() {

@@ -3,6 +3,8 @@ package org.rsinitsyn.quiz.entity;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Arrays;
+
 @RequiredArgsConstructor
 public enum QuestionType {
     TEXT(VaadinIcon.QUESTION),
@@ -16,4 +18,8 @@ public enum QuestionType {
     GUESS_PHOTO(VaadinIcon.EYE_SLASH);
 
     public final VaadinIcon icon;
+
+    public boolean isOneOf(QuestionType... types) {
+        return Arrays.stream(types).anyMatch(type -> type == this);
+    }
 }

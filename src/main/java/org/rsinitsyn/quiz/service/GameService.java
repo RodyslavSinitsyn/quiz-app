@@ -198,6 +198,7 @@ public class GameService {
         updateStatus(id, GameStatus.FINISHED);
     }
 
+
     @Transactional(readOnly = true)
     public QuizGameState restoreQuizGameState(String gameId) {
         var gameEntity = findById(gameId);

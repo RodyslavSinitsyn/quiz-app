@@ -11,6 +11,7 @@ import jakarta.annotation.security.PermitAll;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.custom.GameListGrid;
 import org.rsinitsyn.quiz.page.cleverest.CleverestSetupPage;
+import org.rsinitsyn.quiz.page.quiz.QuizGameConfigurePage;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 

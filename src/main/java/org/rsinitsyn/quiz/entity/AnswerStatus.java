@@ -15,6 +15,10 @@ public enum AnswerStatus {
         return boolVal != null && boolVal;
     }
 
+    public boolean answered() {
+        return this != UNKNOWN;
+    }
+
     public static AnswerStatus answerStatus(Boolean correct) {
         if (correct == null) {
             return UNKNOWN;

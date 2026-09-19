@@ -39,7 +39,7 @@ public class GameParticipantEntity {
     private GameParticipantRole role;
 
     @Column(name = "join_date", nullable = false)
-    private LocalDateTime joinDate;
+    private LocalDateTime joinDate; // todo: make optional
 
     @Column(name = "leave_date", nullable = true)
     private LocalDateTime leaveDate;

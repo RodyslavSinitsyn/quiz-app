@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(exclude = {"gameQuestions"})
+@EqualsAndHashCode(exclude = {"gameQuestions", "participants"})
 @ToString
 public class GameEntity {
     @Id

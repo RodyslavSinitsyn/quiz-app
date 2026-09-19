@@ -11,4 +11,6 @@ import java.util.UUID;
 @Repository
 public interface GameQuestionUserAnswerDao extends JpaRepository<GameQuestionUserAnswerEntity, GameQuestionUserAnswerId> {
     List<GameQuestionUserAnswerEntity> findAllByIdGameIdAndIdQuestionId(UUID gameId, UUID questionId);
+
+    List<GameQuestionUserAnswerEntity> findAllByIdGameIdAndIdUserId(UUID gameId, UUID userId);
 }

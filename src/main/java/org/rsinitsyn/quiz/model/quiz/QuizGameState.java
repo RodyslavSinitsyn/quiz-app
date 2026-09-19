@@ -26,6 +26,7 @@ public class QuizGameState {
     @NotBlank
     @Length(min = 1, max = 30)
     private String playerName = "Test";
+    private UUID playerId;
     private boolean answerOptionsEnabled;
     private boolean timerEnabled;
     private boolean hintsEnabled;

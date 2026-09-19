@@ -8,6 +8,7 @@ import org.rsinitsyn.quiz.dao.GameQuestionUserAnswerDao;
 import org.rsinitsyn.quiz.entity.AnswerStatus;
 import org.rsinitsyn.quiz.entity.GameQuestionUserAnswerEntity;
 import org.rsinitsyn.quiz.entity.GameQuestionUserAnswerId;
+import org.rsinitsyn.quiz.entity.UserAnswerDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,9 +34,9 @@ public class GameQuestionUserAnswerService {
             UUID gameId,
             UUID questionId,
             UUID userId,
-            String answerText,
+            UserAnswerDetails answerDetails,
             AnswerStatus answerStatus,
-            long responseTimeMs) {
+            Long responseTimeMs) {
         final var id = new GameQuestionUserAnswerId(gameId, questionId, userId);
 
         final var answer = gameQuestionUserAnswerDao.findById(id)
@@ -47,8 +48,8 @@ public class GameQuestionUserAnswerService {
                     return entity;
                 });
 
-        answer.setAnswerText(answerText);
-        answer.setAnswerStatus(answerStatus);
+        answer.setDetails(answerDetails);
+        answer.setStatus(answerStatus);
         answer.setResponseTimeMs(responseTimeMs);
 
         gameQuestionUserAnswerDao.save(answer);
@@ -64,9 +65,7 @@ public class GameQuestionUserAnswerService {
             UUID gameId,
             UUID questionId,
             UUID userId) {
-        return gameQuestionUserAnswerDao.findById(
-                new GameQuestionUserAnswerId(gameId, questionId, userId)
-        );
+        return gameQuestionUserAnswerDao.findById(new GameQuestionUserAnswerId(gameId, questionId, userId));
     }
 
     @Transactional(readOnly = true)

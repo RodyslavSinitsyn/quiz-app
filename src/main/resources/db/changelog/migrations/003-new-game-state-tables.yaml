@@ -35,11 +35,6 @@ databaseChangeLog:
                     referencedTableName: questions
                     referencedColumnNames: id
               - column:
-                  name: order_number
-                  type: integer
-                  constraints:
-                    nullable: false
-              - column:
                   name: metadata
                   type: jsonb
 
@@ -101,10 +96,10 @@ databaseChangeLog:
             constraintName: game_participants_pk
             columnNames: game_id,user_id
   - changeSet:
-      id: 3-game_question_user_answers
+      id: 3-create-game-question-user-answers
       author: rsinitsyn
-      comment: Create 'game_question_user_answers' table
-      labels: games,questions,answers
+      comment: Create game question user answers table
+      labels: games
       runAlways: false
       runOnChange: false
       preConditions:
@@ -135,29 +130,31 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: answer_status
+                  name: status
                   type: varchar(50)
                   constraints:
                     nullable: false
               - column:
-                  name: answer_text
-                  type: varchar(255)
+                  name: evaluation_type
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: details
+                  type: jsonb
               - column:
                   name: response_time_ms
                   type: bigint
-
         - addPrimaryKey:
             tableName: game_question_user_answers
             constraintName: game_question_user_answers_pk
             columnNames: game_id,question_id,user_id
-
         - addForeignKeyConstraint:
             baseTableName: game_question_user_answers
             baseColumnNames: game_id,question_id
             constraintName: game_question_user_answers_game_question_fk
             referencedTableName: game_questions
             referencedColumnNames: game_id,question_id
-
         - addForeignKeyConstraint:
             baseTableName: game_question_user_answers
             baseColumnNames: game_id,user_id
