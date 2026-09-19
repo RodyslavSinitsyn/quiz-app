@@ -22,13 +22,13 @@ public enum AnswerStatus {
         return correct ? CORRECT : WRONG;
     }
 
-    public static AnswerStatus answerStatus(int count, int maxCount) {
-        if (count < 0 || maxCount <= 0) {
-            throw new IllegalArgumentException("count can't be 0 and clickLimit must be positive");
+    public static AnswerStatus answerStatus(int correctCount, int maxCount) {
+        if (correctCount < 0 || maxCount <= 0) {
+            throw new IllegalArgumentException("count can't be 0 and maxCount must be positive");
         }
-        if (count == 0) {
+        if (correctCount == 0) {
             return WRONG;
         }
-        return count == maxCount ? CORRECT : PARTIAL;
+        return correctCount == maxCount ? CORRECT : PARTIAL;
     }
 }

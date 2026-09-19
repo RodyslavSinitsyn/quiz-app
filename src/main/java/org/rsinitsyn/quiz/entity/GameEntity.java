@@ -1,14 +1,10 @@
 package org.rsinitsyn.quiz.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -39,8 +35,28 @@ public class GameEntity {
     @ToString.Exclude
     private Set<GameQuestionUserEntity> gameQuestions = new LinkedHashSet<>();
 
+    @OneToMany(
+            mappedBy = "game",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.REMOVE,
+            orphanRemoval = true
+    )
+    @ToString.Exclude
+    private Set<GameParticipantEntity> participants = new HashSet<>();
+
+    /**
+     * Use new method getParticipantPlayerNames
+     */
+    @Deprecated(forRemoval = true)
     public Set<String> getPlayerNames() {
         return gameQuestions.stream()
+                .map(e -> e.getUser().getUsername())
+                .collect(Collectors.toSet());
+    }
+
+    public Set<String> getParticipantPlayerNames() {
+        return participants.stream()
+                .filter(p -> p.getRole() == GameParticipantRole.PLAYER)
                 .map(e -> e.getUser().getUsername())
                 .collect(Collectors.toSet());
     }

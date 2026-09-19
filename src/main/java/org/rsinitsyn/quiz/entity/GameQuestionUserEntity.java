@@ -10,6 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @EqualsAndHashCode(of = {"id", "answered", "orderNumber"})
 @ToString
+@Deprecated
 public class GameQuestionUserEntity {
     @EmbeddedId
     private GameQuestionUserId id;

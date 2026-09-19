@@ -2,6 +2,7 @@ package org.rsinitsyn.quiz.service;
 
 import io.micrometer.observation.annotation.Observed;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.rsinitsyn.quiz.dao.GameQuestionUserDao;
 import org.rsinitsyn.quiz.dao.QuestionDao;
@@ -9,6 +10,7 @@ import org.rsinitsyn.quiz.dao.QuestionGradeDao;
 import org.rsinitsyn.quiz.entity.*;
 import org.rsinitsyn.quiz.model.AnswerHistory;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.QuestionModel.AnswerType;
 import org.rsinitsyn.quiz.model.binding.AbstractQuestionBindingModel;
 import org.rsinitsyn.quiz.service.strategy.update.AbstractQuestionUpdateStrategy;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
@@ -156,9 +158,16 @@ public class QuestionService {
                         .correct(answerEntity.isCorrect())
                         .number(answerEntity.getNumber())
                         .photoFilename(answerEntity.getPhotoFilename())
-                        .type(QuestionModel.AnswerType.TEXT)
+                        .type(getAnswerType(answerEntity))
                         .build())
                 .toList();
+    }
+
+    private static AnswerType getAnswerType(AnswerEntity answerEntity) {
+        if (StringUtils.isNotEmpty(answerEntity.getPhotoFilename())) {
+            return AnswerType.PHOTO;
+        }
+        return AnswerType.TEXT;
     }
 
     private List<HintModel> toHintModel(List<QuestionHintEntity> questionHints) {

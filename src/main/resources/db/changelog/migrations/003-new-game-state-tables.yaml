@@ -1,0 +1,166 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3-game_questions
+      author: rsinitsyn
+      comment: Create new 'game_questions' table
+      labels: games,questions
+      runAlways: false
+      runOnChange: false
+      preConditions:
+        - onFail: HALT
+          not:
+            tableExists:
+              tableName: game_questions
+      rollback:
+        - dropTable:
+            tableName: game_questions
+      changes:
+        - createTable:
+            tableName: game_questions
+            columns:
+              - column:
+                  name: game_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: game_questions_game_id_fk
+                    referencedTableName: games
+                    referencedColumnNames: id
+              - column:
+                  name: question_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: game_questions_question_id_fk
+                    referencedTableName: questions
+                    referencedColumnNames: id
+              - column:
+                  name: order_number
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: metadata
+                  type: jsonb
+
+        - addPrimaryKey:
+            tableName: game_questions
+            constraintName: game_questions_pk
+            columnNames: game_id,question_id
+  - changeSet:
+      id: 3-game_participants
+      author: rsinitsyn
+      comment: Create 'game_participants' table
+      labels: games,participants
+      runAlways: false
+      runOnChange: false
+      preConditions:
+        - onFail: HALT
+          not:
+            tableExists:
+              tableName: game_participants
+      rollback:
+        - dropTable:
+            tableName: game_participants
+      changes:
+        - createTable:
+            tableName: game_participants
+            columns:
+              - column:
+                  name: game_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: game_participants_game_id_fk
+                    referencedTableName: games
+                    referencedColumnNames: id
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: game_participants_user_id_fk
+                    referencedTableName: users_tbl
+                    referencedColumnNames: id
+              - column:
+                  name: role
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: join_date
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: leave_date
+                  type: timestamp
+
+        - addPrimaryKey:
+            tableName: game_participants
+            constraintName: game_participants_pk
+            columnNames: game_id,user_id
+  - changeSet:
+      id: 3-game_question_user_answers
+      author: rsinitsyn
+      comment: Create 'game_question_user_answers' table
+      labels: games,questions,answers
+      runAlways: false
+      runOnChange: false
+      preConditions:
+        - onFail: HALT
+          not:
+            tableExists:
+              tableName: game_question_user_answers
+      rollback:
+        - dropTable:
+            tableName: game_question_user_answers
+      changes:
+        - createTable:
+            tableName: game_question_user_answers
+            columns:
+              - column:
+                  name: game_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: question_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: answer_status
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: answer_text
+                  type: varchar(255)
+              - column:
+                  name: response_time_ms
+                  type: bigint
+
+        - addPrimaryKey:
+            tableName: game_question_user_answers
+            constraintName: game_question_user_answers_pk
+            columnNames: game_id,question_id,user_id
+
+        - addForeignKeyConstraint:
+            baseTableName: game_question_user_answers
+            baseColumnNames: game_id,question_id
+            constraintName: game_question_user_answers_game_question_fk
+            referencedTableName: game_questions
+            referencedColumnNames: game_id,question_id
+
+        - addForeignKeyConstraint:
+            baseTableName: game_question_user_answers
+            baseColumnNames: game_id,user_id
+            constraintName: game_question_user_answers_game_participant_fk
+            referencedTableName: game_participants
+            referencedColumnNames: game_id,user_id
