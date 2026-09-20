@@ -33,7 +33,7 @@ public class GameStateService {
     private final QuestionService questionService;
 
     @Transactional(readOnly = true)
-    public QuizGameState restoreQuizGameStateNew(UUID gameId, UUID userId) {
+    public QuizGameState restoreQuizGameState(UUID gameId, UUID userId) {
         final var maybeGameEntity = gameDao.findById(gameId);
         if (maybeGameEntity.isEmpty()) {
             throw new IllegalArgumentException("Game %s not found".formatted(gameId));
@@ -74,16 +74,18 @@ public class GameStateService {
                 .collect(Collectors.toSet());
         state.setCurrentQuestionNumber(Math.min(answeredQuestionIds.size(), gameQuestions.size()));
 
-        // todo: extract into GameConfiguration
-        state.setAnswerOptionsEnabled(true);
-//        private boolean timerEnabled;
-//        private boolean hintsEnabled;
-//        private boolean intrigueEnabled;
+        final var configuration = gameEntity.getConfiguration();
+        state.setAnswerOptionsEnabled(configuration.optionsEnabled());
+        state.setTimerEnabled(configuration.questionTime() != null);
+        state.setHintsEnabled(configuration.hintsEnabled());
+        state.setIntrigueEnabled(configuration.intrigueEnabled());
+
         return state;
     }
 
+    @Deprecated(forRemoval = true)
     @Transactional(readOnly = true)
-    public QuizGameState restoreQuizGameState(String gameId) {
+    public QuizGameState restoreQuizGameStateOld(String gameId) {
         var gameEntity = findById(gameId);
         var gameQuestions = gameEntity.getGameQuestions();
         var state = new QuizGameState();

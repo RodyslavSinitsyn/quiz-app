@@ -5,10 +5,9 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import org.rsinitsyn.quiz.entity.UserAnswerDetails;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.answer.AnswerResult;
-
-import java.util.stream.Collectors;
 
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
 import static org.rsinitsyn.quiz.entity.AnswerStatus.UNKNOWN;
@@ -64,9 +63,9 @@ public class TopAnswersLayout extends AbstractAnswersLayout {
     protected AnswerGivenEvent createAnswerGivenEvent() {
         final var answers = topListLayout.getChildren()
                 .map(component -> component.getElement().getText())
-                .collect(Collectors.toSet());
+                .toList();
         return AnswerGivenEvent.builder()
-                .answers(answers)
+                .answerDetails(UserAnswerDetails.from(answers))
                 .result(new AnswerResult(UNKNOWN, answers.size(), 0))
                 .manuallyApprove(true)
                 .build();

@@ -6,6 +6,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.listbox.MultiSelectListBox;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
+import org.rsinitsyn.quiz.entity.UserAnswerDetails;
 import org.rsinitsyn.quiz.model.AnswerHint;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
@@ -13,7 +14,6 @@ import org.rsinitsyn.quiz.model.answer.AnswerResult;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.rsinitsyn.quiz.entity.AnswerStatus.answerStatus;
 
@@ -44,9 +44,14 @@ public class MultiAnswersLayout extends AbstractAnswersLayout {
         var correctCount = (int) userAnswers.stream().filter(QuestionModel.AnswerModel::correct).count();
 
         return AnswerGivenEvent.builder()
-                .answers(userAnswers.stream()
-                        .map(QuestionModel.AnswerModel::text)
-                        .collect(Collectors.toSet()))
+                .answerDetails(UserAnswerDetails.from(
+                        userAnswers.stream()
+                                .map(QuestionModel.AnswerModel::text)
+                                .toList(),
+                        userAnswers.stream()
+                                .map(QuestionModel.AnswerModel::id)
+                                .toList()
+                ))
                 .result(new AnswerResult(answerStatus(correctCount, maxCount), maxCount, correctCount))
                 .build();
     }

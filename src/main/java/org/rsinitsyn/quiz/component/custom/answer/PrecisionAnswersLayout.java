@@ -3,10 +3,11 @@ package org.rsinitsyn.quiz.component.custom.answer;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import org.rsinitsyn.quiz.entity.UserAnswerDetails;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.answer.AnswerResult;
 
-import java.util.Set;
+import java.util.List;
 
 import static org.rsinitsyn.quiz.entity.AnswerStatus.*;
 
@@ -49,7 +50,7 @@ public class PrecisionAnswersLayout extends AbstractAnswersLayout {
         }
 
         return AnswerGivenEvent.builder()
-                .answers(Set.of(answerText))
+                .answerDetails(UserAnswerDetails.from(List.of(answerText)))
                 .result(result)
                 .build();
     }

@@ -22,10 +22,15 @@ public record UserAnswerDetails(
         return new UserAnswerDetails(answerTexts, answerIds, null);
     }
 
-    public static UserAnswerDetails fromLink(List<UUID> answerIds,
+    public static UserAnswerDetails fromLink(List<String> answerTexts,
+                                             List<UUID> answerIds,
                                              List<UUID> linkedAnswerIds) {
         validState(!answerIds.isEmpty() && !linkedAnswerIds.isEmpty());
         validState(answerIds.size() == linkedAnswerIds.size());
-        return new UserAnswerDetails(null, answerIds, linkedAnswerIds);
+        return new UserAnswerDetails(answerTexts, answerIds, linkedAnswerIds);
+    }
+
+    public String getAnswersAsText() {
+        return String.join(" ,", answerTexts);
     }
 }

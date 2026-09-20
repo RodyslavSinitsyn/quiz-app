@@ -1,11 +1,12 @@
 package org.rsinitsyn.quiz.component.custom.answer;
 
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.rsinitsyn.quiz.component.custom.LinkAnswersComponent;
 import org.rsinitsyn.quiz.entity.AnswerStatus;
+import org.rsinitsyn.quiz.entity.UserAnswerDetails;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
+import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.answer.AnswerResult;
-
-import java.util.stream.Collectors;
 
 public class LinkAnswersLayout extends AbstractAnswersLayout {
 
@@ -30,9 +31,11 @@ public class LinkAnswersLayout extends AbstractAnswersLayout {
                 .count();
         var answerStatus = AnswerStatus.answerStatus(correctCount, pairs.size());
         return AnswerGivenEvent.builder()
-                .answers(pairs.stream()
-                        .map(pair -> pair.getLeft().text() + " = " + pair.getRight().text())
-                        .collect(Collectors.toSet()))
+                .answerDetails(UserAnswerDetails.fromLink(
+                        pairs.stream().map(pair -> pair.getLeft().text() + " = " + pair.getRight().text()).toList(),
+                        pairs.stream().map(MutablePair::getLeft).map(QuestionModel.AnswerModel::id).toList(),
+                        pairs.stream().map(MutablePair::getRight).map(QuestionModel.AnswerModel::id).toList()
+                ))
                 .result(new AnswerResult(answerStatus, pairs.size(), correctCount))
                 .build();
     }

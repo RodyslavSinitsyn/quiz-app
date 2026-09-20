@@ -5,10 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.dao.GameParticipantDao;
 import org.rsinitsyn.quiz.dao.GameQuestionDao;
 import org.rsinitsyn.quiz.dao.GameQuestionUserAnswerDao;
-import org.rsinitsyn.quiz.entity.AnswerStatus;
-import org.rsinitsyn.quiz.entity.GameQuestionUserAnswerEntity;
-import org.rsinitsyn.quiz.entity.GameQuestionUserAnswerId;
-import org.rsinitsyn.quiz.entity.UserAnswerDetails;
+import org.rsinitsyn.quiz.entity.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +33,7 @@ public class GameQuestionUserAnswerService {
             UUID userId,
             UserAnswerDetails answerDetails,
             AnswerStatus answerStatus,
+            AnswerEvaluationType evaluationType,
             Long responseTimeMs) {
         final var id = new GameQuestionUserAnswerId(gameId, questionId, userId);
 
@@ -48,6 +46,7 @@ public class GameQuestionUserAnswerService {
                     return entity;
                 });
 
+        answer.setEvaluationType(evaluationType);
         answer.setDetails(answerDetails);
         answer.setStatus(answerStatus);
         answer.setResponseTimeMs(responseTimeMs);

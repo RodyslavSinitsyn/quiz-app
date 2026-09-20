@@ -2,6 +2,8 @@ package org.rsinitsyn.quiz.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -43,6 +45,10 @@ public class GameEntity {
     )
     @ToString.Exclude
     private Set<GameParticipantEntity> participants = new HashSet<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "configuration", columnDefinition = "jsonb")
+    private GameConfiguration configuration;
 
     /**
      * Use new method getParticipantPlayerNames

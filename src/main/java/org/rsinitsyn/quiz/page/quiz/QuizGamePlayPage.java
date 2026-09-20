@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.quiz.QuizGamePlayBoardComponent;
 import org.rsinitsyn.quiz.component.quiz.QuizGameResultComponent;
-import org.rsinitsyn.quiz.entity.UserAnswerDetails;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.service.GameQuestionUserAnswerService;
 import org.rsinitsyn.quiz.service.GameService;
@@ -64,8 +63,7 @@ public class QuizGamePlayPage extends VerticalLayout implements HasUrlParameter<
             });
             return;
         }
-//        this.gameState = gameService.restoreQuizGameState(gameId.toString());
-        this.gameState = gameStateService.restoreQuizGameStateNew(gameId, getLoggedUserId());
+        this.gameState = gameStateService.restoreQuizGameState(gameId, getLoggedUserId());
         if (!SessionWrapper.getLoggedUser().equals(gameState.getPlayerName())) {
             getUI().ifPresent(ui -> {
                 ui.navigateToClient("/");
@@ -107,20 +105,14 @@ public class QuizGamePlayPage extends VerticalLayout implements HasUrlParameter<
             configureQuizGameResultComponent();
         }));
         subscriptions.add(playBoardComponent.addSubmitUserAnswerEventListener(event -> {
-            // old submit
-            gameService.submitAnswers(
-                    gameId.toString(),
-                    gameState.getPlayerName(),
-                    event.getQuestion(),
-                    event.getAnswers().stream().toList(),
-                    event::getAnswerStatus);
             // new submit
             gameQuestionUserAnswerService.submitAnswer(
                     gameId,
                     event.getQuestion().getId(),
                     gameState.getPlayerId(),
-                    UserAnswerDetails.from(event.getAnswers().stream().toList()),
+                    event.getAnswerDetails(),
                     event.getAnswerStatus(),
+                    event.getAnswerEvaluationType(),
                     null // todo: response time can be null but passing of params looks ugly
             );
         }));

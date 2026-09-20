@@ -3,9 +3,11 @@ package org.rsinitsyn.quiz.component.custom.answer;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.listbox.ListBox;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
+import org.rsinitsyn.quiz.entity.UserAnswerDetails;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.SMALL_IMAGE_HEIGHT;
@@ -34,7 +36,10 @@ public class PhotoAnswersLayout extends AbstractAnswersLayout {
     protected AnswerGivenEvent createAnswerGivenEvent() {
         var userAnswer = options.getValue();
         return AnswerGivenEvent.builder()
-                .answers(Set.of(userAnswer.photoFilename()))
+                .answerDetails(UserAnswerDetails.from(
+                        List.of("%s - %s".formatted(userAnswer.text(), userAnswer.photoFilename())),
+                        List.of(userAnswer.id())
+                ))
                 .result(oneOptionResult(userAnswer.correct()))
                 .build();
     }

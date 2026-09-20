@@ -4,10 +4,10 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.listbox.ListBox;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
+import org.rsinitsyn.quiz.entity.UserAnswerDetails;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 
-import java.util.Collections;
 import java.util.List;
 
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.optionComponent;
@@ -36,7 +36,7 @@ public class AnswersLayout extends AbstractAnswersLayout {
     @Override
     protected AnswerGivenEvent createAnswerGivenEvent() {
         return AnswerGivenEvent.builder()
-                .answers(Collections.singleton(options.getValue().text()))
+                .answerDetails(UserAnswerDetails.from(List.of(options.getValue().text())))
                 .result(oneOptionResult(options.getValue().correct()))
                 .build();
     }

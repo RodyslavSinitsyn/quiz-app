@@ -133,7 +133,7 @@ public class BaseQuestionLayout extends VerticalLayout {
                                      final AnswerGivenEvent answerGivenEvent) {
             this.question = question;
             this.answerGivenEvent = answerGivenEvent;
-            // Workaround to set manualApprove flag
+            // TODO: Workaround to set manualApprove flag
             this.question.setManualApprove(answerGivenEvent.isManuallyApprove());
         }
     }

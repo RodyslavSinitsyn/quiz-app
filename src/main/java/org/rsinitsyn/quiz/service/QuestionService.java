@@ -154,6 +154,7 @@ public class QuestionService {
     private List<AnswerModel> toAnswerModel(List<AnswerEntity> answerEntities) {
         return answerEntities.stream()
                 .map(answerEntity -> AnswerModel.builder()
+                        .id(answerEntity.getId())
                         .text(answerEntity.getText())
                         .correct(answerEntity.isCorrect())
                         .number(answerEntity.getNumber())

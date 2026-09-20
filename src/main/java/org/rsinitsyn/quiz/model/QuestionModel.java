@@ -100,7 +100,8 @@ public class QuestionModel {
     }
 
     @Builder
-    public record AnswerModel(String text,
+    public record AnswerModel(UUID id,
+                              String text,
                               boolean correct,
                               int number,
                               String photoFilename,

@@ -21,6 +21,7 @@ import org.rsinitsyn.quiz.service.QuestionService;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static java.util.Optional.empty;
 import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
@@ -54,7 +55,7 @@ public class CleverestSetupPage extends VerticalLayout {
         logState(this, attachEvent.getUI(), "onAttach", true, subscriptions);
         subscriptions.add(settingsComponent.addSettingsCompletedListener(event -> {
             final var newGameId = UUID.randomUUID().toString();
-            gameService.createIfNotExists(newGameId, event.getGameName(), GameType.CLEVEREST);
+            gameService.createIfNotExists(newGameId, event.getGameName(), GameType.CLEVEREST, empty());
             final var r1 = shuffleAndToModel(event.getFirstRound());
             final var r2 = shuffleAndToModel(event.getSecondRound());
             final var r3 = shuffleAndToModel(event.getThirdRound());

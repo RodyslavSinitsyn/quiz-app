@@ -161,3 +161,25 @@ databaseChangeLog:
             constraintName: game_question_user_answers_game_participant_fk
             referencedTableName: game_participants
             referencedColumnNames: game_id,user_id
+  - changeSet:
+      id: 3-add-configuration-to-games
+      author: rsinitsyn
+      comment: Add game configuration
+      labels: games
+      runAlways: false
+      runOnChange: false
+      preConditions:
+        - onFail: HALT
+          tableExists:
+            tableName: games
+      rollback:
+        - dropColumn:
+            tableName: games
+            columnName: configuration
+      changes:
+        - addColumn:
+            tableName: games
+            columns:
+              - column:
+                  name: configuration
+                  type: jsonb

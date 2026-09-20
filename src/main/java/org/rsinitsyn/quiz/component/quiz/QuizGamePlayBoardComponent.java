@@ -19,21 +19,23 @@ import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.component.custom.question.BaseQuestionLayout;
 import org.rsinitsyn.quiz.component.custom.question.BaseQuestionLayout.QuestionAnsweredEvent;
 import org.rsinitsyn.quiz.component.custom.question.QuestionLayoutFactory;
+import org.rsinitsyn.quiz.entity.AnswerEvaluationType;
 import org.rsinitsyn.quiz.entity.AnswerStatus;
 import org.rsinitsyn.quiz.entity.GameStatus;
+import org.rsinitsyn.quiz.entity.UserAnswerDetails;
 import org.rsinitsyn.quiz.model.AnswerHint;
 import org.rsinitsyn.quiz.model.QuestionLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.answer.AnswerResult;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.utils.AudioUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
-import static org.rsinitsyn.quiz.utils.QuizComponents.openConfirmDialog;
 import static org.rsinitsyn.quiz.utils.AudioHolder.*;
+import static org.rsinitsyn.quiz.utils.QuizComponents.openConfirmDialog;
 
 @Slf4j
 public class QuizGamePlayBoardComponent extends VerticalLayout implements BeforeLeaveObserver {
@@ -200,15 +202,17 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     }
 
     private void submitAnswer(QuestionAnsweredEvent event) {
-        calculateScoreAndShowPopup(event.getAnswerGivenEvent().isCorrect());
+        calculateScoreAndShowPopup(event.getAnswerGivenEvent().getResult());
         fireEvent(new SubmitUserAnswer(this,
                 event.getQuestion(),
-                event.getAnswerGivenEvent().getAnswers(),
-                event.getAnswerGivenEvent().isCorrect()));
+                AnswerEvaluationType.ofManuallyApproved(event.getAnswerGivenEvent().isManuallyApprove()),
+                event.getAnswerGivenEvent().getAnswerDetails()
+        ));
         renderQuestion();
     }
 
-    private void calculateScoreAndShowPopup(boolean isCorrect) {
+    private void calculateScoreAndShowPopup(AnswerResult answerResult) {
+        final var isCorrect = answerResult.status().correct();
         NotificationVariant popupVariant;
         if (isCorrect) {
             gameState.incrementCorrectAnswersCounter();
@@ -270,19 +274,19 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
     @Getter
     public static class SubmitUserAnswer extends ComponentEvent<QuizGamePlayBoardComponent> {
         private final QuestionModel question;
-        private final Set<String> answers;
-        private final boolean correct;
         private final AnswerStatus answerStatus;
+        private final AnswerEvaluationType answerEvaluationType;
+        private final UserAnswerDetails answerDetails;
 
         public SubmitUserAnswer(QuizGamePlayBoardComponent source,
                                 QuestionModel question,
-                                Set<String> answers,
-                                boolean correct) {
+                                AnswerEvaluationType answerEvaluationType,
+                                UserAnswerDetails answerDetails) {
             super(source, false);
-            this.question = question;
-            this.answers = answers;
             this.correct = correct;
             this.answerStatus = AnswerStatus.answerStatus(correct);
+            this.answerEvaluationType = answerEvaluationType;
+            this.answerDetails = answerDetails;
         }
     }
 

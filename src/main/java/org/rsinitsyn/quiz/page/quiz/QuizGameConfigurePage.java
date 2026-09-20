@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.rsinitsyn.quiz.component.MainLayout;
 import org.rsinitsyn.quiz.component.quiz.QuizGameSettingsComponent;
+import org.rsinitsyn.quiz.entity.GameConfiguration;
 import org.rsinitsyn.quiz.entity.GameQuestionMetadata;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.service.*;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.util.Optional.ofNullable;
 import static org.rsinitsyn.quiz.entity.GameType.QUIZ;
 
 @Slf4j
@@ -69,7 +71,11 @@ public class QuizGameConfigurePage extends VerticalLayout {
         super.onAttach(attachEvent);
         subscriptions.add(settingsComponent.addStartGameListener(event -> {
             var newGameId = UUID.randomUUID().toString();
-            gameService.createIfNotExists(newGameId, event.getGameState().getGameName(), QUIZ);
+            gameService.createIfNotExists(newGameId, event.getGameState().getGameName(), QUIZ, ofNullable(GameConfiguration.builder()
+                    .hintsEnabled(event.getGameState().isHintsEnabled())
+                    .optionsEnabled(event.getGameState().isAnswerOptionsEnabled())
+                    .intrigueEnabled(event.getGameState().isIntrigueEnabled())
+                    .build()));
             // old approach of assigning questions to game
             gameService.linkQuestionsWithGame(newGameId, event.getGameState());
             // new approach of assigning questions to game

@@ -5,13 +5,13 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import org.rsinitsyn.quiz.entity.UserAnswerDetails;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel.HintModel;
 import org.rsinitsyn.quiz.model.answer.AnswerResult;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.*;
 import static org.rsinitsyn.quiz.entity.AnswerStatus.UNKNOWN;
@@ -76,7 +76,8 @@ public class GuessPhotoAnswersLayout extends AbstractAnswersLayout {
     protected AnswerGivenEvent createAnswerGivenEvent() {
         final var points = photoHints.size() - currentHintIndex;
         return AnswerGivenEvent.builder()
-                .answers(Set.of("%s (%d)".formatted(answerField.getValue(), points)))
+                // todo: do not include points into text
+                .answerDetails(UserAnswerDetails.from(List.of("%s (%d)".formatted(answerField.getValue(), points))))
                 .result(new AnswerResult(UNKNOWN, photoHints.size(), points))
                 .manuallyApprove(true)
                 .build();

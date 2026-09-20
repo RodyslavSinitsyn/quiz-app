@@ -2,10 +2,11 @@ package org.rsinitsyn.quiz.component.custom.answer;
 
 import com.vaadin.flow.component.textfield.TextField;
 import org.rsinitsyn.quiz.entity.AnswerStatus;
+import org.rsinitsyn.quiz.entity.UserAnswerDetails;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.answer.AnswerResult;
 
-import java.util.Set;
+import java.util.List;
 
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.textAnswerInput;
 
@@ -29,7 +30,7 @@ public class ManualInputAnswersLayout extends AbstractAnswersLayout {
     @Override
     protected AnswerGivenEvent createAnswerGivenEvent() {
         return AnswerGivenEvent.builder()
-                .answers(Set.of(answerField.getValue()))
+                .answerDetails(UserAnswerDetails.from(List.of(answerField.getValue())))
                 // TODO: Link points with Betting here, later
                 .result(new AnswerResult(AnswerStatus.UNKNOWN, 1, 0))
                 .manuallyApprove(true)

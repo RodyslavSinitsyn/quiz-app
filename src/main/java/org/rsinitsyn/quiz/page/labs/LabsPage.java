@@ -247,7 +247,7 @@ public class LabsPage extends VerticalLayout implements HasUrlParameter<String>,
             sequenceQuestion.addAnsweredListener(e -> {
                 final var event = e.getAnswerGivenEvent();
                 final var text = "%s, %s, %d".formatted(
-                        String.join(", ", event.getAnswers()),
+                        String.join(", ", event.getTextAnswers()),
                         event.getResult(),
                         0);
                 notification(text, LUMO_CONTRAST, Notification.Position.TOP_STRETCH);

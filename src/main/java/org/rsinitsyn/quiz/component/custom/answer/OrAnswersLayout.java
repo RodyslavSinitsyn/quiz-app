@@ -4,10 +4,12 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import org.rsinitsyn.quiz.component.cleverest.CleverestComponents;
+import org.rsinitsyn.quiz.entity.UserAnswerDetails;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel;
 
-import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static org.rsinitsyn.quiz.model.answer.AnswerResult.oneOptionResult;
 
@@ -34,7 +36,10 @@ public class OrAnswersLayout extends AbstractAnswersLayout {
     protected AnswerGivenEvent createAnswerGivenEvent() {
         var userAnswer = radioButtonGroup.getValue();
         return AnswerGivenEvent.builder()
-                .answers(Collections.singleton(userAnswer.text()))
+                .answerDetails(UserAnswerDetails.from(
+                        List.of(userAnswer.text()),
+                        List.of(userAnswer.id())
+                ))
                 .result(oneOptionResult(userAnswer.correct()))
                 .build();
     }

@@ -13,14 +13,19 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.rsinitsyn.quiz.component.custom.event.StubEvent;
+import org.rsinitsyn.quiz.entity.UserAnswerDetails;
 import org.rsinitsyn.quiz.model.AnswerHint;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.HintsState;
 import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
 import org.rsinitsyn.quiz.model.answer.AnswerBet;
 import org.rsinitsyn.quiz.model.answer.AnswerResult;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.horizontalLayoutBetween;
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.submitButton;
@@ -29,7 +34,7 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
 
     protected final QuestionModel question;
     protected final Optional<String> username;
-    protected final List<QuestionModel.AnswerModel> answers;
+    protected final List<AnswerModel> answers;
     protected HintsState hintsState;
     protected Optional<AnswerBet> answerBet;
 
@@ -59,7 +64,7 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
         renderSubmitButton();
     }
 
-    protected List<QuestionModel.AnswerModel> questionAnswers(AnswerLayoutRequest request) {
+    protected List<AnswerModel> questionAnswers(AnswerLayoutRequest request) {
         return new ArrayList<>(request.getQuestion().getShuffledAnswers());
     }
 
@@ -123,13 +128,13 @@ public abstract class AbstractAnswersLayout extends VerticalLayout {
     @Getter
     @Builder
     public static class AnswerGivenEvent extends StubEvent {
-        private final Set<String> answers;
-        protected final AnswerResult result;
+        private final UserAnswerDetails answerDetails;
+        private final AnswerResult result;
         @Builder.Default
         private final boolean manuallyApprove = false;
 
-        public boolean isCorrect() {
-            return result.status().correct();
+        public List<String> getTextAnswers() {
+            return answerDetails.answerTexts();
         }
     }
 

@@ -3,6 +3,7 @@ package org.rsinitsyn.quiz.component.custom.answer;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import org.rsinitsyn.quiz.entity.UserAnswerDetails;
 import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
 import org.rsinitsyn.quiz.model.QuestionModel.AnswerModel;
 import org.rsinitsyn.quiz.model.answer.AnswerResult;
@@ -32,7 +33,7 @@ public class SequenceAnswersLayout extends AbstractAnswersLayout {
             final var index = i;
             final var answer = answers.get(i);
 
-            final var option = optionComponent(answer.text(), 20, event -> {
+            final var option = optionComponent(answer.text(), 20, ignore -> {
             });
 
             final var up = new Button(VaadinIcon.ARROW_CIRCLE_UP.create(), e -> moveUp(index));
@@ -47,7 +48,6 @@ public class SequenceAnswersLayout extends AbstractAnswersLayout {
         if (getChildren().noneMatch(component -> component == sequenceContainer)) {
             add(sequenceContainer);
         }
-        ;
 
         submitButton.setEnabled(true);
     }
@@ -70,8 +70,11 @@ public class SequenceAnswersLayout extends AbstractAnswersLayout {
         final var answers = this.answers.stream()
                 .map(AnswerModel::text)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
-       return AnswerGivenEvent.builder()
-                .answers(answers)
+        return AnswerGivenEvent.builder()
+                .answerDetails(UserAnswerDetails.from(
+                        this.answers.stream().map(AnswerModel::text).toList(),
+                        this.answers.stream().map(AnswerModel::id).toList()
+                ))
                 .result(new AnswerResult(answerStatus(correctCount, answers.size()), answers.size(), correctCount))
                 .build();
     }
