@@ -46,6 +46,11 @@ public class CleverestBroadcaster {
         eventBuses.remove(gameId);
     }
 
+
+    public void restoreState(String gameId, CleverestGameState state) {
+        gameStateMap.put(gameId, state);
+    }
+
     public void createState(String gameId,
                             String createdBy,
                             List<QuestionModel> firstRound,
@@ -63,13 +68,14 @@ public class CleverestBroadcaster {
 
     // UserJoinedEvent
     public void sendJoinUserEvent(String gameId,
+                                  UUID userId,
                                   String username,
                                   String color,
                                   String photoUrl,
                                   String winnerBet,
                                   String loserBet) {
         CleverestGameState gameState = getState(gameId);
-        final var userState = gameState.addOrUpdateUser(gameId, username, color, photoUrl, winnerBet, loserBet);
+        final var userState = gameState.addOrUpdateUser(userId, username, color, photoUrl, winnerBet, loserBet);
         eventBuses.get(gameId).fireEvent(new UserJoinedEvent(gameId, userState.profile(), gameState.getAllUserProfiles()));
     }
 

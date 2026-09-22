@@ -76,8 +76,6 @@ public class QuizGameConfigurePage extends VerticalLayout {
                     .optionsEnabled(event.getGameState().isAnswerOptionsEnabled())
                     .intrigueEnabled(event.getGameState().isIntrigueEnabled())
                     .build()));
-            // old approach of assigning questions to game
-            gameService.linkQuestionsWithGame(newGameId.toString(), event.getGameState());
             // new approach of assigning questions to game
             gameQuestionService.addQuestionsToGame(newGameId, convertToQuizQuestions(event.getGameState()));
             // add player to game

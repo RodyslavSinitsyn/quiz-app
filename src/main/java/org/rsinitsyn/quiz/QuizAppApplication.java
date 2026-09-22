@@ -2,7 +2,7 @@ package org.rsinitsyn.quiz;
 
 import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.properties.QuizAppProperties;
-import org.rsinitsyn.quiz.service.RestoreStateService;
+import org.rsinitsyn.quiz.service.GameStateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -24,7 +24,7 @@ import static org.springframework.boot.SpringApplication.run;
 public class QuizAppApplication {
 
     @Autowired
-    private RestoreStateService restoreStateService;
+    private GameStateService gameStateService;
 
     public static void main(String[] args) {
         run(QuizAppApplication.class, args);
@@ -35,6 +35,6 @@ public class QuizAppApplication {
         log.info("Application [{}] started with arguments: {}",
                 event.getApplicationContext().getApplicationName(),
                 getRuntimeMXBean().getInputArguments());
-        restoreStateService.restore();
+        gameStateService.restoreAllCleverest();
     }
 }

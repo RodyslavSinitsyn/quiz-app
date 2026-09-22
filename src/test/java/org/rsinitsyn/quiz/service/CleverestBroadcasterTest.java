@@ -17,10 +17,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
+import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.InstanceOfAssertFactories.LIST;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
@@ -42,7 +42,7 @@ class CleverestBroadcasterTest implements QuizTestFixture {
 
     @BeforeEach
     void setUp() {
-        gameId = UUID.randomUUID().toString();
+        gameId = randomUUID().toString();
         broadcaster.registerEventBus(gameId, eventBus);
     }
 
@@ -67,7 +67,7 @@ class CleverestBroadcasterTest implements QuizTestFixture {
         createEmptyState();
 
         // when
-        broadcaster.sendJoinUserEvent(gameId, "Alice", color, null, "Bob", "Charlie");
+        broadcaster.sendJoinUserEvent(gameId, randomUUID(), "Alice", color, null, "Bob", "Charlie");
 
         // then
         baseAssertions();
@@ -78,11 +78,11 @@ class CleverestBroadcasterTest implements QuizTestFixture {
         });
 
         then(eventBus).should().fireEvent(new UserJoinedEvent(gameId,
-                new UserProfile("Alice", color, empty()),
-                List.of(new UserProfile("Alice", color, empty()))));
+                new UserProfile(randomUUID(), "Alice", color, empty()),
+                List.of(new UserProfile(randomUUID(), "Alice", color, empty()))));
 
         // and-when
-        broadcaster.sendJoinUserEvent(gameId, "Alice", color, "photo-upd", "Bob", "Charlie");
+        broadcaster.sendJoinUserEvent(gameId, randomUUID(), "Alice", color, "photo-upd", "Bob", "Charlie");
 
         // then
         baseAssertions();
@@ -94,8 +94,8 @@ class CleverestBroadcasterTest implements QuizTestFixture {
         });
 
         then(eventBus).should().fireEvent(new UserJoinedEvent(gameId,
-                new UserProfile("Alice", color, of("photo-upd")),
-                List.of(new UserProfile("Alice", color, of("photo-upd")))));
+                new UserProfile(randomUUID(), "Alice", color, of("photo-upd")),
+                List.of(new UserProfile(randomUUID(), "Alice", color, of("photo-upd")))));
     }
 
     @Test
@@ -332,10 +332,10 @@ class CleverestBroadcasterTest implements QuizTestFixture {
         then(eventBus).should().fireEvent(new SaveUsersAnswersEvent(gameId,
                 q,
                 List.of(new UserStateSnapshot(
-                                new UserProfile("Alice", color, empty()),
+                                new UserProfile(randomUUID(), "Alice", color, empty()),
                                 "4", CORRECT, true, 0, 1, 1, of(q.getId())),
                         new UserStateSnapshot(
-                                new UserProfile("Bob", color, empty()),
+                                new UserProfile(randomUUID(), "Bob", color, empty()),
                                 "22", WRONG, true, 0, 0, 2, of(q.getId())))));
     }
 
@@ -415,7 +415,7 @@ class CleverestBroadcasterTest implements QuizTestFixture {
     }
 
     private UserGameState addUser(String username) {
-        return broadcaster.getState(gameId).addOrUpdateUser(gameId, username, color, null, "", "");
+        return broadcaster.getState(gameId).addOrUpdateUser(randomUUID(), username, color, null, "", "");
     }
 
     private UserGameState addUser(String username, String answer, AnswerResult result) {

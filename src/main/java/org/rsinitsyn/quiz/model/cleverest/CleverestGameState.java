@@ -69,13 +69,13 @@ public class CleverestGameState {
         roundRules.put(3, "Раунд 3");
     }
 
-    public UserGameState addOrUpdateUser(String gameId,
+    public UserGameState addOrUpdateUser(UUID userId,
                                          String username,
                                          String color,
                                          String photoFilename,
                                          String winnerBet,
                                          String loserBet) {
-        users.computeIfAbsent(username, key -> userGameState(username, color, photoFilename));
+        users.computeIfAbsent(username, key -> userGameState(userId, username, color, photoFilename));
         return users.computeIfPresent(username, (key, userGameState) -> {
             userGameState.updateColorAndPhoto(color, photoFilename);
             userGameState.updateBet(defaultIfEmpty(winnerBet, ""), true, false);

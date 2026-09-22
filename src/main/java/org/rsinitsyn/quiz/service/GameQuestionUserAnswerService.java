@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.rsinitsyn.quiz.dao.GameParticipantDao;
 import org.rsinitsyn.quiz.dao.GameQuestionDao;
 import org.rsinitsyn.quiz.dao.GameQuestionUserAnswerDao;
+import org.rsinitsyn.quiz.dao.UserDao;
 import org.rsinitsyn.quiz.entity.*;
+import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.rsinitsyn.quiz.entity.AnswerEvaluationType.AUTOMATIC;
 import static org.rsinitsyn.quiz.entity.AnswerStatus.UNKNOWN;
 import static org.rsinitsyn.quiz.entity.GameParticipantId.gameParticipantId;
 import static org.rsinitsyn.quiz.entity.GameParticipantRole.PLAYER;
@@ -27,6 +30,22 @@ public class GameQuestionUserAnswerService {
     private final GameQuestionUserAnswerDao gameQuestionUserAnswerDao;
     private final GameQuestionDao gameQuestionDao;
     private final GameParticipantDao gameParticipantDao;
+    private final UserDao userDao;
+
+    @Transactional
+    public void submitAnswers(UUID gameId,
+                              UUID questionId,
+                              List<UserStateSnapshot> userAnswers) {
+        for (final var userAnswer : userAnswers) {
+            submitAnswer(gameId,
+                    questionId,
+                    userDao.findByUsername(userAnswer.profile().username()).orElseThrow().getId(),
+                    UserAnswerDetails.from(List.of(userAnswer.answerText())), // todo: answerText is merged list of strings, do list of strings
+                    userAnswer.answerStatus(),
+                    AUTOMATIC, // todo: not passed from game state, need to pass
+                    userAnswer.lastResponseTimeMs());
+        }
+    }
 
     @Transactional
     public void submitAnswer(

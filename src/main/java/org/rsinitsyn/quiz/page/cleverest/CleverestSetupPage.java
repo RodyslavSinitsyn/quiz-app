@@ -15,13 +15,16 @@ import org.rsinitsyn.quiz.entity.GameType;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
+import org.rsinitsyn.quiz.service.GameQuestionService;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
+import org.rsinitsyn.quiz.utils.ModelConverterUtils;
 
 import java.util.*;
 import java.util.stream.Stream;
 
 import static java.util.Optional.empty;
+import static org.rsinitsyn.quiz.utils.ModelConverterUtils.toShuffledGameQuestionPairs;
 import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
 import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
 
@@ -34,6 +37,7 @@ public class CleverestSetupPage extends VerticalLayout {
 
     private final QuestionService questionService;
     private final GameService gameService;
+    private final GameQuestionService gameQuestionService;
     private final CleverestBroadcaster broadcaster;
 
     private final CleverestGameSettingsComponent settingsComponent;
@@ -41,9 +45,11 @@ public class CleverestSetupPage extends VerticalLayout {
 
     public CleverestSetupPage(QuestionService questionService,
                               GameService gameService,
+                              GameQuestionService gameQuestionService,
                               CleverestBroadcaster broadcaster) {
         this.questionService = questionService;
         this.gameService = gameService;
+        this.gameQuestionService = gameQuestionService;
         this.broadcaster = broadcaster;
 
         settingsComponent = new CleverestGameSettingsComponent(questionService.findAllCreatedByCurrentUser());
@@ -59,14 +65,20 @@ public class CleverestSetupPage extends VerticalLayout {
             final var r1 = shuffleAndToModel(event.getFirstRound());
             final var r2 = shuffleAndToModel(event.getSecondRound());
             final var r3 = shuffleAndToModel(event.getThirdRound());
+            // old approach of link questions with game
             gameService.linkQuestionsAndUsersWithGame(
                     newGameId,
                     Set.of(getLoggedUser()),
                     Stream.concat(Stream.concat(r1.stream(), r2.stream()), r3.stream()).toList());
-            broadcaster.createState(
-                    newGameId,
-                    getLoggedUser(),
-                    r1, r2, r3);
+            // new approach of link questions with game
+            gameQuestionService.addQuestionsToGame(
+                    UUID.fromString(newGameId),
+                    Stream.concat(Stream.concat(
+                            toShuffledGameQuestionPairs(r1, 1).stream(),
+                            toShuffledGameQuestionPairs(r2, 2).stream()),
+                            toShuffledGameQuestionPairs(r3, 3).stream()
+                    ).toList());
+            broadcaster.createState(newGameId, getLoggedUser(), r1, r2, r3);
             attachEvent.getUI().navigate(CleverestWaitingPage.class, newGameId);
         }));
         logState(this, attachEvent.getUI(), "onAttach", false, subscriptions);

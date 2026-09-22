@@ -32,6 +32,7 @@ import org.rsinitsyn.quiz.model.cleverest.UserProfile;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.chatInput;
@@ -39,8 +40,7 @@ import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.primary
 import static org.rsinitsyn.quiz.utils.QuizComponents.uploadComponent;
 import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
 import static org.rsinitsyn.quiz.utils.QuizUtils.resolveLocalIp;
-import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUser;
-import static org.rsinitsyn.quiz.utils.SessionWrapper.getLoggedUserThemeColor;
+import static org.rsinitsyn.quiz.utils.SessionWrapper.*;
 
 @Slf4j
 public class CleverestWaitingRoomComponent extends VerticalLayout {
@@ -125,7 +125,9 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
 //        dialog.add(winnerBet, loserBet);
 
         dialog.addConfirmListener(event -> {
-            fireEvent(new UserSubmitDataEvent(getLoggedUser(),
+            fireEvent(new UserSubmitDataEvent(
+                    getLoggedUserId(),
+                    getLoggedUser(),
                     getLoggedUserThemeColor(),
                     Optional.ofNullable(photoHolder.get()).map(Pair::getLeft).orElse(null),
                     Optional.ofNullable(photoHolder.get()).map(Pair::getRight).orElse(null),
@@ -234,6 +236,7 @@ public class CleverestWaitingRoomComponent extends VerticalLayout {
     @EqualsAndHashCode(callSuper = false)
     @ToString
     public class UserSubmitDataEvent extends WaitingRoomEvent implements UserEvent {
+        private final UUID userId;
         private final String username;
         private final String color;
         private final String photoFilename;

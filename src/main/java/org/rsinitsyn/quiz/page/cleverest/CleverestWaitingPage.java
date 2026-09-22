@@ -126,7 +126,7 @@ public class CleverestWaitingPage extends VerticalLayout
             }
             waitingRoom.clearPhotoRef();
             broadcaster.sendJoinUserEvent(
-                    gameId, event.username(), event.color(), photoFilename, event.userWinner(), event.userLoser());
+                    gameId, event.userId(), event.username(), event.color(), photoFilename, event.userWinner(), event.userLoser());
         }));
         subscriptions.add(waitingRoom.addStartGameEventListener(event ->
                 broadcaster.sendUsersReadyEvent(gameId)));

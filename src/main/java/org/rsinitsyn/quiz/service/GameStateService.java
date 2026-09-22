@@ -6,18 +6,26 @@ import org.rsinitsyn.quiz.dao.GameDao;
 import org.rsinitsyn.quiz.dao.GameParticipantDao;
 import org.rsinitsyn.quiz.dao.GameQuestionDao;
 import org.rsinitsyn.quiz.dao.GameQuestionUserAnswerDao;
+import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameQuestionEntity;
 import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
+import org.rsinitsyn.quiz.entity.GameStatus;
+import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.cleverest.CleverestGameState;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static java.util.Comparator.comparing;
 import static org.rsinitsyn.quiz.entity.GameParticipantId.gameParticipantId;
+import static org.rsinitsyn.quiz.entity.GameParticipantRole.PLAYER;
+import static org.rsinitsyn.quiz.utils.ThemeUtils.BLACK_COLOR;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +37,8 @@ public class GameStateService {
     private final GameQuestionDao gameQuestionDao;
     private final GameQuestionUserAnswerDao gameQuestionUserAnswerDao;
     private final QuestionService questionService;
+    private final GameService gameService;
+    private final CleverestBroadcaster broadcaster;
 
     @Transactional(readOnly = true)
     public QuizGameState restoreQuizGameState(UUID gameId, UUID userId) {
@@ -92,7 +102,7 @@ public class GameStateService {
         state.setPlayerName(gameEntity.getPlayerNames().stream().findFirst().orElseThrow());
         state.setAnswerOptionsEnabled(true);
         state.setQuestions(gameQuestions.stream()
-                .sorted(Comparator.comparing(GameQuestionUserEntity::getOrderNumber, Comparator.naturalOrder()))
+                .sorted(comparing(GameQuestionUserEntity::getOrderNumber, Comparator.naturalOrder()))
                 .map(GameQuestionUserEntity::getQuestion)
                 .map(questionService::toQuizQuestionModel)
                 .collect(Collectors.toCollection(LinkedHashSet::new)));
@@ -109,4 +119,94 @@ public class GameStateService {
         state.setCurrentQuestionNumber(Math.max(0, currentQuestionNumber));
         return state;
     }
+
+    public void restoreAllCleverest() {
+        gameDao.findAll().stream()
+                .filter(g -> g.getStatus() != GameStatus.FINISHED)
+                .forEach(this::restoreCleverestGameState);
+    }
+
+    @Transactional(readOnly = true)
+    private void restoreCleverestGameState(GameEntity gameEntity) {
+        final var gameId = gameEntity.getId();
+
+        if (broadcaster.stateExists(gameId.toString())) {
+            return;
+        }
+
+        final var gameQuestions = gameQuestionDao.findByGameId(gameId);
+
+        final var firstRound = toQuestions(gameQuestions, 1);
+        final var secondRound = toQuestions(gameQuestions, 2);
+        final var thirdRound = toQuestions(gameQuestions, 3);
+
+        final var state = new CleverestGameState(
+                gameEntity.getCreatedBy(),
+                firstRound,
+                secondRound,
+                thirdRound
+        );
+
+        final var players = gameParticipantDao.findByGameIdAndRole(gameId, PLAYER);
+
+        players.forEach(participant -> {
+            final var user = participant.getUser();
+            state.addOrUpdateUser(
+                    user.getId(),
+                    user.getUsername(),
+                    BLACK_COLOR,
+                    user.getPhotoFilename(),
+                    "",
+                    "");
+        });
+
+        broadcaster.restoreState(gameId.toString(), state);
+
+        log.debug("Game {} [{}] state restored: questions={}, users={}",
+                gameEntity.getType(),
+                gameId,
+                gameQuestions.size(),
+                state.getAllUsernames().size());
+    }
+
+    private List<QuestionModel> toQuestions(List<GameQuestionEntity> gameQuestions,
+                                            int round) {
+        return gameQuestions.stream()
+                .filter(q -> q.getMetadata().round() == round)
+                .sorted(comparing(q -> q.getMetadata().order()))
+                .map(GameQuestionEntity::getQuestion)
+                .map(questionService::toQuizQuestionModel)
+                .toList();
+    }
+
+    @Deprecated
+    @Transactional(readOnly = true)
+    private void restoreCleverestGameStateOld(GameEntity gameEntity) {
+        final var gameId = gameEntity.getId().toString();
+        if (broadcaster.stateExists(gameId)) {
+            return;
+        }
+        log.debug("Game {} [{}] restoring state", gameEntity.getType(), gameId);
+        final var questionModels = gameEntity.getGameQuestions().stream()
+                .map(GameQuestionUserEntity::getQuestion)
+                .distinct()
+                .map(questionService::toQuizQuestionModel)
+                .toList();
+        broadcaster.createState(gameId,
+                gameEntity.getCreatedBy(),
+                questionModels,
+                List.of(),
+                List.of());
+        log.debug("Game {} [{}] questions count [{}]", gameEntity.getType(), gameId, questionModels.size());
+        final var users = gameEntity.getGameQuestions().stream()
+                .map(GameQuestionUserEntity::getUser)
+                .filter(u -> !u.getUsername().equals(gameEntity.getCreatedBy()))
+                .toList();
+        log.debug("Game {} [{}] users count [{}]", gameEntity.getType(), gameId, users.size());
+        users.forEach(userEntity ->
+                broadcaster.getState(gameId)
+                        .addOrUpdateUser(null, userEntity.getUsername(), BLACK_COLOR, userEntity.getPhotoFilename(), "", ""));
+        log.debug("Game {} [{}] state restored", gameEntity.getType(), gameId);
+    }
+
 }

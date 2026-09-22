@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 import static java.time.LocalDateTime.now;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.util.Optional.empty;
+import static java.util.Optional.ofNullable;
 import static org.rsinitsyn.quiz.entity.AnswerStatus.*;
 import static org.rsinitsyn.quiz.utils.QuizUtils.divide;
 
@@ -36,11 +37,13 @@ public class UserGameState implements Comparable<UserGameState> {
     private Double avgResponseTime;
     private int betMultiplier = 1;
 
-    public static UserGameState userGameState(String username,
-                                              String color,
-                                              String photoFilename) {
+    public static UserGameState userGameState(
+            UUID userId,
+            String username,
+            String color,
+            String photoFilename) {
         final var userGameState = new UserGameState();
-        userGameState.profile = new UserProfile(username, color, Optional.ofNullable(photoFilename));
+        userGameState.profile = new UserProfile(userId, username, color, ofNullable(photoFilename));
         userGameState.lastAnswerStatus = UNKNOWN;
         return userGameState;
     }

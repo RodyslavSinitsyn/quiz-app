@@ -65,7 +65,7 @@ public class LabsPage extends VerticalLayout implements HasUrlParameter<String>,
 
     @Override
     public void afterNavigation(AfterNavigationEvent afterNavigationEvent) {
-        final var userGameState = UserGameState.userGameState("Rodyslav",
+        final var userGameState = UserGameState.userGameState(randomUUID(), "Rodyslav",
                 SessionWrapper.getLoggedUserThemeColor(),
                 "/dev/4704b5fb-a349-4f96-8fc0-240a30d10cca.jpg");
         userGameState.submitAnswer("Lionel Messi", now(), () -> AnswerResult.oneOptionResult(true));
@@ -256,7 +256,7 @@ public class LabsPage extends VerticalLayout implements HasUrlParameter<String>,
     }
 
     private UserStateSnapshot userStateSnapshot(String username, int position, AnswerStatus status) {
-        return new UserStateSnapshot(new UserProfile(username, BLACK_COLOR, Optional.of("")),
+        return new UserStateSnapshot(new UserProfile(randomUUID(), username, BLACK_COLOR, Optional.of("")),
                 randomText(1), status, true, 0, randomInt(), position, Optional.empty());
     }
 

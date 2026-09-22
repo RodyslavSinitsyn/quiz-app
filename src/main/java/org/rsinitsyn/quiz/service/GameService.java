@@ -166,6 +166,7 @@ public class GameService {
         return gameDao.existsById(id);
     }
 
+    @Deprecated
     @Transactional
     public void submitAnswersBatch(String gameId,
                                    QuestionModel question,
@@ -180,6 +181,7 @@ public class GameService {
         });
     }
 
+    @Deprecated
     @Transactional(propagation = Propagation.REQUIRED)
     public void submitAnswers(String gameId,
                               String playerName,

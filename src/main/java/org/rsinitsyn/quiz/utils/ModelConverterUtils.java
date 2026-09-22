@@ -1,14 +1,16 @@
 package org.rsinitsyn.quiz.utils;
 
 import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.tuple.Pair;
 import org.rsinitsyn.quiz.entity.AnswerEntity;
+import org.rsinitsyn.quiz.entity.GameQuestionMetadata;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
 import org.rsinitsyn.quiz.entity.QuestionHintEntity;
+import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.binding.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.rsinitsyn.quiz.entity.QuestionType.SEQUENCE;
@@ -140,5 +142,17 @@ public class ModelConverterUtils {
                         .toList(),
                 questionEntity.getCorrectAnswer().getText()
         );
+    }
+
+    public static List<Pair<UUID, GameQuestionMetadata>> toShuffledGameQuestionPairs(
+            List<QuestionModel> questions, int roundNumber) {
+        Collections.shuffle(questions);
+        final var order = new AtomicInteger(0);
+        return questions.stream()
+                .map(q -> Pair.of(q.getId(), GameQuestionMetadata.builder()
+                        .round(roundNumber)
+                        .order(order.incrementAndGet())
+                        .build()))
+                .toList();
     }
 }

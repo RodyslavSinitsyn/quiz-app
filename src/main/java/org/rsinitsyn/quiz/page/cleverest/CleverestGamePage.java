@@ -16,17 +16,16 @@ import org.rsinitsyn.quiz.page.MainPage;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.GameFinishedEvent;
 import org.rsinitsyn.quiz.service.CleverestBroadcaster.RenderResultsEvent;
+import org.rsinitsyn.quiz.service.GameQuestionUserAnswerService;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.service.QuestionService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static com.vaadin.flow.router.NavigationTrigger.*;
 import static org.rsinitsyn.quiz.entity.GameStatus.STARTED;
+import static org.rsinitsyn.quiz.service.CleverestBroadcaster.SaveUsersAnswersEvent;
 import static org.rsinitsyn.quiz.utils.QuizComponents.infoNotification;
 import static org.rsinitsyn.quiz.utils.QuizComponents.openConfirmDialog;
 import static org.rsinitsyn.quiz.utils.QuizUtils.logState;
@@ -47,6 +46,7 @@ public class CleverestGamePage extends VerticalLayout
     );
 
     private final GameService gameService;
+    private final GameQuestionUserAnswerService gameQuestionUserAnswerService;
     private final CleverestBroadcaster broadcaster;
     private final QuestionService questionService;
     private final PageValidator pageValidator;
@@ -57,10 +57,12 @@ public class CleverestGamePage extends VerticalLayout
     private final List<Registration> subscriptions = new ArrayList<>();
 
     public CleverestGamePage(GameService gameService,
+                             GameQuestionUserAnswerService gameQuestionUserAnswerService,
                              CleverestBroadcaster broadcaster,
                              QuestionService questionService,
-                             final PageValidator pageValidator) {
+                             PageValidator pageValidator) {
         this.gameService = gameService;
+        this.gameQuestionUserAnswerService = gameQuestionUserAnswerService;
         this.broadcaster = broadcaster;
         this.questionService = questionService;
         this.pageValidator = pageValidator;
@@ -108,10 +110,15 @@ public class CleverestGamePage extends VerticalLayout
         add(playBoard);
 
         if (gameHost) {
-            subscriptions.add(broadcaster.subscribe(gameId,
-                    CleverestBroadcaster.SaveUsersAnswersEvent.class,
-                    event -> gameService.submitAnswersBatch(
-                            gameId, event.getQuestion(), event.getUserStateSnapshots())));
+            subscriptions.add(broadcaster.subscribe(gameId, SaveUsersAnswersEvent.class,
+                    event -> {
+                        // old submit
+                        gameService.submitAnswersBatch(
+                                gameId, event.getQuestion(), event.getUserStateSnapshots());
+                        // new submit
+                        gameQuestionUserAnswerService.submitAnswers(
+                                UUID.fromString(gameId), event.getQuestion().getId(), event.getUserStateSnapshots());
+                    }));
 
             subscriptions.add(broadcaster.subscribe(gameId, GameFinishedEvent.class,
                     event -> {
