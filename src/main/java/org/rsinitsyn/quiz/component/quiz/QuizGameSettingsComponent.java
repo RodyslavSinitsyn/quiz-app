@@ -9,7 +9,7 @@ import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Hr;
-import com.vaadin.flow.component.html.Label;
+import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -26,12 +26,6 @@ import com.vaadin.flow.router.BeforeLeaveEvent;
 import com.vaadin.flow.router.BeforeLeaveObserver;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -40,7 +34,15 @@ import org.rsinitsyn.quiz.model.AnswerHistory;
 import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.utils.QuizComponents;
-import org.rsinitsyn.quiz.utils.QuizUtils;
+
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+
+import static org.rsinitsyn.quiz.utils.QuizUtils.createStreamResourceForPhoto;
 
 @Slf4j
 public class QuizGameSettingsComponent extends FormLayout implements BeforeLeaveObserver {
@@ -150,7 +152,7 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
     }
 
     private void configureQuestionsList() {
-        Label label = new Label();
+        var label = new NativeLabel();
 
         questions.removeAll();
         questions.setId("questions-list-box");
@@ -178,11 +180,11 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
             row.getStyle().set("padding", ".25em");
             row.setAlignItems(FlexComponent.Alignment.CENTER);
             appendIconToQuestionRowComponent(row, question);
-            if (StringUtils.isNotEmpty(question.getPhotoFilename())) {
+            question.photoFilename().ifPresent(filename -> {
                 Avatar smallPhoto = new Avatar();
-                smallPhoto.setImageResource(QuizUtils.createStreamResourceForPhoto(question.getPhotoFilename()));
+                smallPhoto.setImageResource(createStreamResourceForPhoto(filename));
                 row.add(smallPhoto);
-            }
+            });
             Span spanText = new Span(question.getText());
             spanText.addClassNames(LumoUtility.FontWeight.MEDIUM);
             row.add(spanText);
@@ -193,20 +195,22 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
     }
 
     private void appendIconToQuestionRowComponent(HorizontalLayout row, QuestionModel question) {
-        if (playerName.getValue() != null) {
-            AnswerHistory answerHistory = question.getPlayersAnswersHistory().get(playerName.getValue());
-            if (answerHistory != null) {
-                Icon icon;
-                if (answerHistory.equals(AnswerHistory.ANSWERED_CORRECT)) {
-                    icon = VaadinIcon.WARNING.create();
-                    icon.setTooltipText("Игрок уже давал верный ответ на этот вопрос");
-                    row.add(icon);
-                } else if (answerHistory.equals(AnswerHistory.ANSWERED_WRONG)) {
-                    icon = VaadinIcon.QUESTION.create();
-                    icon.setTooltipText("Игрок овечал на вопрос, но неправильно");
-                    row.add(icon);
-                }
-            }
+        if (playerName.getValue() == null) {
+            return;
+        }
+        AnswerHistory answerHistory = question.getPlayersAnswersHistory().get(playerName.getValue());
+        if (answerHistory == null) {
+            return;
+        }
+        Icon icon;
+        if (answerHistory.equals(AnswerHistory.ANSWERED_CORRECT)) {
+            icon = VaadinIcon.WARNING.create();
+            icon.setTooltipText("Игрок уже давал верный ответ на этот вопрос");
+            row.add(icon);
+        } else if (answerHistory.equals(AnswerHistory.ANSWERED_WRONG)) {
+            icon = VaadinIcon.QUESTION.create();
+            icon.setTooltipText("Игрок овечал на вопрос, но неправильно");
+            row.add(icon);
         }
     }
 
@@ -222,7 +226,7 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
                     if (!filterAnsweredCheckbox.getValue()) {
                         return Boolean.TRUE;
                     }
-                    return Optional.ofNullable(questionModel.getPlayersAnswersHistory().get(playerName.getValue()))
+                    return Optional.of(questionModel.getPlayersAnswersHistory().get(playerName.getValue()))
                             .map(answerHistory -> !answerHistory.equals(AnswerHistory.ANSWERED_CORRECT))
                             .orElse(Boolean.TRUE);
                 })
@@ -287,8 +291,7 @@ public class QuizGameSettingsComponent extends FormLayout implements BeforeLeave
         }
     }
 
-    public <T extends ComponentEvent<?>> Registration addListener(Class<T> eventType,
-                                                                  ComponentEventListener<T> listener) {
-        return getEventBus().addListener(eventType, listener);
+    public Registration addStartGameListener(ComponentEventListener<StartGameEvent> listener) {
+        return getEventBus().addListener(StartGameEvent.class, listener);
     }
 }

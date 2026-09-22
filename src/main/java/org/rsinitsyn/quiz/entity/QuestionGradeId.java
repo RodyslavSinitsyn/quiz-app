@@ -12,4 +12,8 @@ import lombok.NoArgsConstructor;
 public class QuestionGradeId implements Serializable {
     private UUID questionId;
     private UUID userId;
+
+    public static QuestionGradeId questionGradeId(UUID questionId, UUID userId) {
+        return new QuestionGradeId(questionId, userId);
+    }
 }

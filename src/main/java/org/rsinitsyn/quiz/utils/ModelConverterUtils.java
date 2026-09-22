@@ -1,19 +1,19 @@
 package org.rsinitsyn.quiz.utils;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.tuple.Pair;
 import org.rsinitsyn.quiz.entity.AnswerEntity;
+import org.rsinitsyn.quiz.entity.GameQuestionMetadata;
 import org.rsinitsyn.quiz.entity.QuestionEntity;
-import org.rsinitsyn.quiz.model.binding.FourAnswersQuestionBindingModel;
-import org.rsinitsyn.quiz.model.binding.LinkQuestionBindingModel;
-import org.rsinitsyn.quiz.model.binding.OrQuestionBindingModel;
-import org.rsinitsyn.quiz.model.binding.PhotoQuestionBindingModel;
-import org.rsinitsyn.quiz.model.binding.PrecisionQuestionBindingModel;
-import org.rsinitsyn.quiz.model.binding.TopQuestionBindingModel;
+import org.rsinitsyn.quiz.entity.QuestionHintEntity;
+import org.rsinitsyn.quiz.model.QuestionModel;
+import org.rsinitsyn.quiz.model.binding.*;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+import static org.rsinitsyn.quiz.entity.QuestionType.SEQUENCE;
 
 @UtilityClass
 public class ModelConverterUtils {
@@ -42,9 +42,10 @@ public class ModelConverterUtils {
                 questionEntity.getId().toString(),
                 questionEntity.getText(),
                 answerBindingModels,
-                questionEntity.getCategory().getName(),
                 questionEntity.getCreatedBy(),
                 questionEntity.getOriginalPhotoUrl(),
+                questionEntity.getCategory().getName(),
+                questionEntity.getHintsAsText(),
                 questionEntity.getAnswerDescriptionText());
     }
 
@@ -57,8 +58,9 @@ public class ModelConverterUtils {
         model.setId(questionEntity.getId().toString());
         model.setText(questionEntity.getText());
         model.setRange(Double.valueOf(questionEntity.getValidRange()));
-        model.setAnswerText(Double.valueOf(questionEntity.getAnswers().stream().findFirst().orElseThrow().getText()));
+        model.setAnswerText(Double.valueOf(questionEntity.getCorrectAnswer().getText()));
         model.setPhotoLocation(questionEntity.getOriginalPhotoUrl());
+        model.setCategory(questionEntity.getCategory().getName());
         model.setAnswerDescriptionText(questionEntity.getAnswerDescriptionText());
 
         return model;
@@ -68,10 +70,12 @@ public class ModelConverterUtils {
         return new OrQuestionBindingModel(
                 questionEntity.getId().toString(),
                 questionEntity.getText(),
-                new ArrayList<>(questionEntity.getAnswers()).get(0).getText(),
-                new ArrayList<>(questionEntity.getAnswers()).get(1).getText(),
+                questionEntity.getAnswers().get(0).getText(),
+                questionEntity.getAnswers().get(1).getText(),
                 questionEntity.getOriginalPhotoUrl(),
-                questionEntity.getAnswerDescriptionText()
+                questionEntity.getCategory().getName(),
+                questionEntity.getAnswerDescriptionText(),
+                questionEntity.getHintsAsText()
         );
     }
 
@@ -80,18 +84,24 @@ public class ModelConverterUtils {
                 questionEntity.getId().toString(),
                 questionEntity.getText(),
                 questionEntity.getAnswers().stream().map(AnswerEntity::getText).collect(Collectors.joining(System.lineSeparator())),
+                questionEntity.getType() == SEQUENCE,
                 questionEntity.getOriginalPhotoUrl(),
-                questionEntity.getAnswerDescriptionText()
+                questionEntity.getCategory().getName(),
+                questionEntity.getAnswerDescriptionText(),
+                questionEntity.getHintsAsText()
         );
     }
 
     public static PhotoQuestionBindingModel toPhotoQuestionBindingModel(QuestionEntity questionEntity) {
-        List<AnswerEntity> answerEntities = questionEntity.getAnswers().stream().sorted(Comparator.comparing(AnswerEntity::getNumber)).toList();
+//        List<AnswerEntity> answerEntities = questionEntity.getAnswers().stream().sorted(Comparator.comparing(AnswerEntity::getNumber)).toList();
+        List<AnswerEntity> answerEntities = questionEntity.getAnswers();
         return new PhotoQuestionBindingModel(
                 questionEntity.getId().toString(),
                 questionEntity.getText(),
                 questionEntity.getAnswerDescriptionText(),
                 questionEntity.getOriginalPhotoUrl(),
+                questionEntity.getCategory().getName(),
+                questionEntity.getHintsAsText(),
                 answerEntities.get(0).getPhotoFilename(),
                 answerEntities.get(1).getPhotoFilename(),
                 answerEntities.get(2).getPhotoFilename(),
@@ -105,6 +115,8 @@ public class ModelConverterUtils {
                 questionEntity.getText(),
                 questionEntity.getAnswerDescriptionText(),
                 questionEntity.getOriginalPhotoUrl(),
+                questionEntity.getCategory().getName(),
+                questionEntity.getHintsAsText(),
                 questionEntity.getAnswers().stream()
                         .filter(AnswerEntity::isCorrect)
                         .map(AnswerEntity::getText)
@@ -114,5 +126,33 @@ public class ModelConverterUtils {
                         .map(AnswerEntity::getText)
                         .collect(Collectors.joining(System.lineSeparator()))
         );
+    }
+
+    public static GuessPhotoQuestionBindingModel toGuessPhotoBindingModel(QuestionEntity questionEntity) {
+        return new GuessPhotoQuestionBindingModel(
+                questionEntity.getId().toString(),
+                questionEntity.getText(),
+                questionEntity.getAnswerDescriptionText(),
+                questionEntity.getPhotoFilename(),
+                questionEntity.getCategory().getName(),
+                questionEntity.getHintsAsText(),
+                questionEntity.getHints().stream()
+                        .filter(QuestionHintEntity::photoType)
+                        .map(QuestionHintEntity::getPhotoFilename)
+                        .toList(),
+                questionEntity.getCorrectAnswer().getText()
+        );
+    }
+
+    public static List<Pair<UUID, GameQuestionMetadata>> toShuffledGameQuestionPairs(
+            List<QuestionModel> questions, int roundNumber) {
+        Collections.shuffle(questions);
+        final var order = new AtomicInteger(0);
+        return questions.stream()
+                .map(q -> Pair.of(q.getId(), GameQuestionMetadata.builder()
+                        .round(roundNumber)
+                        .order(order.incrementAndGet())
+                        .build()))
+                .toList();
     }
 }

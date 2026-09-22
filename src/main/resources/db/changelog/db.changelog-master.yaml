@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/migrations/001-create-tables.yaml
+  - include:
+      file: db/changelog/migrations/002-migrate-data.yaml
+  - include:
+      file: db/changelog/migrations/003-new-game-state-tables.yaml

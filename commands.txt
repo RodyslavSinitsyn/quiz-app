@@ -1,0 +1,8 @@
+ipconfig getifaddr en0
+192.168.100.149
+
+pgcli postgres://qa-user:qa-password@localhost:5433/qa-db
+pgcli postgres://qa-user:qa-password@localhost:5432/qa-db-prod
+
+db data:
+filenames: "dev/uuid.png"

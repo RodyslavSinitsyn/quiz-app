@@ -1,0 +1,39 @@
+package org.rsinitsyn.quiz.component.custom.answer;
+
+import com.vaadin.flow.component.textfield.TextField;
+import org.rsinitsyn.quiz.entity.AnswerStatus;
+import org.rsinitsyn.quiz.entity.UserAnswerDetails;
+import org.rsinitsyn.quiz.model.AnswerLayoutRequest;
+import org.rsinitsyn.quiz.model.answer.AnswerResult;
+
+import java.util.List;
+
+import static org.rsinitsyn.quiz.component.cleverest.CleverestComponents.textAnswerInput;
+
+public class ManualInputAnswersLayout extends AbstractAnswersLayout {
+
+    private final TextField answerField = textAnswerInput((e) -> {
+        submitButton.setEnabled(!e.getValue().isBlank());
+    });
+
+    public ManualInputAnswersLayout(final AnswerLayoutRequest request) {
+        super(request);
+    }
+
+    @Override
+    protected void renderAnswers() {
+        answerField.addValueChangeListener(e ->
+                fireEvent(new InputChangedEvent(username.orElseThrow(), e.getValue())));
+        add(answerField);
+    }
+
+    @Override
+    protected AnswerGivenEvent createAnswerGivenEvent() {
+        return AnswerGivenEvent.builder()
+                .answerDetails(UserAnswerDetails.from(List.of(answerField.getValue())))
+                // TODO: Link points with Betting here, later
+                .result(new AnswerResult(AnswerStatus.UNKNOWN, 1, 0))
+                .manuallyApprove(true)
+                .build();
+    }
+}

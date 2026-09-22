@@ -27,11 +27,13 @@ public class PhotoQuestionBindingModel extends AbstractQuestionBindingModel {
                                      String text,
                                      String answerDescriptionText,
                                      String photoLocation,
+                                     String category,
+                                     String hintsText,
                                      String correctOption,
                                      String optionTwo,
                                      String optionThree,
                                      String optionFour) {
-        super(id, text, answerDescriptionText, photoLocation);
+        super(id, text, answerDescriptionText, photoLocation, category, hintsText);
         this.correctOption = correctOption;
         this.optionTwo = optionTwo;
         this.optionThree = optionThree;

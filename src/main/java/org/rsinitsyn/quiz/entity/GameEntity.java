@@ -1,26 +1,16 @@
 package org.rsinitsyn.quiz.entity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderBy;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+
+import static jakarta.persistence.CascadeType.REMOVE;
+import static jakarta.persistence.FetchType.LAZY;
 
 @Entity
 @Table(name = "games")
@@ -28,7 +18,7 @@ import lombok.ToString;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(exclude = {"gameQuestions"})
+@EqualsAndHashCode(of = "id")
 @ToString
 public class GameEntity {
     @Id
@@ -42,14 +32,55 @@ public class GameEntity {
     @Column(nullable = false)
     private LocalDateTime creationDate;
     private LocalDateTime finishDate;
-    @OneToMany(mappedBy = "game", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "game", fetch = LAZY, cascade = REMOVE)
     @OrderBy(value = "orderNumber")
     @ToString.Exclude
-    private Set<GameQuestionUserEntity> gameQuestions = new HashSet<>();
+    private Set<GameQuestionUserEntity> gameQuestions = new LinkedHashSet<>();
 
+    @OneToMany(
+            mappedBy = "game",
+            fetch = LAZY,
+            cascade = REMOVE,
+            orphanRemoval = true
+    )
+    @ToString.Exclude
+    private List<GameParticipantEntity> participants = new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "game",
+            fetch = LAZY,
+            cascade = REMOVE,
+            orphanRemoval = true
+    )
+    @ToString.Exclude
+    private List<GameQuestionEntity> questions = new ArrayList<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "configuration", columnDefinition = "jsonb")
+    private GameConfiguration configuration;
+
+    @Deprecated
+    public Set<GameQuestionUserEntity> getGameQuestions() {
+        return gameQuestions;
+    }
+
+    public boolean oldGameQuestionsPresent() {
+        return !gameQuestions.isEmpty();
+    }
+
+    /**
+     * Use new method getParticipantPlayerNames
+     */
     public Set<String> getPlayerNames() {
         return gameQuestions.stream()
                 .map(e -> e.getUser().getUsername())
+                .collect(Collectors.toSet());
+    }
+
+    public Set<String> getParticipantPlayerNames() {
+        return participants.stream()
+                .filter(p -> p.getRole() == GameParticipantRole.PLAYER)
+                .map(e -> "[new]" + e.getUser().getUsername())
                 .collect(Collectors.toSet());
     }
 }

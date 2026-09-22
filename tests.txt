@@ -1,0 +1,12 @@
+25 Mar
+==================================================
+User left cleverest game (exit/login)
+- Joins back
+- Host should refresh page
+- Question appeared, score preserved
+
+==================================================
+User who not in the game can't join Cleverest game
+
+==================================================
+
