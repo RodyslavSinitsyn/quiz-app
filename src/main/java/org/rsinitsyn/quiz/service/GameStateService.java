@@ -2,12 +2,10 @@ package org.rsinitsyn.quiz.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.Hibernate;
 import org.rsinitsyn.quiz.dao.GameDao;
 import org.rsinitsyn.quiz.dao.GameParticipantDao;
 import org.rsinitsyn.quiz.dao.GameQuestionDao;
 import org.rsinitsyn.quiz.dao.GameQuestionUserAnswerDao;
-import org.rsinitsyn.quiz.entity.GameEntity;
 import org.rsinitsyn.quiz.entity.GameQuestionEntity;
 import org.rsinitsyn.quiz.entity.GameQuestionUserEntity;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
@@ -83,10 +81,10 @@ public class GameStateService {
         return state;
     }
 
-    @Deprecated(forRemoval = true)
+    @Deprecated()
     @Transactional(readOnly = true)
     public QuizGameState restoreQuizGameStateOld(String gameId) {
-        var gameEntity = findById(gameId);
+        var gameEntity = gameDao.findById(UUID.fromString(gameId)).orElseThrow();
         var gameQuestions = gameEntity.getGameQuestions();
         var state = new QuizGameState();
         state.setGameId(gameEntity.getId());
@@ -110,21 +108,5 @@ public class GameStateService {
                 .count());
         state.setCurrentQuestionNumber(Math.max(0, currentQuestionNumber));
         return state;
-    }
-
-    @Transactional(readOnly = true)
-    public GameEntity findById(String id) {
-        return gameDao.findByIdJoinQuestions(UUID.fromString(id)).stream()
-                .peek(gq -> {
-                    gq.getGameQuestions().stream()
-                            .map(GameQuestionUserEntity::getQuestion)
-                            .forEach(q -> {
-                                Hibernate.initialize(q.getAnswers());
-                                Hibernate.initialize(q.getGrades());
-                                Hibernate.initialize(q.getHints());
-                            });
-                })
-                .findFirst()
-                .orElse(null);
     }
 }

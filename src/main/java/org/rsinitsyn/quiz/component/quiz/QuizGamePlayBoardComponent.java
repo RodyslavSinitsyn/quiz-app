@@ -206,23 +206,28 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         fireEvent(new SubmitUserAnswer(this,
                 event.getQuestion(),
                 AnswerEvaluationType.ofManuallyApproved(event.getAnswerGivenEvent().isManuallyApprove()),
-                event.getAnswerGivenEvent().getAnswerDetails()
+                event.getAnswerGivenEvent().getAnswerDetails(),
+                event.getAnswerGivenEvent().getResult()
         ));
         renderQuestion();
     }
 
     private void calculateScoreAndShowPopup(AnswerResult answerResult) {
-        final var isCorrect = answerResult.status().correct();
         NotificationVariant popupVariant;
-        if (isCorrect) {
+        String notifyText;
+        if (answerResult.status().correct()) {
             gameState.incrementCorrectAnswersCounter();
             AudioUtils.playStaticSoundAsync(CORRECT_ANSWER_AUDIOS.next());
             popupVariant = NotificationVariant.LUMO_SUCCESS;
-        } else {
+            notifyText = "Правильный ответ!";
+        } else if (answerResult.status().wrong()) {
             AudioUtils.playStaticSoundAsync(WRONG_ANSWER_AUDIOS.next());
             popupVariant = NotificationVariant.LUMO_ERROR;
+            notifyText = "Неверно...";
+        } else {
+            popupVariant = NotificationVariant.LUMO_CONTRAST;
+            notifyText = "Позже узнаем";
         }
-        String notifyText = isCorrect ? "Правильный ответ!" : "Неверно...";
         Notification notification = Notification.show(notifyText, 3_000, Notification.Position.TOP_STRETCH);
         notification.addThemeVariants(popupVariant);
     }
@@ -277,14 +282,17 @@ public class QuizGamePlayBoardComponent extends VerticalLayout implements Before
         private final AnswerStatus answerStatus;
         private final AnswerEvaluationType answerEvaluationType;
         private final UserAnswerDetails answerDetails;
+        private final AnswerResult answerResult;
 
         public SubmitUserAnswer(QuizGamePlayBoardComponent source,
                                 QuestionModel question,
                                 AnswerEvaluationType answerEvaluationType,
-                                UserAnswerDetails answerDetails) {
+                                UserAnswerDetails answerDetails,
+                                AnswerResult answerResult) {
             super(source, false);
-            this.correct = correct;
-            this.answerStatus = AnswerStatus.answerStatus(correct);
+            this.question = question;
+            this.answerResult = answerResult;
+            this.answerStatus = answerResult.status();
             this.answerEvaluationType = answerEvaluationType;
             this.answerDetails = answerDetails;
         }

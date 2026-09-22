@@ -34,4 +34,7 @@ public class GameQuestionEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "metadata", columnDefinition = "jsonb")
     private GameQuestionMetadata metadata;
+
+    @Transient
+    private boolean answered;
 }

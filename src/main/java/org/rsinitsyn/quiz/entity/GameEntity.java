@@ -6,11 +6,11 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static jakarta.persistence.CascadeType.REMOVE;
+import static jakarta.persistence.FetchType.LAZY;
 
 @Entity
 @Table(name = "games")
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(exclude = {"gameQuestions", "participants"})
+@EqualsAndHashCode(of = "id")
 @ToString
 public class GameEntity {
     @Id
@@ -32,28 +32,45 @@ public class GameEntity {
     @Column(nullable = false)
     private LocalDateTime creationDate;
     private LocalDateTime finishDate;
-    @OneToMany(mappedBy = "game", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "game", fetch = LAZY, cascade = REMOVE)
     @OrderBy(value = "orderNumber")
     @ToString.Exclude
     private Set<GameQuestionUserEntity> gameQuestions = new LinkedHashSet<>();
 
     @OneToMany(
             mappedBy = "game",
-            fetch = FetchType.LAZY,
-            cascade = CascadeType.REMOVE,
+            fetch = LAZY,
+            cascade = REMOVE,
             orphanRemoval = true
     )
     @ToString.Exclude
-    private Set<GameParticipantEntity> participants = new HashSet<>();
+    private List<GameParticipantEntity> participants = new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "game",
+            fetch = LAZY,
+            cascade = REMOVE,
+            orphanRemoval = true
+    )
+    @ToString.Exclude
+    private List<GameQuestionEntity> questions = new ArrayList<>();
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "configuration", columnDefinition = "jsonb")
     private GameConfiguration configuration;
 
+    @Deprecated
+    public Set<GameQuestionUserEntity> getGameQuestions() {
+        return gameQuestions;
+    }
+
+    public boolean oldGameQuestionsPresent() {
+        return !gameQuestions.isEmpty();
+    }
+
     /**
      * Use new method getParticipantPlayerNames
      */
-    @Deprecated(forRemoval = true)
     public Set<String> getPlayerNames() {
         return gameQuestions.stream()
                 .map(e -> e.getUser().getUsername())
@@ -63,7 +80,7 @@ public class GameEntity {
     public Set<String> getParticipantPlayerNames() {
         return participants.stream()
                 .filter(p -> p.getRole() == GameParticipantRole.PLAYER)
-                .map(e -> e.getUser().getUsername())
+                .map(e -> "[new]" + e.getUser().getUsername())
                 .collect(Collectors.toSet());
     }
 }

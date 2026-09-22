@@ -4,15 +4,18 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public enum AnswerStatus {
-    UNKNOWN(null),
-    CORRECT(true),
-    WRONG(false),
-    PARTIAL(true);
-
-    public final Boolean boolVal;
+    UNKNOWN,
+    CORRECT,
+    WRONG,
+    PARTIAL
+    ;
 
     public boolean correct() {
-        return boolVal != null && boolVal;
+        return this == CORRECT || this == PARTIAL;
+    }
+
+    public boolean wrong() {
+        return this == WRONG;
     }
 
     public boolean answered() {

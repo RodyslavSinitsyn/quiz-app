@@ -12,6 +12,7 @@ import org.rsinitsyn.quiz.model.QuestionModel;
 import org.rsinitsyn.quiz.model.cleverest.UserStateSnapshot;
 import org.rsinitsyn.quiz.model.quiz.QuizGameState;
 import org.rsinitsyn.quiz.utils.SessionWrapper;
+import org.rsinitsyn.quiz.view.GameDetailsView;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static org.rsinitsyn.quiz.entity.AnswerStatus.UNKNOWN;
 import static org.rsinitsyn.quiz.entity.GameStatus.FINISHED;
@@ -33,6 +35,7 @@ public class GameService {
     private final GameDao gameDao;
     private final GameQuestionUserDao gameQuestionUserDao;
     private final QuestionService questionService;
+    private final GameQuestionUserAnswerService gameQuestionUserAnswerService;
     private final UserService userService;
     private final EntityManager entityManager;
 
@@ -46,7 +49,7 @@ public class GameService {
 
     @Transactional(readOnly = true)
     public GameEntity findById(String id) {
-        return gameDao.findByIdJoinQuestions(UUID.fromString(id)).stream()
+        return gameDao.findByIdJoinQuestionsOld(UUID.fromString(id)).stream()
                 .peek(gq -> {
                     gq.getGameQuestions().stream()
                             .map(GameQuestionUserEntity::getQuestion)
@@ -60,8 +63,103 @@ public class GameService {
                 .orElse(null);
     }
 
-    public List<GameEntity> findAllNewFirst() {
-        return gameDao.findAllJoinGamesQuestionsNewFirst();
+    @Transactional(readOnly = true)
+    public GameEntity findByIdNew(UUID id) {
+        // join questions
+        final var gameEntityWithQuestions = gameDao.findByIdJoinQuestions(id);
+        // join participants
+        gameDao.findByIdJoinParticipants(id);
+        // backward compatibility
+        gameDao.findByIdJoinQuestionsOld(id);
+        return gameEntityWithQuestions.stream()
+                .peek(gq -> {
+                    gq.getQuestions().stream()
+                            .map(GameQuestionEntity::getQuestion)
+                            .forEach(q -> {
+                                Hibernate.initialize(q.getAnswers());
+                                Hibernate.initialize(q.getGrades());
+                                Hibernate.initialize(q.getHints());
+                            });
+                })
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Deprecated
+    public List<GameEntity> findAllNewFirstOld() {
+        return gameDao.findAllJoinGamesQuestionsNewFirstOld();
+    }
+
+    @Transactional(readOnly = true)
+    public List<GameDetailsView> getAllGameDetails() {
+        // dual read
+        final var gameDetails = gameDao.findAllGameDetails();
+        final var oldGameDetails = findAllNewFirstOld().stream()
+                .map(g -> new GameDetailsView() {
+                    @Override
+                    public UUID getId() {
+                        return g.getId();
+                    }
+
+                    @Override
+                    public GameStatus getStatus() {
+                        return g.getStatus();
+                    }
+
+                    @Override
+                    public String getCreatedBy() {
+                        return g.getCreatedBy();
+                    }
+
+                    @Override
+                    public GameType getType() {
+                        return g.getType();
+                    }
+
+                    @Override
+                    public String getName() {
+                        return g.getName();
+                    }
+
+                    @Override
+                    public String[] getPlayerNames() {
+                        return g.getPlayerNames().toArray(String[]::new);
+                    }
+
+                    @Override
+                    public int getAnsweredQuestions() {
+                        return (int) g.getGameQuestions().stream().filter(GameQuestionUserEntity::getAnswered).count();
+                    }
+
+                    @Override
+                    public int getTotalQuestions() {
+                        return (int) g.getGameQuestions().size();
+                    }
+
+                    @Override
+                    public int getCorrectAnswers() {
+                        return (int) g.getGameQuestions().stream().filter(GameQuestionUserEntity::getAnswered).count();
+                    }
+
+                    @Override
+                    public LocalDateTime getCreationDate() {
+                        return g.getCreationDate();
+                    }
+
+                    @Override
+                    public LocalDateTime getFinishDate() {
+                        return g.getFinishDate();
+                    }
+
+                    @Override
+                    public boolean oldSource() {
+                        return true;
+                    }
+                })
+                .toList();
+        return Stream.concat(gameDetails.stream(), oldGameDetails.stream())
+                .sorted(Comparator.comparing(GameDetailsView::getCreatedBy).reversed())
+                .toList();
     }
 
     public boolean exists(UUID id) {
@@ -113,16 +211,16 @@ public class GameService {
         }
     }
 
-    public boolean createIfNotExists(String id,
+    public boolean createIfNotExists(UUID id,
                                      String name,
                                      GameType gameType,
                                      Optional<GameConfiguration> configuration) {
-        if (gameDao.existsById(UUID.fromString(id))) {
+        if (gameDao.existsById(id)) {
             log.info("Game already exists, id: {}", id);
             return false;
         }
         GameEntity entity = new GameEntity();
-        entity.setId(UUID.fromString(id));
+        entity.setId(id);
         entity.setName(name);
         entity.setStatus(NOT_STARTED);
         entity.setType(gameType);
@@ -144,6 +242,7 @@ public class GameService {
         log.info("Updated game, id: {}", id);
     }
 
+    @Deprecated
     @Transactional(propagation = Propagation.REQUIRED)
     public void linkQuestionsWithGame(String id, QuizGameState stateModel) {
         GameEntity gameEntity = findById(id);

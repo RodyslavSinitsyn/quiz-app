@@ -16,7 +16,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -29,6 +28,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
+import static java.math.RoundingMode.HALF_UP;
 import static java.util.concurrent.CompletableFuture.delayedExecutor;
 import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -58,7 +58,7 @@ public final class QuizUtils {
 
     public static double divide(double val, double divideOn, int afterDigit) {
         return BigDecimal.valueOf(val)
-                .divide(BigDecimal.valueOf(NumberUtils.max(divideOn, 1)), afterDigit, RoundingMode.HALF_UP)
+                .divide(BigDecimal.valueOf(NumberUtils.max(divideOn, 1)), afterDigit, HALF_UP)
                 .doubleValue();
     }
 

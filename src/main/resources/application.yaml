@@ -27,7 +27,7 @@ spring:
       ddl-auto: validate
       naming:
         implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy # underscore
-    show-sql: false
+    show-sql: true
     open-in-view: false
 
   liquibase:

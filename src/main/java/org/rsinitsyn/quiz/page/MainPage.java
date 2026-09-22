@@ -15,7 +15,6 @@ import org.rsinitsyn.quiz.page.quiz.QuizGameConfigurePage;
 import org.rsinitsyn.quiz.service.GameService;
 import org.rsinitsyn.quiz.utils.QuizComponents;
 
-import java.util.Collections;
 import java.util.function.Consumer;
 
 @Route(value = "/", layout = MainLayout.class)
@@ -27,7 +26,7 @@ public class MainPage extends VerticalLayout {
 
     private final GameService gameService;
 
-    private GameListGrid gameListGrid = new GameListGrid(Collections.emptyList());
+    private GameListGrid gameListGrid;
 
     public MainPage(GameService gameService) {
         this.gameService = gameService;
@@ -40,7 +39,9 @@ public class MainPage extends VerticalLayout {
     }
 
     private void configureGameList() {
-        gameListGrid = new GameListGrid(gameService.findAllNewFirst());
+        gameListGrid = new GameListGrid(
+                gameService.getAllGameDetails(),
+                gameService::findByIdNew);
         gameListGrid.setSizeFull();
     }
 

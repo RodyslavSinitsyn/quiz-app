@@ -14,7 +14,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.rsinitsyn.quiz.entity.AnswerStatus.UNKNOWN;
 import static org.rsinitsyn.quiz.entity.GameParticipantId.gameParticipantId;
+import static org.rsinitsyn.quiz.entity.GameParticipantRole.PLAYER;
 import static org.rsinitsyn.quiz.entity.GameQuestionId.gameQuestionId;
 
 @Service
@@ -73,4 +75,18 @@ public class GameQuestionUserAnswerService {
             UUID questionId) {
         return gameQuestionUserAnswerDao.findAllByIdGameIdAndIdQuestionId(gameId, questionId);
     }
+
+    public boolean isQuestionAnswered(UUID gameId, UUID questionId) {
+        final var players = gameParticipantDao.countByGameIdAndRole(gameId, PLAYER);
+        if (players == 0) {
+            return false;
+        }
+        final var answeredPlayers = gameQuestionUserAnswerDao.countAnsweredPlayers(
+                gameId,
+                questionId,
+                PLAYER,
+                UNKNOWN);
+        return players == answeredPlayers;
+    }
+
 }

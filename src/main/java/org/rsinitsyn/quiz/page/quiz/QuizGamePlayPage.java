@@ -63,7 +63,7 @@ public class QuizGamePlayPage extends VerticalLayout implements HasUrlParameter<
             });
             return;
         }
-        this.gameState = gameStateService.restoreQuizGameState(gameId, getLoggedUserId());
+        this.gameState = getRestoreQuizGameState();
         if (!SessionWrapper.getLoggedUser().equals(gameState.getPlayerName())) {
             getUI().ifPresent(ui -> {
                 ui.navigateToClient("/");
@@ -81,13 +81,22 @@ public class QuizGamePlayPage extends VerticalLayout implements HasUrlParameter<
         configurePlayGameComponent();
     }
 
+    private QuizGameState getRestoreQuizGameState() {
+        try {
+            return gameStateService.restoreQuizGameState(gameId, getLoggedUserId());
+        } catch (Exception e) {
+            log.warn("Failed to restore game state via new tables for game {}. {}", gameId, e.getMessage());
+            return gameStateService.restoreQuizGameStateOld(gameId.toString());
+        }
+    }
+
     private void configurePlayGameComponent() {
         playBoardComponent.setState(gameState);
         add(playBoardComponent);
     }
 
     private void configureQuizGameResultComponent() {
-        resulComponent = new QuizGameResultComponent(gameState, gameService.findById(gameId.toString()));
+        resulComponent = new QuizGameResultComponent(gameState, gameService.findByIdNew(gameId));
         add(resulComponent);
     }
 

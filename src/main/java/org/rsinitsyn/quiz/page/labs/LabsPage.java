@@ -292,10 +292,10 @@ public class LabsPage extends VerticalLayout implements HasUrlParameter<String>,
                 .text(randomText(5))
                 .type(questionType)
                 .answers(List.of(
-                        new AnswerModel("Everest", true, 1, null, null, AnswerType.TEXT),
-                        new AnswerModel(randomText(7), false, 2, null, null, AnswerType.TEXT),
-                        new AnswerModel("Ответ который состоит из нескольких слов", false, 3, null, null, AnswerType.TEXT),
-                        new AnswerModel("Вполне себе такой длинный вариант ответа, в нем даже есть запятая", false, 4, null, null, AnswerType.TEXT)
+                        new AnswerModel(randomUUID(), "Everest", true, 1, null, null, AnswerType.TEXT),
+                        new AnswerModel(randomUUID(), randomText(7), false, 2, null, null, AnswerType.TEXT),
+                        new AnswerModel(randomUUID(), "Ответ который состоит из нескольких слов", false, 3, null, null, AnswerType.TEXT),
+                        new AnswerModel(randomUUID(), "Вполне себе такой длинный вариант ответа, в нем даже есть запятая", false, 4, null, null, AnswerType.TEXT)
                 ));
     }
 

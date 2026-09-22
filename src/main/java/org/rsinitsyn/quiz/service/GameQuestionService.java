@@ -40,13 +40,13 @@ public class GameQuestionService {
         final var game = gameDao.getReferenceById(gameId);
         final var question = questionDao.getReferenceById(questionId);
 
-        final var entity = GameQuestionEntity.builder()
+        final var gameQuestion = GameQuestionEntity.builder()
                 .id(id)
                 .game(game)
                 .question(question)
                 .metadata(metadata)
                 .build();
-        gameQuestionDao.save(entity);
+        gameQuestionDao.save(gameQuestion);
         log.debug("Question {} added to game {}", questionId, gameId);
     }
 

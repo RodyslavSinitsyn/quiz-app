@@ -42,6 +42,6 @@ public class GameQuestionUserEntity {
     private int orderNumber;
 
     public Boolean getAnswered() {
-        return this.answerStatus.boolVal;
+        return this.answerStatus.correct();
     }
 }

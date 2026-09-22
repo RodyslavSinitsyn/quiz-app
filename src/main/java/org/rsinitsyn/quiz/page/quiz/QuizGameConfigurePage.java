@@ -70,20 +70,20 @@ public class QuizGameConfigurePage extends VerticalLayout {
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         subscriptions.add(settingsComponent.addStartGameListener(event -> {
-            var newGameId = UUID.randomUUID().toString();
+            var newGameId = UUID.randomUUID();
             gameService.createIfNotExists(newGameId, event.getGameState().getGameName(), QUIZ, ofNullable(GameConfiguration.builder()
                     .hintsEnabled(event.getGameState().isHintsEnabled())
                     .optionsEnabled(event.getGameState().isAnswerOptionsEnabled())
                     .intrigueEnabled(event.getGameState().isIntrigueEnabled())
                     .build()));
             // old approach of assigning questions to game
-            gameService.linkQuestionsWithGame(newGameId, event.getGameState());
+            gameService.linkQuestionsWithGame(newGameId.toString(), event.getGameState());
             // new approach of assigning questions to game
-            gameQuestionService.addQuestionsToGame(UUID.fromString(newGameId), convertToQuizQuestions(event.getGameState()));
+            gameQuestionService.addQuestionsToGame(newGameId, convertToQuizQuestions(event.getGameState()));
             // add player to game
-            gameParticipantService.addPlayer(UUID.fromString(newGameId), event.getGameState().getPlayerName());
+            gameParticipantService.addPlayer(newGameId, event.getGameState().getPlayerName());
 
-            getUI().ifPresent(ui -> ui.navigate(QuizGamePlayPage.class, newGameId));
+            getUI().ifPresent(ui -> ui.navigate(QuizGamePlayPage.class, newGameId.toString()));
         }));
         log.trace("onAttach. subscribe {}", subscriptions.size());
     }

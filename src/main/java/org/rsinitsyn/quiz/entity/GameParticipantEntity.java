@@ -5,6 +5,8 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+import static jakarta.persistence.FetchType.EAGER;
+
 @Entity
 @Table(
         name = "game_participants",
@@ -24,12 +26,12 @@ public class GameParticipantEntity {
     @EmbeddedId
     private GameParticipantId id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = EAGER)
     @MapsId("gameId")
     @JoinColumn(name = "game_id", nullable = false)
     private GameEntity game;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = EAGER)
     @MapsId("userId")
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;

@@ -27,7 +27,7 @@ public class CleanupInvalidCleverestGamesJob {
             initialDelay = 60,
             fixedDelay = 600)
     public void runJob() {
-        List<GameEntity> games = gameService.findAllNewFirst().stream()
+        List<GameEntity> games = gameService.findAllNewFirstOld().stream()
                 .filter(e -> e.getType().equals(GameType.CLEVEREST)
                         && e.getStatus().equals(GameStatus.STARTED))
                 .filter(e -> broadcaster.getState(e.getId().toString()) == null)

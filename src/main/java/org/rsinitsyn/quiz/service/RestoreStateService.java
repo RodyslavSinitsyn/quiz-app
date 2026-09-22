@@ -22,7 +22,7 @@ public class RestoreStateService {
     private final QuestionService questionService;
 
     public void restore() {
-        gameService.findAllNewFirst().stream()
+        gameService.findAllNewFirstOld().stream()
                 .filter(g -> g.getStatus() != GameStatus.FINISHED)
                 .map(g -> gameService.findById(g.getId().toString()))
                 .forEach(this::restoreGame);
